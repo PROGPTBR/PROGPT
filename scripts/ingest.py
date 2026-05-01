@@ -6,15 +6,18 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import json
 import os
 import re
 import sys
+import time
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from enum import Enum
 from pathlib import Path
 from typing import Any, Callable, Iterable, Sequence
 
+import httpx
 from dotenv import load_dotenv
 
 
@@ -28,6 +31,8 @@ EMBED_BATCH_SIZE = 128
 HTTP_TIMEOUT_SECONDS = 60
 RETRY_BACKOFFS = (2, 4, 8)
 SUPPORTED_EXTS = {".pdf", ".md", ".txt", ".html"}
+EMBED_CACHE_DIR = PROJECT_ROOT / "scripts" / ".embed-cache"
+VOYAGE_ENDPOINT = "https://api.voyageai.com/v1/embeddings"
 
 
 def content_hash(path: Path) -> str:
@@ -264,6 +269,103 @@ def decide_action(
     if existing is None:
         return IngestDecision.PROCESS
     return IngestDecision.REPLACE if force else IngestDecision.SKIP
+
+
+def _cache_key(model: str, text: str) -> str:
+    h = hashlib.sha256()
+    h.update(model.encode("utf-8"))
+    h.update(b":")
+    h.update(text.encode("utf-8"))
+    return h.hexdigest()
+
+
+def _cache_get(key: str) -> list[float] | None:
+    p = EMBED_CACHE_DIR / f"{key}.json"
+    if not p.exists():
+        return None
+    try:
+        return json.loads(p.read_text())
+    except Exception:
+        return None
+
+
+def _cache_put(key: str, embedding: list[float]) -> None:
+    EMBED_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    p = EMBED_CACHE_DIR / f"{key}.json"
+    p.write_text(json.dumps(embedding))
+
+
+def _voyage_post(texts: list[str], api_key: str, model: str) -> list[list[float]]:
+    payload = {"model": model, "input": texts}
+    last_err: Exception | None = None
+    for attempt, delay in enumerate([0, *RETRY_BACKOFFS]):
+        if delay:
+            time.sleep(delay)
+        try:
+            with httpx.Client(timeout=HTTP_TIMEOUT_SECONDS) as client:
+                resp = client.post(
+                    VOYAGE_ENDPOINT,
+                    json=payload,
+                    headers={
+                        "Authorization": f"Bearer {api_key}",
+                        "Content-Type": "application/json",
+                    },
+                )
+            if resp.status_code in (429, 500, 502, 503, 504):
+                last_err = RuntimeError(f"Voyage {resp.status_code}: {resp.text[:200]}")
+                continue
+            if not resp.is_success:
+                raise RuntimeError(
+                    f"Voyage error {resp.status_code}: {resp.text[:500]}"
+                )
+            data = resp.json()
+            return [d["embedding"] for d in data["data"]]
+        except (httpx.TimeoutException, httpx.NetworkError) as e:
+            last_err = e
+            continue
+    raise RuntimeError(f"Voyage embed failed after retries: {last_err}")
+
+
+def embed_batch(texts: list[str], use_cache: bool = False) -> list[list[float]]:
+    """Embed a list of texts via Voyage in batches of EMBED_BATCH_SIZE."""
+    if not texts:
+        return []
+    api_key = os.environ["VOYAGE_API_KEY"]
+    model = os.environ["VOYAGE_MODEL"]
+
+    out: list[list[float] | None] = [None] * len(texts)
+    pending_indices: list[int] = []
+    pending_texts: list[str] = []
+    cache_keys: list[str] = []
+
+    for i, t in enumerate(texts):
+        if use_cache:
+            key = _cache_key(model, t)
+            cached = _cache_get(key)
+            if cached is not None:
+                out[i] = cached
+                continue
+            cache_keys.append(key)
+        else:
+            cache_keys.append("")
+        pending_indices.append(i)
+        pending_texts.append(t)
+
+    for start in range(0, len(pending_texts), EMBED_BATCH_SIZE):
+        batch = pending_texts[start : start + EMBED_BATCH_SIZE]
+        batch_idx = pending_indices[start : start + EMBED_BATCH_SIZE]
+        batch_keys = cache_keys[start : start + EMBED_BATCH_SIZE]
+        embeddings = _voyage_post(batch, api_key=api_key, model=model)
+        for i, emb, key in zip(batch_idx, embeddings, batch_keys):
+            out[i] = emb
+            if use_cache and key:
+                _cache_put(key, emb)
+
+    # Sanity: no Nones remain
+    if any(e is None for e in out):
+        missing = [i for i, e in enumerate(out) if e is None]
+        raise RuntimeError(f"embed_batch produced None for indices {missing}")
+    return out  # type: ignore[return-value]
 
 
 def load_env() -> None:
