@@ -1,0 +1,41 @@
+{
+  "name": "iacompras",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:migrate": "supabase db push",
+    "db:types": "supabase gen types typescript --linked > lib/db/database.types.ts",
+    "format": "prettier --write ."
+  },
+  "dependencies": {
+    "@google/genai": "^0.3.0",
+    "@supabase/supabase-js": "^2.45.0",
+    "next": "14.2.15",
+    "next-themes": "^0.3.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.16.0",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "14.2.15",
+    "postcss": "^8.4.45",
+    "prettier": "^3.3.3",
+    "supabase": "^1.200.3",
+    "tailwindcss": "^3.4.10",
+    "tailwindcss-animate": "^1.0.7",
+    "typescript": "^5.5.0",
+    "vitest": "^2.1.0"
+  }
+}
