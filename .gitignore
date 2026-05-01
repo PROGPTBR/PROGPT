@@ -1,0 +1,42 @@
+# dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# next.js
+.next/
+out/
+build/
+dist/
+
+# env
+.env
+.env.local
+.env.*.local
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# editor
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# python (sub-projeto 2)
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# supabase
+supabase/.branches
+supabase/.temp
