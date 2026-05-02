@@ -4,6 +4,7 @@ import { Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import type { StoredSession } from '@/lib/chat-storage';
+import { UserRow } from '@/components/auth/UserRow';
 
 type Props = {
   sessions: StoredSession[];
@@ -66,6 +67,7 @@ export function Sidebar({ sessions, currentId, onSwitch, onNew, onDelete }: Prop
           })}
         </ul>
       </ScrollArea>
+      <UserRow />
     </aside>
   );
 }
