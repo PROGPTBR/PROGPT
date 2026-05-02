@@ -395,8 +395,13 @@ def _db_dsn() -> str:
 
 
 def connect_db():
-    """Open a psycopg connection with pgvector type registered."""
-    conn = psycopg.connect(_db_dsn())
+    """Open a psycopg connection with pgvector type registered.
+
+    autocommit=True so `conn.transaction()` issues real BEGIN/COMMIT instead of
+    nested SAVEPOINT/RELEASE inside an implicit outer transaction (which would
+    never be committed and silently roll back at conn.close()).
+    """
+    conn = psycopg.connect(_db_dsn(), autocommit=True)
     register_vector(conn)
     return conn
 
