@@ -12,11 +12,13 @@
     "test:watch": "vitest",
     "db:migrate": "supabase db push",
     "db:types": "supabase gen types typescript --linked > lib/db/database.types.ts",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "rag:query": "tsx scripts/rag-query.ts"
   },
   "dependencies": {
     "@google/genai": "^1.51.0",
     "@supabase/supabase-js": "^2.45.0",
+    "dotenv": "^16.6.1",
     "next": "14.2.15",
     "next-themes": "^0.3.0",
     "react": "^18.3.1",
