@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useChatSessions } from '@/hooks/useChatSessions';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
@@ -8,12 +8,23 @@ import { ChatSession } from './ChatSession';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 
 export function ChatRoot() {
+  // Wait for client mount before reading localStorage. The server and the
+  // initial client render both produce the empty placeholder, so React
+  // hydration matches; the real tree mounts in a subsequent effect.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  if (!mounted) {
+    return <div className="h-screen bg-background" />;
+  }
+
+  return <ChatRootMounted />;
+}
+
+function ChatRootMounted() {
   const sessionsApi = useChatSessions();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  // useChatSessions starts empty during SSR / first paint and hydrates from
-  // localStorage in a useEffect. Render an empty shell until current exists
-  // to avoid passing undefined into ChatSession.
   if (!sessionsApi.current) {
     return <div className="h-screen bg-background" />;
   }
