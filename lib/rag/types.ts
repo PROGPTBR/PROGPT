@@ -54,3 +54,8 @@ export const SAFE_DEFAULT_CLASSIFICATION: Classification = {
   language: 'pt',
   needsRetrieval: true,
 };
+
+export type ChatMessage = {
+  role: 'user' | 'assistant';
+  content: string;
+};
