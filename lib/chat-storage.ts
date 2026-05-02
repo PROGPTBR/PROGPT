@@ -1,3 +1,10 @@
+/**
+ * @file
+ * @deprecated localStorage backend for chat sessions. Sub-projeto 6b moved
+ * authenticated users to DB-backed `useChatSessionsRemote`. The `deriveTitle`
+ * helper is still in active use; the rest of this module is retained for tests
+ * and potential offline mode in sub-projeto 7.
+ */
 import type { ChatMessage } from '@/lib/rag/types';
 
 export type StoredSession = {
