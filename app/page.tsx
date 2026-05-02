@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
 
 export default function Landing() {
   return (
@@ -11,9 +10,12 @@ export default function Landing() {
             Especialista em teorias e práticas de procurement, treinado em centenas de artigos.
           </p>
         </div>
-        <Button asChild>
-          <Link href="/login">Entrar</Link>
-        </Button>
+        <Link
+          href="/login"
+          className="inline-flex items-center justify-center rounded-lg bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:bg-primary/90 transition-colors"
+        >
+          Entrar
+        </Link>
       </div>
     </main>
   );
