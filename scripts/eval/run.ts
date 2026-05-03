@@ -1,12 +1,16 @@
 #!/usr/bin/env tsx
 import { config } from 'dotenv';
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 config({ path: resolve(process.cwd(), '.env.local') });
 
 import { getServerSupabase } from '@/lib/db/supabase';
 import { runRag } from '@/lib/rag';
+import { embed } from '@/lib/llm/voyage';
+import { startTrace, flushAsync } from '@/lib/observability/langfuse';
+
+const RECALL_THRESHOLD = 0.85;
 
 type GoldenRow = {
   id: string;
@@ -52,32 +56,33 @@ function pad(s: string, n: number): string {
   return s.length >= n ? s.slice(0, n) : s + ' '.repeat(n - s.length);
 }
 
-async function main() {
+export async function runEval(): Promise<void> {
   const goldenPath = resolve(process.cwd(), 'scripts/eval/golden.json');
   const rows = JSON.parse(readFileSync(goldenPath, 'utf-8')) as GoldenRow[];
   const expectedIds = await resolveExpectedIds(rows);
 
+  const commit = process.env.GITHUB_SHA?.slice(0, 7) ?? 'local';
+  const sessionId = `eval-${new Date().toISOString().slice(0, 10)}-${commit}`;
+
+  // Single batched embed call for ALL queries upfront — eliminates Voyage 3 RPM throttle.
+  const queryVectors = await embed(rows.map((r) => r.query), 'query');
+
   const results: RowResult[] = [];
 
-  // Voyage free tier is 3 RPM (~20 s between embed calls) to avoid 429s.
-  const VOYAGE_DELAY_MS = 21_000;
-  let lastEmbedAt = 0;
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i]!;
+    const trace = await startTrace({
+      name: 'eval.pair',
+      sessionId,
+      input: { query: row.query, intent: row.intent },
+      tags: ['env:ci', `commit:${commit}`, `intent:${row.intent}`],
+    });
 
-  for (const row of rows) {
-    // If the previous row used retrieval (embed), throttle before the next embed call.
-    // We check intent heuristically; actual check happens after the call.
-    if (lastEmbedAt > 0) {
-      const elapsed = Date.now() - lastEmbedAt;
-      if (elapsed < VOYAGE_DELAY_MS) {
-        const wait = VOYAGE_DELAY_MS - elapsed;
-        process.stdout.write(`  [rate-limit] waiting ${Math.ceil(wait / 1000)}s …\r`);
-        await new Promise((res) => setTimeout(res, wait));
-      }
-    }
-    const ragResult = await runRag(row.query);
-    if (ragResult.classification.needsRetrieval) {
-      lastEmbedAt = Date.now();
-    }
+    const ragResult = await runRag(row.query, {
+      parentTrace: trace,
+      _preEmbeddedQuery: queryVectors[i],
+    });
+
     const expected = expectedIds.get(row.id) ?? new Set<string>();
 
     let hit: RowResult['hit'];
@@ -100,6 +105,13 @@ async function main() {
       }
     }
 
+    trace.end({
+      hit,
+      rank,
+      sources: ragResult.sources.slice(0, 5),
+      classification: ragResult.classification,
+    });
+
     results.push({
       id: row.id,
       intent: row.intent,
@@ -110,7 +122,8 @@ async function main() {
     });
   }
 
-  // Aggregate
+  await flushAsync();
+
   const scoreable = results.filter((r) => r.hit === true || r.hit === false);
   const hits = scoreable.filter((r) => r.hit === true);
   const recallAt5 = scoreable.length > 0 ? hits.length / scoreable.length : 0;
@@ -139,10 +152,29 @@ async function main() {
   console.log(`smalltalk-skip-rate : ${smalltalkRate.toFixed(2)} (${smalltalkCorrect}/${smalltalk.length})`);
   console.log(`mean total latency  : ${meanLatency.toFixed(0)} ms`);
 
+  writeFileSync(
+    resolve(process.cwd(), 'scripts/eval/results.json'),
+    JSON.stringify(
+      { results, recallAt5, mrr, smalltalkRate, meanLatency, threshold: RECALL_THRESHOLD, commit, sessionId },
+      null,
+      2,
+    ),
+  );
+
+  if (recallAt5 < RECALL_THRESHOLD) {
+    console.error(`FAIL: recall@5 ${recallAt5.toFixed(2)} < ${RECALL_THRESHOLD}`);
+    process.exit(1);
+  }
   process.exit(0);
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+// Only run when invoked as a script (not when imported by tests).
+// tsx transpiles .ts to CJS by default, so require.main === module works.
+const isMainModule =
+  typeof require !== 'undefined' && typeof module !== 'undefined' && require.main === module;
+if (isMainModule || process.env.RUN_EVAL_AS_MAIN === '1') {
+  runEval().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}
