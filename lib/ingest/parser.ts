@@ -9,9 +9,14 @@ export async function parseFile(
   let pageCount: number | undefined;
 
   if (mime === 'application/pdf') {
-    // Dynamic import: pdf-parse runs a debug self-test at import-time when
-    // imported at module top-level — the dynamic form avoids that pitfall.
-    const pdfParse = (await import('pdf-parse')).default;
+    // pdf-parse@1.1.1 runs a debug self-test at module load when `module.parent`
+    // is null — it tries to read 'test/data/05-versions-space.pdf' (which doesn't
+    // exist in our project) and throws ENOENT. Dynamic import alone doesn't fix
+    // this — only importing the inner file 'pdf-parse/lib/pdf-parse.js' bypasses
+    // the index.js self-test wrapper.
+    // @ts-expect-error — no types for the inner path; shape matches pdf-parse default export.
+    const pdfParse = (await import('pdf-parse/lib/pdf-parse.js')).default as
+      (data: Buffer) => Promise<{ text: string; numpages: number }>;
     const data = await pdfParse(buf);
     text = data.text;
     pageCount = data.numpages;

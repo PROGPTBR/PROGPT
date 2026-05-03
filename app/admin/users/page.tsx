@@ -1,5 +1,4 @@
 import { requireAdmin } from '@/lib/auth';
-import { supabaseServer } from '@/lib/db/supabase-server';
 import { getServerSupabase } from '@/lib/db/supabase';
 import { UsersTable } from '@/components/admin/UsersTable';
 
@@ -17,8 +16,12 @@ type EnrichedUser = {
 export default async function AdminUsersPage() {
   const { user } = await requireAdmin();
 
-  const sb = supabaseServer();
-  const { data: rows, error } = await sb
+  // Service-role: profiles_with_email joins auth.users, which authed users can't
+  // read directly under RLS. The page is requireAdmin-gated, so service-role
+  // here is safe — same pattern as the admin_user_session_counts RPC below.
+  const svc = getServerSupabase();
+
+  const { data: rows, error } = await svc
     .from('profiles_with_email')
     .select('id, email, role, last_sign_in_at, created_at')
     .order('created_at', { ascending: false });
@@ -26,7 +29,6 @@ export default async function AdminUsersPage() {
     return <p className="text-sm text-destructive">Falha ao carregar usuários: {error.message}</p>;
   }
 
-  const svc = getServerSupabase();
   const { data: counts } = await svc.rpc('admin_user_session_counts');
   const map = new Map<string, number>();
   for (const r of (counts ?? []) as Array<{ user_id: string; session_count: number }>) {

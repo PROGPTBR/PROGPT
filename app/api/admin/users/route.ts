@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { requireAdmin, NotAdmin } from '@/lib/auth';
 import { getServerSupabase } from '@/lib/db/supabase';
 import { supabaseServer } from '@/lib/db/supabase-server';
+// supabaseServer is used by PATCH (so admins update profiles via RLS); GET uses
+// service-role because profiles_with_email joins auth.users (no SELECT for authed).
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -85,13 +87,14 @@ export async function GET() {
     throw err;
   }
   void admin;
-  const sb = supabaseServer();
-  const { data: rows, error } = await sb
+  // Service-role: profiles_with_email joins auth.users which authed users can't
+  // SELECT directly even with security_invoker. Route is requireAdmin-gated.
+  const svc = getServerSupabase();
+  const { data: rows, error } = await svc
     .from('profiles_with_email')
     .select('id, email, role, last_sign_in_at, created_at, auth_created_at');
   if (error) return NextResponse.json({ error: 'list_failed' }, { status: 500 });
 
-  const svc = getServerSupabase();
   const { data: counts } = await svc.rpc('admin_user_session_counts');
   const map = new Map<string, number>();
   for (const r of (counts ?? []) as Array<{ user_id: string; session_count: number }>) {

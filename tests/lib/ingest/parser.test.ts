@@ -7,7 +7,7 @@ beforeEach(() => {
 describe('lib/ingest/parser', () => {
   it('parsePdf returns text and page count via pdf-parse', async () => {
     const longText = 'Esta é uma frase longa o suficiente para passar do limite mínimo de 500 caracteres exigido pelo guardrail. '.repeat(10);
-    vi.doMock('pdf-parse', () => ({
+    vi.doMock('pdf-parse/lib/pdf-parse.js', () => ({
       default: vi.fn().mockResolvedValue({ text: longText, numpages: 7 }),
     }));
     const { parseFile } = await import('@/lib/ingest/parser');
@@ -39,7 +39,7 @@ describe('lib/ingest/parser', () => {
   });
 
   it('throws when extracted text is shorter than 500 characters (OCR-required guard)', async () => {
-    vi.doMock('pdf-parse', () => ({
+    vi.doMock('pdf-parse/lib/pdf-parse.js', () => ({
       default: vi.fn().mockResolvedValue({ text: 'apenas duas linhas', numpages: 1 }),
     }));
     const { parseFile } = await import('@/lib/ingest/parser');
