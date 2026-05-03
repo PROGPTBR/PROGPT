@@ -1,0 +1,82 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Python deps
+        if: hashFiles('scripts/requirements.txt') != ''
+        run: pip install -r scripts/requirements.txt
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Vitest
+        run: npm test
+
+      - name: Pytest
+        if: hashFiles('scripts/tests/**/*.py') != ''
+        run: pytest scripts/tests
+
+      - name: RAG eval
+        env:
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          GEMINI_MODEL: ${{ secrets.GEMINI_MODEL }}
+          VOYAGE_API_KEY: ${{ secrets.VOYAGE_API_KEY }}
+          VOYAGE_MODEL: ${{ secrets.VOYAGE_MODEL }}
+          COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
+          COHERE_RERANK_MODEL: ${{ secrets.COHERE_RERANK_MODEL }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          LANGFUSE_PUBLIC_KEY: ${{ secrets.LANGFUSE_PUBLIC_KEY }}
+          LANGFUSE_SECRET_KEY: ${{ secrets.LANGFUSE_SECRET_KEY }}
+          LANGFUSE_BASE_URL: https://cloud.langfuse.com
+          GITHUB_SHA: ${{ github.sha }}
+        run: npm run rag:eval
+
+      - name: Upload eval results artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rag-eval-results
+          path: scripts/eval/results.json
+
+      - name: PR comment with eval results
+        if: github.event_name == 'pull_request' && always() && hashFiles('scripts/eval/results.json') != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          {
+            echo "### RAG Eval"
+            jq -r '"recall@5: \(.recallAt5 | tostring) (threshold \(.threshold | tostring))"' scripts/eval/results.json
+            echo ""
+            echo "MRR: $(jq -r '.mrr' scripts/eval/results.json)"
+            echo "smalltalk-skip: $(jq -r '.smalltalkRate' scripts/eval/results.json)"
+            echo "mean latency: $(jq -r '.meanLatency' scripts/eval/results.json) ms"
+            echo ""
+            echo "<details><summary>per-pair</summary>"
+            echo ""
+            jq -r '.results[] | "- `\(.id)` (\(.intent)) — \(.hit) rank=\(.rank // "—") latency=\(.totalMs)ms"' scripts/eval/results.json
+            echo "</details>"
+          } > /tmp/comment.md
+          gh pr comment ${{ github.event.pull_request.number }} -F /tmp/comment.md
