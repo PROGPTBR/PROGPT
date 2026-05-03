@@ -36,3 +36,17 @@ export async function getProfile(userId: string): Promise<Profile | null> {
   if (error) return null;
   return (data as Profile | null) ?? null;
 }
+
+export class NotAdmin extends Error {
+  constructor() {
+    super('NOT_ADMIN');
+    this.name = 'NotAdmin';
+  }
+}
+
+export async function requireAdmin(): Promise<{ user: User; profile: Profile }> {
+  const user = await requireUser();
+  const profile = await getProfile(user.id);
+  if (!profile || profile.role !== 'admin') throw new NotAdmin();
+  return { user, profile };
+}

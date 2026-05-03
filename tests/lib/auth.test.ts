@@ -63,4 +63,24 @@ describe('lib/auth', () => {
     const { getProfile } = await import('@/lib/auth');
     expect(await getProfile('u1')).toBeNull();
   });
+
+  it('requireAdmin returns user + profile when role is admin', async () => {
+    mockSupabaseServer({
+      user: { id: 'u1', email: 'a@b.com' },
+      profile: { id: 'u1', role: 'admin', display_name: null },
+    });
+    const { requireAdmin } = await import('@/lib/auth');
+    const { user, profile } = await requireAdmin();
+    expect(user.id).toBe('u1');
+    expect(profile.role).toBe('admin');
+  });
+
+  it('requireAdmin throws NotAdmin when role is user', async () => {
+    mockSupabaseServer({
+      user: { id: 'u1', email: 'a@b.com' },
+      profile: { id: 'u1', role: 'user', display_name: null },
+    });
+    const { requireAdmin, NotAdmin } = await import('@/lib/auth');
+    await expect(requireAdmin()).rejects.toBeInstanceOf(NotAdmin);
+  });
 });
