@@ -2,12 +2,10 @@ import { describe, expect, it, beforeEach, vi } from 'vitest';
 import type { RetrievedChunk } from '@/lib/rag/types';
 
 beforeEach(() => {
-  process.env.COHERE_API_KEY = 'test-key';
-  process.env.COHERE_RERANK_MODEL = 'rerank-multilingual-v3.0';
   vi.resetModules();
 });
 
-function chunk(id: string, content: string, rrfScore: number): RetrievedChunk {
+function chunk(id: string, content: string): RetrievedChunk {
   return {
     chunkId: id,
     articleId: `art-${id}`,
@@ -16,44 +14,60 @@ function chunk(id: string, content: string, rrfScore: number): RetrievedChunk {
     articleTitle: `Title ${id}`,
     vectorRank: null,
     ftsRank: null,
-    rrfScore,
+    rrfScore: 0,
     rerankScore: null,
   };
 }
 
-describe('rag reranker', () => {
-  it('returns empty without calling Cohere when input is empty', async () => {
-    const cohereSpy = vi.fn();
-    vi.doMock('@/lib/llm/cohere', () => ({ rerank: cohereSpy }));
-    const { rerank } = await import('@/lib/rag/reranker');
-    const out = await rerank('q', [], 5);
-    expect(out).toEqual([]);
-    expect(cohereSpy).not.toHaveBeenCalled();
-  });
-
-  it('reorders chunks by Cohere index and annotates rerankScore', async () => {
+describe('rerank', () => {
+  it('keeps chunks with relevanceScore >= MIN_RELEVANCE', async () => {
     vi.doMock('@/lib/llm/cohere', () => ({
       rerank: vi.fn().mockResolvedValue([
-        { index: 2, relevanceScore: 0.95 },
-        { index: 0, relevanceScore: 0.7 },
+        { index: 0, relevanceScore: 0.9 },
+        { index: 1, relevanceScore: 0.5 },
       ]),
     }));
-    const input = [chunk('A', 'a', 0.5), chunk('B', 'b', 0.4), chunk('C', 'c', 0.3)];
     const { rerank } = await import('@/lib/rag/reranker');
-    const out = await rerank('q', input, 2);
-    expect(out.map((c) => c.chunkId)).toEqual(['C', 'A']);
-    expect(out[0]?.rerankScore).toBe(0.95);
-    expect(out[1]?.rerankScore).toBe(0.7);
+    const result = await rerank('q', [chunk('a', 'aaa'), chunk('b', 'bbb')], 5);
+    expect(result.map((c) => c.chunkId)).toEqual(['a', 'b']);
   });
 
-  it('falls back to RRF order on Cohere failure', async () => {
+  it('filters out chunks with relevanceScore < MIN_RELEVANCE', async () => {
+    vi.doMock('@/lib/llm/cohere', () => ({
+      rerank: vi.fn().mockResolvedValue([
+        { index: 0, relevanceScore: 0.5 },
+        { index: 1, relevanceScore: 0.05 },
+      ]),
+    }));
+    const { rerank } = await import('@/lib/rag/reranker');
+    const result = await rerank('q', [chunk('a', 'aaa'), chunk('b', 'bbb')], 5);
+    expect(result.map((c) => c.chunkId)).toEqual(['a']);
+  });
+
+  it('returns empty array when every score is below threshold', async () => {
+    vi.doMock('@/lib/llm/cohere', () => ({
+      rerank: vi.fn().mockResolvedValue([
+        { index: 0, relevanceScore: 0.02 },
+        { index: 1, relevanceScore: 0.04 },
+      ]),
+    }));
+    const { rerank } = await import('@/lib/rag/reranker');
+    const result = await rerank('q', [chunk('a', 'aaa'), chunk('b', 'bbb')], 5);
+    expect(result).toEqual([]);
+  });
+
+  it('falls back to RRF order when Cohere throws', async () => {
     vi.doMock('@/lib/llm/cohere', () => ({
       rerank: vi.fn().mockRejectedValue(new Error('cohere down')),
     }));
-    const input = [chunk('A', 'a', 0.5), chunk('B', 'b', 0.4), chunk('C', 'c', 0.3)];
     const { rerank } = await import('@/lib/rag/reranker');
-    const out = await rerank('q', input, 2);
-    expect(out.map((c) => c.chunkId)).toEqual(['A', 'B']);
-    expect(out[0]?.rerankScore).toBeNull();
+    const result = await rerank('q', [chunk('a', 'aaa'), chunk('b', 'bbb')], 1);
+    expect(result.map((c) => c.chunkId)).toEqual(['a']);
+  });
+
+  it('returns [] when given no candidates', async () => {
+    vi.doMock('@/lib/llm/cohere', () => ({ rerank: vi.fn() }));
+    const { rerank } = await import('@/lib/rag/reranker');
+    expect(await rerank('q', [], 5)).toEqual([]);
   });
 });
