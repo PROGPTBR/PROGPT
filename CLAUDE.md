@@ -38,7 +38,18 @@ removida em 2026-05-02). Audiência: gestores de compras brasileiros (PT-BR prim
 | 6c | `admin-ui-complete` | `/admin` (sidebar + sub-routes `/admin/{users,articles,ingest}`) gated por `requireAdmin()` → 404 (não 403) para non-admins. Port TS da pipeline de ingest (`pdf-parse@1.1.1` + `mammoth` + chunker/metadata/parser/pipeline) roda como Node route via fire-and-forget + 2s polling, sobrevive ao fechamento da aba. Migration 0005: `ingestion_jobs` + RLS, `profiles_with_email` view, `admin_user_session_counts()` RPC, `profiles_admin_update`/`articles_admin_delete` policies. Storage bucket `ingest-uploads` com policy admin-only path-scoped. Auto-cleanup de jobs `done` > 7d inline no `/jobs`. UserRow mostra link "Admin" só para admins |
 | 7 | `langfuse-eval-complete` | Langfuse instrumentation em `/api/chat` (Edge): trace `chat.turn` por turno com 6 spans aninhados (condense, classify, retrieve, rerank, build-prompt, generate), `userId` = Supabase UUID, `sessionId` = sessions.id, flush em onFinish/error/abort. Wrapper `lib/observability/langfuse.ts` com no-op fallback quando keys ausentes. Eval expandido para 25 pares (5 ângulos × 4 artigos + 2 smalltalk + 3 comparison) com batched embed (1 chamada Voyage para todas as queries). CI workflow GitHub Actions roda typecheck + vitest + pytest + rag:eval em PR + push para main, falha se `recall@5 < 0.85`. Eval traces tagged `env:ci` agrupados em sessão por commit. Baseline atual: recall@5 = 1.00 (18/18 scoreable na corpus de 4 artigos). |
 
-**Milestone 1 closed.** Próximo: definir milestone 2 com base em uso real (traces em Langfuse).
+**Milestone 1 closed.**
+
+## Milestone 2 — Beta Readiness (em planejamento, 2026-05-03)
+Objetivo: abrir beta fechado (3–5 gestores convidados) para coletar traces reais no Langfuse e escopar Milestone 3 (B2B) com dados, não com palpite. Single-tenant deliberadamente.
+
+Sub-projetos:
+- **8 — beta-hardening** (planejado): rate limit em `/api/chat`, error boundary + toast amigável, UX para `recall=0`, tag `env:beta` nos traces, checklist de smoke test
+- **9 — feedback-loop** (planejado): migration `message_feedback`, 👍/👎 inline na resposta + comentário opcional, `/api/feedback` route que persiste em DB + chama `trace.score()` no Langfuse, link "feedback geral" no header
+
+Critério de saída para abrir Milestone 3: ≥100 traces `env:beta` com ≥30 ratings ao longo de ≥2 semanas, classificados em buckets (retrieval / prompt / produto / fora-de-escopo).
+
+Roadmap completo em `docs/product/beta-readiness.md`. Roadmap B2B (Milestone 3+) em `docs/product/b2b-roadmap.md`.
 
 **Test count atual:** 143 vitest, 23 pytest, typecheck zero erros. CI gate: `recall@5 ≥ 0.85` em PR + push main.
 
