@@ -89,3 +89,27 @@ Tempo estimado: 8 = ~1 dia, 9 = ~1 dia. Total ~2 dias úteis até abrir convite.
 3. `superpowers:brainstorming` → `superpowers:writing-plans` → executar via TDD/subagent-driven
 
 Aguardando aprovação do usuário antes de tocar em código.
+
+---
+
+## Fila pós-beta (capturado durante beta, decidir prioridade depois)
+
+Itens identificados durante a operação do beta que NÃO bloqueiam o convite mas devem entrar antes do Milestone 3 ou em paralelo com ele:
+
+### Sub-projeto 10 — Visibilidade da ingestão em `/admin/articles` (Opção A)
+**Capturado em**: 2026-05-04
+**Trigger**: precisa olhar quanto da apostila o RAG realmente "viu" antes de explicar misses para os beta testers.
+
+Escopo:
+- Listar todos os chunks de um artigo no detail pane (ord, primeiros ~150 chars + "Expandir" via `<details>` HTML nativo).
+- Mostrar % de conteúdo absorvido = `sum(chunk.content.length) / source_chars` com nota visual "≈" (overcount por overlap de 400 chars é aceitável neste contexto admin).
+- Migration 0009: `articles.source_chars int` populado pela pipeline TS de ingestão (`lib/ingest/pipeline.ts` grava `parsedText.length` ao inserir).
+- Backfill script `npm run ingest:backfill-source-chars` que re-parseia cada artigo no Storage para preencher `source_chars` em rows existentes (one-shot, idempotente via `is null` filter).
+
+Decisões já travadas:
+- Opção A escolhida (sum-with-overlap, simples). Opções B (offsets exatos) e C (sem %) recusadas.
+- Enfileirado para **depois do primeiro convite de beta** — sub-projeto 9 vai pra produção primeiro.
+
+Não-objetivos:
+- Não alterar a pipeline de chunking para emitir offsets exatos (Opção B).
+- Não expor essa informação ao usuário final do `/chat`.
