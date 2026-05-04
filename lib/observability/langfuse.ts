@@ -1,4 +1,4 @@
-import type { Trace, Span, TraceLevel } from './types';
+import type { Trace, Span } from './types';
 
 const NOOP_SPAN: Span = { end() {} };
 
