@@ -62,6 +62,7 @@ export async function runPipeline(jobId: string): Promise<void> {
         author: meta.author,
         language: meta.language,
         published_at: meta.date,
+        source_chars: parsed.text.length,
         raw_md: parsed.text,
         metadata: { content_hash: hash, source_filename: job.filename },
       })

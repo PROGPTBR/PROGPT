@@ -130,6 +130,17 @@ describe('lib/ingest/pipeline', () => {
     expect(deleteSpy).not.toHaveBeenCalled();
   });
 
+  it('writes source_chars equal to the parsed text length on the new article row', async () => {
+    const m = setupMocks({ job: baseJob });
+    const { runPipeline } = await import('@/lib/ingest/pipeline');
+    await runPipeline('job-1');
+    expect(m.insertedArticles).toHaveLength(1);
+    const row = m.insertedArticles[0] as Record<string, unknown>;
+    const rawMd = row.raw_md as string;
+    expect(typeof row.source_chars).toBe('number');
+    expect(row.source_chars).toBe(rawMd.length);
+  });
+
   it('dedup hit: existing article matched by content_hash → status=done, chunks_count=0, no inserts', async () => {
     const m = setupMocks({ job: baseJob, existingArticleId: 'existing-art-9' });
     const { runPipeline } = await import('@/lib/ingest/pipeline');
