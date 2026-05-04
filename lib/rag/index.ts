@@ -42,7 +42,9 @@ export async function runRag(query: string, opts: RunRagOpts = {}): Promise<RagR
     const tRerankStart = performance.now();
     const rerankSpan = trace?.span('rerank', { candidates: candidates.length });
     chunks = await rerank(query, candidates, RERANK_TOP_N);
-    rerankSpan?.end({ kept: chunks.length });
+    const top1Score = chunks[0]?.rerankScore ?? null;
+    rerankSpan?.end({ kept: chunks.length, top1Score });
+    if (chunks.length === 0) trace?.setTag('low-confidence');
     rerankMs = performance.now() - tRerankStart;
   }
 
