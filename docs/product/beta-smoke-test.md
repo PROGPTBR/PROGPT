@@ -45,4 +45,11 @@ Run this checklist before sending a beta invite. Updated 2026-05-03.
 - [ ] Rerank span shows `top1Score` and `kept` fields
 - [ ] An origami-style query trace carries the `low-confidence` tag
 
+## Feedback (sub-projeto 9)
+- [ ] Click 👍 on an assistant message → `aria-pressed=true` and a row appears in `select * from message_feedback where rating='up'` (Supabase SQL editor)
+- [ ] Click 👎 → textarea opens; submit a comment → row updated with `rating='down'` and `comment` populated
+- [ ] Reload the page → previously-rated message shows the rating active
+- [ ] Langfuse trace shows a `user-feedback` score with value `1` or `-1`
+- [ ] Header "feedback geral" icon opens an email draft to the configured address
+
 If any item fails, file an issue and fix before sending invites.
