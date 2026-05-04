@@ -73,6 +73,9 @@ describe('POST /api/chat', () => {
 
   it('orchestrates condenser, runRag, streamText with correct shapes', async () => {
     vi.doMock('@/lib/auth', () => ({ getCurrentUser: vi.fn().mockResolvedValue({ id: 'user-123' }) }));
+    vi.doMock('@/lib/rate-limit', () => ({
+      checkChatRateLimit: vi.fn().mockResolvedValue({ allowed: true }),
+    }));
     vi.doMock('@/lib/observability/langfuse', () => ({
       startTrace: vi.fn().mockResolvedValue(NOOP_TRACE),
       flushAsync: vi.fn().mockResolvedValue(undefined),
@@ -139,7 +142,10 @@ describe('POST /api/chat', () => {
   });
 
   it('returns 500 when runRag throws', async () => {
-    vi.doMock('@/lib/auth', () => ({ getCurrentUser: vi.fn().mockResolvedValue(null) }));
+    vi.doMock('@/lib/auth', () => ({ getCurrentUser: vi.fn().mockResolvedValue({ id: 'user-1' }) }));
+    vi.doMock('@/lib/rate-limit', () => ({
+      checkChatRateLimit: vi.fn().mockResolvedValue({ allowed: true }),
+    }));
     vi.doMock('@/lib/observability/langfuse', () => ({
       startTrace: vi.fn().mockResolvedValue(NOOP_TRACE),
       flushAsync: vi.fn().mockResolvedValue(undefined),
@@ -164,5 +170,62 @@ describe('POST /api/chat', () => {
       makeReq({ messages: [{ role: 'user', content: 'q' }] }),
     );
     expect(res.status).toBe(500);
+  });
+
+  it('returns 401 when there is no authenticated user', async () => {
+    vi.doMock('@/lib/rag/condenser', () => ({ condenseQuery: vi.fn() }));
+    vi.doMock('@/lib/rag', () => ({ runRag: vi.fn() }));
+    vi.doMock('ai', () => ({
+      streamText: vi.fn(),
+      StreamData: class {
+        appendMessageAnnotation = vi.fn();
+        close = vi.fn();
+      },
+    }));
+    vi.doMock('@ai-sdk/google', () => ({
+      createGoogleGenerativeAI: vi.fn(() => () => 'mock-model'),
+    }));
+    vi.doMock('@/lib/observability/langfuse', () => ({
+      startTrace: vi.fn().mockResolvedValue(NOOP_TRACE),
+      flushAsync: vi.fn().mockResolvedValue(undefined),
+    }));
+    vi.doMock('@/lib/auth', () => ({ getCurrentUser: vi.fn().mockResolvedValue(null) }));
+    vi.doMock('@/lib/rate-limit', () => ({ checkChatRateLimit: vi.fn() }));
+
+    const { POST } = await import('@/app/api/chat/route');
+    const res = await POST(makeReq({ messages: [{ role: 'user', content: 'oi' }] }));
+    expect(res.status).toBe(401);
+  });
+
+  it('returns 429 with Retry-After when rate limit is exceeded', async () => {
+    vi.doMock('@/lib/rag/condenser', () => ({ condenseQuery: vi.fn() }));
+    vi.doMock('@/lib/rag', () => ({ runRag: vi.fn() }));
+    vi.doMock('ai', () => ({
+      streamText: vi.fn(),
+      StreamData: class {
+        appendMessageAnnotation = vi.fn();
+        close = vi.fn();
+      },
+    }));
+    vi.doMock('@ai-sdk/google', () => ({
+      createGoogleGenerativeAI: vi.fn(() => () => 'mock-model'),
+    }));
+    vi.doMock('@/lib/observability/langfuse', () => ({
+      startTrace: vi.fn().mockResolvedValue(NOOP_TRACE),
+      flushAsync: vi.fn().mockResolvedValue(undefined),
+    }));
+    vi.doMock('@/lib/auth', () => ({
+      getCurrentUser: vi.fn().mockResolvedValue({ id: 'user-1' }),
+    }));
+    vi.doMock('@/lib/rate-limit', () => ({
+      checkChatRateLimit: vi.fn().mockResolvedValue({ allowed: false, retryAfterSecs: 60 }),
+    }));
+
+    const { POST } = await import('@/app/api/chat/route');
+    const res = await POST(makeReq({ messages: [{ role: 'user', content: 'oi' }] }));
+    expect(res.status).toBe(429);
+    expect(res.headers.get('Retry-After')).toBe('60');
+    const body = await res.json();
+    expect(body).toEqual({ error: 'rate_limited', retry_after_secs: 60 });
   });
 });

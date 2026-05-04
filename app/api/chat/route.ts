@@ -7,12 +7,9 @@ import { condenseQuery } from '@/lib/rag/condenser';
 import type { ChatMessage } from '@/lib/rag/types';
 import { startTrace, flushAsync } from '@/lib/observability/langfuse';
 import { getCurrentUser } from '@/lib/auth';
+import { checkChatRateLimit } from '@/lib/rate-limit';
 import type { TraceLevel } from '@/lib/observability/types';
 
-// Node runtime (was 'edge' through sub-projeto 6) — switched in sub-projeto 7
-// because the langfuse SDK uses Node-only APIs (fs/crypto/etc.) that fail
-// silently on Edge, dropping all traces. ~50ms cold-start cost is invisible
-// to users; streaming response shape is unchanged via Vercel AI SDK.
 export const runtime = 'nodejs';
 
 const Body = z
@@ -44,19 +41,28 @@ export async function POST(req: Request): Promise<Response> {
     );
   }
 
-  const messages: ChatMessage[] = parsed.messages;
-
-  // Best-effort user lookup. getCurrentUser returns null instead of throwing,
-  // so unauthed requests still produce a trace (with userId undefined).
   const user = await getCurrentUser();
-  const userId = user?.id;
+  if (!user) {
+    return Response.json({ error: 'unauthorized' }, { status: 401 });
+  }
+
+  const rl = await checkChatRateLimit();
+  if (!rl.allowed) {
+    return Response.json(
+      { error: 'rate_limited', retry_after_secs: rl.retryAfterSecs },
+      { status: 429, headers: { 'Retry-After': String(rl.retryAfterSecs) } },
+    );
+  }
+
+  const messages: ChatMessage[] = parsed.messages;
+  const env = process.env.APP_ENV ?? 'production';
 
   const trace = await startTrace({
     name: 'chat.turn',
-    userId,
+    userId: user.id,
     sessionId: parsed.sessionId,
     input: { messages },
-    tags: ['env:production'],
+    tags: [`env:${env}`],
   });
 
   try {
@@ -93,8 +99,6 @@ export async function POST(req: Request): Promise<Response> {
         generateSpan.end({
           tokens_in: usage.promptTokens,
           tokens_out: usage.completionTokens,
-          // FinishReason values: 'stop' | 'length' | 'content-filter' | 'tool-calls' | 'error' | 'other' | 'unknown'
-          // 'error' is the closest to an abort/cancel scenario in the AI SDK type.
           finish_reason: finishReason,
           chars_out: text.length,
         });
