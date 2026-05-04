@@ -19,7 +19,7 @@ removida em 2026-05-02). Audiência: gestores de compras brasileiros (PT-BR prim
 1. **Retrieval híbrido obrigatório** — vetorial + lexical (FTS portuguese) + RRF + Cohere rerank, nunca só cosine
 2. **Resposta fundamentada na base** — o contexto recuperado é injetado no prompt para fundamentar a resposta; o modelo NÃO menciona fontes, IDs, ou números entre colchetes para o usuário (decisão 2026-05-02). Sem fonte na base, dizer explicitamente "não tenho fonte sobre isso"
 3. **Streaming SSE** — resposta começa a aparecer em <3s
-4. **Edge Runtime** nas rotas de chat, Node runtime na ingestão Python
+4. **Node runtime em `/api/chat`** (era Edge até sub-projeto 6; trocou em sub-projeto 7 porque a SDK do Langfuse usa APIs Node — `crypto`, `fs` — que falham silenciosamente no Edge e perdem traces). Outras rotas Edge quando possível; ingestão Python em Node.
 5. **LGPD compliance** — logs sem PII, opt-in para histórico (sub-projeto 6); Langfuse usa Supabase UUID pseudonimizado como `userId`, nunca email
 6. **Custos sob controle** — cache de embeddings, Gemini Flash Lite para todas as chamadas LLM
 7. **Observabilidade obrigatória** — `/api/chat` abre uma Langfuse trace por turno; cada estágio do RAG é um span. Sem isto, retrieval e prompt iteram às cegas
@@ -37,6 +37,7 @@ removida em 2026-05-02). Audiência: gestores de compras brasileiros (PT-BR prim
 | 6b | `conversation-persistence-complete` | DB-only conversation history (localStorage retired for authed). `useChatSessionsRemote` drop-in for `useChatSessions`. Migration 0004 (`sessions` table com 4 RLS owner-only policies, FK cascade para LGPD erasure mecânica) |
 | 6c | `admin-ui-complete` | `/admin` (sidebar + sub-routes `/admin/{users,articles,ingest}`) gated por `requireAdmin()` → 404 (não 403) para non-admins. Port TS da pipeline de ingest (`pdf-parse@1.1.1` + `mammoth` + chunker/metadata/parser/pipeline) roda como Node route via fire-and-forget + 2s polling, sobrevive ao fechamento da aba. Migration 0005: `ingestion_jobs` + RLS, `profiles_with_email` view, `admin_user_session_counts()` RPC, `profiles_admin_update`/`articles_admin_delete` policies. Storage bucket `ingest-uploads` com policy admin-only path-scoped. Auto-cleanup de jobs `done` > 7d inline no `/jobs`. UserRow mostra link "Admin" só para admins |
 | 7 | `langfuse-eval-complete` | Langfuse instrumentation em `/api/chat` (Edge): trace `chat.turn` por turno com 6 spans aninhados (condense, classify, retrieve, rerank, build-prompt, generate), `userId` = Supabase UUID, `sessionId` = sessions.id, flush em onFinish/error/abort. Wrapper `lib/observability/langfuse.ts` com no-op fallback quando keys ausentes. Eval expandido para 25 pares (5 ângulos × 4 artigos + 2 smalltalk + 3 comparison) com batched embed (1 chamada Voyage para todas as queries). CI workflow GitHub Actions roda typecheck + vitest + pytest + rag:eval em PR + push para main, falha se `recall@5 < 0.85`. Eval traces tagged `env:ci` agrupados em sessão por commit. Baseline atual: recall@5 = 1.00 (18/18 scoreable na corpus de 4 artigos). |
+| 8 | `beta-hardening-complete` | Per-user rate limit em `/api/chat` (10/min, 60/h) via Postgres RPC `check_rate_limit` + tabela `rate_limit_events` (migration 0007, RLS sem policies, RPC security definer com cleanup probabilístico). Auth obrigatório em `/api/chat` (401 sem cookie). Threshold `MIN_RELEVANCE = 0.10` no reranker — chunks abaixo são descartados, prompt-builder cai no `REFUSAL_INSTRUCTION`. Tag dinâmica `env:${APP_ENV}` no trace (default `production`). Span `rerank` ganha `top1Score`; trace ganha tag `low-confidence` quando threshold zera tudo. `sonner` Toaster no root layout; `ChatSession` mostra toast amigável em 429 (lê `retry_after_secs`) e 500. `ChatErrorBoundary` envolvendo `<ChatSession/>`. Checklist manual em `docs/product/beta-smoke-test.md`. |
 
 **Milestone 1 closed.**
 
@@ -44,8 +45,8 @@ removida em 2026-05-02). Audiência: gestores de compras brasileiros (PT-BR prim
 Objetivo: abrir beta fechado (3–5 gestores convidados) para coletar traces reais no Langfuse e escopar Milestone 3 (B2B) com dados, não com palpite. Single-tenant deliberadamente.
 
 Sub-projetos:
-- **8 — beta-hardening** (planejado): rate limit em `/api/chat`, error boundary + toast amigável, UX para `recall=0`, tag `env:beta` nos traces, checklist de smoke test
-- **9 — feedback-loop** (planejado): migration `message_feedback`, 👍/👎 inline na resposta + comentário opcional, `/api/feedback` route que persiste em DB + chama `trace.score()` no Langfuse, link "feedback geral" no header
+- **8 — beta-hardening** ✅ completo (`beta-hardening-complete`)
+- **9 — feedback-loop** (próximo): migration `message_feedback`, 👍/👎 inline na resposta + comentário opcional, `/api/feedback` route que persiste em DB + chama `trace.score()` no Langfuse, link "feedback geral" no header
 
 Critério de saída para abrir Milestone 3: ≥100 traces `env:beta` com ≥30 ratings ao longo de ≥2 semanas, classificados em buckets (retrieval / prompt / produto / fora-de-escopo).
 
@@ -179,6 +180,7 @@ SUPABASE_DB_PASSWORD=          # para o ingest.py via psycopg
 LANGFUSE_PUBLIC_KEY=           # ativo desde sub-projeto 7; quando vazio, wrapper retorna no-op trace
 LANGFUSE_SECRET_KEY=
 LANGFUSE_BASE_URL=https://cloud.langfuse.com
+APP_ENV=local                  # sub-projeto 8 — drives env:<value> tag in Langfuse (local|beta|production|ci)
 ```
 
 ## Comandos
@@ -216,6 +218,10 @@ LANGFUSE_BASE_URL=https://cloud.langfuse.com
 - Esquecer `await flushAsync()` no `onFinish`/catch do `streamText` — Edge runtime mata a função quando a response termina, perdendo traces silenciosamente
 - Pular o batching de embeds no eval — 25 chamadas seriais à Voyage seriam ~9 min (3 RPM throttle); batched é <30s
 - Mudar `RECALL_THRESHOLD` em `scripts/eval/run.ts` sem atualizar a spec + CLAUDE.md (o número precisa ser auditável depois)
+- Mudar `MIN_RELEVANCE` em `lib/rag/reranker.ts` sem rodar `npm run rag:eval` — o threshold é gateado por `recall@5 ≥ 0.85` e qualquer mudança precisa ser auditável
+- Acessar `rate_limit_events` direto do cliente — a tabela tem RLS sem policies por design; sempre via RPC `check_rate_limit` (security definer)
+- Esquecer de adicionar mocks de `@/lib/auth` + `@/lib/rate-limit` em testes novos de `/api/chat` — sem eles a route hoje retorna 401 antes de qualquer outro código rodar
+- Mudar a versão de `sonner` sem confirmar que o `Toaster` continua honrando o tema do `next-themes` — o tema é resolvido em runtime via `useTheme()` no wrapper
 
 ## Fluxo de chat end-to-end (sub-projetos 1-7)
 ```
