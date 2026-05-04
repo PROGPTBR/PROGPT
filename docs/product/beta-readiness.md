@@ -97,6 +97,8 @@ Aguardando aprovação do usuário antes de tocar em código.
 Itens identificados durante a operação do beta que NÃO bloqueiam o convite mas devem entrar antes do Milestone 3 ou em paralelo com ele:
 
 ### Sub-projeto 10 — Visibilidade da ingestão em `/admin/articles` (Opção A)
+**Status**: ✅ completo (`admin-chunks-visibility-complete`), 2026-05-04.
+
 **Capturado em**: 2026-05-04
 **Trigger**: precisa olhar quanto da apostila o RAG realmente "viu" antes de explicar misses para os beta testers.
 
