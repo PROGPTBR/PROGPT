@@ -70,4 +70,35 @@ describe('rerank', () => {
     const { rerank } = await import('@/lib/rag/reranker');
     expect(await rerank('q', [], 5)).toEqual([]);
   });
+
+  it('returns chunks in Cohere relevance order, not input order', async () => {
+    vi.doMock('@/lib/llm/cohere', () => ({
+      rerank: vi.fn().mockResolvedValue([
+        { index: 2, relevanceScore: 0.95 },
+        { index: 0, relevanceScore: 0.55 },
+        { index: 1, relevanceScore: 0.30 },
+      ]),
+    }));
+    const { rerank } = await import('@/lib/rag/reranker');
+    const result = await rerank(
+      'q',
+      [chunk('a', 'aaa'), chunk('b', 'bbb'), chunk('c', 'ccc')],
+      3,
+    );
+    expect(result.map((c) => c.chunkId)).toEqual(['c', 'a', 'b']);
+  });
+
+  it('annotates rerankScore on each returned chunk with the Cohere relevance score', async () => {
+    vi.doMock('@/lib/llm/cohere', () => ({
+      rerank: vi.fn().mockResolvedValue([
+        { index: 0, relevanceScore: 0.92 },
+        { index: 1, relevanceScore: 0.41 },
+      ]),
+    }));
+    const { rerank } = await import('@/lib/rag/reranker');
+    const result = await rerank('q', [chunk('a', 'aaa'), chunk('b', 'bbb')], 5);
+    expect(result).toHaveLength(2);
+    expect(result[0]!.rerankScore).toBe(0.92);
+    expect(result[1]!.rerankScore).toBe(0.41);
+  });
 });
