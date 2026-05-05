@@ -79,4 +79,28 @@ describe('rag followups', () => {
     expect(callArg.contents).toContain('A Matriz de Kraljic');
     expect(callArg.config.responseMimeType).toBe('application/json');
   });
+
+  it('returns 3 redirect suggestions when chunks is empty (PT)', async () => {
+    const { generateContent } = mockGeminiOnce({
+      text: JSON.stringify({
+        followups: [
+          'Quer ver matriz de Kraljic?',
+          'Modelos de TCO te interessam?',
+          'Posso explicar SRM (Cousins)?',
+        ],
+      }),
+    });
+    const { suggestFollowups } = await import('@/lib/rag/followups');
+    const out = await suggestFollowups({
+      query: 'O que e blockchain?',
+      answer: 'Nao tenho fonte na base sobre isso.',
+      chunks: [],
+      classification: PT_CLASSIFICATION,
+      parentTrace: NOOP_TRACE,
+    });
+    expect(out).toHaveLength(3);
+    const callArg = generateContent.mock.calls[0]?.[0] as { contents: string };
+    expect(callArg.contents).toContain('reformulacoes');
+    expect(callArg.contents).not.toContain('Material disponivel');
+  });
 });

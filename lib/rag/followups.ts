@@ -13,6 +13,8 @@ const FollowupsSchema = z.object({
 
 const SYSTEM_DEEPEN_PT = `Voce e um assistente que sugere 3 perguntas curtas de follow-up para um usuario que acabou de receber uma resposta sobre teoria de procurement. As perguntas devem aprofundar o tema, ser respondiveis a partir do material abaixo, e ter no maximo 90 caracteres cada. Nao inclua a pergunta original. Nao use IDs, numeros entre colchetes, nem cite fontes. Retorne JSON com a forma { "followups": [string, string, string] }.`;
 
+const SYSTEM_REDIRECT_PT = `Voce e um assistente que ajuda um usuario cuja pergunta nao foi respondida porque a base de conhecimento nao tinha material sobre o topico. Sugira 3 reformulacoes ou topicos proximos de procurement (matriz de Kraljic, TCO, modelos de Cox / Cousins / Monczka, sourcing estrategico, gestao de fornecedores, Porter, Dyer, etc.) que possam estar na base. Nao prometa que a base cobre o tema; apenas sugira reformulacoes. No maximo 90 caracteres cada. Retorne JSON com a forma { "followups": [string, string, string] }.`;
+
 export type SuggestFollowupsInput = {
   query: string;
   answer: string;
@@ -26,20 +28,27 @@ export async function suggestFollowups(input: SuggestFollowupsInput): Promise<st
   const ai = getGemini();
   const model = requireEnv('GEMINI_MODEL');
 
-  const system = SYSTEM_DEEPEN_PT;
-  const material = chunks
-    .map((c) => `- ${c.articleTitle}: ${c.content.slice(0, SNIPPET_MAX)}`)
-    .join('\n');
-  const userBlock = [
-    '## Pergunta original',
-    query,
-    '',
-    '## Resposta dada',
-    answer,
-    '',
-    '## Material disponivel',
-    material,
-  ].join('\n');
+  const mode: 'deepen' | 'redirect' = chunks.length > 0 ? 'deepen' : 'redirect';
+  const system = mode === 'deepen' ? SYSTEM_DEEPEN_PT : SYSTEM_REDIRECT_PT;
+
+  let userBlock: string;
+  if (mode === 'deepen') {
+    const material = chunks
+      .map((c) => `- ${c.articleTitle}: ${c.content.slice(0, SNIPPET_MAX)}`)
+      .join('\n');
+    userBlock = [
+      '## Pergunta original',
+      query,
+      '',
+      '## Resposta dada',
+      answer,
+      '',
+      '## Material disponivel',
+      material,
+    ].join('\n');
+  } else {
+    userBlock = ['## Pergunta original (nao respondida)', query].join('\n');
+  }
 
   const res = await ai.models.generateContent({
     model,
