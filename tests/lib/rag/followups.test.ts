@@ -103,4 +103,28 @@ describe('rag followups', () => {
     expect(callArg.contents).toContain('reformulacoes');
     expect(callArg.contents).not.toContain('Material disponivel');
   });
+
+  it('uses EN system prompt when classification.language is en', async () => {
+    const { generateContent } = mockGeminiOnce({
+      text: JSON.stringify({
+        followups: [
+          'How does Kraljic differ from Cox?',
+          'How to apply it in food retail?',
+          'What are the matrix limitations?',
+        ],
+      }),
+    });
+    const { suggestFollowups } = await import('@/lib/rag/followups');
+    await suggestFollowups({
+      query: 'What is the Kraljic matrix?',
+      answer: 'It is a framework by Peter Kraljic from 1983...',
+      chunks: [SAMPLE_CHUNK],
+      classification: { ...PT_CLASSIFICATION, language: 'en' },
+      parentTrace: NOOP_TRACE,
+    });
+    const contents = (generateContent.mock.calls[0]?.[0] as { contents: string }).contents;
+    expect(contents).toMatch(/follow-up/i);
+    expect(contents).toContain('## Original question');
+    expect(contents).not.toContain('Pergunta original');
+  });
 });

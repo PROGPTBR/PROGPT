@@ -15,6 +15,25 @@ const SYSTEM_DEEPEN_PT = `Voce e um assistente que sugere 3 perguntas curtas de 
 
 const SYSTEM_REDIRECT_PT = `Voce e um assistente que ajuda um usuario cuja pergunta nao foi respondida porque a base de conhecimento nao tinha material sobre o topico. Sugira 3 reformulacoes ou topicos proximos de procurement (matriz de Kraljic, TCO, modelos de Cox / Cousins / Monczka, sourcing estrategico, gestao de fornecedores, Porter, Dyer, etc.) que possam estar na base. Nao prometa que a base cobre o tema; apenas sugira reformulacoes. No maximo 90 caracteres cada. Retorne JSON com a forma { "followups": [string, string, string] }.`;
 
+const SYSTEM_DEEPEN_EN = `You are an assistant suggesting 3 short follow-up questions for a user who just received an answer about procurement theory. The questions should deepen the topic, be answerable from the material below, and be at most 90 characters each. Do not include the original question. Do not use IDs, bracketed numbers, or source citations. Return JSON shaped { "followups": [string, string, string] }.`;
+
+const SYSTEM_REDIRECT_EN = `You are an assistant helping a user whose question was not answered because the knowledge base had no material on the topic. Suggest 3 reformulations or adjacent procurement topics (Kraljic matrix, TCO, Cox / Cousins / Monczka, strategic sourcing, supplier management, Porter, Dyer, etc.) that may exist in the base. Do not promise that the base covers the topic; only suggest reformulations. At most 90 characters each. Return JSON shaped { "followups": [string, string, string] }.`;
+
+const LABELS = {
+  pt: {
+    origQ: '## Pergunta original',
+    given: '## Resposta dada',
+    material: '## Material disponivel',
+    refusalQ: '## Pergunta original (nao respondida)',
+  },
+  en: {
+    origQ: '## Original question',
+    given: '## Answer given',
+    material: '## Available material',
+    refusalQ: '## Original question (unanswered)',
+  },
+} as const;
+
 export type SuggestFollowupsInput = {
   query: string;
   answer: string;
@@ -24,30 +43,30 @@ export type SuggestFollowupsInput = {
 };
 
 export async function suggestFollowups(input: SuggestFollowupsInput): Promise<string[]> {
-  const { query, answer, chunks } = input;
+  const { query, answer, chunks, classification } = input;
   const ai = getGemini();
   const model = requireEnv('GEMINI_MODEL');
 
+  const lang = classification.language;
   const mode: 'deepen' | 'redirect' = chunks.length > 0 ? 'deepen' : 'redirect';
-  const system = mode === 'deepen' ? SYSTEM_DEEPEN_PT : SYSTEM_REDIRECT_PT;
+  const system =
+    mode === 'deepen'
+      ? lang === 'en'
+        ? SYSTEM_DEEPEN_EN
+        : SYSTEM_DEEPEN_PT
+      : lang === 'en'
+        ? SYSTEM_REDIRECT_EN
+        : SYSTEM_REDIRECT_PT;
+  const L = LABELS[lang];
 
   let userBlock: string;
   if (mode === 'deepen') {
     const material = chunks
       .map((c) => `- ${c.articleTitle}: ${c.content.slice(0, SNIPPET_MAX)}`)
       .join('\n');
-    userBlock = [
-      '## Pergunta original',
-      query,
-      '',
-      '## Resposta dada',
-      answer,
-      '',
-      '## Material disponivel',
-      material,
-    ].join('\n');
+    userBlock = [L.origQ, query, '', L.given, answer, '', L.material, material].join('\n');
   } else {
-    userBlock = ['## Pergunta original (nao respondida)', query].join('\n');
+    userBlock = [L.refusalQ, query].join('\n');
   }
 
   const res = await ai.models.generateContent({
