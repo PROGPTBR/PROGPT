@@ -55,4 +55,14 @@ Run this checklist before sending a beta invite. Updated 2026-05-04.
 - [ ] Langfuse trace shows a `user-feedback` score with value `1` or `-1`
 - [ ] Header "feedback geral" icon opens an email draft to the configured address
 
+## Follow-up chips (sub-projeto 11)
+- [ ] Após uma resposta fundamentada (ex.: "O que é a matriz de Kraljic?"), 3 chips aparecem abaixo da resposta dentro de ~1 s do fim do stream
+- [ ] Click num chip envia o texto como nova mensagem do usuário; chips do turno anterior somem assim que o novo turno renderiza
+- [ ] Após pergunta fora da base ("o que é blockchain?"), aparecem chips de reformulação (ex.: matriz de Kraljic, TCO, modelos de Cox/Cousins) — não chips genéricos sobre blockchain
+- [ ] Stop button durante streaming → chips NÃO aparecem para aquele turno
+- [ ] Tema dark e light: chips legíveis em ambos
+- [ ] Mobile (largura ≤ 480 px): chips wrappam em múltiplas linhas, área de click ≥44 px de altura
+- [ ] Langfuse: trace tem span `suggest-followups` com `mode=deepen` ou `mode=redirect` e `count` correspondente
+- [ ] Quando o helper retorna `[]` (zod falha, timeout 3 s, etc.), trace ganha tag `followups:empty` e turno principal completa normalmente
+
 If any item fails, file an issue and fix before sending invites.

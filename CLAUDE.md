@@ -41,6 +41,7 @@ removida em 2026-05-02). Audiência: gestores de compras brasileiros (PT-BR prim
 | 8 | `beta-hardening-complete` | Per-user rate limit em `/api/chat` (10/min, 60/h) via Postgres RPC `check_rate_limit` + tabela `rate_limit_events` (migration 0007, RLS sem policies, RPC security definer com cleanup probabilístico). Auth obrigatório em `/api/chat` (401 sem cookie). Threshold `MIN_RELEVANCE = 0.10` no reranker — chunks abaixo são descartados, prompt-builder cai no `REFUSAL_INSTRUCTION`. Tag dinâmica `env:${APP_ENV}` no trace (default `production`). Span `rerank` ganha `top1Score`; trace ganha tag `low-confidence` quando threshold zera tudo. `sonner` Toaster no root layout; `ChatSession` mostra toast amigável em 429 (lê `retry_after_secs`) e 500. `ChatErrorBoundary` envolvendo `<ChatSession/>`. Checklist manual em `docs/product/beta-smoke-test.md`. |
 | 9 | `feedback-loop-complete` | 👍/👎 inline em cada resposta do assistant via `<MessageActions/>` (lucide ThumbsUp/ThumbsDown), 👎 expande textarea inline para comentário (≤1000 chars). Migration 0008: `message_feedback` + 4 RLS owner-only policies + `unique(user_id, trace_id)` para upsert flip. `Trace.id` exposto pelo wrapper Langfuse (real ou `crypto.randomUUID()` em no-op). `/api/chat` adiciona `traceId` à message annotation; client passa de volta em `POST /api/feedback` (Node, zod-validated, 401/400/404/500/204). `lib/feedback.recordFeedback` UPSERTa + chama `scoreTrace` fire-and-forget (`name: user-feedback`, `value: 1` ou `-1`). `useChatSessionsRemote` hidrata `ratings: Map<traceId, rating>` ao trocar sessão. Header ganha link mailto "Feedback geral" (hardcoded até decidir branding). |
 | 10 | `admin-chunks-visibility-complete` | `/admin/articles` detail pane lista TODOS os chunks por artigo (sem `limit(20)`) e mostra "N chunks · ≈X% absorvido" no header. % = `sum(chunk.content.length) / source_chars`; pode exceder 100% por causa do overlap de 400 chars (prefix `≈` deixa explícito). Migration 0009 adiciona `articles.source_chars int NOT NULL` com backfill inline (`length(raw_md)`). Pipeline grava `source_chars: parsed.text.length` no insert do artigo. Chunks renderizam como `<details>` HTML nativo (sem dep nova; expand/collapse com a11y de browser). |
+| 11 | `followup-questions-complete` | `/api/chat` estende `onFinish` com `suggestFollowups` (Gemini Flash Lite, JSON via zod, abort 3s, fail-soft → `[]`). Dois modos por `chunks.length`: **deepen** (system prompt PT/EN ancorado em títulos + snippets de 240 chars) e **redirect** (PT/EN — sugere reformulações para tópicos conhecidos de procurement; sem material no prompt). Span `suggest-followups` aninhado em `chat.turn` (`level:WARNING` em erro). Tag de trace `followups:empty` quando array sai vazio. Annotation `{ followups: string[] }` no SSE; `MessageList` lê via `pickFollowups`. `<FollowupChips/>` (button row, a11y, theme-aware) renderiza só na **última** mensagem do assistant da sessão (não persistido em `sessions.messages`). Click invoca `useChat.append({ role:'user', content })`, virando turno normal (rate-limit per-user já cobre). Skip do passo se `finishReason !== 'stop'` ou `text.length < 20`. `RagResult` agora expõe `chunks: RetrievedChunk[]` (refactor aditivo). |
 
 **Milestone 1 closed.**
 
@@ -54,7 +55,7 @@ Milestone 2 entregue. Critério de saída para Milestone 3 (≥100 traces `env:b
 
 Roadmap completo em `docs/product/beta-readiness.md`. Roadmap B2B (Milestone 3+) em `docs/product/b2b-roadmap.md`.
 
-**Test count atual:** 143 vitest, 23 pytest, typecheck zero erros. CI gate: `recall@5 ≥ 0.85` em PR + push main.
+**Test count atual:** 203 vitest, 23 pytest, typecheck zero erros. CI gate: `recall@5 ≥ 0.85` em PR + push main.
 
 ## Estrutura de pastas
 ```
@@ -230,6 +231,9 @@ APP_ENV=local                  # sub-projeto 8 — drives env:<value> tag in Lan
 - Bloquear o response do `/api/feedback` em falha do Langfuse `score()` — `recordFeedback` chama `scoreTrace` fire-and-forget de propósito; UI não deve esperar por Langfuse.
 - Calcular % absorvido sem o prefix `≈` na UI — o valor é overcount intencional pelo overlap (400 chars) e pode passar de 100% em artigos pequenos. O prefix é a comunicação visual de aproximação.
 - Mover `raw_md` do row do `articles` sem antes garantir que `source_chars` continua sendo populado — sub-projeto 10 deliberadamente denormaliza para que essa migração futura não quebre a UI admin.
+- Persistir `followups` em `sessions.messages` JSONB — sub-projeto 11 deliberadamente NÃO persiste. Vivem só na annotation SSE do turno atual e desaparecem quando o próximo turno renderiza. Se um sub-projeto futuro precisar de chips em mensagens passadas, fazer schema change explícito.
+- Esquecer de incluir `chunks` no mock de `runRag` em testes novos do `/api/chat` — sub-projeto 11 adicionou `chunks: RetrievedChunk[]` ao `RagResult`. Padrão: passar `chunks: []` quando o retrieval foi pulado, ou um array de `RetrievedChunk` com `content` quando o teste exercita o caminho `deepen` do `suggestFollowups`.
+- Bloquear o response do `/api/chat` em falha do `suggestFollowups` — o helper é fail-soft por design, retorna `[]` em qualquer erro (Gemini, JSON, zod, abort 3s) e o `onFinish` segue normalmente. Não envolver a chamada em handler que rejeite.
 
 ## Fluxo de chat end-to-end (sub-projetos 1-7)
 ```
@@ -253,7 +257,13 @@ usuário não logado → / (landing) → /login → middleware passa → /chat
                                                                  ↓
                                                        SSE de volta ao cliente
                                                                  ↓
-              onFinish → end generate span + trace.end + await flushAsync (NÃO esquecer!)
+              onFinish → end generate span
+                                                                 ↓
+              if finishReason==='stop' && text.length>=20 → suggestFollowups span
+                                                                 ↓
+              data.appendMessageAnnotation({ followups }) (SSE)
+                                                                 ↓
+              trace.end + await flushAsync (NÃO esquecer!)
                                                                  ↓
                                              useChatSessionsRemote.updateMessages → DB
 ```
