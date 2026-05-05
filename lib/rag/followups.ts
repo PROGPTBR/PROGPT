@@ -61,13 +61,20 @@ function postProcess(items: string[], query: string): string[] {
 }
 
 export async function suggestFollowups(input: SuggestFollowupsInput): Promise<string[]> {
+  const { query, answer, chunks, classification, parentTrace } = input;
+  const mode: 'deepen' | 'redirect' = chunks.length > 0 ? 'deepen' : 'redirect';
+  const span = parentTrace?.span('suggest-followups', {
+    mode,
+    chunkCount: chunks.length,
+    queryLen: query.length,
+  });
+  const startedAt = performance.now();
+
   try {
-    const { query, answer, chunks, classification } = input;
     const ai = getGemini();
     const model = requireEnv('GEMINI_MODEL');
 
     const lang = classification.language;
-    const mode: 'deepen' | 'redirect' = chunks.length > 0 ? 'deepen' : 'redirect';
     const system =
       mode === 'deepen'
         ? lang === 'en'
@@ -114,13 +121,19 @@ export async function suggestFollowups(input: SuggestFollowupsInput): Promise<st
       });
       const text = res.text ?? '';
       const parsed = FollowupsSchema.parse(JSON.parse(text));
-      return postProcess(parsed.followups, query);
+      const items = postProcess(parsed.followups, query);
+      span?.end({ count: items.length, latencyMs: Math.round(performance.now() - startedAt) });
+      return items;
     } finally {
       clearTimeout(timer);
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.warn('[rag/followups] returning [] due to error:', message);
+    span?.end(
+      { error: message, latencyMs: Math.round(performance.now() - startedAt) },
+      'WARNING',
+    );
     return [];
   }
 }

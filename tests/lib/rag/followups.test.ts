@@ -225,4 +225,59 @@ describe('rag followups', () => {
     expect(out).toEqual([]);
     expect(abortReceived).toBe(true);
   });
+
+  it('opens a parentTrace.span("suggest-followups") and ends it on success', async () => {
+    mockGeminiOnce({
+      text: JSON.stringify({ followups: ['aa?', 'bb?', 'cc?'] }),
+    });
+    const spanEnd = vi.fn();
+    const trace = {
+      id: 't1',
+      span: vi.fn(() => ({ end: spanEnd })),
+      end: vi.fn(),
+      setMetadata: vi.fn(),
+      setTag: vi.fn(),
+    };
+    const { suggestFollowups } = await import('@/lib/rag/followups');
+    const out = await suggestFollowups({
+      query: 'q',
+      answer: 'a',
+      chunks: [SAMPLE_CHUNK],
+      classification: PT_CLASSIFICATION,
+      parentTrace: trace,
+    });
+    expect(out).toEqual(['aa?', 'bb?', 'cc?']);
+    expect(trace.span).toHaveBeenCalledWith(
+      'suggest-followups',
+      expect.objectContaining({ mode: 'deepen', chunkCount: 1 }),
+    );
+    expect(spanEnd).toHaveBeenCalledOnce();
+    const endArg = spanEnd.mock.calls[0]?.[0] as { count: number; latencyMs: number };
+    expect(endArg).toMatchObject({ count: 3 });
+    expect(typeof endArg.latencyMs).toBe('number');
+  });
+
+  it('ends span with WARNING level on failure', async () => {
+    mockGeminiOnce({ throws: new Error('boom') });
+    const spanEnd = vi.fn();
+    const trace = {
+      id: 't1',
+      span: vi.fn(() => ({ end: spanEnd })),
+      end: vi.fn(),
+      setMetadata: vi.fn(),
+      setTag: vi.fn(),
+    };
+    const { suggestFollowups } = await import('@/lib/rag/followups');
+    await suggestFollowups({
+      query: 'q',
+      answer: 'a',
+      chunks: [SAMPLE_CHUNK],
+      classification: PT_CLASSIFICATION,
+      parentTrace: trace,
+    });
+    expect(spanEnd).toHaveBeenCalledWith(
+      expect.objectContaining({ error: expect.any(String) }),
+      'WARNING',
+    );
+  });
 });
