@@ -157,18 +157,13 @@ async function parsePdfMultimodalViaFiles(
   buf: Buffer,
 ): Promise<{ blocks: Block[]; pageCount?: number }> {
   const ai = getGemini();
-  // `files.create` is a pragmatic alias used by the test mock; the real SDK
-  // exposes `files.upload` but the mock (and some SDK versions) expose `create`.
-  // We cast to avoid TS complaining about the method name mismatch.
-  const filesApi = ai.files as unknown as {
-    create: (params: unknown) => Promise<{ name?: string; uri?: string }>;
-  };
-  const uploaded = await filesApi.create({
-    file: { bytes: buf, mimeType: 'application/pdf' },
+  const uploaded = await ai.files.upload({
+    file: new Blob([buf as unknown as ArrayBuffer], { type: 'application/pdf' }),
+    config: { mimeType: 'application/pdf' },
   });
-  const fileUri = uploaded.uri ?? uploaded.name ?? '';
+  const fileUri = uploaded.name;
   if (!fileUri) {
-    throw new Error('Gemini files.create returned neither uri nor name');
+    throw new Error('Gemini files.upload returned no name');
   }
   const part: FilePart = {
     fileData: {

@@ -84,17 +84,17 @@ function setupGeminiMock(responses: Array<{ text?: string; throws?: Error }>) {
     if (r.throws) throw r.throws;
     return { text: r.text ?? '' };
   });
-  const filesCreate = vi.fn().mockResolvedValue({ name: 'files/abc-123' });
+  const filesUpload = vi.fn().mockResolvedValue({ name: 'files/abc-123' });
   vi.doMock('@/lib/llm/gemini', () => ({
     getGemini: () => ({
       models: { generateContent },
-      files: { create: filesCreate },
+      files: { upload: filesUpload },
     }),
   }));
   vi.doMock('@/lib/env', () => ({
     requireEnv: vi.fn().mockReturnValue('gemini-3.1-flash-lite-preview'),
   }));
-  return { generateContent, filesCreate };
+  return { generateContent, filesUpload };
 }
 
 describe('parsePdfMultimodal — happy and retry', () => {
@@ -119,7 +119,7 @@ describe('parsePdfMultimodal — happy and retry', () => {
     expect(out.blocks).toHaveLength(3);
     expect(out.blocks.map((b) => b.type)).toEqual(['text', 'table', 'figure']);
     expect(m.generateContent).toHaveBeenCalledTimes(1);
-    expect(m.filesCreate).not.toHaveBeenCalled();
+    expect(m.filesUpload).not.toHaveBeenCalled();
     // Confirm inline base64 was passed
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const arg = m.generateContent.mock.calls[0]![0];
@@ -171,7 +171,7 @@ describe('parsePdfMultimodal — Files API (>20MB)', () => {
     const big = Buffer.alloc(21 * 1024 * 1024, 0x42);
     const out = await parsePdfMultimodal(big);
     expect(out.blocks).toHaveLength(1);
-    expect(m.filesCreate).toHaveBeenCalledTimes(1);
+    expect(m.filesUpload).toHaveBeenCalledTimes(1);
     // Confirm fileData (not inlineData) was passed in the second call
     const arg = m.generateContent.mock.calls[0]![0];
     const parts = arg.contents as Array<Record<string, unknown>>;
@@ -188,14 +188,14 @@ describe('parsePdfMultimodal — Files API (>20MB)', () => {
     const out = await parsePdfMultimodal(big);
     expect(out.blocks).toHaveLength(1);
     expect(m.generateContent).toHaveBeenCalledTimes(2);
-    expect(m.filesCreate).toHaveBeenCalledTimes(1); // upload only once
+    expect(m.filesUpload).toHaveBeenCalledTimes(1); // upload only once
   });
 
   it('Files API upload failure surfaces as throw (caller falls back)', async () => {
-    const filesCreate = vi.fn().mockRejectedValue(new Error('files API quota'));
+    const filesUpload = vi.fn().mockRejectedValue(new Error('files API quota'));
     const generateContent = vi.fn();
     vi.doMock('@/lib/llm/gemini', () => ({
-      getGemini: () => ({ models: { generateContent }, files: { create: filesCreate } }),
+      getGemini: () => ({ models: { generateContent }, files: { upload: filesUpload } }),
     }));
     vi.doMock('@/lib/env', () => ({
       requireEnv: vi.fn().mockReturnValue('gemini-3.1-flash-lite-preview'),
