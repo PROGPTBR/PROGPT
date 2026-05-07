@@ -1,5 +1,7 @@
 import { z } from 'zod';
 import type { Block } from '@/lib/ingest/types';
+import { getGemini } from '@/lib/llm/gemini';
+import { requireEnv } from '@/lib/env';
 
 export const MULTIMODAL_SYSTEM_PROMPT = `Você é um extrator estruturado de artigos acadêmicos sobre procurement.
 Receba o PDF e retorne um array de blocos representando o conteúdo do
@@ -79,4 +81,82 @@ export const MULTIMODAL_RESPONSE_SCHEMA = {
 
 export function validateBlocks(raw: unknown): Block[] {
   return MultimodalOutputSchema.parse(raw).blocks;
+}
+
+const INLINE_LIMIT_BYTES = 20 * 1024 * 1024; // 20 MB
+const TIMEOUT_MS = 120_000;
+
+type InlinePart = { inlineData: { mimeType: string; data: string } };
+type FilePart = { fileData: { fileUri: string; mimeType: string } };
+type PdfPart = InlinePart | FilePart;
+
+async function callGemini(
+  pdfPart: PdfPart,
+  systemPrompt: string,
+  signal: AbortSignal,
+): Promise<string> {
+  const ai = getGemini();
+  const model = requireEnv('GEMINI_MODEL');
+  const res = await ai.models.generateContent({
+    model,
+    contents: [
+      pdfPart as never,
+      { text: systemPrompt } as never,
+    ] as never,
+    config: {
+      responseMimeType: 'application/json',
+      responseSchema: MULTIMODAL_RESPONSE_SCHEMA as never,
+      maxOutputTokens: 32_768,
+      abortSignal: signal,
+    },
+  });
+  return res.text ?? '';
+}
+
+export async function parsePdfMultimodal(
+  buf: Buffer,
+): Promise<{ blocks: Block[]; pageCount?: number }> {
+  if (buf.length > INLINE_LIMIT_BYTES) {
+    return parsePdfMultimodalViaFiles(buf);
+  }
+
+  const part: InlinePart = {
+    inlineData: {
+      mimeType: 'application/pdf',
+      data: buf.toString('base64'),
+    },
+  };
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  try {
+    let raw = '';
+    try {
+      raw = await callGemini(part, MULTIMODAL_SYSTEM_PROMPT, controller.signal);
+      const blocks = validateBlocks(JSON.parse(raw));
+      return { blocks };
+    } catch (firstErr) {
+      // Only retry on validation/JSON failures, not on network errors.
+      if (!(firstErr instanceof z.ZodError) && !(firstErr instanceof SyntaxError)) {
+        throw firstErr;
+      }
+      raw = await callGemini(
+        part,
+        MULTIMODAL_SYSTEM_PROMPT + MULTIMODAL_RETRY_SUFFIX,
+        controller.signal,
+      );
+      const blocks = validateBlocks(JSON.parse(raw));
+      return { blocks };
+    }
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// Forward declaration; Task 7 implements this. Throwing here makes the
+// >20 MB path explicit even before Files API support lands.
+async function parsePdfMultimodalViaFiles(
+  _buf: Buffer,
+): Promise<{ blocks: Block[]; pageCount?: number }> {
+  throw new Error('Files API path not implemented yet (Task 7)');
 }
