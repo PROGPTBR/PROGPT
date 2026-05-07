@@ -28,5 +28,11 @@
 
   { "id": "porter-vs-kraljic", "intent": "comparison", "query": "Qual a diferença entre Porter e Kraljic em compras estratégicas?", "expected_titles": ["A Matriz de Kraljic", "Porter's Five Forces"] },
   { "id": "sustentaveis-vs-strategic", "intent": "comparison", "query": "How does sustainable procurement relate to strategic sourcing?", "expected_titles": ["Compras Sustentáveis", "Strategic Sourcing Fundamentals"] },
-  { "id": "kraljic-vs-sustentaveis", "intent": "comparison", "query": "Como a matriz de Kraljic se conecta com compras sustentáveis?", "expected_titles": ["A Matriz de Kraljic", "Compras Sustentáveis"] }
+  { "id": "kraljic-vs-sustentaveis", "intent": "comparison", "query": "Como a matriz de Kraljic se conecta com compras sustentáveis?", "expected_titles": ["A Matriz de Kraljic", "Compras Sustentáveis"] },
+
+  { "id": "structured-kraljic-table", "intent": "structured-content", "query": "Como é estruturada a tabela da matriz de Kraljic?", "expected_titles": ["A Matriz de Kraljic"] },
+  { "id": "structured-kraljic-axes", "intent": "structured-content", "query": "Quais são os eixos de risco e valor na matriz de Kraljic?", "expected_titles": ["A Matriz de Kraljic"] },
+  { "id": "structured-s2p-flow", "intent": "structured-content", "query": "Qual é o fluxo do processo de strategic sourcing?", "expected_titles": ["Strategic Sourcing Fundamentals"] },
+  { "id": "structured-porter-diagram", "intent": "structured-content", "query": "Quais elementos compõem o diagrama das cinco forças de Porter?", "expected_titles": ["Porter's Five Forces"] },
+  { "id": "structured-iso-frameworks", "intent": "structured-content", "query": "Quais frameworks ISO orientam compras sustentáveis?", "expected_titles": ["Compras Sustentáveis"] }
 ]
