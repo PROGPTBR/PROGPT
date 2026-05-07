@@ -24,3 +24,37 @@ export type IngestJob = {
   updated_at: string;
   finished_at: string | null;
 };
+
+export type FigureKind = 'flow' | 'chart' | 'diagram';
+
+export type TextBlock = { type: 'text'; page: number; content: string };
+export type TableBlock = {
+  type: 'table';
+  page: number;
+  markdown: string;
+  caption?: string;
+};
+export type FigureBlock = {
+  type: 'figure';
+  page: number;
+  description: string;
+  caption?: string;
+  figureKind: FigureKind;
+};
+export type Block = TextBlock | TableBlock | FigureBlock;
+
+export type ParsedSource =
+  | { kind: 'blocks'; blocks: Block[]; pageCount?: number }
+  | { kind: 'text'; text: string; pageCount?: number };
+
+export type ChunkKind = 'text' | 'table' | 'figure';
+
+export type ChunkRow = {
+  content: string;
+  metadata: {
+    kind: ChunkKind;
+    page?: number;
+    caption?: string;
+    figureKind?: FigureKind;
+  };
+};
