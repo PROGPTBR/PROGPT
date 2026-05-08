@@ -13,24 +13,20 @@ afterEach(() => {
 
 function mockBrowser(opts: {
   signInPwResult?: { error: null | { message: string; code?: string } };
-  signInOAuthResult?: { error: null | { message: string; code?: string } };
 }) {
   const signInWithPassword = vi.fn().mockResolvedValue(
     opts.signInPwResult ?? { error: null },
   );
-  const signInWithOAuth = vi.fn().mockResolvedValue(
-    opts.signInOAuthResult ?? { error: null },
-  );
   vi.doMock('@/lib/db/supabase-browser', () => ({
     supabaseBrowser: () => ({
-      auth: { signInWithPassword, signInWithOAuth },
+      auth: { signInWithPassword },
     }),
   }));
   vi.doMock('next/navigation', () => ({
     useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
     useSearchParams: () => new URLSearchParams(),
   }));
-  return { signInWithPassword, signInWithOAuth };
+  return { signInWithPassword };
 }
 
 describe('LoginForm', () => {
@@ -45,15 +41,11 @@ describe('LoginForm', () => {
     expect(signInWithPassword).toHaveBeenCalledWith({ email: 'a@b.com', password: 'pw1234' });
   });
 
-  it('Google button calls signInWithOAuth with provider google', async () => {
-    const { signInWithOAuth } = mockBrowser({});
+  it('does not render a Google OAuth button (Google sign-in removed 2026-05-08)', async () => {
+    mockBrowser({});
     const { LoginForm } = await import('@/components/auth/LoginForm');
     render(<LoginForm />);
-    const user = userEvent.setup();
-    await user.click(screen.getByRole('button', { name: /google/i }));
-    expect(signInWithOAuth).toHaveBeenCalledWith(
-      expect.objectContaining({ provider: 'google' }),
-    );
+    expect(screen.queryByRole('button', { name: /google/i })).toBeNull();
   });
 
   it('shows error when signInWithPassword returns invalid credentials', async () => {
@@ -73,5 +65,14 @@ describe('LoginForm', () => {
     render(<LoginForm />);
     const link = screen.getByRole('link', { name: /esqueci minha senha/i });
     expect(link.getAttribute('href')).toBe('/forgot-password');
+  });
+
+  it('renders a link to /signup that preserves the next= param', async () => {
+    mockBrowser({});
+    const { LoginForm } = await import('@/components/auth/LoginForm');
+    render(<LoginForm />);
+    const link = screen.getByRole('link', { name: /criar conta/i });
+    // useSearchParams mock returns empty params → next defaults to /chat
+    expect(link.getAttribute('href')).toBe('/signup?next=%2Fchat');
   });
 });
