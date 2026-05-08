@@ -11,9 +11,6 @@ function friendlyError(error: { message: string; code?: string } | null): string
   if (error.message?.toLowerCase().includes('invalid login credentials')) {
     return 'Email ou senha incorretos.';
   }
-  if (error.code === 'signup_disabled' || /signup.+disabled/i.test(error.message ?? '')) {
-    return 'Este email não foi convidado. Solicite acesso ao administrador.';
-  }
   return 'Algo deu errado. Tente novamente.';
 }
 
@@ -41,24 +38,12 @@ export function LoginForm() {
     router.refresh();
   }
 
-  async function onGoogle() {
-    setError(null);
-    const sb = supabaseBrowser();
-    const { error: err } = await sb.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
-      },
-    });
-    if (err) setError(friendlyError(err));
-  }
-
   return (
     <div className="w-full max-w-sm mx-auto p-6 space-y-6">
       <div>
         <h1 className="text-xl font-semibold">Entrar</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Use o email do convite. Caso contrário, peça acesso ao administrador.
+          Use seu email e senha para acessar.
         </p>
       </div>
       <form onSubmit={onPasswordSubmit} className="space-y-3">
@@ -93,13 +78,17 @@ export function LoginForm() {
           {loading ? 'Entrando…' : 'Entrar'}
         </Button>
       </form>
-      <Button type="button" variant="outline" onClick={onGoogle} className="w-full">
-        Continuar com Google
-      </Button>
-      <div className="text-sm text-center">
-        <Link href="/forgot-password" className="text-primary hover:underline">
-          Esqueci minha senha
-        </Link>
+      <div className="text-sm text-center space-y-2">
+        <div>
+          <Link href={`/signup?next=${encodeURIComponent(next)}`} className="text-primary hover:underline">
+            Criar conta
+          </Link>
+        </div>
+        <div>
+          <Link href="/forgot-password" className="text-muted-foreground hover:underline">
+            Esqueci minha senha
+          </Link>
+        </div>
       </div>
     </div>
   );
