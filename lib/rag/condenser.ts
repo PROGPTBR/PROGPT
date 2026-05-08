@@ -1,5 +1,4 @@
-import { getGemini } from '@/lib/llm/gemini';
-import { requireEnv } from '@/lib/env';
+import { getOpenAI, getOpenAIModel } from '@/lib/llm/openai';
 import type { ChatMessage } from './types';
 
 const SYSTEM_PROMPT = `Reescreva a última pergunta do usuário como uma pergunta autônoma em português, incorporando o contexto necessário das mensagens anteriores. Responda APENAS com a pergunta reescrita, sem explicações, sem aspas, sem prefixos.`;
@@ -33,14 +32,16 @@ export async function condenseQuery(messages: ChatMessage[]): Promise<string> {
     return lastUserContent(messages);
   }
   try {
-    const ai = getGemini();
-    const model = requireEnv('GEMINI_MODEL');
-    const res = await ai.models.generateContent({
-      model,
-      contents: `${SYSTEM_PROMPT}\n\n${formatHistory(messages)}`,
-      config: { maxOutputTokens: 256 },
+    const ai = getOpenAI();
+    const res = await ai.chat.completions.create({
+      model: getOpenAIModel(),
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'user', content: formatHistory(messages) },
+      ],
+      max_completion_tokens: 256,
     });
-    const text = (res.text ?? '').trim();
+    const text = (res.choices[0]?.message?.content ?? '').trim();
     if (!text) return lastUserContent(messages);
     return stripQuotes(text);
   } catch (err) {

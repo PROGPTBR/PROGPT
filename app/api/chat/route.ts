@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { streamText, StreamData } from 'ai';
-import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { createOpenAI } from '@ai-sdk/openai';
 import { requireEnv } from '@/lib/env';
 import { runRag } from '@/lib/rag';
 import { condenseQuery } from '@/lib/rag/condenser';
@@ -79,8 +79,8 @@ export async function POST(req: Request): Promise<Response> {
       { role: 'user', content: rag.user },
     ];
 
-    const google = createGoogleGenerativeAI({
-      apiKey: requireEnv('GOOGLE_API_KEY'),
+    const openai = createOpenAI({
+      apiKey: requireEnv('OPENAI_API_KEY'),
     });
 
     const data = new StreamData();
@@ -94,7 +94,7 @@ export async function POST(req: Request): Promise<Response> {
     const generateSpan = trace.span('generate', { systemLen: rag.system.length });
 
     const result = streamText({
-      model: google(requireEnv('GEMINI_MODEL')),
+      model: openai(process.env.OPENAI_MODEL ?? 'gpt-4o-mini'),
       system: rag.system,
       messages: llmMessages,
       onFinish: async ({ text, usage, finishReason }) => {

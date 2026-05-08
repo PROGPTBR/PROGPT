@@ -2,41 +2,44 @@ import { describe, expect, it, beforeEach, vi } from 'vitest';
 import type { ChatMessage } from '@/lib/rag/types';
 
 beforeEach(() => {
-  process.env.GOOGLE_API_KEY = 'test-key';
-  process.env.GEMINI_MODEL = 'gemini-test';
+  process.env.OPENAI_API_KEY = 'test-key';
   vi.resetModules();
 });
 
-function mockGemini(returns: { text?: string; throws?: Error }) {
-  vi.doMock('@/lib/llm/gemini', () => ({
-    getGemini: () => ({
-      models: {
-        generateContent: vi.fn().mockImplementation(async () => {
-          if (returns.throws) throw returns.throws;
-          return { text: returns.text ?? '' };
-        }),
+function mockOpenAI(returns: { text?: string; throws?: Error }) {
+  vi.doMock('@/lib/llm/openai', () => ({
+    getOpenAI: () => ({
+      chat: {
+        completions: {
+          create: vi.fn().mockImplementation(async () => {
+            if (returns.throws) throw returns.throws;
+            return { choices: [{ message: { content: returns.text ?? '' } }] };
+          }),
+        },
       },
     }),
+    getOpenAIModel: () => 'gpt-4o-mini',
   }));
 }
 
 describe('rag condenser', () => {
-  it('returns content directly without calling Gemini for single-turn', async () => {
-    const geminiSpy = vi.fn();
-    vi.doMock('@/lib/llm/gemini', () => ({
-      getGemini: () => ({
-        models: { generateContent: geminiSpy },
+  it('returns content directly without calling OpenAI for single-turn', async () => {
+    const createSpy = vi.fn();
+    vi.doMock('@/lib/llm/openai', () => ({
+      getOpenAI: () => ({
+        chat: { completions: { create: createSpy } },
       }),
+      getOpenAIModel: () => 'gpt-4o-mini',
     }));
     const { condenseQuery } = await import('@/lib/rag/condenser');
     const messages: ChatMessage[] = [{ role: 'user', content: '  hello world  ' }];
     const result = await condenseQuery(messages);
     expect(result).toBe('hello world');
-    expect(geminiSpy).not.toHaveBeenCalled();
+    expect(createSpy).not.toHaveBeenCalled();
   });
 
-  it('calls Gemini and returns rewritten string for multi-turn', async () => {
-    mockGemini({ text: 'Como aplicar a matriz de Kraljic?' });
+  it('calls OpenAI and returns rewritten string for multi-turn', async () => {
+    mockOpenAI({ text: 'Como aplicar a matriz de Kraljic?' });
     const { condenseQuery } = await import('@/lib/rag/condenser');
     const messages: ChatMessage[] = [
       { role: 'user', content: 'O que é a matriz de Kraljic?' },
@@ -47,8 +50,8 @@ describe('rag condenser', () => {
     expect(result).toBe('Como aplicar a matriz de Kraljic?');
   });
 
-  it('falls back to last user message when Gemini throws', async () => {
-    mockGemini({ throws: new Error('boom') });
+  it('falls back to last user message when OpenAI throws', async () => {
+    mockOpenAI({ throws: new Error('boom') });
     const { condenseQuery } = await import('@/lib/rag/condenser');
     const messages: ChatMessage[] = [
       { role: 'user', content: 'first' },
@@ -59,8 +62,8 @@ describe('rag condenser', () => {
     expect(result).toBe('follow-up');
   });
 
-  it('falls back to last user message when Gemini returns empty text', async () => {
-    mockGemini({ text: '' });
+  it('falls back to last user message when OpenAI returns empty text', async () => {
+    mockOpenAI({ text: '' });
     const { condenseQuery } = await import('@/lib/rag/condenser');
     const messages: ChatMessage[] = [
       { role: 'user', content: 'a' },
@@ -72,7 +75,7 @@ describe('rag condenser', () => {
   });
 
   it('strips wrapping quotes from the rewritten output', async () => {
-    mockGemini({ text: '"o que é kraljic?"' });
+    mockOpenAI({ text: '"o que é kraljic?"' });
     const { condenseQuery } = await import('@/lib/rag/condenser');
     const messages: ChatMessage[] = [
       { role: 'user', content: 'a' },

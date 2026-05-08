@@ -10,21 +10,21 @@ const NOOP_TRACE = {
 };
 
 beforeEach(() => {
-  process.env.GOOGLE_API_KEY = 'test-key';
-  process.env.GEMINI_MODEL = 'gemini-test';
+  process.env.OPENAI_API_KEY = 'test-key';
   vi.resetModules();
   vi.useRealTimers();
 });
 
-function mockGeminiOnce(returns: { text?: string; throws?: Error }) {
-  const generateContent = vi.fn().mockImplementation(async () => {
+function mockOpenAIOnce(returns: { text?: string; throws?: Error }) {
+  const create = vi.fn().mockImplementation(async () => {
     if (returns.throws) throw returns.throws;
-    return { text: returns.text ?? '' };
+    return { choices: [{ message: { content: returns.text ?? '' } }] };
   });
-  vi.doMock('@/lib/llm/gemini', () => ({
-    getGemini: () => ({ models: { generateContent } }),
+  vi.doMock('@/lib/llm/openai', () => ({
+    getOpenAI: () => ({ chat: { completions: { create } } }),
+    getOpenAIModel: () => 'gpt-4o-mini',
   }));
-  return { generateContent };
+  return { create };
 }
 
 const PT_CLASSIFICATION = {
@@ -48,7 +48,7 @@ const SAMPLE_CHUNK = {
 
 describe('rag followups', () => {
   it('returns 3 deepen suggestions when chunks are present (PT)', async () => {
-    const { generateContent } = mockGeminiOnce({
+    const { create } = mockOpenAIOnce({
       text: JSON.stringify({
         followups: [
           'Como aplicar Kraljic em PMEs?',
@@ -70,18 +70,20 @@ describe('rag followups', () => {
       'Diferenca entre Kraljic e Cox?',
       'Quais limitacoes da matriz?',
     ]);
-    expect(generateContent).toHaveBeenCalledOnce();
-    const callArg = generateContent.mock.calls[0]?.[0] as {
-      contents: string;
-      config: { responseMimeType: string };
+    expect(create).toHaveBeenCalledOnce();
+    const callBody = create.mock.calls[0]?.[0] as {
+      messages: Array<{ role: string; content: string }>;
+      response_format: { type: string };
     };
-    expect(callArg.contents).toContain('Material disponivel');
-    expect(callArg.contents).toContain('A Matriz de Kraljic');
-    expect(callArg.config.responseMimeType).toBe('application/json');
+    // user message should contain the material available label and chunk title
+    const userContent = callBody.messages[1]?.content ?? '';
+    expect(userContent).toContain('Material disponivel');
+    expect(userContent).toContain('A Matriz de Kraljic');
+    expect(callBody.response_format).toEqual({ type: 'json_object' });
   });
 
   it('returns 3 redirect suggestions when chunks is empty (PT)', async () => {
-    const { generateContent } = mockGeminiOnce({
+    const { create } = mockOpenAIOnce({
       text: JSON.stringify({
         followups: [
           'Quer ver matriz de Kraljic?',
@@ -99,13 +101,19 @@ describe('rag followups', () => {
       parentTrace: NOOP_TRACE,
     });
     expect(out).toHaveLength(3);
-    const callArg = generateContent.mock.calls[0]?.[0] as { contents: string };
-    expect(callArg.contents).toContain('reformulacoes');
-    expect(callArg.contents).not.toContain('Material disponivel');
+    const callBody = create.mock.calls[0]?.[0] as {
+      messages: Array<{ role: string; content: string }>;
+    };
+    // "reformulacoes" is in the SYSTEM prompt for the redirect mode
+    const systemContent = callBody.messages[0]?.content ?? '';
+    expect(systemContent).toContain('reformulacoes');
+    // user block should NOT contain the material label (deepen-only)
+    const userContent = callBody.messages[1]?.content ?? '';
+    expect(userContent).not.toContain('Material disponivel');
   });
 
   it('uses EN system prompt when classification.language is en', async () => {
-    const { generateContent } = mockGeminiOnce({
+    const { create } = mockOpenAIOnce({
       text: JSON.stringify({
         followups: [
           'How does Kraljic differ from Cox?',
@@ -122,14 +130,19 @@ describe('rag followups', () => {
       classification: { ...PT_CLASSIFICATION, language: 'en' },
       parentTrace: NOOP_TRACE,
     });
-    const contents = (generateContent.mock.calls[0]?.[0] as { contents: string }).contents;
-    expect(contents).toMatch(/follow-up/i);
-    expect(contents).toContain('## Original question');
-    expect(contents).not.toContain('Pergunta original');
+    const callBody = create.mock.calls[0]?.[0] as {
+      messages: Array<{ role: string; content: string }>;
+    };
+    const systemContent = callBody.messages[0]?.content ?? '';
+    expect(systemContent).toMatch(/follow-up/i);
+    // EN user block uses "## Original question" not "Pergunta original"
+    const userContent = callBody.messages[1]?.content ?? '';
+    expect(userContent).toContain('## Original question');
+    expect(userContent).not.toContain('Pergunta original');
   });
 
-  it('returns [] when Gemini throws', async () => {
-    mockGeminiOnce({ throws: new Error('boom') });
+  it('returns [] when OpenAI throws', async () => {
+    mockOpenAIOnce({ throws: new Error('boom') });
     const { suggestFollowups } = await import('@/lib/rag/followups');
     const out = await suggestFollowups({
       query: 'q',
@@ -142,7 +155,7 @@ describe('rag followups', () => {
   });
 
   it('returns [] when JSON is malformed', async () => {
-    mockGeminiOnce({ text: 'not json {' });
+    mockOpenAIOnce({ text: 'not json {' });
     const { suggestFollowups } = await import('@/lib/rag/followups');
     const out = await suggestFollowups({
       query: 'q',
@@ -155,7 +168,7 @@ describe('rag followups', () => {
   });
 
   it('returns [] when schema rejects (item too long)', async () => {
-    mockGeminiOnce({
+    mockOpenAIOnce({
       text: JSON.stringify({
         followups: ['ok', 'x'.repeat(200), 'fine'],
       }),
@@ -172,7 +185,7 @@ describe('rag followups', () => {
   });
 
   it('dedupes case-insensitively and removes echo of original query', async () => {
-    mockGeminiOnce({
+    mockOpenAIOnce({
       text: JSON.stringify({
         followups: [
           'O que e a matriz de Kraljic?',
@@ -195,22 +208,20 @@ describe('rag followups', () => {
   it('aborts after 3s and returns []', async () => {
     vi.useFakeTimers();
     let abortReceived = false;
-    vi.doMock('@/lib/llm/gemini', () => ({
-      getGemini: () => ({
-        models: {
-          generateContent: vi
-            .fn()
-            .mockImplementation(async (arg: { config?: { abortSignal?: AbortSignal } }) => {
-              const signal = arg.config?.abortSignal;
-              return new Promise((_, reject) => {
-                signal?.addEventListener('abort', () => {
-                  abortReceived = true;
-                  reject(new Error('aborted'));
-                });
-              });
-            }),
-        },
-      }),
+    const create = vi
+      .fn()
+      .mockImplementation(async (_body: unknown, options?: { signal?: AbortSignal }) => {
+        const signal = options?.signal;
+        return new Promise((_, reject) => {
+          signal?.addEventListener('abort', () => {
+            abortReceived = true;
+            reject(new Error('aborted'));
+          });
+        });
+      });
+    vi.doMock('@/lib/llm/openai', () => ({
+      getOpenAI: () => ({ chat: { completions: { create } } }),
+      getOpenAIModel: () => 'gpt-4o-mini',
     }));
     const { suggestFollowups } = await import('@/lib/rag/followups');
     const promise = suggestFollowups({
@@ -227,7 +238,7 @@ describe('rag followups', () => {
   });
 
   it('opens a parentTrace.span("suggest-followups") and ends it on success', async () => {
-    mockGeminiOnce({
+    mockOpenAIOnce({
       text: JSON.stringify({ followups: ['aa?', 'bb?', 'cc?'] }),
     });
     const spanEnd = vi.fn();
@@ -258,7 +269,7 @@ describe('rag followups', () => {
   });
 
   it('ends span with WARNING level on failure', async () => {
-    mockGeminiOnce({ throws: new Error('boom') });
+    mockOpenAIOnce({ throws: new Error('boom') });
     const spanEnd = vi.fn();
     const trace = {
       id: 't1',

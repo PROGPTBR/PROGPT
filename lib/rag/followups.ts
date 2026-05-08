@@ -1,6 +1,5 @@
 import { z } from 'zod';
-import { getGemini } from '@/lib/llm/gemini';
-import { requireEnv } from '@/lib/env';
+import { getOpenAI, getOpenAIModel } from '@/lib/llm/openai';
 import type { Classification, RetrievedChunk } from './types';
 import type { Trace } from '@/lib/observability/types';
 
@@ -71,8 +70,7 @@ export async function suggestFollowups(input: SuggestFollowupsInput): Promise<st
   const startedAt = performance.now();
 
   try {
-    const ai = getGemini();
-    const model = requireEnv('GEMINI_MODEL');
+    const ai = getOpenAI();
 
     const lang = classification.language;
     const system =
@@ -98,28 +96,19 @@ export async function suggestFollowups(input: SuggestFollowupsInput): Promise<st
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
     try {
-      const res = await ai.models.generateContent({
-        model,
-        contents: `${system}\n\n${userBlock}`,
-        config: {
-          responseMimeType: 'application/json',
-          responseSchema: {
-            type: 'object',
-            properties: {
-              followups: {
-                type: 'array',
-                items: { type: 'string' },
-                minItems: 1,
-                maxItems: 3,
-              },
-            },
-            required: ['followups'],
-          },
-          maxOutputTokens: 512,
-          abortSignal: controller.signal,
+      const res = await ai.chat.completions.create(
+        {
+          model: getOpenAIModel(),
+          messages: [
+            { role: 'system', content: system },
+            { role: 'user', content: userBlock },
+          ],
+          response_format: { type: 'json_object' },
+          max_completion_tokens: 512,
         },
-      });
-      const text = res.text ?? '';
+        { signal: controller.signal },
+      );
+      const text = res.choices[0]?.message?.content ?? '';
       const parsed = FollowupsSchema.parse(JSON.parse(text));
       const items = postProcess(parsed.followups, query);
       span?.end({ count: items.length, latencyMs: Math.round(performance.now() - startedAt) });

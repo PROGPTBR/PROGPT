@@ -1,6 +1,5 @@
 import { z } from 'zod';
-import { getGemini } from '@/lib/llm/gemini';
-import { requireEnv } from '@/lib/env';
+import { getOpenAI, getOpenAIModel } from '@/lib/llm/openai';
 import { SAFE_DEFAULT_CLASSIFICATION, type Classification } from './types';
 
 const SYSTEM_PROMPT = `Você classifica perguntas de usuários sobre teorias de procurement (compras corporativas).
@@ -26,30 +25,17 @@ const ClassificationSchema = z.object({
 
 export async function classify(query: string): Promise<Classification> {
   try {
-    const ai = getGemini();
-    const model = requireEnv('GEMINI_MODEL');
-    const res = await ai.models.generateContent({
-      model,
-      contents: `${SYSTEM_PROMPT}\n\nPergunta:\n${query}`,
-      config: {
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: 'object',
-          properties: {
-            theory: { type: 'string', nullable: true },
-            intent: {
-              type: 'string',
-              enum: ['definition', 'application', 'comparison', 'recommendation', 'smalltalk'],
-            },
-            language: { type: 'string', enum: ['pt', 'en'] },
-            needsRetrieval: { type: 'boolean' },
-          },
-          required: ['theory', 'intent', 'language', 'needsRetrieval'],
-        },
-        maxOutputTokens: 256,
-      },
+    const ai = getOpenAI();
+    const res = await ai.chat.completions.create({
+      model: getOpenAIModel(),
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'user', content: `Pergunta:\n${query}` },
+      ],
+      response_format: { type: 'json_object' },
+      max_completion_tokens: 256,
     });
-    const text = res.text ?? '';
+    const text = res.choices[0]?.message?.content ?? '';
     const parsed = ClassificationSchema.parse(JSON.parse(text));
     return parsed;
   } catch (err) {

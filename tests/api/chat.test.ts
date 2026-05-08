@@ -11,8 +11,7 @@ const NOOP_TRACE = {
 };
 
 beforeEach(() => {
-  process.env.GOOGLE_API_KEY = 'test-key';
-  process.env.GEMINI_MODEL = 'gemini-test';
+  process.env.OPENAI_API_KEY = 'test-key';
   vi.resetModules();
 });
 
@@ -35,8 +34,8 @@ describe('POST /api/chat', () => {
         close = vi.fn();
       },
     }));
-    vi.doMock('@ai-sdk/google', () => ({
-      createGoogleGenerativeAI: vi.fn(() => () => 'mock-model'),
+    vi.doMock('@ai-sdk/openai', () => ({
+      createOpenAI: vi.fn(() => () => 'mock-model'),
     }));
 
     const { POST } = await import('@/app/api/chat/route');
@@ -56,8 +55,8 @@ describe('POST /api/chat', () => {
         close = vi.fn();
       },
     }));
-    vi.doMock('@ai-sdk/google', () => ({
-      createGoogleGenerativeAI: vi.fn(() => () => 'mock-model'),
+    vi.doMock('@ai-sdk/openai', () => ({
+      createOpenAI: vi.fn(() => () => 'mock-model'),
     }));
 
     const { POST } = await import('@/app/api/chat/route');
@@ -108,8 +107,8 @@ describe('POST /api/chat', () => {
       },
     }));
     const modelFactory = vi.fn(() => 'mock-model');
-    vi.doMock('@ai-sdk/google', () => ({
-      createGoogleGenerativeAI: vi.fn(() => modelFactory),
+    vi.doMock('@ai-sdk/openai', () => ({
+      createOpenAI: vi.fn(() => modelFactory),
     }));
 
     const { POST } = await import('@/app/api/chat/route');
@@ -164,8 +163,8 @@ describe('POST /api/chat', () => {
         close = vi.fn();
       },
     }));
-    vi.doMock('@ai-sdk/google', () => ({
-      createGoogleGenerativeAI: vi.fn(() => () => 'mock-model'),
+    vi.doMock('@ai-sdk/openai', () => ({
+      createOpenAI: vi.fn(() => () => 'mock-model'),
     }));
 
     const { POST } = await import('@/app/api/chat/route');
@@ -185,8 +184,8 @@ describe('POST /api/chat', () => {
         close = vi.fn();
       },
     }));
-    vi.doMock('@ai-sdk/google', () => ({
-      createGoogleGenerativeAI: vi.fn(() => () => 'mock-model'),
+    vi.doMock('@ai-sdk/openai', () => ({
+      createOpenAI: vi.fn(() => () => 'mock-model'),
     }));
     vi.doMock('@/lib/observability/langfuse', () => ({
       startTrace: vi.fn().mockResolvedValue(NOOP_TRACE),
@@ -210,8 +209,8 @@ describe('POST /api/chat', () => {
         close = vi.fn();
       },
     }));
-    vi.doMock('@ai-sdk/google', () => ({
-      createGoogleGenerativeAI: vi.fn(() => () => 'mock-model'),
+    vi.doMock('@ai-sdk/openai', () => ({
+      createOpenAI: vi.fn(() => () => 'mock-model'),
     }));
     vi.doMock('@/lib/observability/langfuse', () => ({
       startTrace: vi.fn().mockResolvedValue(NOOP_TRACE),
@@ -247,6 +246,7 @@ describe('POST /api/chat', () => {
 
     const runRagSpy = vi.fn().mockResolvedValue({
       classification: { theory: null, intent: 'definition', language: 'pt', needsRetrieval: true },
+      chunks: [],
       sources: [],
       system: 'sys',
       user: 'user q',
@@ -264,8 +264,8 @@ describe('POST /api/chat', () => {
         close = vi.fn();
       },
     }));
-    vi.doMock('@ai-sdk/google', () => ({
-      createGoogleGenerativeAI: vi.fn(() => () => 'mock-model'),
+    vi.doMock('@ai-sdk/openai', () => ({
+      createOpenAI: vi.fn(() => () => 'mock-model'),
     }));
 
     const { POST } = await import('@/app/api/chat/route');
@@ -354,8 +354,8 @@ describe('POST /api/chat — followups annotation', () => {
         close = vi.fn();
       },
     }));
-    vi.doMock('@ai-sdk/google', () => ({
-      createGoogleGenerativeAI: vi.fn(() => () => 'm'),
+    vi.doMock('@ai-sdk/openai', () => ({
+      createOpenAI: vi.fn(() => () => 'm'),
     }));
 
     const { POST } = await import('@/app/api/chat/route');
@@ -392,7 +392,7 @@ describe('POST /api/chat — followups annotation', () => {
         close = vi.fn();
       },
     }));
-    vi.doMock('@ai-sdk/google', () => ({ createGoogleGenerativeAI: vi.fn(() => () => 'm') }));
+    vi.doMock('@ai-sdk/openai', () => ({ createOpenAI: vi.fn(() => () => 'm') }));
 
     const { POST } = await import('@/app/api/chat/route');
     await POST(makeReq({ messages: [{ role: 'user', content: 'oi' }] }));
@@ -422,7 +422,7 @@ describe('POST /api/chat — followups annotation', () => {
         close = vi.fn();
       },
     }));
-    vi.doMock('@ai-sdk/google', () => ({ createGoogleGenerativeAI: vi.fn(() => () => 'm') }));
+    vi.doMock('@ai-sdk/openai', () => ({ createOpenAI: vi.fn(() => () => 'm') }));
 
     const { POST } = await import('@/app/api/chat/route');
     await POST(makeReq({ messages: [{ role: 'user', content: 'oi' }] }));
@@ -450,7 +450,7 @@ describe('POST /api/chat — followups annotation', () => {
         close = vi.fn();
       },
     }));
-    vi.doMock('@ai-sdk/google', () => ({ createGoogleGenerativeAI: vi.fn(() => () => 'm') }));
+    vi.doMock('@ai-sdk/openai', () => ({ createOpenAI: vi.fn(() => () => 'm') }));
 
     const { POST } = await import('@/app/api/chat/route');
     await POST(makeReq({ messages: [{ role: 'user', content: 'oi' }] }));

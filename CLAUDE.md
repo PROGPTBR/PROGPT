@@ -9,8 +9,9 @@ removida em 2026-05-02). Audiência: gestores de compras brasileiros (PT-BR prim
 - Next.js 14 App Router + TypeScript strict
 - Tailwind + shadcn/ui (tema light/dark via `next-themes`)
 - Supabase (Postgres + pgvector + Auth + Storage)
-- Google Generative AI SDK (`@google/genai`) — Gemini 3.1 Flash Lite (preview) para classificação, condenser e geração one-shot
-- Vercel AI SDK (`ai` v4 + `@ai-sdk/google`) — para o streaming SSE do endpoint de chat
+- OpenAI SDK (`openai` v5) — `gpt-4o-mini` (default) para classificador, condenser, follow-ups
+- Vercel AI SDK (`ai` v4 + `@ai-sdk/openai`) — para o streaming SSE do endpoint de chat
+- Google Generative AI SDK (`@google/genai`) — Gemini 3.1 Flash Lite (preview) APENAS no `parsePdfMultimodal` (sub-projeto 12); OpenAI não aceita PDF nativo
 - Voyage AI para embeddings (`voyage-3-large`, 1024 dims)
 - Cohere Rerank 3 para reranking
 - Langfuse para observabilidade (sub-projeto 7)
@@ -175,6 +176,8 @@ para o usuário ler como uma explicação fluente.
 
 ## Variáveis de ambiente
 ```
+OPENAI_API_KEY=
+OPENAI_MODEL=gpt-4o-mini   # default em código se vazio
 GOOGLE_API_KEY=
 GEMINI_MODEL=gemini-3.1-flash-lite-preview
 VOYAGE_API_KEY=
@@ -247,6 +250,10 @@ APP_ENV=local                  # sub-projeto 8 — drives env:<value> tag in Lan
 - Em retries do Gemini multimodal: o retry só dispara em `z.ZodError` ou `SyntaxError`. Erros de rede / 5xx vão direto pro fallback texto-only no `parseSource` — não ficam looping.
 - Esquecer que o `parser` field em `articles.metadata` é o sinal de auditoria — quando todo PDF está caindo em `text-only-fallback`, o multimodal está com problema; investigar antes de assumir que o gain de tabelas/figuras está chegando.
 - Confundir SDK do `@google/genai`: o método de upload é `ai.files.upload({ file: Blob, config: { mimeType } })` — NÃO `ai.files.create`. Mock antigo usava `create` e o teste passava, mas em produção quebra com TypeError. Verificar tipos no `node_modules/@google/genai/dist/node/node.d.ts` se houver dúvida.
+- Usar `getGemini()` em código novo de RAG, chat ou classificação — sempre `getOpenAI()` (`lib/llm/openai.ts`). O wrapper Gemini sobrevive APENAS em `lib/ingest/multimodal-parse.ts` porque OpenAI não aceita PDF nativo (multimodal exigiria render PDF→PNG via deps com bindings nativos, frágil em Railway).
+- Esquecer `OPENAI_API_KEY` no Railway env quando deployar — todo o `/api/chat` quebra (sem fallback).
+- Esquecer `OPENAI_API_KEY` nos GitHub Actions secrets — CI vai falhar no `RAG eval`.
+- Atualizar `@ai-sdk/openai` pra `^2.x` ou `^3.x` sem subir `ai` pra `^5.x` — a major contém troca do contrato `LanguageModelV1` → `LanguageModelV3` e quebra typecheck no `streamText`. Se for atualizar, faça os dois juntos.
 
 ## Fluxo de chat end-to-end (sub-projetos 1-7)
 ```
@@ -266,7 +273,7 @@ usuário não logado → / (landing) → /login → middleware passa → /chat
                                                                  ↓
                               4 spans nested: classify → retrieve → rerank → build-prompt
                                                                  ↓
-                              generate span → streamText (Gemini Flash via @ai-sdk/google)
+                              generate span → streamText (gpt-4o-mini via @ai-sdk/openai)
                                                                  ↓
                                                        SSE de volta ao cliente
                                                                  ↓
