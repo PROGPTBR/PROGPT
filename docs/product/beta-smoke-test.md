@@ -82,3 +82,12 @@ If any item fails, file an issue and fix before sending invites.
 - [ ] Editar título via lápis no detail pane: persiste após F5 e o card na lista atualiza.
 - [ ] Editar tema via dropdown: artigo "muda de pasta" — sidebar contagens recalculam imediatamente sem refetch.
 - [ ] Tentar setar tema fora da taxonomia (dev tools, fetch direto): API retorna 400.
+
+### Sub-projeto 14 — Feedback Review Loop
+
+- [ ] Beta user dá 👎 com comentário → aparece em `/admin/feedback` em ≤30s, com a pergunta e o comentário visíveis (clicar pra abrir detail).
+- [ ] Filtro "rating=down" remove os 👍 da lista; toggle "Exibir tratados" alterna pra mostrar resolvidos.
+- [ ] Click num row mostra pergunta+resposta+chunks (com badges de tema).
+- [ ] Botão "✓ Marcar como resolvido" persiste após F5; row some da view default; aparece em "Exibir tratados".
+- [ ] Top queries panel mostra as N perguntas mais frequentes nos últimos 30 dias.
+- [ ] Tentar acessar `/admin/feedback` ou os endpoints `/api/admin/feedback/*` como não-admin: 404.

@@ -44,6 +44,7 @@ removida em 2026-05-02). Audiência: gestores de compras brasileiros (PT-BR prim
 | 11 | `followup-questions-complete` | `/api/chat` estende `onFinish` com `suggestFollowups` (Gemini Flash Lite, JSON via zod, abort 3s, fail-soft → `[]`). Dois modos por `chunks.length`: **deepen** (system prompt PT/EN ancorado em títulos + snippets de 240 chars) e **redirect** (PT/EN — sugere reformulações para tópicos conhecidos de procurement; sem material no prompt). Span `suggest-followups` aninhado em `chat.turn` (`level:WARNING` em erro). Tag de trace `followups:empty` quando array sai vazio. Annotation `{ followups: string[] }` no SSE; `MessageList` lê via `pickFollowups`. `<FollowupChips/>` (button row, a11y, theme-aware) renderiza só na **última** mensagem do assistant da sessão (não persistido em `sessions.messages`). Click invoca `useChat.append({ role:'user', content })`, virando turno normal (rate-limit per-user já cobre). Skip do passo se `finishReason !== 'stop'` ou `text.length < 20`. `RagResult` agora expõe `chunks: RetrievedChunk[]` (refactor aditivo). |
 | 12 | `multimodal-ingestion-complete` | Ingestão PDF agora via Gemini multimodal nativo (1 chamada por artigo, ~$0.02). `lib/ingest/multimodal-parse.ts` com zod schema + retry 1x + AbortController 120s; >20MB usa Files API (`ai.files.upload`). `lib/ingest/parse-source.ts` orquestra dispatch (PDF→multimodal-com-fallback, DOCX→tables-aware, TXT→trivial). Chunker ganha `chunkBlocks` que emite 1 chunk por table/figure (sem split mesmo >3200) e agrupa text contíguo. `chunks.metadata` ganha `kind`/`page`/`caption`/`figureKind` (sem migration — JSONB). `articles.metadata.parser` registra `multimodal`/`text-only-fallback`/`docx-tables`/`text-only`. `/admin/articles` mostra badge colorido por kind + número de página. Eval +5 pares (tabelas Kraljic, fluxos S2P/stakeholders, gráfico spend); CI gate `recall@5 ≥ 0.85` mantido sobre 30 pares (verificação após backfill manual dos 4 artigos atuais). |
 | 13 | `auto-classified-library-complete` | Pipeline chama `classifyContent` (gpt-4o-mini, fail-soft, abort 15s) após dedup-check pra produzir `{ title, theme, summary }` baseados no conteúdo. Migration 0010 adiciona `articles.theme` (CHECK constraint nos 11 valores) + `articles.summary`. `lib/ingest/taxonomy.ts` é a fonte única da verdade pra os temas. `/admin/articles` ganha sidebar de temas (180px) com contagem; detail pane ganha edição inline de título (✎) + dropdown de tema; PATCH `/api/admin/articles/[id]` valida com zod. Script `npm run articles:reclassify` re-classifica todos os artigos via `articles.raw_md` (sem re-upload). Backfill de 21 artigos rodou com 0 fallbacks; distribuição 9/11 temas. `golden.json` realinhado com novos títulos canônicos pós-backfill (recall@5=0.97, 28/29 hits). |
+| 14 | `feedback-review-loop-complete` | Página `/admin/feedback` lê `message_feedback` (sub-projeto 9) via service-role e lista 👍/👎 com filtros (rating, resolvido, has-comment, date range). Migration 0011 adiciona `resolved_at timestamptz` + index parcial + SQL function `admin_top_queries`. Detail pane extrai pergunta+resposta+chunks de `sessions.messages` JSONB via match `annotations[].traceId === feedback.trace_id` (fallback: último assistant message da sessão). Painel `<TopQueries>` mostra top 10 user queries dos últimos 30 dias. PATCH endpoint `/api/admin/feedback/[id]/resolve` flipa `resolved_at`. Sem ML — constrói o dataset humano-curado pra Tier 2/3 futuro de aprendizado. |
 
 **Milestone 1 closed.**
 
@@ -79,6 +80,7 @@ Roadmap completo em `docs/product/beta-readiness.md`. Roadmap B2B (Milestone 3+)
     /users/page.tsx                     (server: profiles_with_email + admin_user_session_counts → <UsersTable/>)
     /articles/page.tsx                  (mounts <ArticlesSplitView/>)
     /ingest/page.tsx                    (mounts <IngestRoot/>)
+    /feedback/page.tsx                  (gated por requireAdmin → 404; mounts <FeedbackRoot/>)
   /api/admin
     /users/route.ts                     (Node: GET list, POST invite, PATCH role)
     /articles/[id]/route.ts             (Node: DELETE, chunks cascade)
@@ -86,6 +88,10 @@ Roadmap completo em `docs/product/beta-readiness.md`. Roadmap B2B (Milestone 3+)
     /ingest/run/[jobId]/route.ts        (Node, maxDuration=300: runs runPipeline)
     /ingest/jobs/route.ts               (Node: GET list, inline cleanup + stale sweep)
     /ingest/retry/[jobId]/route.ts      (Node, maxDuration=300: reset error → re-run)
+    /feedback/route.ts                  (Node: GET paginated + filtered list)
+    /feedback/[id]/resolve/route.ts     (Node: POST toggle resolved_at)
+    /feedback/top-queries/route.ts      (Node: GET admin_top_queries aggregation)
+    /sessions/[id]/messages/route.ts    (Node: admin-gated GET de sessions.messages JSONB)
 /lib
   /rag
     types.ts                            (Classification, RetrievedChunk, SourceRef, ChatMessage, RagResult)
@@ -128,7 +134,7 @@ Roadmap completo em `docs/product/beta-readiness.md`. Roadmap B2B (Milestone 3+)
 /components
   /chat (ChatRoot, ChatSession, Sidebar, Header, EmptyState, MessageList, Message, Composer)
   /auth (LoginForm, ForgotPasswordForm, ResetPasswordForm, UserRow — admin link visível só para admins)
-  /admin (AdminSidebar, UsersTable, InviteUserDialog, ArticlesSplitView, ArticleDetail, ConfirmDelete, IngestRoot, Dropzone, JobCard, JobsLive, JobsRecent)
+  /admin (AdminSidebar, UsersTable, InviteUserDialog, ArticlesSplitView, ArticleDetail, ConfirmDelete, IngestRoot, Dropzone, JobCard, JobsLive, JobsRecent, FeedbackRoot, FeedbackList, FeedbackDetail, TopQueries)
   /ui (shadcn base-nova: button, textarea, scroll-area, sheet, tooltip, dialog, input, dropdown-menu, table)
   theme-provider.tsx
 /hooks
@@ -259,6 +265,11 @@ APP_ENV=local                  # sub-projeto 8 — drives env:<value> tag in Lan
 - Persistir tema em `chunks.metadata` — o tema é puramente administrativo (organização da biblioteca), NÃO é usado pelo retrieval. Adicionar no chunk seria duplicação inútil.
 - Editar `golden.json` `expected_titles` sem rodar `npm run articles:reclassify` antes — você não sabe quais títulos canônicos o LLM produziu até rodar o backfill.
 - Usar `articles.title` como ID estável em qualquer integração externa — o admin pode editar via PATCH a qualquer momento. Use `articles.id` (UUID).
+- Ler `message_feedback` via cookie-aware client (`supabaseBrowser`) em código admin — RLS é owner-only e admin não consegue ver feedback de outros users. Use `getServerSupabase()` (service-role) em route handler admin-gated. Pattern já estabelecido em `/api/admin/articles`.
+- Ler `sessions.messages` via `supabaseBrowser` em UI admin — RLS owner-only bloqueia sessões de outros users. Use `GET /api/admin/sessions/[id]/messages` (sub-projeto 14) que usa service-role.
+- Esquecer de criar a SQL function `admin_top_queries` ao reaplicar migration 0011 — sem ela, `topQueries()` retorna array vazio sem erro óbvio. A função é parte da migration 0011; verifique com `select count(*) from pg_proc where proname='admin_top_queries'` se suspeitar.
+- Confiar no `last user message` do `sessions.messages` JSONB pra preview de feedback — pode não bater com o turno do trace. v1 do sub-projeto 14 NÃO mostra preview na lista por isso. Se um sub-projeto futuro quiser preview, persistir trace_id por turno em `sessions.messages` JSONB.
+- Considerar `resolved_at` como audit log — não há `resolved_by` nem timeline. Single-tenant atual = single admin OK; em B2B precisa schema change.
 
 ## Fluxo de chat end-to-end (sub-projetos 1-7)
 ```
