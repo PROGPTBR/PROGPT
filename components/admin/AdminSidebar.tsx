@@ -2,12 +2,13 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Users, FileText, Upload, ArrowLeft } from 'lucide-react';
+import { Users, FileText, Upload, MessageSquare, ArrowLeft } from 'lucide-react';
 
 const ITEMS = [
   { href: '/admin/users', label: 'Usuários', Icon: Users },
   { href: '/admin/articles', label: 'Artigos', Icon: FileText },
   { href: '/admin/ingest', label: 'Ingestão', Icon: Upload },
+  { href: '/admin/feedback', label: 'Feedback', Icon: MessageSquare },
 ];
 
 export function AdminSidebar() {
