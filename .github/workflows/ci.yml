@@ -77,6 +77,7 @@ jobs:
 
       - name: PR comment with eval results
         if: github.event_name == 'pull_request' && always() && hashFiles('scripts/eval/results.json') != ''
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
