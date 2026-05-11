@@ -20,6 +20,26 @@ const SORT_LABELS: Record<SortMode, string> = {
   theme: 'Por tema',
 };
 
+function sourceFilename(metadata: Record<string, unknown> | null | undefined): string | null {
+  if (!metadata || typeof metadata !== 'object') return null;
+  const v = (metadata as Record<string, unknown>).source_filename;
+  return typeof v === 'string' && v.length > 0 ? v : null;
+}
+
+function formatIngestedAt(iso: string | null | undefined): string | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  // pt-BR short form: 11/05/2026 10:39
+  return d.toLocaleString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
 export function ArticlesSplitView() {
   const [rows, setRows] = useState<ArticleRow[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -258,11 +278,27 @@ export function ArticlesSplitView() {
                   </TableCell>
                   <TableCell>
                     <div className="font-medium text-sm">{r.title}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {[r.author, (r.language ?? '').toUpperCase(), r.published_at]
-                        .filter(Boolean)
-                        .join(' · ')}
-                    </div>
+                    {(() => {
+                      const fn = sourceFilename(r.metadata);
+                      const ts = formatIngestedAt(r.ingested_at);
+                      return (
+                        <>
+                          <div className="text-xs text-muted-foreground font-mono truncate max-w-[420px]">
+                            {fn ?? '—'}
+                          </div>
+                          <div className="text-[11px] text-muted-foreground">
+                            {[
+                              ts && `ingerido ${ts}`,
+                              r.author,
+                              (r.language ?? '').toUpperCase(),
+                              r.published_at,
+                            ]
+                              .filter(Boolean)
+                              .join(' · ')}
+                          </div>
+                        </>
+                      );
+                    })()}
                   </TableCell>
                   <TableCell className="text-right tabular-nums text-xs text-muted-foreground">
                     {r.chunks_count ?? '—'}
