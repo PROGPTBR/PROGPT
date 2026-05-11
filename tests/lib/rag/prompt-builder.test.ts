@@ -121,4 +121,72 @@ describe('rag prompt-builder', () => {
     expect(SYSTEM_PROMPT).toMatch(/TCO/);
     expect(SYSTEM_PROMPT).toMatch(/S2P|Source-to-Pay/i);
   });
+
+  // ── senior-expertise rules (sub-projeto 15) ──────────────────────────────
+  // These rules exist to fight the "B-grade textbook answer" failure mode:
+  // model produces structurally-correct but generic responses that don't
+  // demonstrate the 20-year-senior persona promised in the system prompt.
+
+  it('demands authorship + year when the topic is a canonical framework', async () => {
+    const { SYSTEM_PROMPT } = await import('@/lib/rag/prompt-builder');
+    // Rule lives in the "Resposta direta" section
+    expect(SYSTEM_PROMPT).toMatch(/cite autor e ano/i);
+    // Concrete example with the canonical authors people forget
+    expect(SYSTEM_PROMPT).toMatch(/HBR 1983/);
+    expect(SYSTEM_PROMPT).toMatch(/Porter \(1979\)/);
+  });
+
+  it('demands FULL coverage when the framework has N named elements', async () => {
+    const { SYSTEM_PROMPT } = await import('@/lib/rag/prompt-builder');
+    // The "todos" mandate is the antidote to "covers 2 of 4 Kraljic quadrants"
+    expect(SYSTEM_PROMPT).toMatch(/cobertura completa/i);
+    expect(SYSTEM_PROMPT).toMatch(/aborde TODOS/);
+    // Concrete failure pattern named so the model recognizes it
+    expect(SYSTEM_PROMPT).toMatch(/alavancagem.*gargalo|gargalo.*alavancagem/i);
+  });
+
+  it('expands "aplicação prática" with a 4-element checklist (threshold/tool/cadence/pitfall)', async () => {
+    const { SYSTEM_PROMPT } = await import('@/lib/rag/prompt-builder');
+    expect(SYSTEM_PROMPT).toMatch(/threshold|crit[ée]rio mensur[áa]vel/i);
+    expect(SYSTEM_PROMPT).toMatch(/ferramenta concreta/i);
+    expect(SYSTEM_PROMPT).toMatch(/cad[êe]ncia de revis[ãa]o/i);
+    expect(SYSTEM_PROMPT).toMatch(/armadilha/i);
+  });
+
+  it('adds optional "limitações ou evolução" section for framework-definition questions', async () => {
+    const { SYSTEM_PROMPT } = await import('@/lib/rag/prompt-builder');
+    expect(SYSTEM_PROMPT).toMatch(/limita[çc][õo]es ou evolu[çc][ãa]o/i);
+    // Mentions an extension author so the model has a concrete example
+    expect(SYSTEM_PROMPT).toMatch(/Gelderman/);
+    expect(SYSTEM_PROMPT).toMatch(/diferencia.*Wikipedia/i);
+  });
+
+  it('mandates structured markdown for 2D and enumerated frameworks', async () => {
+    const { SYSTEM_PROMPT } = await import('@/lib/rag/prompt-builder');
+    // 2D frameworks → table/bullets with **bold** category names
+    expect(SYSTEM_PROMPT).toMatch(/Frameworks bidimensionais/);
+    expect(SYSTEM_PROMPT).toMatch(/tabela markdown|bullets estruturados/i);
+    // Enumerated N-item lists must be bullets, not buried in prose
+    expect(SYSTEM_PROMPT).toMatch(/nunca enterrados em prosa/i);
+  });
+
+  it('framework reference block carries explicit authorship for canonical entries', async () => {
+    const { SYSTEM_PROMPT } = await import('@/lib/rag/prompt-builder');
+    // The reference block is the source of truth the model leans on —
+    // authorship must be embedded there, not just in the directive.
+    expect(SYSTEM_PROMPT).toMatch(/Peter Kraljic/);
+    expect(SYSTEM_PROMPT).toMatch(/Michael Porter/);
+    expect(SYSTEM_PROMPT).toMatch(/Lisa Ellram/);
+    expect(SYSTEM_PROMPT).toMatch(/Williamson/);
+    expect(SYSTEM_PROMPT).toMatch(/Andrew Cox/);
+  });
+
+  it('Kraljic anchor lists all four quadrants with their canonical strategies', async () => {
+    const { SYSTEM_PROMPT } = await import('@/lib/rag/prompt-builder');
+    // If this regresses, "B-grade Kraljic" answers come back.
+    expect(SYSTEM_PROMPT).toMatch(/alavancagem/i);
+    expect(SYSTEM_PROMPT).toMatch(/estrat[ée]gico/i);
+    expect(SYSTEM_PROMPT).toMatch(/gargalo/i);
+    expect(SYSTEM_PROMPT).toMatch(/n[ãa]o-cr[íi]tico/i);
+  });
 });
