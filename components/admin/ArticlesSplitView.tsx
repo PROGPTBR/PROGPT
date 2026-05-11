@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { RefreshCw } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -11,31 +12,57 @@ import { ConfirmDelete } from '@/components/admin/ConfirmDelete';
 import { ThemeSidebar, type ThemeFilter } from '@/components/admin/ThemeSidebar';
 
 type ArticleRow = AdminArticle & { chunks_count?: number };
+type SortMode = 'recent' | 'alpha' | 'theme';
+
+const SORT_LABELS: Record<SortMode, string> = {
+  recent: 'Mais recentes',
+  alpha: 'A → Z',
+  theme: 'Por tema',
+};
 
 export function ArticlesSplitView() {
   const [rows, setRows] = useState<ArticleRow[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [themeFilter, setThemeFilter] = useState<ThemeFilter>('all');
+  const [sortMode, setSortMode] = useState<SortMode>('recent');
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [confirmBulkOpen, setConfirmBulkOpen] = useState(false);
   const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchRows = useCallback(async () => {
+    const { data, error } = await supabaseBrowser()
+      .from('articles')
+      .select('id, title, author, language, published_at, ingested_at, metadata, source_chars, theme, summary')
+      .order('ingested_at', { ascending: false })
+      .limit(500);
+    if (error) {
+      toast.error(`Erro ao carregar artigos: ${error.message}`);
+      return;
+    }
+    setRows((data ?? []) as ArticleRow[]);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data } = await supabaseBrowser()
-        .from('articles')
-        .select('id, title, author, language, published_at, ingested_at, metadata, source_chars, theme, summary')
-        .order('ingested_at', { ascending: false })
-        .limit(100);
       if (cancelled) return;
-      setRows((data ?? []) as ArticleRow[]);
+      await fetchRows();
     })();
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [fetchRows]);
+
+  async function handleRefresh() {
+    setRefreshing(true);
+    try {
+      await fetchRows();
+    } finally {
+      setRefreshing(false);
+    }
+  }
 
   const filtered = useMemo(() => {
     let out = themeFilter === 'all' ? rows : rows.filter((r) => r.theme === themeFilter);
@@ -45,8 +72,19 @@ export function ArticlesSplitView() {
         (r) => r.title.toLowerCase().includes(q) || (r.author ?? '').toLowerCase().includes(q),
       );
     }
+    if (sortMode === 'alpha') {
+      out = [...out].sort((a, b) => a.title.localeCompare(b.title, 'pt-BR'));
+    } else if (sortMode === 'theme') {
+      out = [...out].sort((a, b) => {
+        const ta = a.theme ?? '';
+        const tb = b.theme ?? '';
+        if (ta !== tb) return ta.localeCompare(tb, 'pt-BR');
+        return a.title.localeCompare(b.title, 'pt-BR');
+      });
+    }
+    // 'recent' = default order from DB (ingested_at desc)
     return out;
-  }, [rows, search, themeFilter]);
+  }, [rows, search, themeFilter, sortMode]);
 
   const detailArticle = rows.find((r) => r.id === selectedId) ?? null;
 
@@ -115,7 +153,10 @@ export function ArticlesSplitView() {
       <div className="flex items-center justify-between gap-4">
         <div>
           <h2 className="text-lg font-semibold">Artigos</h2>
-          <p className="text-xs text-muted-foreground">{rows.length} artigos</p>
+          <p className="text-xs text-muted-foreground">
+            {filtered.length}
+            {filtered.length !== rows.length ? ` de ${rows.length}` : ''} artigos
+          </p>
         </div>
         <div className="flex items-center gap-2">
           {selected.size > 0 && (
@@ -134,6 +175,32 @@ export function ArticlesSplitView() {
             onChange={(e) => setSearch(e.target.value)}
             className="max-w-xs"
           />
+          <label className="sr-only" htmlFor="articles-sort">
+            Ordenar por
+          </label>
+          <select
+            id="articles-sort"
+            aria-label="Ordenar por"
+            value={sortMode}
+            onChange={(e) => setSortMode(e.target.value as SortMode)}
+            className="h-9 rounded-md border border-input bg-background px-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+          >
+            {(['recent', 'alpha', 'theme'] as SortMode[]).map((m) => (
+              <option key={m} value={m}>
+                {SORT_LABELS[m]}
+              </option>
+            ))}
+          </select>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={refreshing}
+            aria-label="Atualizar lista"
+            title="Atualizar lista"
+          >
+            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+          </Button>
         </div>
       </div>
 
