@@ -1,7 +1,8 @@
 import { classify } from './classifier';
 import { retrieve } from './retriever';
 import { rerank } from './reranker';
-import { buildPrompt } from './prompt-builder';
+import { buildPrompt, buildLibraryOverviewPrompt } from './prompt-builder';
+import { getLibrarySnapshot } from './library-snapshot';
 import type { RagResult, RetrievedChunk } from './types';
 import type { Trace } from '@/lib/observability/types';
 
@@ -28,6 +29,39 @@ export async function runRag(query: string, opts: RunRagOpts = {}): Promise<RagR
   let vectorMs = 0;
   let ftsMs = 0;
   let rerankMs = 0;
+
+  // library_overview short-circuits both retrieval AND the standard
+  // prompt-builder. The data source is the DB snapshot, not the chunk
+  // corpus, so any retrieval would just return noise.
+  if (classification.intent === 'library_overview') {
+    const snapshotSpan = trace?.span('library-snapshot', {});
+    const snapshot = await getLibrarySnapshot();
+    snapshotSpan?.end({
+      totalArticles: snapshot.totalArticles,
+      themeCount: snapshot.themes.length,
+    });
+    trace?.setTag('intent:library_overview');
+
+    const promptSpan = trace?.span('build-prompt', { sources: 0, mode: 'library_overview' });
+    const { system, user, sources } = buildLibraryOverviewPrompt(query, snapshot, classification);
+    promptSpan?.end({ systemLen: system.length, userLen: user.length });
+
+    return {
+      classification,
+      chunks: [],
+      sources,
+      system,
+      user,
+      debug: {
+        classifyMs,
+        embedMs: 0,
+        vectorMs: 0,
+        ftsMs: 0,
+        rerankMs: 0,
+        totalMs: performance.now() - t0,
+      },
+    };
+  }
 
   if (classification.needsRetrieval) {
     const tRetrieveStart = performance.now();

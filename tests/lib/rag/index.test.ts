@@ -96,6 +96,70 @@ describe('rag runRag', () => {
     expect(result.system.toLowerCase()).toMatch(/não\s+(tenho|tem)\s+fonte/);
   });
 
+  it('short-circuits retrieval AND uses the library-overview prompt when intent=library_overview (sub-projeto 18)', async () => {
+    vi.doMock('@/lib/rag/classifier', () => ({
+      classify: vi.fn().mockResolvedValue({
+        theory: null,
+        intent: 'library_overview',
+        language: 'pt',
+        needsRetrieval: false,
+      }),
+    }));
+    const retrieveSpy = vi.fn();
+    const rerankSpy = vi.fn();
+    vi.doMock('@/lib/rag/retriever', () => ({ retrieve: retrieveSpy }));
+    vi.doMock('@/lib/rag/reranker', () => ({ rerank: rerankSpy }));
+    vi.doMock('@/lib/rag/library-snapshot', () => ({
+      getLibrarySnapshot: vi.fn().mockResolvedValue({
+        totalArticles: 96,
+        themes: [
+          { theme: 'Digital / Tecnologia', count: 19, status: 'canonical' },
+          { theme: 'Gestão da Cadeia de Suprimentos', count: 11, status: 'candidate' },
+          { theme: 'Risco / Resiliência', count: 10, status: 'canonical' },
+        ],
+      }),
+    }));
+
+    const { runRag } = await import('@/lib/rag');
+    const result = await runRag('que temas você cobre?');
+
+    expect(retrieveSpy).not.toHaveBeenCalled();
+    expect(rerankSpy).not.toHaveBeenCalled();
+    expect(result.chunks).toEqual([]);
+    expect(result.sources).toEqual([]);
+    // User prompt carries the actual snapshot data
+    expect(result.user).toMatch(/Snapshot da base/);
+    expect(result.user).toMatch(/Total de artigos: 96/);
+    expect(result.user).toMatch(/Digital \/ Tecnologia/);
+    expect(result.user).toMatch(/19 artigos/);
+    expect(result.user).toMatch(/Gestão da Cadeia de Suprimentos/);
+    expect(result.user).toMatch(/NÃO recuse/);
+  });
+
+  it('library_overview English: prompts the model to respond in English', async () => {
+    vi.doMock('@/lib/rag/classifier', () => ({
+      classify: vi.fn().mockResolvedValue({
+        theory: null,
+        intent: 'library_overview',
+        language: 'en',
+        needsRetrieval: false,
+      }),
+    }));
+    vi.doMock('@/lib/rag/retriever', () => ({ retrieve: vi.fn() }));
+    vi.doMock('@/lib/rag/reranker', () => ({ rerank: vi.fn() }));
+    vi.doMock('@/lib/rag/library-snapshot', () => ({
+      getLibrarySnapshot: vi.fn().mockResolvedValue({
+        totalArticles: 5,
+        themes: [{ theme: 'Kraljic', count: 5, status: 'canonical' }],
+      }),
+    }));
+
+    const { runRag } = await import('@/lib/rag');
+    const result = await runRag('what topics do you cover?');
+    expect(result.user).toMatch(/Library snapshot/);
+    expect(result.user).toMatch(/Respond in English/);
+  });
+
   it('opens spans on a provided parentTrace for classify, retrieve, rerank, build-prompt', async () => {
     vi.doMock('@/lib/rag/classifier', () => ({
       classify: vi.fn().mockResolvedValue({

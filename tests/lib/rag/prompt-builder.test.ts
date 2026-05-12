@@ -190,3 +190,90 @@ describe('rag prompt-builder', () => {
     expect(SYSTEM_PROMPT).toMatch(/n[ãa]o-cr[íi]tico/i);
   });
 });
+
+// ── library_overview branch (sub-projeto 18) ─────────────────────────────
+describe('buildLibraryOverviewPrompt', () => {
+  const snapshot = {
+    totalArticles: 96,
+    themes: [
+      { theme: 'Digital / Tecnologia', count: 19, status: 'canonical' as const },
+      { theme: 'Gestão da Cadeia de Suprimentos', count: 11, status: 'candidate' as const },
+      { theme: 'Risco / Resiliência', count: 10, status: 'canonical' as const },
+    ],
+  };
+
+  it('injects the snapshot data and total into the user message (PT)', async () => {
+    const { buildLibraryOverviewPrompt } = await import('@/lib/rag/prompt-builder');
+    const out = buildLibraryOverviewPrompt('que temas você cobre?', snapshot, ptClass);
+    expect(out.user).toMatch(/Snapshot da base/);
+    expect(out.user).toMatch(/Total de artigos: 96/);
+    expect(out.user).toMatch(/\*\*Digital \/ Tecnologia\*\* — 19 artigos/);
+    expect(out.user).toMatch(/\*\*Risco \/ Resili[êe]ncia\*\* — 10 artigos/);
+    expect(out.user).toMatch(/que temas você cobre\?/);
+    expect(out.sources).toEqual([]);
+  });
+
+  it('singular "artigo" vs plural "artigos" formatting', async () => {
+    const { buildLibraryOverviewPrompt } = await import('@/lib/rag/prompt-builder');
+    const out = buildLibraryOverviewPrompt('?', {
+      totalArticles: 1,
+      themes: [{ theme: 'Kraljic', count: 1, status: 'canonical' }],
+    }, ptClass);
+    expect(out.user).toMatch(/1 artigo(?!s)/);
+  });
+
+  it('forbids invention with explicit "do not invent" / "NÃO invente" instruction', async () => {
+    const { buildLibraryOverviewPrompt } = await import('@/lib/rag/prompt-builder');
+    const out = buildLibraryOverviewPrompt('?', snapshot, ptClass);
+    expect(out.user).toMatch(/N[ÃA]O invente/);
+    expect(out.user).toMatch(/N[ÃA]O recuse/);
+  });
+
+  it('emits the snapshot in English when classification.language === "en"', async () => {
+    const { buildLibraryOverviewPrompt } = await import('@/lib/rag/prompt-builder');
+    const out = buildLibraryOverviewPrompt(
+      'what topics do you cover?',
+      snapshot,
+      enClass,
+    );
+    expect(out.user).toMatch(/Library snapshot/);
+    expect(out.user).toMatch(/Total articles: 96/);
+    expect(out.user).toMatch(/do not invent themes/i);
+    expect(out.user).toMatch(/Respond in English/);
+  });
+
+  it('caps theme list at 12 entries even when many themes exist', async () => {
+    const manyThemes = Array.from({ length: 25 }, (_, i) => ({
+      theme: `Tema ${i}`,
+      count: 25 - i,
+      status: 'canonical' as const,
+    }));
+    const { buildLibraryOverviewPrompt } = await import('@/lib/rag/prompt-builder');
+    const out = buildLibraryOverviewPrompt('?', { totalArticles: 100, themes: manyThemes }, ptClass);
+    // Tema 0 (count=25) appears, Tema 13+ should not (12 entries max)
+    expect(out.user).toMatch(/Tema 0/);
+    expect(out.user).not.toMatch(/Tema 13/);
+  });
+
+  it('omits themes with count=0 from the list (no empty canonical noise)', async () => {
+    const { buildLibraryOverviewPrompt } = await import('@/lib/rag/prompt-builder');
+    const out = buildLibraryOverviewPrompt('?', {
+      totalArticles: 5,
+      themes: [
+        { theme: 'Kraljic', count: 5, status: 'canonical' },
+        { theme: 'TCO', count: 0, status: 'canonical' },
+      ],
+    }, ptClass);
+    expect(out.user).toMatch(/Kraljic/);
+    // TCO is empty — don't list it
+    expect(out.user).not.toMatch(/\*\*TCO\*\*/);
+  });
+
+  it('reuses the same SYSTEM_PROMPT (cache-stable, no fork)', async () => {
+    const { buildLibraryOverviewPrompt, SYSTEM_PROMPT } = await import(
+      '@/lib/rag/prompt-builder'
+    );
+    const out = buildLibraryOverviewPrompt('?', snapshot, ptClass);
+    expect(out.system).toBe(SYSTEM_PROMPT);
+  });
+});

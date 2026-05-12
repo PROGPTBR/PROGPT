@@ -90,6 +90,41 @@ describe('rag classifier', () => {
     expect(callBody.response_format).toEqual({ type: 'json_object' });
   });
 
+  it('accepts library_overview intent with needsRetrieval=false (sub-projeto 18)', async () => {
+    mockOpenAI({
+      text: JSON.stringify({
+        theory: null,
+        intent: 'library_overview',
+        language: 'pt',
+        needsRetrieval: false,
+      }),
+    });
+    const { classify } = await import('@/lib/rag/classifier');
+    const result = await classify('que temas você cobre?');
+    expect(result.intent).toBe('library_overview');
+    expect(result.needsRetrieval).toBe(false);
+  });
+
+  it('system prompt teaches the model what library_overview means with examples', async () => {
+    const { create } = mockOpenAI({
+      text: JSON.stringify({
+        theory: null,
+        intent: 'smalltalk',
+        language: 'pt',
+        needsRetrieval: false,
+      }),
+    });
+    const { classify } = await import('@/lib/rag/classifier');
+    await classify('any query');
+    const callBody = create.mock.calls[0]?.[0] as {
+      messages: Array<{ role: string; content: string }>;
+    };
+    const sys = callBody.messages.find((m) => m.role === 'system')?.content ?? '';
+    expect(sys).toMatch(/library_overview/);
+    expect(sys).toMatch(/que temas você cobre/i);
+    expect(sys).toMatch(/META/);
+  });
+
   it('accepts theory as null and intent as application', async () => {
     mockOpenAI({
       text: JSON.stringify({

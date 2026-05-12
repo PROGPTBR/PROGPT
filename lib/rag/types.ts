@@ -3,7 +3,8 @@ export type Intent =
   | 'application'
   | 'comparison'
   | 'recommendation'
-  | 'smalltalk';
+  | 'smalltalk'
+  | 'library_overview';
 
 export type Classification = {
   theory: string | null;

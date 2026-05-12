@@ -7,18 +7,34 @@ Responda SEMPRE com JSON estrito conforme o schema abaixo. Não adicione texto f
 
 Campos:
 - theory: string com o nome curto da teoria/framework principal mencionada (ex: "kraljic", "porter", "monczka", "tco", "srm"). null se nenhuma teoria específica for citada ou inferível.
-- intent: um de "definition" | "application" | "comparison" | "recommendation" | "smalltalk".
-  - definition: pede o que é, conceito, definição
+- intent: um de "definition" | "application" | "comparison" | "recommendation" | "smalltalk" | "library_overview".
+  - definition: pede o que é, conceito, definição de algum tema/framework
   - application: pede como aplicar, exemplo prático, caso
   - comparison: compara duas ou mais teorias/frameworks
   - recommendation: pede sugestão de abordagem/teoria/leitura
-  - smalltalk: saudação, agradecimento, pergunta sobre o próprio bot, sem conteúdo de procurement
+  - smalltalk: saudação, agradecimento, conversa fiada sem conteúdo de procurement
+  - library_overview: usuário pergunta sobre a PRÓPRIA BASE/COBERTURA do sistema — "que temas você cobre", "lista de tópicos", "sobre o que você sabe", "what topics do you cover", "what's in your knowledge base". É META — sobre o sistema, não sobre procurement. NÃO confunda com "definition" (que pergunta sobre UM tema específico). Confunda só se o usuário quer descobrir o que está disponível.
 - language: "pt" se a pergunta está em português, "en" se em inglês. Default "pt".
-- needsRetrieval: false APENAS se intent = "smalltalk". Senão true.`;
+- needsRetrieval: false APENAS se intent ∈ ("smalltalk", "library_overview"). Senão true.
+
+Exemplos:
+- "O que é Kraljic?" → intent=definition, needsRetrieval=true
+- "Quais temas você cobre?" → intent=library_overview, needsRetrieval=false
+- "Lista de temas da base" → intent=library_overview, needsRetrieval=false
+- "Sobre o que você pode me ensinar?" → intent=library_overview, needsRetrieval=false
+- "What's in your knowledge base?" → intent=library_overview, needsRetrieval=false
+- "oi, tudo bem?" → intent=smalltalk, needsRetrieval=false`;
 
 const ClassificationSchema = z.object({
   theory: z.string().nullable(),
-  intent: z.enum(['definition', 'application', 'comparison', 'recommendation', 'smalltalk']),
+  intent: z.enum([
+    'definition',
+    'application',
+    'comparison',
+    'recommendation',
+    'smalltalk',
+    'library_overview',
+  ]),
   language: z.enum(['pt', 'en']),
   needsRetrieval: z.boolean(),
 });
