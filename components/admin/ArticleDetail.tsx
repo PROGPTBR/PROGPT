@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { supabaseBrowser } from '@/lib/db/supabase-browser';
 import { ConfirmDelete } from '@/components/admin/ConfirmDelete';
-import { TAXONOMY, isValidTheme } from '@/lib/ingest/taxonomy';
+import { CANONICAL_THEMES, isCanonicalTheme } from '@/lib/ingest/taxonomy';
 import { toast } from 'sonner';
 
 export type AdminArticle = {
@@ -18,6 +18,7 @@ export type AdminArticle = {
   ingested_at: string;
   source_chars: number;
   theme: string;
+  theme_status?: 'canonical' | 'candidate';
   summary: string | null;
 };
 
@@ -40,7 +41,10 @@ type Chunk = {
 type Props = {
   article: AdminArticle | null;
   onDeleted: (id: string) => void;
-  onUpdated?: (id: string, patch: { title?: string; theme?: string }) => void;
+  onUpdated?: (
+    id: string,
+    patch: { title?: string; theme?: string; theme_status?: 'canonical' | 'candidate' },
+  ) => void;
 };
 
 export function ArticleDetail({ article, onDeleted, onUpdated }: Props) {
@@ -89,10 +93,40 @@ export function ArticleDetail({ article, onDeleted, onUpdated }: Props) {
         body: JSON.stringify(patch),
       });
       if (!res.ok) throw new Error(`status ${res.status}`);
-      onUpdated?.(article.id, patch);
+      const data = (await res.json().catch(() => ({}))) as {
+        themeStatus?: 'canonical' | 'candidate';
+      };
+      onUpdated?.(article.id, {
+        ...patch,
+        ...(data.themeStatus ? { theme_status: data.themeStatus } : {}),
+      });
       toast.success('Atualizado');
     } catch (err) {
       toast.error('Falha ao salvar', { description: String(err) });
+    } finally {
+      setSavingPatch(false);
+    }
+  }
+
+  async function promoteCandidate() {
+    if (!article) return;
+    setSavingPatch(true);
+    try {
+      const res = await fetch('/api/admin/themes/promote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ theme: article.theme }),
+      });
+      if (!res.ok) throw new Error(`status ${res.status}`);
+      const data = (await res.json().catch(() => ({}))) as { promoted?: number };
+      onUpdated?.(article.id, { theme_status: 'canonical' });
+      toast.success(
+        data.promoted && data.promoted > 1
+          ? `Promovido — ${data.promoted} artigos atualizados`
+          : 'Promovido a canônico',
+      );
+    } catch (err) {
+      toast.error('Falha ao promover', { description: String(err) });
     } finally {
       setSavingPatch(false);
     }
@@ -181,20 +215,42 @@ export function ArticleDetail({ article, onDeleted, onUpdated }: Props) {
         <p className="text-xs text-muted-foreground mt-1">
           {chunks.length} chunks · ≈{absorvedPct}% absorvido
         </p>
-        <div className="mt-2 flex items-center gap-2">
+        <div className="mt-2 flex items-center gap-2 flex-wrap">
           <label className="text-xs text-muted-foreground">Tema:</label>
           <select
-            value={isValidTheme(article.theme) ? article.theme : 'Outros'}
+            value={article.theme}
             onChange={(e) => patchArticle({ theme: e.target.value })}
             disabled={savingPatch}
             className="text-xs rounded border border-border bg-background px-2 py-1"
           >
-            {TAXONOMY.map((t) => (
+            {!isCanonicalTheme(article.theme) && (
+              <option value={article.theme}>{article.theme} (candidato)</option>
+            )}
+            {CANONICAL_THEMES.map((t) => (
               <option key={t} value={t}>
                 {t}
               </option>
             ))}
           </select>
+          {article.theme_status === 'candidate' && (
+            <>
+              <span
+                className="text-[10px] rounded px-1.5 py-0.5 bg-amber-100 dark:bg-amber-950 text-amber-900 dark:text-amber-200"
+                title="Tema proposto pela IA, ainda não aprovado como canônico"
+              >
+                candidato
+              </span>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={promoteCandidate}
+                disabled={savingPatch}
+                title="Marca este tema como canônico para todos os artigos que o usam"
+              >
+                Promover a canônico
+              </Button>
+            </>
+          )}
         </div>
       </div>
       <div className="flex gap-2">

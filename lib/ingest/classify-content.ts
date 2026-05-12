@@ -1,6 +1,14 @@
 import { z } from 'zod';
 import { getOpenAI, getOpenAIModel, withRateLimitRetry } from '@/lib/llm/openai';
-import { TAXONOMY, THEME_DESCRIPTIONS, isValidTheme, type Theme } from '@/lib/ingest/taxonomy';
+import {
+  CANONICAL_THEMES,
+  THEME_DESCRIPTIONS,
+  isCanonicalTheme,
+  normalizeCandidateTheme,
+  MAX_THEME_LENGTH,
+  type Theme,
+  type ThemeStatus,
+} from '@/lib/ingest/taxonomy';
 
 // Bumped from 15s to 45s to absorb the 429 retry's wait (OpenAI tells us "try
 // again in Xs" up to ~30s under TPM saturation) without aborting mid-retry.
@@ -15,7 +23,8 @@ const ClassifyResultSchema = z.object({
 
 export type ClassifyResult = {
   title: string;
-  theme: Theme;
+  theme: string;
+  themeStatus: ThemeStatus;
   summary: string;
 };
 
@@ -26,7 +35,12 @@ function filenameStem(filename: string): string {
 
 function fallback(filename: string): ClassifyResult {
   const stem = filenameStem(filename);
-  return { title: stem || 'Sem título', theme: 'Outros' as Theme, summary: '' };
+  return {
+    title: stem || 'Sem título',
+    theme: 'Outros' as Theme,
+    themeStatus: 'canonical',
+    summary: '',
+  };
 }
 
 function stripWrappingQuotes(s: string): string {
@@ -38,13 +52,16 @@ function stripWrappingQuotes(s: string): string {
 }
 
 function buildSystemPrompt(): string {
-  const descriptions = TAXONOMY.map((t) => `  - ${t}: ${THEME_DESCRIPTIONS[t]}`).join('\n');
+  const descriptions = CANONICAL_THEMES.map((t) => `  - ${t}: ${THEME_DESCRIPTIONS[t]}`).join('\n');
   return `Você é um especialista em procurement (compras corporativas) classificando artigos acadêmicos. Receba um trecho de texto extraído do artigo e devolva JSON com EXATAMENTE 3 campos:
 
 - title: string em português (ou idioma original se não for PT) com 60-100 caracteres que reflete o ASSUNTO CENTRAL do artigo. NÃO copie headers, números de página, nomes de revistas ou afiliações institucionais. Pense: "qual é o tema único deste artigo?" e escreva como um título de capítulo.
 
-- theme: um de exatamente: ${TAXONOMY.join(' | ')}.
-  Use as descrições abaixo pra guiar:
+- theme: idealmente uma das categorias CANÔNICAS abaixo. Se NENHUMA se encaixa razoavelmente, você PODE propor UM NOVO TEMA — Title Case em português, máximo ${MAX_THEME_LENGTH} caracteres, conciso (1-4 palavras), descrevendo a área temática genérica do artigo (NÃO o título do artigo, NÃO um sub-tópico ultra-específico). Exemplos de bons novos temas: "Gestão de Projetos", "Reforma Tributária", "Logística", "Recursos Humanos". Exemplos RUINS (não fazer): "Análise da Empresa X", "Caso da Petrobras 2024", "Sub-tópico Específico de Detalhamento".
+
+  IMPORTANTE: use "Outros" SOMENTE como último recurso quando o artigo é claramente procurement mas não cabe em tema mais específico. Se você consegue nomear o tema com 1-3 palavras genéricas, prefira propor um novo tema a usar "Outros".
+
+  Categorias canônicas existentes:
 ${descriptions}
 
 - summary: string de até 200 caracteres com uma única frase resumindo a contribuição central do artigo. Sem chavões, sem "este artigo discute".
@@ -85,10 +102,15 @@ export async function classifyContent(
     const raw = res.choices[0]?.message?.content ?? '';
     const parsed = ClassifyResultSchema.parse(JSON.parse(raw));
 
-    if (!isValidTheme(parsed.theme)) {
-      console.warn(`[ingest/classify] fallback for ${filename}: invalid theme "${parsed.theme}"`);
+    const normalized = normalizeCandidateTheme(parsed.theme);
+    if (normalized.length === 0 || normalized.length > MAX_THEME_LENGTH) {
+      console.warn(
+        `[ingest/classify] fallback for ${filename}: theme out of bounds (len=${normalized.length})`,
+      );
       return fallback(filename);
     }
+
+    const themeStatus: ThemeStatus = isCanonicalTheme(normalized) ? 'canonical' : 'candidate';
 
     const title = stripWrappingQuotes(parsed.title);
     if (title.length < 10) {
@@ -97,8 +119,10 @@ export async function classifyContent(
     }
 
     const summary = (parsed.summary ?? '').trim().slice(0, 220);
-    const result: ClassifyResult = { title, theme: parsed.theme as Theme, summary };
-    console.info(`[ingest/classify] result title="${title}" theme=${result.theme}`);
+    const result: ClassifyResult = { title, theme: normalized, themeStatus, summary };
+    console.info(
+      `[ingest/classify] result title="${title}" theme=${result.theme} status=${themeStatus}`,
+    );
     return result;
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

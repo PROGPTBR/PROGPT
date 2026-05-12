@@ -56,14 +56,39 @@ describe('classifyContent', () => {
     expect(out.title).toBe('Aplicação prática da matriz de Kraljic');
   });
 
-  it('falls back when theme is outside the taxonomy', async () => {
+  it('accepts a theme outside the canonical set as a CANDIDATE (open taxonomy, sub-projeto 16)', async () => {
     setupOpenAIMock({
-      content: JSON.stringify({ title: 'Algum título OK aqui', theme: 'BogusTheme', summary: '' }),
+      content: JSON.stringify({ title: 'Algum título OK aqui', theme: 'Gestão de Projetos', summary: '' }),
     });
     const { classifyContent } = await import('@/lib/ingest/classify-content');
     const out = await classifyContent('Texto longo. '.repeat(80), 'k.pdf');
-    expect(out.theme).toBe('Outros');
-    expect(out.title).toBe('k'); // filename stem fallback (no _- to replace)
+    expect(out.theme).toBe('Gestão de Projetos');
+    expect(out.themeStatus).toBe('candidate');
+    expect(out.title).toBe('Algum título OK aqui');
+  });
+
+  it('canonical themes from the LLM are tagged status=canonical', async () => {
+    setupOpenAIMock({
+      content: JSON.stringify({ title: 'Algum título OK aqui', theme: 'Kraljic', summary: '' }),
+    });
+    const { classifyContent } = await import('@/lib/ingest/classify-content');
+    const out = await classifyContent('Texto longo. '.repeat(80), 'k.pdf');
+    expect(out.theme).toBe('Kraljic');
+    expect(out.themeStatus).toBe('canonical');
+  });
+
+  it('normalizes whitespace and trims wrapping quotes from a candidate theme', async () => {
+    setupOpenAIMock({
+      content: JSON.stringify({
+        title: 'Algum título OK aqui',
+        theme: '"  Gestão   de    Projetos  "',
+        summary: '',
+      }),
+    });
+    const { classifyContent } = await import('@/lib/ingest/classify-content');
+    const out = await classifyContent('Texto longo. '.repeat(80), 'k.pdf');
+    expect(out.theme).toBe('Gestão de Projetos');
+    expect(out.themeStatus).toBe('candidate');
   });
 
   it('falls back when title is too short', async () => {

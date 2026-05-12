@@ -2,7 +2,11 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireAdmin, NotAdmin } from '@/lib/auth';
 import { supabaseServer } from '@/lib/db/supabase-server';
-import { isValidTheme } from '@/lib/ingest/taxonomy';
+import {
+  isCanonicalTheme,
+  normalizeCandidateTheme,
+  MAX_THEME_LENGTH,
+} from '@/lib/ingest/taxonomy';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -10,7 +14,15 @@ export const dynamic = 'force-dynamic';
 const PatchBody = z
   .object({
     title: z.string().min(3).max(200).optional(),
-    theme: z.string().refine(isValidTheme, { message: 'invalid theme' }).optional(),
+    // Any non-empty string ≤ MAX_THEME_LENGTH. Status is derived server-side
+    // so the client cannot promote a candidate by passing theme_status itself.
+    theme: z
+      .string()
+      .transform(normalizeCandidateTheme)
+      .refine((s) => s.length >= 1 && s.length <= MAX_THEME_LENGTH, {
+        message: `theme must be 1–${MAX_THEME_LENGTH} chars after trim`,
+      })
+      .optional(),
   })
   .refine((b) => b.title !== undefined || b.theme !== undefined, {
     message: 'at least one field required',
@@ -45,8 +57,17 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     return NextResponse.json({ error: 'invalid_body' }, { status: 400 });
   }
 
+  const update: { title?: string; theme?: string; theme_status?: 'canonical' | 'candidate' } = {};
+  if (body.title !== undefined) update.title = body.title;
+  if (body.theme !== undefined) {
+    update.theme = body.theme;
+    // Derive status server-side so editing to a canonical name automatically
+    // re-canonicalizes the row (and vice versa).
+    update.theme_status = isCanonicalTheme(body.theme) ? 'canonical' : 'candidate';
+  }
+
   const sb = supabaseServer();
-  const { error } = await sb.from('articles').update(body).eq('id', params.id);
+  const { error } = await sb.from('articles').update(update).eq('id', params.id);
   if (error) return NextResponse.json({ error: 'update_failed' }, { status: 500 });
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, themeStatus: update.theme_status });
 }

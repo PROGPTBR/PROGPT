@@ -87,6 +87,7 @@ export async function runPipeline(jobId: string): Promise<void> {
       .insert({
         title: classified.title,
         theme: classified.theme,
+        theme_status: classified.themeStatus,
         summary: classified.summary,
         author: meta.author,
         language: meta.language,
