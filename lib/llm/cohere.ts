@@ -1,4 +1,5 @@
 import { requireEnv } from '@/lib/env';
+import { recordApiUsage } from '@/lib/observability/api-usage';
 
 const ENDPOINT = 'https://api.cohere.com/v2/rerank';
 const TIMEOUT_MS = 30_000;
@@ -40,6 +41,15 @@ export async function rerank(
     const json = (await res.json()) as {
       results: Array<{ index: number; relevance_score: number }>;
     };
+    // Rerank is priced per-call ($2 / 1k searches), not per-token. callCount=1
+    // for the (query, documents[]) tuple regardless of documents.length.
+    void recordApiUsage({
+      provider: 'cohere',
+      operation: 'rerank',
+      model,
+      callCount: 1,
+      metadata: { docs: documents.length, top_n: topN },
+    });
     return json.results.map((r) => ({ index: r.index, relevanceScore: r.relevance_score }));
   } finally {
     clearTimeout(timer);

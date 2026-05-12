@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { getOpenAI, getOpenAIModel } from '@/lib/llm/openai';
+import { recordApiUsage } from '@/lib/observability/api-usage';
 import { SAFE_DEFAULT_CLASSIFICATION, type Classification } from './types';
 
 const SYSTEM_PROMPT = `Você classifica perguntas de usuários sobre teorias de procurement (compras corporativas).
@@ -53,6 +54,14 @@ export async function classify(query: string): Promise<Classification> {
     });
     const text = res.choices[0]?.message?.content ?? '';
     const parsed = ClassificationSchema.parse(JSON.parse(text));
+    void recordApiUsage({
+      provider: 'openai',
+      operation: 'classify',
+      model: getOpenAIModel(),
+      tokensIn: res.usage?.prompt_tokens ?? 0,
+      tokensOut: res.usage?.completion_tokens ?? 0,
+      tokensCached: res.usage?.prompt_tokens_details?.cached_tokens ?? 0,
+    });
     return parsed;
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

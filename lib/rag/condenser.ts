@@ -1,4 +1,5 @@
 import { getOpenAI, getOpenAIModel } from '@/lib/llm/openai';
+import { recordApiUsage } from '@/lib/observability/api-usage';
 import type { ChatMessage } from './types';
 
 const SYSTEM_PROMPT = `Reescreva a última pergunta do usuário como uma pergunta autônoma em português, incorporando o contexto necessário das mensagens anteriores. Responda APENAS com a pergunta reescrita, sem explicações, sem aspas, sem prefixos.`;
@@ -42,6 +43,14 @@ export async function condenseQuery(messages: ChatMessage[]): Promise<string> {
       max_completion_tokens: 256,
     });
     const text = (res.choices[0]?.message?.content ?? '').trim();
+    void recordApiUsage({
+      provider: 'openai',
+      operation: 'condense',
+      model: getOpenAIModel(),
+      tokensIn: res.usage?.prompt_tokens ?? 0,
+      tokensOut: res.usage?.completion_tokens ?? 0,
+      tokensCached: res.usage?.prompt_tokens_details?.cached_tokens ?? 0,
+    });
     if (!text) return lastUserContent(messages);
     return stripQuotes(text);
   } catch (err) {

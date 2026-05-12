@@ -7,6 +7,7 @@ import { condenseQuery } from '@/lib/rag/condenser';
 import { suggestFollowups } from '@/lib/rag/followups';
 import type { ChatMessage } from '@/lib/rag/types';
 import { startTrace, flushAsync } from '@/lib/observability/langfuse';
+import { recordApiUsage } from '@/lib/observability/api-usage';
 import { getCurrentUser } from '@/lib/auth';
 import { checkChatRateLimit } from '@/lib/rate-limit';
 import type { TraceLevel } from '@/lib/observability/types';
@@ -122,6 +123,19 @@ export async function POST(req: Request): Promise<Response> {
           chars_out: text.length,
         });
         trace.setTag(cachedPromptTokens > 0 ? 'cache:hit' : 'cache:miss');
+        void recordApiUsage({
+          provider: 'openai',
+          operation: 'chat-generate',
+          model: process.env.OPENAI_MODEL ?? 'gpt-4o-mini',
+          tokensIn: usage.promptTokens,
+          tokensOut: usage.completionTokens,
+          tokensCached: cachedPromptTokens,
+          metadata: {
+            intent: rag.classification.intent,
+            finish_reason: finishReason,
+            env,
+          },
+        });
         const aborted = finishReason === 'error';
         const level: TraceLevel = aborted ? 'WARNING' : 'DEFAULT';
         if (aborted) trace.setTag('aborted');

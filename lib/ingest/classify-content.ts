@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { getOpenAI, getOpenAIModel, withRateLimitRetry } from '@/lib/llm/openai';
+import { recordApiUsage } from '@/lib/observability/api-usage';
 import {
   CANONICAL_THEMES,
   THEME_DESCRIPTIONS,
@@ -100,6 +101,15 @@ export async function classifyContent(
     );
 
     const raw = res.choices[0]?.message?.content ?? '';
+    void recordApiUsage({
+      provider: 'openai',
+      operation: 'classify-content',
+      model: getOpenAIModel(),
+      tokensIn: res.usage?.prompt_tokens ?? 0,
+      tokensOut: res.usage?.completion_tokens ?? 0,
+      tokensCached: res.usage?.prompt_tokens_details?.cached_tokens ?? 0,
+      metadata: { filename },
+    });
     const parsed = ClassifyResultSchema.parse(JSON.parse(raw));
 
     const normalized = normalizeCandidateTheme(parsed.theme);
