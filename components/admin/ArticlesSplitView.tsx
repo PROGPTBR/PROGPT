@@ -54,7 +54,9 @@ export function ArticlesSplitView() {
   const fetchRows = useCallback(async () => {
     const { data, error } = await supabaseBrowser()
       .from('articles')
-      .select('id, title, author, language, published_at, ingested_at, metadata, source_chars, theme, summary')
+      .select(
+        'id, title, author, language, published_at, ingested_at, metadata, source_chars, theme, theme_status, summary',
+      )
       .order('ingested_at', { ascending: false })
       .limit(500);
     if (error) {
