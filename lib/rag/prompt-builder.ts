@@ -1,4 +1,5 @@
 import type { Classification, RetrievedChunk, SourceRef } from './types';
+import type { LibrarySnapshot } from './library-snapshot';
 
 // SYSTEM_PROMPT must stay byte-identical across every turn of every session
 // (no string interpolation, no per-call branching). OpenAI prompt-caches
@@ -98,6 +99,73 @@ export function buildPrompt(
   }
 
   return { system: SYSTEM_PROMPT, user: userParts.join('\n\n'), sources };
+}
+
+/**
+ * Build the user prompt for the `library_overview` intent (sub-projeto 18).
+ *
+ * Why a dedicated path: meta-queries ("que temas você cobre?") have no
+ * answer in the article corpus by construction — the corpus is about
+ * procurement theory, not about the system itself. The standard refusal
+ * path leaves the user empty-handed. Instead, we inject the DB snapshot
+ * (theme list + counts) as ground truth in the user message so the LLM
+ * can format it naturally with the senior-expert persona, without
+ * hallucinating themes that don't exist.
+ *
+ * The system prompt stays the same (cache-stable) — only the user
+ * message structure changes for this intent.
+ */
+export function buildLibraryOverviewPrompt(
+  query: string,
+  snapshot: LibrarySnapshot,
+  classification: Classification,
+): { system: string; user: string; sources: SourceRef[] } {
+  const isEN = classification.language === 'en';
+
+  const topThemes = snapshot.themes.filter((t) => t.count > 0).slice(0, 12);
+  const themeLines = topThemes
+    .map((t) => `- **${t.theme}** — ${t.count} artigo${t.count === 1 ? '' : 's'}`)
+    .join('\n');
+
+  const dataBlock = isEN
+    ? `## Library snapshot (ground truth — do not invent themes)
+
+Total articles: ${snapshot.totalArticles}
+Themes with material (top ${topThemes.length} by article count):
+
+${themeLines}`
+    : `## Snapshot da base (verdade — NÃO invente temas)
+
+Total de artigos: ${snapshot.totalArticles}
+Temas com material disponível (top ${topThemes.length} por quantidade de artigos):
+
+${themeLines}`;
+
+  const instructionBlock = isEN
+    ? `## Question
+${query}
+
+The user is asking what your knowledge base covers. Use ONLY the snapshot above to answer — do not invent themes that aren't listed. Format the response as:
+1. One short opening sentence stating the size of the library.
+2. A bulleted list of the top themes with article counts, in **bold**.
+3. One sentence inviting the user to ask about a specific topic.
+
+(Respond in English.) Do not refuse — this is a meta-question about the library and the snapshot IS your source.`
+    : `## Pergunta
+${query}
+
+O usuário está perguntando o que a sua base de conhecimento cobre. Use APENAS o snapshot acima para responder — NÃO invente temas que não estão na lista. Formate a resposta assim:
+1. Uma frase curta de abertura mencionando o tamanho da base.
+2. Lista bullet dos principais temas com contagem de artigos em **bold**.
+3. Uma frase final convidando o usuário a perguntar sobre um tópico específico.
+
+NÃO recuse — isso é uma meta-pergunta sobre a base, e o snapshot acima É a sua fonte.`;
+
+  return {
+    system: SYSTEM_PROMPT,
+    user: `${dataBlock}\n\n---\n\n${instructionBlock}`,
+    sources: [],
+  };
 }
 
 // Exported for tests asserting the system prompt is stable and cache-eligible.
