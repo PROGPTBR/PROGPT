@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireAdmin, NotAdmin } from '@/lib/auth';
-import { supabaseServer } from '@/lib/db/supabase-server';
+import { getServerSupabase } from '@/lib/db/supabase';
 import {
   CANONICAL_THEMES,
   normalizeCandidateTheme,
@@ -53,7 +53,8 @@ export async function POST(req: Request) {
     );
   }
 
-  const sb = supabaseServer();
+  // Service-role bypass: articles has no UPDATE RLS policy.
+  const sb = getServerSupabase();
   const { data, error } = await sb
     .from('articles')
     .update({ theme_status: 'candidate' })

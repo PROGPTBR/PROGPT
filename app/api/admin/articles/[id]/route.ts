@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireAdmin, NotAdmin } from '@/lib/auth';
-import { supabaseServer } from '@/lib/db/supabase-server';
+import { getServerSupabase } from '@/lib/db/supabase';
 import {
   isCanonicalTheme,
   normalizeCandidateTheme,
@@ -35,7 +35,7 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
     if (err instanceof NotAdmin) return new NextResponse('Not Found', { status: 404 });
     throw err;
   }
-  const sb = supabaseServer();
+  const sb = getServerSupabase();
   const { error } = await sb.from('articles').delete().eq('id', params.id);
   if (error) return NextResponse.json({ error: 'delete_failed' }, { status: 500 });
   return NextResponse.json({ ok: true });
@@ -66,7 +66,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     update.theme_status = isCanonicalTheme(body.theme) ? 'canonical' : 'candidate';
   }
 
-  const sb = supabaseServer();
+  const sb = getServerSupabase();
   const { error } = await sb.from('articles').update(update).eq('id', params.id);
   if (error) return NextResponse.json({ error: 'update_failed' }, { status: 500 });
   return NextResponse.json({ ok: true, themeStatus: update.theme_status });

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin, NotAdmin } from '@/lib/auth';
-import { supabaseServer } from '@/lib/db/supabase-server';
+import { getServerSupabase } from '@/lib/db/supabase';
 import { CANONICAL_THEMES, isCanonicalTheme } from '@/lib/ingest/taxonomy';
 
 export const runtime = 'nodejs';
@@ -24,7 +24,10 @@ export async function GET() {
     throw err;
   }
 
-  const sb = supabaseServer();
+  // Service-role: consistency with the write endpoints (rename/promote/demote)
+  // and avoids RLS surprises if future migrations tighten read policies on
+  // articles. requireAdmin() already gates.
+  const sb = getServerSupabase();
   // Pull all rows; group in memory. The corpus is <1k articles for now;
   // when it grows we move to a SQL aggregate RPC.
   const { data, error } = await sb.from('articles').select('theme, theme_status');

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireAdmin, NotAdmin } from '@/lib/auth';
-import { supabaseServer } from '@/lib/db/supabase-server';
+import { getServerSupabase } from '@/lib/db/supabase';
 import { normalizeCandidateTheme, MAX_THEME_LENGTH } from '@/lib/ingest/taxonomy';
 
 export const runtime = 'nodejs';
@@ -41,7 +41,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'invalid_body' }, { status: 400 });
   }
 
-  const sb = supabaseServer();
+  // Service-role bypass: articles has no UPDATE RLS policy for admins, so a
+  // cookie-aware client silently no-ops with 0 rows. Pattern matches
+  // /api/admin/articles/bulk-delete.
+  const sb = getServerSupabase();
   const { data, error } = await sb
     .from('articles')
     .update({ theme_status: 'canonical' })

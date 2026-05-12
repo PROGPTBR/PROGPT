@@ -20,8 +20,8 @@ function setupMocks(opts: { isAdmin: boolean; supabaseError?: { message: string 
       NotAdmin,
     };
   });
-  vi.doMock('@/lib/db/supabase-server', () => ({
-    supabaseServer: () => ({ from: () => ({ update }) }),
+  vi.doMock('@/lib/db/supabase', () => ({
+    getServerSupabase: () => ({ from: () => ({ update }) }),
   }));
   return { update, updateChain };
 }
