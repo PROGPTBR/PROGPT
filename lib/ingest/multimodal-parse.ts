@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { Block } from '@/lib/ingest/types';
 import { getOpenAI, getOpenAIModel, withRateLimitRetry } from '@/lib/llm/openai';
+import { recordApiUsage } from '@/lib/observability/api-usage';
 
 export const MULTIMODAL_SYSTEM_PROMPT = `Você é um extrator LITERAL de PDFs sobre procurement. Sua tarefa é
 TRANSCREVER o conteúdo do documento INTEGRALMENTE — NÃO RESUMA, NÃO
@@ -212,6 +213,17 @@ async function callOpenAI(
         },
         { signal },
       );
+      // OpenAI Responses API exposes usage in res.usage; fields are slightly
+      // different from chat.completions (input_tokens/output_tokens here).
+      const usage = (res as { usage?: { input_tokens?: number; output_tokens?: number; input_tokens_details?: { cached_tokens?: number } } }).usage;
+      void recordApiUsage({
+        provider: 'openai',
+        operation: 'multimodal-parse',
+        model,
+        tokensIn: usage?.input_tokens ?? 0,
+        tokensOut: usage?.output_tokens ?? 0,
+        tokensCached: usage?.input_tokens_details?.cached_tokens ?? 0,
+      });
       return res.output_text ?? '';
     },
     signal,

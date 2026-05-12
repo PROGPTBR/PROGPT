@@ -1,4 +1,5 @@
 import { requireEnv } from '@/lib/env';
+import { recordApiUsage } from '@/lib/observability/api-usage';
 
 const ENDPOINT = 'https://api.voyageai.com/v1/embeddings';
 const TIMEOUT_MS = 30_000;
@@ -36,7 +37,20 @@ export async function embed(
       throw new Error(`Voyage embed failed (${res.status}): ${detail}`);
     }
 
-    const json = (await res.json()) as { data: Array<{ embedding: number[] }> };
+    const json = (await res.json()) as {
+      data: Array<{ embedding: number[] }>;
+      usage?: { total_tokens?: number };
+    };
+    // Fire-and-forget cost tracking; never throws. Voyage returns the
+    // tokenized total in usage.total_tokens for the whole batch.
+    void recordApiUsage({
+      provider: 'voyage',
+      operation: 'embed',
+      model,
+      tokensIn: json.usage?.total_tokens ?? 0,
+      callCount: texts.length,
+      metadata: { input_type: inputType ?? null },
+    });
     return json.data.map((d) => d.embedding);
   } finally {
     clearTimeout(timer);

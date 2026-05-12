@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { getOpenAI, getOpenAIModel } from '@/lib/llm/openai';
+import { recordApiUsage } from '@/lib/observability/api-usage';
 import type { Classification, RetrievedChunk } from './types';
 import type { Trace } from '@/lib/observability/types';
 
@@ -109,6 +110,15 @@ export async function suggestFollowups(input: SuggestFollowupsInput): Promise<st
         { signal: controller.signal },
       );
       const text = res.choices[0]?.message?.content ?? '';
+      void recordApiUsage({
+        provider: 'openai',
+        operation: 'followups',
+        model: getOpenAIModel(),
+        tokensIn: res.usage?.prompt_tokens ?? 0,
+        tokensOut: res.usage?.completion_tokens ?? 0,
+        tokensCached: res.usage?.prompt_tokens_details?.cached_tokens ?? 0,
+        metadata: { mode },
+      });
       const parsed = FollowupsSchema.parse(JSON.parse(text));
       const items = postProcess(parsed.followups, query);
       span?.end({ count: items.length, latencyMs: Math.round(performance.now() - startedAt) });
