@@ -24,8 +24,8 @@ function setupMocks(opts: { isAdmin: boolean; rows?: Row[]; selectError?: { mess
       NotAdmin,
     };
   });
-  vi.doMock('@/lib/db/supabase-server', () => ({
-    supabaseServer: () => ({ from: () => ({ select }) }),
+  vi.doMock('@/lib/db/supabase', () => ({
+    getServerSupabase: () => ({ from: () => ({ select }) }),
   }));
 }
 

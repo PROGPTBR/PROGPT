@@ -31,8 +31,8 @@ function setupMocks(opts: Opts) {
       NotAdmin,
     };
   });
-  vi.doMock('@/lib/db/supabase-server', () => ({
-    supabaseServer: () => ({ from: () => ({ update }) }),
+  vi.doMock('@/lib/db/supabase', () => ({
+    getServerSupabase: () => ({ from: () => ({ update }) }),
   }));
   return { update, eq };
 }

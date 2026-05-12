@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireAdmin, NotAdmin } from '@/lib/auth';
-import { supabaseServer } from '@/lib/db/supabase-server';
+import { getServerSupabase } from '@/lib/db/supabase';
 import {
   isCanonicalTheme,
   normalizeCandidateTheme,
@@ -48,7 +48,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'noop', detail: 'from === to' }, { status: 400 });
   }
 
-  const sb = supabaseServer();
+  // Service-role bypass: articles has no UPDATE RLS policy.
+  const sb = getServerSupabase();
   const newStatus: 'canonical' | 'candidate' = isCanonicalTheme(body.to)
     ? 'canonical'
     : 'candidate';
