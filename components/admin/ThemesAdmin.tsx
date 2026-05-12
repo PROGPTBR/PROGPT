@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { ArrowRight, ArrowDown, ArrowUp, RefreshCw } from 'lucide-react';
+import { ArrowRight, ArrowDown, ArrowUp, GitMerge, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -19,6 +19,8 @@ export function ThemesAdmin() {
   const [loading, setLoading] = useState(true);
   const [renameSource, setRenameSource] = useState<ThemeRow | null>(null);
   const [renameTarget, setRenameTarget] = useState('');
+  const [mergeSource, setMergeSource] = useState<ThemeRow | null>(null);
+  const [mergeTarget, setMergeTarget] = useState('');
   const [acting, setActing] = useState(false);
 
   const fetchRows = useCallback(async () => {
@@ -95,19 +97,13 @@ export function ThemesAdmin() {
     }
   }
 
-  async function handleRename() {
-    if (!renameSource) return;
-    const target = renameTarget.trim();
-    if (target.length === 0 || target === renameSource.theme) {
-      setRenameSource(null);
-      return;
-    }
+  async function callRename(from: string, to: string, verb: 'mesclado' | 'renomeado') {
     setActing(true);
     try {
       const res = await fetch('/api/admin/themes/rename', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ from: renameSource.theme, to: target }),
+        body: JSON.stringify({ from, to }),
       });
       if (!res.ok) {
         const data = (await res.json().catch(() => ({}))) as {
@@ -117,18 +113,47 @@ export function ThemesAdmin() {
         throw new Error(data.detail ?? data.error ?? `status ${res.status}`);
       }
       const data = (await res.json()) as { moved?: number; newStatus?: string };
-      const collisionTarget = rows.find((r) => r.theme === target);
-      const verb = collisionTarget && collisionTarget.count > 0 ? 'mesclado' : 'renomeado';
       toast.success(
-        `Tema ${verb} → "${target}" — ${data.moved ?? 0} artigos · status ${data.newStatus}`,
+        `Tema ${verb} → "${to}" — ${data.moved ?? 0} artigos · status ${data.newStatus}`,
       );
-      setRenameSource(null);
-      setRenameTarget('');
       await fetchRows();
+      return true;
     } catch (err) {
-      toast.error('Falha ao renomear/mesclar', { description: String(err) });
+      toast.error('Falha ao atualizar tema', { description: String(err) });
+      return false;
     } finally {
       setActing(false);
+    }
+  }
+
+  async function handleRename() {
+    if (!renameSource) return;
+    const target = renameTarget.trim();
+    if (target.length === 0 || target === renameSource.theme) {
+      setRenameSource(null);
+      return;
+    }
+    // If the typed target collides with an existing populated theme, surface
+    // it as "mesclado" — same operation, accurate verb in the toast.
+    const collision = rows.find((r) => r.theme === target && r.theme !== renameSource.theme);
+    const verb = collision && collision.count > 0 ? 'mesclado' : 'renomeado';
+    const ok = await callRename(renameSource.theme, target, verb);
+    if (ok) {
+      setRenameSource(null);
+      setRenameTarget('');
+    }
+  }
+
+  async function handleMerge() {
+    if (!mergeSource || !mergeTarget) return;
+    if (mergeTarget === mergeSource.theme) {
+      setMergeSource(null);
+      return;
+    }
+    const ok = await callRename(mergeSource.theme, mergeTarget, 'mesclado');
+    if (ok) {
+      setMergeSource(null);
+      setMergeTarget('');
     }
   }
 
@@ -191,13 +216,28 @@ export function ThemesAdmin() {
                         variant="outline"
                         disabled={acting}
                         onClick={() => {
+                          setMergeSource(r);
+                          setMergeTarget('');
+                        }}
+                        title="Mesclar com tema existente (escolher do dropdown)"
+                      >
+                        <GitMerge className="h-3.5 w-3.5 mr-1" />
+                        Mesclar
+                      </Button>
+                    )}
+                    {r.count > 0 && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={acting}
+                        onClick={() => {
                           setRenameSource(r);
                           setRenameTarget('');
                         }}
-                        title="Renomear (ou mesclar com tema existente)"
+                        title="Renomear para um nome NOVO (texto livre)"
                       >
                         <ArrowRight className="h-3.5 w-3.5 mr-1" />
-                        Renomear / mesclar
+                        Renomear
                       </Button>
                     )}
                     {r.status === 'candidate' && r.count > 0 && (
@@ -246,6 +286,21 @@ export function ThemesAdmin() {
           busy={acting}
         />
       )}
+
+      {mergeSource && (
+        <MergeWithExistingModal
+          source={mergeSource}
+          allRows={rows}
+          target={mergeTarget}
+          onTargetChange={setMergeTarget}
+          onCancel={() => {
+            setMergeSource(null);
+            setMergeTarget('');
+          }}
+          onConfirm={handleMerge}
+          busy={acting}
+        />
+      )}
     </div>
   );
 }
@@ -281,9 +336,10 @@ function RenameMergeModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
       <div className="w-full max-w-md rounded-lg bg-card border border-border shadow-xl">
         <div className="p-4 border-b border-border">
-          <h3 className="text-sm font-semibold">Renomear ou mesclar</h3>
+          <h3 className="text-sm font-semibold">Renomear tema</h3>
           <p className="text-xs text-muted-foreground mt-1">
-            Mover os {source.count} artigos de <strong>{source.theme}</strong> para outro tema.
+            Mover os {source.count} artigos de <strong>{source.theme}</strong> para um nome novo
+            (ou um existente).
           </p>
         </div>
         <div className="p-4 space-y-3">
@@ -326,6 +382,120 @@ function RenameMergeModal({
           </Button>
           <Button onClick={onConfirm} disabled={busy || intent === 'noop'}>
             {intent === 'merge' ? 'Mesclar' : 'Renomear'}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MergeWithExistingModal({
+  source,
+  allRows,
+  target,
+  onTargetChange,
+  onCancel,
+  onConfirm,
+  busy,
+}: {
+  source: ThemeRow;
+  allRows: ThemeRow[];
+  target: string;
+  onTargetChange: (s: string) => void;
+  onCancel: () => void;
+  onConfirm: () => void;
+  busy: boolean;
+}) {
+  // Build dropdown groups: canonical first (constant alphabetical, then non-
+  // constant by count), then candidates with count > 0. Source is excluded
+  // (can't merge into self).
+  const canonicalConstant = allRows
+    .filter((r) => r.theme !== source.theme && r.inConstant)
+    .sort((a, b) => a.theme.localeCompare(b.theme, 'pt-BR'));
+  const canonicalExtra = allRows
+    .filter((r) => r.theme !== source.theme && r.status === 'canonical' && !r.inConstant)
+    .sort((a, b) => b.count - a.count);
+  const candidates = allRows
+    .filter((r) => r.theme !== source.theme && r.status === 'candidate' && r.count > 0)
+    .sort((a, b) => b.count - a.count);
+
+  const targetRow = allRows.find((r) => r.theme === target);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="w-full max-w-md rounded-lg bg-card border border-border shadow-xl">
+        <div className="p-4 border-b border-border">
+          <h3 className="text-sm font-semibold">Mesclar com tema existente</h3>
+          <p className="text-xs text-muted-foreground mt-1">
+            Mover os {source.count} artigos de <strong>{source.theme}</strong> para um tema já
+            existente.
+          </p>
+        </div>
+        <div className="p-4 space-y-3">
+          <div>
+            <label
+              htmlFor="merge-target"
+              className="text-xs text-muted-foreground block mb-1"
+            >
+              Tema de destino
+            </label>
+            <select
+              id="merge-target"
+              autoFocus
+              value={target}
+              onChange={(e) => onTargetChange(e.target.value)}
+              className="w-full h-9 rounded-md border border-input bg-background px-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+            >
+              <option value="">— escolha um tema —</option>
+              {canonicalConstant.length > 0 && (
+                <optgroup label="Canônicos (no constant)">
+                  {canonicalConstant.map((r) => (
+                    <option key={r.theme} value={r.theme}>
+                      {r.theme} {r.count > 0 ? `(${r.count})` : '(vazio)'}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
+              {canonicalExtra.length > 0 && (
+                <optgroup label="Canônicos extras">
+                  {canonicalExtra.map((r) => (
+                    <option key={r.theme} value={r.theme}>
+                      {r.theme} ({r.count})
+                    </option>
+                  ))}
+                </optgroup>
+              )}
+              {candidates.length > 0 && (
+                <optgroup label="Candidatos">
+                  {candidates.map((r) => (
+                    <option key={r.theme} value={r.theme}>
+                      {r.theme} ({r.count})
+                    </option>
+                  ))}
+                </optgroup>
+              )}
+            </select>
+          </div>
+          {targetRow && (
+            <div className="text-xs">
+              <span className="text-amber-700 dark:text-amber-300">
+                ⚠ Mescla com tema <strong>{targetRow.theme}</strong> ({targetRow.count} artigos ·{' '}
+                {targetRow.status}). Após a ação, {targetRow.count + source.count} artigos ficarão
+                sob esse nome.
+              </span>
+            </div>
+          )}
+          <div className="rounded bg-muted/50 p-2 text-[11px] text-muted-foreground">
+            Status do destino é preservado (canônico continua canônico). Apenas os artigos do
+            tema origem são movidos.
+          </div>
+        </div>
+        <div className="p-4 border-t border-border flex justify-end gap-2">
+          <Button variant="outline" onClick={onCancel} disabled={busy}>
+            Cancelar
+          </Button>
+          <Button onClick={onConfirm} disabled={busy || !target}>
+            Mesclar
           </Button>
         </div>
       </div>

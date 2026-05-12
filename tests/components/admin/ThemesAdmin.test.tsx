@@ -64,12 +64,50 @@ describe('ThemesAdmin', () => {
     expect(screen.queryByRole('button', { name: /Demover/i })).toBeNull();
   });
 
-  it('opens the rename/merge modal when "Renomear" is clicked', async () => {
+  it('opens the rename modal (free-text) when "Renomear" is clicked', async () => {
     mockFetchOk({ themes: mockThemes() });
     render(<ThemesAdmin />);
     await waitFor(() => screen.getByText('Gestão de Projetos'));
-    const renameButtons = screen.getAllByRole('button', { name: /Renomear/i });
+    const renameButtons = screen.getAllByRole('button', { name: /^Renomear$/i });
     fireEvent.click(renameButtons[0]!);
     await waitFor(() => screen.getByPlaceholderText(/Ex: Gestão da Cadeia/));
+  });
+
+  it('opens the merge modal with a dropdown when "Mesclar" is clicked', async () => {
+    mockFetchOk({ themes: mockThemes() });
+    render(<ThemesAdmin />);
+    await waitFor(() => screen.getByText('Gestão de Projetos'));
+    const mergeButtons = screen.getAllByRole('button', { name: /^Mesclar$/i });
+    fireEvent.click(mergeButtons[0]!);
+    await waitFor(() => screen.getByLabelText(/Tema de destino/i));
+    // Dropdown is a <select>; verify the placeholder option exists
+    expect(screen.getByText(/— escolha um tema —/)).toBeTruthy();
+  });
+
+  it('merge dropdown excludes the source theme and surfaces other rows as options', async () => {
+    const themes = mockThemes();
+    mockFetchOk({ themes });
+    render(<ThemesAdmin />);
+    await waitFor(() => screen.getByText('Gestão de Projetos'));
+    // Click Mesclar on the FIRST row that supports it — that's Kraljic
+    const mergeButtons = screen.getAllByRole('button', { name: /^Mesclar$/i });
+    fireEvent.click(mergeButtons[0]!);
+    await waitFor(() => screen.getByLabelText(/Tema de destino/i));
+    // Source row's theme should NOT appear in the dropdown options
+    const select = screen.getByLabelText(/Tema de destino/i) as HTMLSelectElement;
+    const optionValues = Array.from(select.querySelectorAll('option')).map((o) => o.value);
+    expect(optionValues).not.toContain('Kraljic'); // the source row clicked first
+    // But other themes should
+    expect(optionValues).toContain('Gestão de Projetos');
+    expect(optionValues).toContain('Outros');
+  });
+
+  it('renders Mesclar button on every row with count > 0 (canonical and candidate)', async () => {
+    mockFetchOk({ themes: mockThemes() });
+    render(<ThemesAdmin />);
+    await waitFor(() => screen.getByText('Gestão de Projetos'));
+    // Kraljic (5), Gestão de Projetos (3), Cadeia de Suprimentos (1) — Outros has count=0
+    const mergeButtons = screen.getAllByRole('button', { name: /^Mesclar$/i });
+    expect(mergeButtons).toHaveLength(3);
   });
 });
