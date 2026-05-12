@@ -48,8 +48,8 @@ removida em 2026-05-02). Audiência: gestores de compras brasileiros (PT-BR prim
 | 15 | `prompt-senior-expertise-complete` | `lib/rag/prompt-builder.ts` reescrito pra exigir profundidade de expert sênior em vez de "B-grade textbook answer". Regras explícitas: (a) autoria+ano na resposta direta para frameworks canônicos (Kraljic+HBR 1983, Porter 1979, Ellram 1993, Cox 1996, Williamson 1985), (b) cobertura completa quando o framework tem N elementos (todos os 4 quadrantes Kraljic, todas as 5 forças Porter, 7 etapas Monczka), (c) "aplicação prática" exige threshold + ferramenta + cadência + armadilha (mata "mapeie suas categorias"), (d) 4ª seção opcional "Limitações ou evolução" (Gelderman & Van Weele 2003 extensão Kraljic, crítica do Cox), (e) markdown estruturado para frameworks 2D (tabela/bullets com **bold**), nunca enumerações enterradas em prosa. Reference block reescrito com autoria explícita inline + estratégias canônicas dos 4 quadrantes Kraljic. SYSTEM_PROMPT mantém byte-stability (PT/EN, empty/non-empty chunks) — OpenAI prefix cache intacto. +7 vitest novos garantem regras de regressão. |
 | 16 | `open-taxonomy-complete` | Taxonomia aberta com curadoria admin. Migration 0012 dropa o CHECK constraint dos 11 temas fixos e adiciona `articles.theme_status text` (`'canonical' | 'candidate'`, default `canonical`) + length CHECK 1–50. `lib/ingest/taxonomy.ts`: `CANONICAL_THEMES` (renomeado de `TAXONOMY`, alias mantido), `isCanonicalTheme`, `normalizeCandidateTheme` (trim/collapse/strip-quotes; SEM truncate). `lib/ingest/classify-content.ts`: prompt instrui o LLM a propor novo tema (1-4 palavras, Title Case PT) quando nenhuma canônica encaixa — `Outros` vira último recurso. Retorna `{ theme, themeStatus }` para o pipeline. `PATCH /api/admin/articles/[id]` aceita qualquer string ≤50 chars e deriva `theme_status` server-side (admin não pode forjar canonicidade). Novo endpoint `POST /api/admin/themes/promote` faz bulk-promote de candidato → canônico em todos os artigos com aquele tema. UI: `ThemeSidebar` separa canônicos da seção "Candidatos · IA propôs" (amber); `ArticleDetail` mostra badge "candidato" + botão "Promover a canônico"; dropdown de tema expõe canônicas + o tema atual mesmo se candidato. CANONICAL_THEMES constant não muda na promoção (DB-only flip) — admin promove ao constant via PR quando tema estabilizar. |
 | 17 | `themes-admin-complete` | Tela dedicada `/admin/themes` para curadoria completa da taxonomia: lista todos os temas com contagem + status (canônico/candidato), badge "no constant" pros temas que vivem em `CANONICAL_THEMES`. Três ações: **Renomear/Mesclar** (modal único — se o target já existe é merge, senão é rename criando novo tema), **Promover** (candidato → canônico, só visível em candidatos), **Demover** (canônico → candidato, só visível em canônicos não-constant; refusa themes do constant pra evitar split-brain com o classifier). 3 endpoints novos: `GET /api/admin/themes` agrega+ordena (constant-canonical alfabético, depois canonical extra-constant por count, depois candidatos por count, e inclui temas-canônicos-zerados como targets válidos pra merge), `POST /api/admin/themes/rename` (deriva `theme_status` server-side via `isCanonicalTheme(to)`; refusa `from===to` com 400 `noop`; normaliza whitespace/quotes em ambos), `POST /api/admin/themes/demote` (espelho do promote do sub-projeto 16, refusa themes do CANONICAL_THEMES constant com 409 `protected_canonical`). Entrada "Temas" no `AdminSidebar` entre Artigos e Ingestão. +24 vitest novos. |
-| 19 | `api-costs-dashboard-complete` | Dashboard de custos das APIs em `/admin/costs`. Migration 0013 adiciona `api_usage_events` (provider/operation/model/tokens_in/tokens_out/tokens_cached/call_count/cost_usd_cents/metadata/created_at) + SQL function `admin_api_usage_daily(p_days)` que agrupa por dia × provider × operation. `lib/observability/api-usage.ts` expõe `recordApiUsage()` fire-and-forget (catch interno garante que falha de tracking nunca quebra pipeline) + `computeCostUsdCents()` pure-function com rate cards (gpt-4o-mini $0.15/$0.075 cached/$0.60 por 1M tok; voyage-3-large $0.18/1M; cohere $2/1k calls). Cost gravado no momento da chamada (rate frozen at write time — histórico não muda quando preços mudam). Instrumentação em 8 call sites: `chat-generate` no `onFinish` do `streamText`, `classify`/`condense`/`followups`/`classify-content` em `chat.completions.create`, `multimodal-parse` em `responses.create` (campos `input_tokens`/`output_tokens`/`input_tokens_details.cached_tokens`), `voyage.embed` (usage.total_tokens), `cohere.rerank` (per-call). `GET /api/admin/costs?range=1\|7\|30\|90` retorna `{ rangeDays, daily, totals }`. UI: range selector (Hoje/7/30/90), 3 cards de KPI (custo total, chamadas, tokens in/out + cached), tabelas por provedor e por operação, gráfico de barras horizontal CSS-only por dia. Entrada "Custos" no `AdminSidebar`. +14 vitest (cost math, recordApiUsage swallow-on-error, endpoint contract, range validation). |
 | 18 | `library-overview-intent-complete` | Resposta à dor "que temas você cobre?" (👎 em 2026-05-12 14:12 com a refusal genérica do bot). Novo intent `library_overview` no classifier (`lib/rag/classifier.ts`) com triggers PT+EN ("que temas", "lista de tópicos", "what topics do you cover"). Quando detectado, runRag pula retrieval e chama `getLibrarySnapshot()` (`lib/rag/library-snapshot.ts`) que agrega artigos por tema via service-role; `buildLibraryOverviewPrompt` injeta o snapshot como ground truth na user-message com instrução explícita "NÃO invente / NÃO recuse". LLM formata com a persona sênior padrão (SYSTEM_PROMPT mantém byte-stability — prefix cache intacto). Caps em 12 temas top, omite count=0, força status='canonical' para themes em CANONICAL_THEMES (defesa contra DB drift). UI: nova card "Descobrir" no `EmptyState` (cor primary, separada das 4 task-cards) com query "Sobre o que você pode me ensinar?". Trace ganha tag `intent:library_overview` + span `library-snapshot`. +18 vitest novos. |
+| 19 | `api-costs-dashboard-complete` | Dashboard de custos das APIs em `/admin/costs`. Migration 0013 adiciona `api_usage_events` (provider/operation/model/tokens_in/tokens_out/tokens_cached/call_count/cost_usd_cents/metadata/created_at) + SQL function `admin_api_usage_daily(p_days)` que agrupa por dia × provider × operation. `lib/observability/api-usage.ts` expõe `recordApiUsage()` fire-and-forget (catch interno garante que falha de tracking nunca quebra pipeline) + `computeCostUsdCents()` pure-function com rate cards (gpt-4o-mini $0.15/$0.075 cached/$0.60 por 1M tok; voyage-3-large $0.18/1M; cohere $2/1k calls). Cost gravado no momento da chamada (rate frozen at write time — histórico não muda quando preços mudam). Instrumentação em 8 call sites: `chat-generate` no `onFinish` do `streamText`, `classify`/`condense`/`followups`/`classify-content` em `chat.completions.create`, `multimodal-parse` em `responses.create` (campos `input_tokens`/`output_tokens`/`input_tokens_details.cached_tokens`), `voyage.embed` (usage.total_tokens), `cohere.rerank` (per-call). `GET /api/admin/costs?range=1\|7\|30\|90` retorna `{ rangeDays, daily, totals }`. UI: range selector (Hoje/7/30/90), 3 cards de KPI (custo total, chamadas, tokens in/out + cached), tabelas por provedor e por operação, gráfico de barras horizontal CSS-only por dia. Entrada "Custos" no `AdminSidebar`. +14 vitest (cost math, recordApiUsage swallow-on-error, endpoint contract, range validation). |
 
 **Milestone 1 closed.**
 
@@ -63,7 +63,7 @@ Milestone 2 entregue. Critério de saída para Milestone 3 (≥100 traces `env:b
 
 Roadmap completo em `docs/product/beta-readiness.md`. Roadmap B2B (Milestone 3+) em `docs/product/b2b-roadmap.md`.
 
-**Test count atual:** 203 vitest, 23 pytest, typecheck zero erros. CI gate: `recall@5 ≥ 0.85` em PR + push main.
+**Test count atual:** 430 vitest, 23 pytest, typecheck zero erros. CI gate: `recall@5 ≥ 0.85` em PR + push main.
 
 ## Estrutura de pastas
 ```
@@ -84,11 +84,14 @@ Roadmap completo em `docs/product/beta-readiness.md`. Roadmap B2B (Milestone 3+)
     page.tsx                            (redirect to /admin/users)
     /users/page.tsx                     (server: profiles_with_email + admin_user_session_counts → <UsersTable/>)
     /articles/page.tsx                  (mounts <ArticlesSplitView/>)
+    /themes/page.tsx                    (mounts <ThemesAdmin/>, sub-projeto 17)
     /ingest/page.tsx                    (mounts <IngestRoot/>)
-    /feedback/page.tsx                  (gated por requireAdmin → 404; mounts <FeedbackRoot/>)
+    /feedback/page.tsx                  (mounts <FeedbackRoot/>)
+    /costs/page.tsx                     (mounts <CostsDashboard/>, sub-projeto 19)
   /api/admin
     /users/route.ts                     (Node: GET list, POST invite, PATCH role)
-    /articles/[id]/route.ts             (Node: DELETE, chunks cascade)
+    /articles/[id]/route.ts             (Node: DELETE + PATCH; uses getServerSupabase service-role since 2026-05-12 — articles has no admin UPDATE RLS)
+    /articles/bulk-delete/route.ts      (Node: POST {ids[]} bulk DELETE)
     /ingest/upload/route.ts             (Node: multipart → Storage + job row)
     /ingest/run/[jobId]/route.ts        (Node, maxDuration=300: runs runPipeline)
     /ingest/jobs/route.ts               (Node: GET list, inline cleanup + stale sweep)
@@ -97,15 +100,22 @@ Roadmap completo em `docs/product/beta-readiness.md`. Roadmap B2B (Milestone 3+)
     /feedback/[id]/resolve/route.ts     (Node: POST toggle resolved_at)
     /feedback/top-queries/route.ts      (Node: GET admin_top_queries aggregation)
     /sessions/[id]/messages/route.ts    (Node: admin-gated GET de sessions.messages JSONB)
+    /themes/route.ts                    (Node: GET aggregated theme list, sub-projeto 17)
+    /themes/promote/route.ts            (Node: POST bulk candidate→canonical flip, sub-projeto 16)
+    /themes/rename/route.ts             (Node: POST {from,to} bulk rename/merge, sub-projeto 17)
+    /themes/demote/route.ts             (Node: POST canonical→candidate, refuses CANONICAL_THEMES constant, sub-projeto 17)
+    /costs/route.ts                     (Node: GET ?range=1|7|30|90, sub-projeto 19)
 /lib
   /rag
-    types.ts                            (Classification, RetrievedChunk, SourceRef, ChatMessage, RagResult)
-    classifier.ts                       (Gemini Flash: teoria, intenção, idioma)
+    types.ts                            (Classification + Intent union (6 values, library_overview added sub-projeto 18), RetrievedChunk, SourceRef, ChatMessage, RagResult)
+    classifier.ts                       (OpenAI gpt-4o-mini: theory, intent, language, needsRetrieval; library_overview triggers PT+EN since sub-projeto 18)
     retriever.ts                        (vetorial + FTS via RPC, RRF)
-    reranker.ts                         (Cohere wrapper, fallback para RRF)
-    prompt-builder.ts                   (system prompt + contexto fundamentador, SEM citações)
+    reranker.ts                         (Cohere wrapper, fallback para RRF, MIN_RELEVANCE 0.10)
+    prompt-builder.ts                   (SYSTEM_PROMPT byte-stable + buildPrompt + buildLibraryOverviewPrompt; senior-expertise rules + library snapshot path)
     condenser.ts                        (multi-turn → standalone query)
-    index.ts                            (runRag orquestrador)
+    library-snapshot.ts                 (getLibrarySnapshot for library_overview intent, sub-projeto 18)
+    followups.ts                        (suggestFollowups: gpt-4o-mini, deepen vs redirect modes)
+    index.ts                            (runRag orquestrador; library_overview short-circuits retrieval)
   /db
     supabase.ts                         (service-role + anon clients)
     supabase-browser.ts                 (cookie-aware client client; LITERAL process.env.NEXT_PUBLIC_*)
@@ -114,9 +124,10 @@ Roadmap completo em `docs/product/beta-readiness.md`. Roadmap B2B (Milestone 3+)
     openai.ts                           (getOpenAI singleton + getOpenAIModel + pingOpenAI; the only LLM wrapper since 2026-05-08)
     voyage.ts                           (embed com inputType opcional)
     cohere.ts                           (rerank wrapper)
-  /observability                        (NEW sub-projeto 7)
+  /observability
     types.ts                            (Trace, Span, TraceLevel)
     langfuse.ts                         (startTrace + flushAsync, no-op fallback quando keys absent)
+    api-usage.ts                        (recordApiUsage fire-and-forget + computeCostUsdCents pure fn, sub-projeto 19)
   env.ts                                (requireEnv — server-side only; client modules use literal process.env)
   auth.ts                               (getCurrentUser, requireUser, getProfile, NotAuthenticated, requireAdmin, NotAdmin)
   chat-storage.ts                       (@deprecated; deriveTitle ainda usado)
@@ -132,14 +143,14 @@ Roadmap completo em `docs/product/beta-readiness.md`. Roadmap B2B (Milestone 3+)
     parse-source.ts                     (parseSource dispatcher: PDF→multimodal-with-fallback, DOCX→tables-aware, TXT→trivial)
     chunker.ts                          (chunkText + chunkBlocks; paragraph-aware splitter shared internally)
     metadata.ts                         (author/language/date heurísticas; title campo ignorado pós-sub-projeto 13)
-    taxonomy.ts                         (TAXONOMY 11 temas + Theme type + isValidTheme + THEME_DESCRIPTIONS)
-    classify-content.ts                 (classifyContent: gpt-4o-mini, response_format json_object, zod, fail-soft, abort 15s)
-    pipeline.ts                         (runPipeline: dedup → classify → insert, ordering reorder em sub-projeto 13)
+    taxonomy.ts                         (CANONICAL_THEMES 11 canônicos + isCanonicalTheme + normalizeCandidateTheme + MAX_THEME_LENGTH; TAXONOMY/isValidTheme back-compat aliases, sub-projeto 16)
+    classify-content.ts                 (classifyContent: gpt-4o-mini, retorna { title, theme, themeStatus, summary }; permite candidate themes desde sub-projeto 16)
+    pipeline.ts                         (runPipeline: dedup → classify → insert, grava theme + theme_status)
 /middleware.ts                          (gates /chat + /admin via Supabase session check)
 /components
-  /chat (ChatRoot, ChatSession, Sidebar, Header, EmptyState, MessageList, Message, Composer)
+  /chat (ChatRoot, ChatSession, Sidebar, Header, EmptyState (+ "Descobrir" card, sub-projeto 18), MessageList, Message, Composer, FollowupChips, ChatErrorBoundary, MessageActions)
   /auth (LoginForm, ForgotPasswordForm, ResetPasswordForm, UserRow — admin link visível só para admins)
-  /admin (AdminSidebar, UsersTable, InviteUserDialog, ArticlesSplitView, ArticleDetail, ConfirmDelete, IngestRoot, Dropzone, JobCard, JobsLive, JobsRecent, FeedbackRoot, FeedbackList, FeedbackDetail, TopQueries)
+  /admin (AdminSidebar (+ Temas + Custos entries), UsersTable, InviteUserDialog, ArticlesSplitView (+ sort/refresh/source filename + ingested_at sub-projeto 12), ArticleDetail (+ candidate badge sub-projeto 16), ConfirmDelete, IngestRoot, Dropzone (100 MB), JobCard, JobsLive, JobsRecent, FeedbackRoot, FeedbackList, FeedbackDetail, TopQueries, ThemeSidebar (canonical + Candidatos section sub-projeto 16), ThemesAdmin (sub-projeto 17), CostsDashboard (sub-projeto 19))
   /ui (shadcn base-nova: button, textarea, scroll-area, sheet, tooltip, dialog, input, dropdown-menu, table)
   theme-provider.tsx
 /hooks
@@ -148,9 +159,19 @@ Roadmap completo em `docs/product/beta-readiness.md`. Roadmap B2B (Milestone 3+)
 /scripts
   ingest.py                             (pipeline Python, sub-projeto 2)
   rag-query.ts                          (CLI de debug, sub-projeto 3)
+  reclassify.ts                         (re-classifica todos os artigos via classifyContent)
+  reclassify-outros.ts                  (re-classifica só artigos em "Outros", preserva title/summary, sub-projeto 16)
+  apply_migrations.py                   (aplica todas as migrations em ordem, idempotente)
+  apply_migration_0012.py               (one-shot open taxonomy migration, sub-projeto 16)
+  apply_migration_0013.py               (one-shot api_usage_events migration, sub-projeto 19)
+  bootstrap_storage.py                  (cria bucket ingest-uploads + path-scoped admin policies)
+  bootstrap_admin.py                    (Auth Admin API user create + profiles.role='admin' promote)
+  check_recent_ingest.py                (diagnostic: lista 10 ingestion_jobs recentes + 5 newest articles)
+  check_dedup_target.py                 (diagnostic: lookup do artigo que um dedup job matched)
+  inspect_negative_feedback.py          (diagnostic: 👎 hoje com question + assistant message + chunks)
   /eval
-    golden.json                         (10 Q&A pairs)
-    run.ts                              (recall@5, MRR, latência)
+    golden.json                         (31 Q&A pairs, realinhados em 2026-05-09 com 27-article corpus)
+    run.ts                              (recall@5, MRR, latência; gate 0.85)
 /supabase/migrations
   00000000000000_init.sql               (pgvector, FTS, articles, chunks)
   00000000000001_articles_hash_unique.sql (idempotência da ingestão)
@@ -159,6 +180,13 @@ Roadmap completo em `docs/product/beta-readiness.md`. Roadmap B2B (Milestone 3+)
   00000000000004_sessions.sql           (sessions table + 4 owner-only RLS policies)
   00000000000005_admin_ui.sql           (ingestion_jobs + 4 admin RLS, profiles_admin_update, articles_admin_delete, profiles_with_email view, admin_user_session_counts RPC)
   00000000000006_sessions_user_id_default.sql (forward-fix: ALTER sessions.user_id SET DEFAULT auth.uid())
+  00000000000007_rate_limit.sql         (rate_limit_events + check_rate_limit RPC, sub-projeto 8)
+  00000000000008_message_feedback.sql   (message_feedback + 4 RLS owner-only + unique(user_id, trace_id), sub-projeto 9)
+  00000000000009_articles_source_chars.sql (source_chars int NOT NULL backfill, sub-projeto 10)
+  00000000000010_articles_theme.sql     (theme text + summary + CHECK 11-themes — CHECK dropado em 0012, sub-projeto 13)
+  00000000000011_feedback_resolved.sql  (resolved_at timestamptz + admin_top_queries fn, sub-projeto 14)
+  00000000000012_open_taxonomy.sql      (drop theme CHECK + theme_status enum + length CHECK 1-50, sub-projeto 16)
+  00000000000013_api_usage_events.sql   (api_usage_events + admin_api_usage_daily fn, sub-projeto 19)
 /.github/workflows
   ci.yml                                (typecheck + vitest + pytest + rag:eval em PR + push main; artifact + PR comment)
 /docs/superpowers
@@ -277,6 +305,13 @@ APP_ENV=local                  # sub-projeto 8 — drives env:<value> tag in Lan
 - Esquecer de criar a SQL function `admin_top_queries` ao reaplicar migration 0011 — sem ela, `topQueries()` retorna array vazio sem erro óbvio. A função é parte da migration 0011; verifique com `select count(*) from pg_proc where proname='admin_top_queries'` se suspeitar.
 - Confiar no `last user message` do `sessions.messages` JSONB pra preview de feedback — pode não bater com o turno do trace. v1 do sub-projeto 14 NÃO mostra preview na lista por isso. Se um sub-projeto futuro quiser preview, persistir trace_id por turno em `sessions.messages` JSONB.
 - Considerar `resolved_at` como audit log — não há `resolved_by` nem timeline. Single-tenant atual = single admin OK; em B2B precisa schema change.
+- Usar `supabaseServer()` (cookie-aware) em qualquer endpoint admin que faz UPDATE/INSERT em `articles`, `message_feedback`, `sessions`, `profiles`, `api_usage_events`, etc. — articles tem RLS só de SELECT e DELETE pra admin; UPDATE silenciosamente afeta 0 rows. Use `getServerSupabase()` (service-role, em `lib/db/supabase.ts`). Bug histórico: PR #11 (2026-05-12) corrigiu PATCH article + promote/rename/demote themes endpoints que silenciosamente no-opavam. Pattern: `requireAdmin()` + `getServerSupabase()`, NÃO `supabaseServer()`.
+- Esquecer de instrumentar `recordApiUsage()` em call site novo de LLM/embed/rerank — `/admin/costs` (sub-projeto 19) só vê o que está gravado em `api_usage_events`. Para adicionar tracking: importe `recordApiUsage` de `@/lib/observability/api-usage` e chame `void recordApiUsage({ provider, operation, model, tokensIn, tokensOut, tokensCached, callCount, metadata })` dentro do try block, ANTES do parse/return. Fire-and-forget — falha de tracking NUNCA quebra pipeline (`void` + try/catch interno).
+- Rebumear rate cards em `lib/observability/api-usage.ts` sem documentar a data — `cost_usd_cents` é gravado at write time, então linhas históricas mantêm o cost antigo. Se você muda a constant, novos rows usam a nova rate mas o histórico permanece — bom para auditoria. Se PRECISAR re-cost histórico (raro), faça via SQL UPDATE explícito documentando o motivo.
+- Considerar `intent='library_overview'` como smalltalk — sub-projeto 18 deliberadamente separou. Library_overview gera span `library-snapshot`, lê tabela articles, formata resposta com a persona sênior. Smalltalk pula tudo isso e cai no caminho refusal/no-context do prompt-builder. Confundir os dois faz meta-queries ("que temas você cobre") voltarem a refusal genérica.
+- Esquecer que `SYSTEM_PROMPT` em `lib/rag/prompt-builder.ts` é byte-stable (invariant do prefix cache OpenAI) — mudanças no prompt geram cache miss até o cache rebuild. `buildLibraryOverviewPrompt` deliberadamente reusa o mesmo `SYSTEM_PROMPT` e injeta o snapshot só no user message pra preservar o cache. Não bifurque o system prompt por intent.
+- Tentar promover/demover via mudança direta na `CANONICAL_THEMES` constant sem migration — a constant é source-of-truth do classificador (prompt), não do DB. Promover candidato → canônico flipa só `theme_status` (DB-only). Pra um tema candidato virar opção *ativa* na classificação de NOVOS uploads, é necessário editar `lib/ingest/taxonomy.ts` via PR. Decisão deliberada — admin promove ao constant após validar que o tema estabilizou.
+- Atualizar a tabela do CLAUDE.md (sub-projetos completos) na ordem errada — entradas DEVEM estar em ordem crescente (1, 2, ..., 14, 15, 16, 17, 18, 19). Inserir nova linha NO LUGAR CERTO; já vi 3 vezes nesse projeto eu trocar a ordem por engano. Sempre cole o INSERT abaixo da última linha existente.
 
 ## Fluxo de chat end-to-end (sub-projetos 1-7)
 ```
