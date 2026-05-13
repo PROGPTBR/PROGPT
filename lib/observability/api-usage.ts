@@ -23,7 +23,8 @@ export type ApiOperation =
   | 'classify-content'
   | 'multimodal-parse'
   | 'embed'
-  | 'rerank';
+  | 'rerank'
+  | 'assistant-rfp-generate';
 
 export type RecordUsageInput = {
   provider: ApiProvider;

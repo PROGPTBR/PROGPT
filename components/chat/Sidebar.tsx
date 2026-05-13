@@ -1,6 +1,7 @@
 'use client';
 
-import { Plus, Trash2 } from 'lucide-react';
+import Link from 'next/link';
+import { Plus, Trash2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import type { StoredSession } from '@/lib/chat-storage';
@@ -34,6 +35,13 @@ export function Sidebar({ sessions, currentId, onSwitch, onNew, onDelete }: Prop
           <Plus className="h-4 w-4" />
         </Button>
       </div>
+      <Link
+        href="/assistants"
+        className="flex items-center gap-2 px-4 py-2 text-sm font-medium border-b border-border text-primary hover:bg-primary/5"
+      >
+        <Sparkles className="h-4 w-4" />
+        <span>Assistentes</span>
+      </Link>
       <ScrollArea className="flex-1">
         <ul className="p-2 space-y-1">
           {sessions.map((s) => {
