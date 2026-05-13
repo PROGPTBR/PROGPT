@@ -168,7 +168,7 @@ export function TemplatesAdmin() {
             {rows.length === 0 && !loading && (
               <TableRow>
                 <TableCell colSpan={5} className="text-center text-sm text-muted-foreground py-8">
-                  Nenhum template ainda. Clique em "Novo template" para criar o primeiro.
+                  Nenhum template ainda. Clique em &quot;Novo template&quot; para criar o primeiro.
                 </TableCell>
               </TableRow>
             )}
