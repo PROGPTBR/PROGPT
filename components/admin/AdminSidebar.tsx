@@ -2,12 +2,13 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Users, FileText, Upload, MessageSquare, Tag, DollarSign, ArrowLeft } from 'lucide-react';
+import { Users, FileText, Upload, MessageSquare, Tag, DollarSign, FileCode, ArrowLeft } from 'lucide-react';
 
 const ITEMS = [
   { href: '/admin/users', label: 'Usuários', Icon: Users },
   { href: '/admin/articles', label: 'Artigos', Icon: FileText },
   { href: '/admin/themes', label: 'Temas', Icon: Tag },
+  { href: '/admin/templates', label: 'Templates', Icon: FileCode },
   { href: '/admin/ingest', label: 'Ingestão', Icon: Upload },
   { href: '/admin/feedback', label: 'Feedback', Icon: MessageSquare },
   { href: '/admin/costs', label: 'Custos', Icon: DollarSign },
