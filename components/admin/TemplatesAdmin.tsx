@@ -10,7 +10,7 @@ import { TemplateEditor, type TemplateDraft } from '@/components/admin/TemplateE
 
 type TemplateRow = {
   id: string;
-  assistant_type: 'rfp';
+  assistant_type: 'rfp' | 'kraljic';
   name: string;
   description: string | null;
   body_md: string;
@@ -20,6 +20,7 @@ type TemplateRow = {
 
 const ASSISTANT_LABEL: Record<string, string> = {
   rfp: 'RFP',
+  kraljic: 'Kraljic',
 };
 
 export function TemplatesAdmin() {
@@ -53,9 +54,12 @@ export function TemplatesAdmin() {
         ? `/api/admin/templates/${editing.id}`
         : '/api/admin/templates';
       const method = editing ? 'PATCH' : 'POST';
+      // On create we honor the editor's selection; on edit the type
+      // is immutable (UI disables the select) and we exclude it from
+      // the PATCH body.
       const body = editing
         ? { name: draft.name, description: draft.description, body_md: draft.body_md }
-        : { ...draft, assistant_type: 'rfp' };
+        : draft;
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
@@ -181,6 +185,7 @@ export function TemplatesAdmin() {
         initial={
           editing
             ? {
+                assistant_type: editing.assistant_type,
                 name: editing.name,
                 description: editing.description ?? '',
                 body_md: editing.body_md,

@@ -9,9 +9,9 @@ import { z } from 'zod';
 //   2. the templates CHECK constraint (new migration)
 //   3. ApiOperation in lib/observability/api-usage.ts
 //   4. add /api/assistants/<type>/route.ts + UI page
-export type AssistantType = 'rfp';
+export type AssistantType = 'rfp' | 'kraljic';
 
-export const ASSISTANT_TYPES = ['rfp'] as const;
+export const ASSISTANT_TYPES = ['rfp', 'kraljic'] as const;
 
 export type ThemeStatusRow = 'running' | 'done' | 'error';
 
@@ -80,13 +80,81 @@ export const RfpRequestSchema = z.object({
 
 export type RfpRequest = z.infer<typeof RfpRequestSchema>;
 
+// ── Kraljic params (form input) ──────────────────────────────────────────
+// Sub-projeto 27 — Matriz de Kraljic.
+//
+// Methodology mirrors the Procurement Garage template:
+//   - Eixo Y (Impacto no Negócio): 4 critérios escala 1-4
+//   - Eixo X (Complexidade Mercado Fornecedor): 4 critérios escala 1-4
+//   - Spend é input numérico (R$ MM); score derivado server-side via
+//     percentil dentro do portfólio (top 25%→4, 25-50%→3, 50-75%→2,
+//     bottom 25%→1).
+// The user therefore scores 7 sub-criteria per item (3 of Impacto +
+// 4 of Complexidade); Spend is the 4th Impacto criterion but
+// computed, not scored.
+
+const Score1to4 = z.number().int().min(1).max(4);
+
+export const KraljicItemSchema = z.object({
+  name: z.string().trim().min(1).max(120),
+  segment: z.string().trim().max(120).optional().default(''),
+  category: z.string().trim().max(120).optional().default(''),
+  spendMM: z.number().min(0).max(1_000_000), // R$ MM, derived to score
+  // Impacto no Negócio (Y axis) — 3 user-scored criteria
+  criticality: Score1to4, // Nível de Criticidade
+  technicalSpec: Score1to4, // Especificações Técnicas
+  customerValue: Score1to4, // Valor Percebido pelo Cliente Final
+  // Complexidade Mercado Fornecedor (X axis) — 4 user-scored criteria
+  marketStructure: Score1to4, // Estrutura do Mercado
+  marketRivalry: Score1to4, // Rivalidade do Mercado
+  supplierPower: Score1to4, // Poder de Barganha do Fornecedor
+  supplierSwitching: Score1to4, // Substituição de Fornecedor
+});
+
+export type KraljicItem = z.infer<typeof KraljicItemSchema>;
+
+export const KraljicParamsSchema = z.object({
+  portfolioName: z.string().trim().min(1).max(200),
+  notes: z.string().trim().max(2000).optional().default(''),
+  items: z.array(KraljicItemSchema).min(2).max(200),
+});
+
+export type KraljicParams = z.infer<typeof KraljicParamsSchema>;
+
+export const KraljicRequestSchema = z.object({
+  templateId: z.string().uuid(),
+  params: KraljicParamsSchema,
+});
+
+export type KraljicRequest = z.infer<typeof KraljicRequestSchema>;
+
+export type KraljicQuadrant = 'estrategico' | 'alavancavel' | 'gargalo' | 'nao-critico';
+
+export const KRALJIC_QUADRANT_LABELS: Record<KraljicQuadrant, string> = {
+  estrategico: 'Estratégico',
+  alavancavel: 'Alavancável',
+  gargalo: 'Gargalo',
+  'nao-critico': 'Não Crítico',
+};
+
+export type ClassifiedKraljicItem = KraljicItem & {
+  spendShare: number; // 0-1
+  spendScore: 1 | 2 | 3 | 4; // derived from percentile within portfolio
+  businessImpact: number; // weighted, 1-4 domain
+  supplyComplexity: number; // weighted, 1-4 domain
+  quadrant: KraljicQuadrant;
+};
+
 // ── Assistant run row shape (DB serialization) ───────────────────────────
+// `params` is discriminated by `assistant_type`. We type it as the union
+// here and narrow at the call site. Existing callers that read RFP runs
+// continue to cast to RfpParams; new Kraljic callers cast to KraljicParams.
 export type AssistantRunRow = {
   id: string;
   user_id: string;
   assistant_type: AssistantType;
   template_id: string | null;
-  params: RfpParams; // typed by assistant_type; only RFP for now
+  params: RfpParams | KraljicParams;
   output_md: string | null;
   status: ThemeStatusRow;
   error_message: string | null;

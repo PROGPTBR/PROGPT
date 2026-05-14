@@ -22,12 +22,16 @@ import { Button } from '@/components/ui/button';
 
 type RunSummary = {
   id: string;
-  assistant_type: 'rfp';
+  assistant_type: 'rfp' | 'kraljic';
   template_id: string | null;
   params: {
+    // RFP
     scope?: string;
     category?: string;
     client?: string;
+    // Kraljic
+    portfolioName?: string;
+    items?: Array<{ name?: string }>;
   };
   status: 'running' | 'done' | 'error';
   error_message: string | null;
@@ -73,8 +77,9 @@ export function RfpHistoryList() {
     void load();
   }, [load]);
 
-  async function downloadBlob(runId: string, kind: 'docx' | 'xlsx') {
-    const filename = kind === 'docx' ? `rfp-${runId.slice(0, 8)}.docx` : `cotacao-${runId.slice(0, 8)}.xlsx`;
+  async function downloadBlob(runId: string, assistantType: 'rfp' | 'kraljic', kind: 'docx' | 'xlsx') {
+    const prefix = assistantType === 'kraljic' ? 'kraljic' : kind === 'docx' ? 'rfp' : 'cotacao';
+    const filename = `${prefix}-${runId.slice(0, 8)}.${kind}`;
     const errLabel = kind === 'docx' ? 'Falha ao baixar .docx' : 'Falha ao baixar planilha';
     setDownloadingId(`${runId}-${kind}`);
     try {
@@ -100,9 +105,9 @@ export function RfpHistoryList() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Meus RFPs</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Meus assistentes</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {loading ? 'Carregando…' : `${runs.length} RFP${runs.length === 1 ? '' : 's'} salvos`}
+            {loading ? 'Carregando…' : `${runs.length} análise${runs.length === 1 ? '' : 's'} salva${runs.length === 1 ? '' : 's'}`}
           </p>
         </div>
         <Button variant="outline" size="sm" onClick={load} disabled={loading} title="Atualizar">
@@ -112,9 +117,9 @@ export function RfpHistoryList() {
 
       {!loading && runs.length === 0 && (
         <div className="rounded-md border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-          Você ainda não criou nenhum RFP.{' '}
-          <Link href="/assistants/rfp" className="text-primary underline-offset-4 hover:underline">
-            Criar o primeiro →
+          Você ainda não criou nenhuma análise.{' '}
+          <Link href="/assistants" className="text-primary underline-offset-4 hover:underline">
+            Ver assistentes disponíveis →
           </Link>
         </div>
       )}
@@ -123,9 +128,14 @@ export function RfpHistoryList() {
         <div className="rounded-md border border-border overflow-hidden">
           <ul className="divide-y divide-border">
             {runs.map((r) => {
-              const scope = r.params.scope ?? '(sem escopo)';
-              const category = r.params.category ?? '—';
-              const client = r.params.client ?? '';
+              const isKraljic = r.assistant_type === 'kraljic';
+              const scope = isKraljic
+                ? r.params.portfolioName ?? '(portfólio sem nome)'
+                : r.params.scope ?? '(sem escopo)';
+              const category = isKraljic
+                ? `${r.params.items?.length ?? 0} item(ns)`
+                : r.params.category ?? '—';
+              const client = isKraljic ? '' : r.params.client ?? '';
               const isDone = r.status === 'done';
               return (
                 <li key={r.id} className="p-4 bg-card hover:bg-accent/30 transition-colors">
@@ -172,7 +182,7 @@ export function RfpHistoryList() {
                         variant="outline"
                         size="sm"
                         disabled={!isDone || downloadingId === `${r.id}-xlsx`}
-                        onClick={() => downloadBlob(r.id, 'xlsx')}
+                        onClick={() => downloadBlob(r.id, r.assistant_type, 'xlsx')}
                         title="Planilha de cotação"
                       >
                         <FileSpreadsheet className="h-3.5 w-3.5" />
@@ -180,7 +190,7 @@ export function RfpHistoryList() {
                       <Button
                         size="sm"
                         disabled={!isDone || downloadingId === `${r.id}-docx`}
-                        onClick={() => downloadBlob(r.id, 'docx')}
+                        onClick={() => downloadBlob(r.id, r.assistant_type, 'docx')}
                         title=".docx"
                       >
                         <FileText className="h-3.5 w-3.5" />
