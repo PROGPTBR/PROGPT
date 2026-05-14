@@ -2,9 +2,21 @@ import { describe, expect, it } from 'vitest';
 import {
   splitTemplateBody,
   renderTail,
+  renderPlaceholders,
   assembleOutput,
 } from '@/lib/assistants/template-assembly';
 import type { RfpParams } from '@/lib/assistants/types';
+import type { CompanyData } from '@/lib/db/user-company';
+
+const company: CompanyData = {
+  company_name: 'ACME S.A.',
+  company_legal_name: 'ACME Indústria Ltda.',
+  company_cnpj: '12.345.678/0001-90',
+  company_email: 'compras@acme.com.br',
+  company_phone: '(11) 99999-9999',
+  company_address: 'Av. Exemplo, 100 — São Paulo/SP',
+  company_description: 'Empresa de teste para suíte de unit tests.',
+};
 
 const params: RfpParams = {
   client: 'Embraer S.A.',
@@ -97,5 +109,47 @@ describe('assembleOutput', () => {
   it('returns llm text unchanged when tail is null', () => {
     const out = assembleOutput('# Just LLM', null, params);
     expect(out).toBe('# Just LLM');
+  });
+});
+
+describe('renderPlaceholders — company fields', () => {
+  it('substitutes every supported {{empresa_*}} placeholder when company is provided', () => {
+    const text =
+      'Nome: {{empresa_nome}} | Razão: {{empresa_razao_social}} | CNPJ: {{empresa_cnpj}} | E-mail: {{empresa_email}} | Telefone: {{empresa_telefone}} | Endereço: {{empresa_endereco}} | Descrição: {{empresa_descricao}}';
+    const out = renderPlaceholders(text, params, company);
+    expect(out).toContain('ACME S.A.');
+    expect(out).toContain('ACME Indústria Ltda.');
+    expect(out).toContain('12.345.678/0001-90');
+    expect(out).toContain('compras@acme.com.br');
+    expect(out).toContain('(11) 99999-9999');
+    expect(out).toContain('Av. Exemplo, 100');
+    expect(out).toContain('Empresa de teste');
+  });
+
+  it('falls back to the form client value when company_name is unset', () => {
+    const out = renderPlaceholders('{{empresa_nome}}', params, {
+      ...company,
+      company_name: null,
+    });
+    expect(out).toBe(params.client);
+  });
+
+  it('renders empty strings (not raw placeholders) when a company field is unset', () => {
+    const out = renderPlaceholders('CNPJ: {{empresa_cnpj}}.', params, {
+      ...company,
+      company_cnpj: null,
+    });
+    expect(out).toBe('CNPJ: .');
+  });
+
+  it('uses empresa_phone and empresa_telefone as aliases for the same value', () => {
+    const out = renderPlaceholders('A:{{empresa_phone}} B:{{empresa_telefone}}', params, company);
+    expect(out).toBe('A:(11) 99999-9999 B:(11) 99999-9999');
+  });
+
+  it('renderTail back-compat still works (no company arg)', () => {
+    // Tail uses only form-derived placeholders — should render fine.
+    const out = renderTail('Cliente: {{cliente}}', params);
+    expect(out).toBe('Cliente: Embraer S.A.');
   });
 });

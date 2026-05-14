@@ -1,4 +1,5 @@
 import type { RfpParams } from './types';
+import type { CompanyData } from '@/lib/db/user-company';
 
 // Sub-projeto 23 — Programmatic template assembly.
 //
@@ -24,11 +25,19 @@ export function splitTemplateBody(bodyMd: string): {
   };
 }
 
-// Replace every `{{<key>}}` occurrence with the corresponding param value.
-// Unknown placeholders are left untouched (defensive — surfaces a bug
-// rather than silently emitting an empty string).
-export function renderTail(tail: string, params: RfpParams): string {
+// Replace every `{{<key>}}` occurrence with the corresponding value.
+// Supports form-derived placeholders (cliente/escopo/...) AND profile
+// company data placeholders (empresa_nome/empresa_cnpj/...). Unknown
+// placeholders are left untouched (defensive — surfaces a bug rather
+// than silently emitting an empty string).
+export function renderPlaceholders(
+  text: string,
+  params: RfpParams,
+  company: CompanyData | null = null,
+): string {
+  const c = company ?? null;
   const substitutions: Record<string, string> = {
+    // Form-derived
     cliente: params.client,
     categoria: params.category,
     escopo: params.scope,
@@ -37,24 +46,42 @@ export function renderTail(tail: string, params: RfpParams): string {
     criterios:
       params.criteria.length === 0
         ? '(critérios padrão de procurement)'
-        : params.criteria.map((c) => `- ${c}`).join('\n'),
+        : params.criteria.map((cr) => `- ${cr}`).join('\n'),
     notas: params.notes ?? '',
+    // Profile-derived. When a field is unset we fall back to a visible
+    // marker so the user knows to fill the profile rather than seeing a
+    // silent blank in the document.
+    empresa_nome: c?.company_name ?? params.client,
+    empresa_razao_social: c?.company_legal_name ?? '',
+    empresa_cnpj: c?.company_cnpj ?? '',
+    empresa_email: c?.company_email ?? '',
+    empresa_phone: c?.company_phone ?? '',
+    empresa_telefone: c?.company_phone ?? '', // PT-BR alias
+    empresa_endereco: c?.company_address ?? '',
+    empresa_descricao: c?.company_description ?? '',
   };
 
-  return tail.replace(/\{\{([a-z]+)\}\}/g, (full, key: string) => {
+  return text.replace(/\{\{([a-z_]+)\}\}/g, (full, key: string) => {
     const v = substitutions[key];
     return typeof v === 'string' ? v : full;
   });
 }
 
+// Back-compat alias for callers that still pass two args.
+export function renderTail(tail: string, params: RfpParams): string {
+  return renderPlaceholders(tail, params, null);
+}
+
 // Convenience: assemble final output from LLM text + tail rendered with
-// params. If the template had no tail, the LLM text is returned as-is.
+// params + company. If the template had no tail, the LLM text is
+// returned as-is.
 export function assembleOutput(
   llmText: string,
   tail: string | null,
   params: RfpParams,
+  company: CompanyData | null = null,
 ): string {
   if (!tail) return llmText;
-  const rendered = renderTail(tail, params);
+  const rendered = renderPlaceholders(tail, params, company);
   return `${llmText.trimEnd()}\n\n${rendered}`;
 }

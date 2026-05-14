@@ -70,9 +70,26 @@ export function RfpForm({ onSubmit }: { onSubmit: (v: RfpFormValues) => void }) 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Prefill "Empresa contratante" from the user's saved company name.
+  // Silent fail — if nothing saved, the field stays empty and the user
+  // types it in by hand.
+  const prefillFromProfile = useCallback(async () => {
+    try {
+      const res = await fetch('/api/profile/company', { cache: 'no-store' });
+      if (!res.ok) return;
+      const data = (await res.json()) as { company_name?: string | null };
+      if (data.company_name) {
+        setValues((v) => (v.client.length === 0 ? { ...v, client: data.company_name! } : v));
+      }
+    } catch {
+      // Non-fatal — UI still works without prefill.
+    }
+  }, []);
+
   useEffect(() => {
     void fetchTemplates();
-  }, [fetchTemplates]);
+    void prefillFromProfile();
+  }, [fetchTemplates, prefillFromProfile]);
 
   function toggleCriterion(c: string) {
     setValues((v) => ({

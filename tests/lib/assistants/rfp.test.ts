@@ -64,13 +64,19 @@ describe('buildRfpPrompt', () => {
     expect(out.user).toMatch(/Empresa contratante.*Embraer S\.A\./s);
   });
 
-  it('lists {{cliente}} among the placeholders the system prompt must resolve', () => {
-    expect(RFP_SYSTEM_PROMPT).toMatch(/\{\{cliente\}\}/);
+  it('system prompt tells the LLM that placeholders arrive pre-resolved', () => {
+    expect(RFP_SYSTEM_PROMPT).toMatch(/já chega com os valores reais resolvidos/);
+    expect(RFP_SYSTEM_PROMPT).toMatch(/NÃO precisa preencher placeholders/);
   });
 
-  it('embeds the template body verbatim so the LLM follows the structure', () => {
+  it('embeds the template head with placeholders pre-rendered (no {{...}} leaks)', () => {
     const out = buildRfpPrompt(baseParams, template, []);
-    expect(out.user).toMatch(/# RFP \{\{categoria\}\}/);
+    // The template body uses {{categoria}} and {{escopo}} — these get
+    // substituted server-side before reaching the LLM, so the prompt
+    // contains the real values, not the literal placeholders.
+    expect(out.user).toMatch(/# RFP TI \/ Software/);
+    expect(out.user).toMatch(/Software de gestão de frota/);
+    expect(out.user).not.toMatch(/\{\{categoria\}\}/);
     expect(out.user).toMatch(/RFP Padrão/);
     expect(out.user).toMatch(/Template genérico de RFP corporativo/);
   });
@@ -101,8 +107,8 @@ describe('buildRfpPrompt', () => {
     expect(out.user).toMatch(/usar critérios padrão de procurement sênior/);
   });
 
-  it('system prompt forbids placeholder leakage in output', () => {
-    expect(RFP_SYSTEM_PROMPT).toMatch(/NÃO deixe placeholders no output final/);
+  it('system prompt clarifies placeholders are pre-resolved (no leakage risk by design)', () => {
+    expect(RFP_SYSTEM_PROMPT).toMatch(/já foram substituídos pelo sistema/);
   });
 
   it('system prompt mandates markdown structure (renderable + docx-friendly)', () => {
