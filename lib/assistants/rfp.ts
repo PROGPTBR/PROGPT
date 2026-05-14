@@ -27,7 +27,9 @@ const RFP_SYSTEM_PROMPT = `Você é um especialista sênior em procurement (comp
 
 6. **Não invente fornecedores, cláusulas legais inexistentes, ou benchmarks fabricados**. Se não houver fundamento, use linguagem de "o comprador definirá" / "a ser detalhado pelo comprador" ao invés de inventar.
 
-7. **Não inclua preâmbulo nem epílogo conversacional**. Comece direto pelo título do RFP. Termine na última cláusula. Sem "Aqui está o seu RFP:" ou "Espero que esta versão te ajude!".`;
+7. **Não inclua preâmbulo nem epílogo conversacional**. Comece direto pelo título do RFP. Termine na última cláusula. Sem "Aqui está o seu RFP:" ou "Espero que esta versão te ajude!".
+
+8. **CRÍTICO — preservar texto legal verbatim**. As seções **6. Termos e Condições** e **7. Código de Conduta e Ética** do template são texto jurídico pré-aprovado. Reproduza-as INTEGRALMENTE, parágrafo por parágrafo, sem parafrasear, sem encurtar, sem omitir cláusulas, sem fundir bullets. A única transformação permitida nessas duas seções é substituir o placeholder {{cliente}} pelo nome real da empresa contratante. Mantenha a numeração e os subtítulos exatamente como aparecem no template. Esse texto é juridicamente significativo — qualquer reescrita criativa é defeito.`;
 
 function formatCriteria(criteria: string[]): string {
   if (criteria.length === 0) return '(usar critérios padrão de procurement sênior)';
