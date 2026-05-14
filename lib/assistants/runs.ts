@@ -70,6 +70,41 @@ export async function failRun(id: string, errorMessage: string): Promise<boolean
   return true;
 }
 
+// Thinner row shape for the history list — drops output_md (can be tens
+// of KB) so we can fetch ~50 rows cheaply.
+export type AssistantRunSummary = {
+  id: string;
+  assistant_type: AssistantType;
+  template_id: string | null;
+  params: RfpParams;
+  status: 'running' | 'done' | 'error';
+  error_message: string | null;
+  created_at: string;
+  finished_at: string | null;
+};
+
+// Owner-scoped list. Most recent first. Caps the result at `limit`.
+// Used by /assistants/history.
+export async function listRunsForOwner(
+  userId: string,
+  limit = 50,
+): Promise<AssistantRunSummary[]> {
+  const sb = getServerSupabase();
+  const { data, error } = await sb
+    .from('assistant_runs')
+    .select(
+      'id, assistant_type, template_id, params, status, error_message, created_at, finished_at',
+    )
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(Math.min(Math.max(limit, 1), 200));
+  if (error) {
+    console.warn('[assistants/runs] listRunsForOwner failed:', error.message);
+    return [];
+  }
+  return (data ?? []) as AssistantRunSummary[];
+}
+
 // Owner-scoped lookup. Used by the docx download endpoint to verify the
 // caller owns the run before rendering. We pass userId explicitly rather
 // than relying on RLS so the route's auth check is visible in code review.

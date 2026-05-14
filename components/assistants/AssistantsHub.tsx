@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { FileText, Clock } from 'lucide-react';
+import { FileText, Clock, History } from 'lucide-react';
 
 // Sub-projeto 20: hub page that lists available assistants. v1 has only
 // RFP; future sub-projetos add Spec Técnica, Análise de Cotação, etc.
@@ -30,12 +30,21 @@ const ASSISTANTS: Assistant[] = [
 export function AssistantsHub() {
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Assistentes</h1>
-        <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
-          Cada assistente combina a base de conhecimento com templates curados pra te entregar
-          um artefato pronto pra usar. Mais assistentes em breve.
-        </p>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Assistentes</h1>
+          <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
+            Cada assistente combina a base de conhecimento com templates curados pra te entregar
+            um artefato pronto pra usar. Mais assistentes em breve.
+          </p>
+        </div>
+        <Link
+          href="/assistants/history"
+          className="inline-flex items-center gap-1.5 text-sm rounded-md border border-input bg-background hover:bg-accent px-3 h-9"
+        >
+          <History className="h-4 w-4" />
+          Meus RFPs
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
