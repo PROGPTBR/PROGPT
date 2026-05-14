@@ -24,7 +24,8 @@ export type ApiOperation =
   | 'multimodal-parse'
   | 'embed'
   | 'rerank'
-  | 'assistant-rfp-generate';
+  | 'assistant-rfp-generate'
+  | 'assistant-rfp-refine';
 
 export type RecordUsageInput = {
   provider: ApiProvider;

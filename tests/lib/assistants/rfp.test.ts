@@ -112,4 +112,11 @@ describe('buildRfpPrompt', () => {
   it('system prompt explicitly forbids preâmbulo and chat-style epilogue', () => {
     expect(RFP_SYSTEM_PROMPT).toMatch(/preâmbulo nem epílogo/);
   });
+
+  it('system prompt mandates verbatim preservation of the legal sections (6 and 7)', () => {
+    expect(RFP_SYSTEM_PROMPT).toMatch(/preservar texto legal verbatim|verbatim/i);
+    expect(RFP_SYSTEM_PROMPT).toMatch(/Termos e Condições/);
+    expect(RFP_SYSTEM_PROMPT).toMatch(/Código de Conduta/);
+    expect(RFP_SYSTEM_PROMPT).toMatch(/sem parafrasear/);
+  });
 });

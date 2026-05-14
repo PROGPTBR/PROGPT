@@ -96,8 +96,13 @@ export async function POST(req: Request): Promise<Response> {
 
   const openai = createOpenAI({ apiKey: requireEnv('OPENAI_API_KEY') });
   const data = new StreamData();
+  // We expose runId via a custom response header (X-Run-Id). Earlier
+  // attempts used data.appendMessageAnnotation() but the Vercel AI SDK
+  // serializes annotations with type code "8:" while our client was
+  // looking for "2:" — silent mismatch left runId null and the download
+  // button permanently disabled. The header is observable before the
+  // stream is consumed, simpler, and immune to SDK protocol drift.
   data.appendMessageAnnotation({
-    runId: run.id,
     traceId: trace.id,
     templateName: template.name,
     chunkCount: chunks.length,
@@ -149,7 +154,10 @@ export async function POST(req: Request): Promise<Response> {
       },
     });
 
-    return result.toDataStreamResponse({ data });
+    return result.toDataStreamResponse({
+      data,
+      headers: { 'X-Run-Id': run.id },
+    });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error('[api/assistants/rfp] failed:', err);

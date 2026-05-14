@@ -4,7 +4,7 @@ import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { toast } from 'sonner';
-import { Download, RotateCcw, Copy } from 'lucide-react';
+import { Download, RotateCcw, Copy, FileSpreadsheet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 type Props = {
@@ -16,29 +16,53 @@ type Props = {
 };
 
 export function RfpResult({ markdown, runId, scope, generating, onReset }: Props) {
-  const [downloading, setDownloading] = useState(false);
+  const [downloadingDocx, setDownloadingDocx] = useState(false);
+  const [downloadingXlsx, setDownloadingXlsx] = useState(false);
 
-  async function handleDownload() {
+  async function downloadFile(
+    path: string,
+    filename: string,
+    setBusy: (v: boolean) => void,
+    errorLabel: string,
+  ) {
     if (!runId) return;
-    setDownloading(true);
+    setBusy(true);
     try {
-      const res = await fetch(`/api/assistants/runs/${runId}/docx`);
+      const res = await fetch(path);
       if (!res.ok) throw new Error(`status ${res.status}`);
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `rfp-${runId.slice(0, 8)}.docx`;
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
     } catch (err) {
-      toast.error('Falha ao baixar .docx', { description: String(err) });
+      toast.error(errorLabel, { description: String(err) });
     } finally {
-      setDownloading(false);
+      setBusy(false);
     }
   }
+
+  const handleDownloadDocx = () =>
+    runId &&
+    downloadFile(
+      `/api/assistants/runs/${runId}/docx`,
+      `rfp-${runId.slice(0, 8)}.docx`,
+      setDownloadingDocx,
+      'Falha ao baixar .docx',
+    );
+
+  const handleDownloadXlsx = () =>
+    runId &&
+    downloadFile(
+      `/api/assistants/runs/${runId}/xlsx`,
+      `cotacao-${runId.slice(0, 8)}.xlsx`,
+      setDownloadingXlsx,
+      'Falha ao baixar planilha',
+    );
 
   async function handleCopy() {
     try {
@@ -76,12 +100,22 @@ export function RfpResult({ markdown, runId, scope, generating, onReset }: Props
             Copiar
           </Button>
           <Button
+            variant="outline"
             size="sm"
-            onClick={handleDownload}
-            disabled={generating || !runId || downloading}
+            onClick={handleDownloadXlsx}
+            disabled={generating || !runId || downloadingXlsx}
+            title="Planilha de cotação (.xlsx)"
+          >
+            <FileSpreadsheet className="h-3.5 w-3.5 mr-1" />
+            {downloadingXlsx ? 'Baixando…' : 'Baixar planilha'}
+          </Button>
+          <Button
+            size="sm"
+            onClick={handleDownloadDocx}
+            disabled={generating || !runId || downloadingDocx}
           >
             <Download className="h-3.5 w-3.5 mr-1" />
-            {downloading ? 'Baixando…' : 'Baixar .docx'}
+            {downloadingDocx ? 'Baixando…' : 'Baixar .docx'}
           </Button>
         </div>
       </div>

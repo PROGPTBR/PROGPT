@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { RfpForm, type RfpFormValues } from './RfpForm';
 import { RfpResult } from './RfpResult';
+import { RfpChatPanel } from './RfpChatPanel';
 
 // Top-level state machine for the RFP assistant page:
 //   'form'        — user filling out parameters
@@ -49,10 +50,15 @@ export function RfpAssistant() {
         throw new Error(data.error ?? `status ${res.status}`);
       }
 
-      // The Vercel AI SDK streams "data stream protocol". We parse it
-      // ourselves here (instead of using useChat) because this isn't a
-      // chat — it's a one-shot generate. Each chunk arrives prefixed with
-      // a type code: "0:" for text deltas, "2:" for data (annotations).
+      // runId arrives via the response header (set by the API route). This
+      // is observable immediately, before the stream is consumed.
+      const runIdHeader = res.headers.get('x-run-id');
+      if (runIdHeader) setRunId(runIdHeader);
+
+      // The Vercel AI SDK streams "data stream protocol". We parse only
+      // the text deltas (type code "0:") because this isn't a chat — it's a
+      // one-shot generate. Other frames (annotations, finish events) are
+      // ignored.
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buffer = '';
@@ -61,7 +67,6 @@ export function RfpAssistant() {
         if (done) break;
         buffer += decoder.decode(value, { stream: true });
 
-        // Each line: TYPE:JSON
         const lines = buffer.split('\n');
         buffer = lines.pop() ?? '';
         for (const line of lines) {
@@ -69,17 +74,11 @@ export function RfpAssistant() {
           const colon = line.indexOf(':');
           if (colon < 0) continue;
           const type = line.slice(0, colon);
+          if (type !== '0') continue;
           const json = line.slice(colon + 1);
           try {
-            if (type === '0') {
-              const text = JSON.parse(json) as string;
-              setOutput((prev) => prev + text);
-            } else if (type === '2') {
-              const annotations = JSON.parse(json) as Array<{ runId?: string }>;
-              for (const a of annotations) {
-                if (a.runId) setRunId(a.runId);
-              }
-            }
+            const text = JSON.parse(json) as string;
+            setOutput((prev) => prev + text);
           } catch {
             // Tolerant: ignore malformed frames; stream continues.
           }
@@ -127,6 +126,8 @@ export function RfpAssistant() {
           onReset={handleReset}
         />
       )}
+
+      {phase === 'done' && runId && <RfpChatPanel runId={runId} />}
     </div>
   );
 }
