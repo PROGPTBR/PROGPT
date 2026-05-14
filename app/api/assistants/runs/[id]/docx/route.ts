@@ -3,6 +3,8 @@ import { getCurrentUser } from '@/lib/auth';
 import { getRunForOwner } from '@/lib/assistants/runs';
 import { mdToDocxBuffer } from '@/lib/assistants/docx';
 import { getUserLogoBuffer } from '@/lib/db/user-logos';
+import { getUserCompany } from '@/lib/db/user-company';
+import type { RfpParams } from '@/lib/assistants/types';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -22,11 +24,20 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
     return NextResponse.json({ error: 'not_ready', status: run.status }, { status: 409 });
   }
 
-  const scope = (run.params as { scope?: string }).scope ?? 'RFP';
+  const rfpParams = run.params as RfpParams;
+  const scope = rfpParams.scope ?? 'RFP';
   const titleSafe = `RFP - ${scope}`.slice(0, 120);
-  const logo = await getUserLogoBuffer(user.id);
+  const [logo, company] = await Promise.all([
+    getUserLogoBuffer(user.id),
+    getUserCompany(user.id),
+  ]);
   const buf = await mdToDocxBuffer(run.output_md, titleSafe, {
     logo: logo ?? undefined,
+    cover: {
+      title: titleSafe,
+      category: rfpParams.category,
+      company,
+    },
   });
 
   // Filename derived from run id (no PII), browser saves it as a .docx.

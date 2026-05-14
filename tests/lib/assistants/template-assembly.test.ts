@@ -4,6 +4,8 @@ import {
   renderTail,
   renderPlaceholders,
   assembleOutput,
+  splitAssembledOutput,
+  ASSEMBLY_BOUNDARY,
 } from '@/lib/assistants/template-assembly';
 import type { RfpParams } from '@/lib/assistants/types';
 import type { CompanyData } from '@/lib/db/user-company';
@@ -101,14 +103,17 @@ describe('renderTail', () => {
 });
 
 describe('assembleOutput', () => {
-  it('joins llm text + rendered tail with a blank line', () => {
+  it('joins llm text + rendered tail with a boundary marker between them', () => {
     const out = assembleOutput('# Generated\n\nBody.', 'Tail: {{cliente}}', params);
-    expect(out).toBe('# Generated\n\nBody.\n\nTail: Embraer S.A.');
+    expect(out).toContain('<!-- @assembled-tail-below -->');
+    expect(out.indexOf('Body.')).toBeLessThan(out.indexOf('<!-- @assembled-tail-below -->'));
+    expect(out.indexOf('<!-- @assembled-tail-below -->')).toBeLessThan(out.indexOf('Embraer S.A.'));
   });
 
-  it('returns llm text unchanged when tail is null', () => {
+  it('returns llm text unchanged (no marker) when tail is null', () => {
     const out = assembleOutput('# Just LLM', null, params);
     expect(out).toBe('# Just LLM');
+    expect(out).not.toContain('@assembled-tail-below');
   });
 });
 
@@ -151,5 +156,28 @@ describe('renderPlaceholders — company fields', () => {
     // Tail uses only form-derived placeholders — should render fine.
     const out = renderTail('Cliente: {{cliente}}', params);
     expect(out).toBe('Cliente: Embraer S.A.');
+  });
+});
+
+describe('splitAssembledOutput', () => {
+  it('splits an assembled output back into head + tail at the boundary', () => {
+    const assembled = `# Head section\n\nSome content.\n\n${ASSEMBLY_BOUNDARY}\n\n## Tail section\n\nLegal text.`;
+    const { head, tail } = splitAssembledOutput(assembled);
+    expect(head).toBe('# Head section\n\nSome content.');
+    expect(tail).toBe('## Tail section\n\nLegal text.');
+  });
+
+  it('treats the whole document as head when no boundary is present (back-compat)', () => {
+    const md = '# Just head\n\nNo marker here.';
+    const { head, tail } = splitAssembledOutput(md);
+    expect(head).toBe(md);
+    expect(tail).toBeNull();
+  });
+
+  it('round-trips: assemble then split recovers head + rendered tail', () => {
+    const assembled = assembleOutput('# Customizable head\n\nBody.', 'Cliente: {{cliente}}', params);
+    const { head, tail } = splitAssembledOutput(assembled);
+    expect(head).toBe('# Customizable head\n\nBody.');
+    expect(tail).toBe('Cliente: Embraer S.A.');
   });
 });

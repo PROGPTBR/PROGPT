@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { toast } from 'sonner';
-import { Send, Sparkles, User as UserIcon } from 'lucide-react';
+import { Send, Sparkles, User as UserIcon, FilePlus2, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 // Sub-projeto 21 — Chat panel for refining a completed RFP.
@@ -13,7 +13,11 @@ import { Button } from '@/components/ui/button';
 // not part of the deliverable. If a future sub-projeto wants history,
 // add a rfp_refinement_messages table keyed by run_id.
 
-type Msg = { role: 'user' | 'assistant'; content: string };
+type Msg = {
+  role: 'user' | 'assistant';
+  content: string;
+  applied?: boolean;
+};
 
 const SUGGESTIONS = [
   'Como reforçar os critérios técnicos sem afastar fornecedores?',
@@ -22,11 +26,44 @@ const SUGGESTIONS = [
   'Que riscos esse RFP ainda não cobre?',
 ];
 
-export function RfpChatPanel({ runId }: { runId: string }) {
+type Props = {
+  runId: string;
+  onRfpUpdated?: (newMarkdown: string) => void;
+};
+
+export function RfpChatPanel({ runId, onRfpUpdated }: Props) {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState('');
   const [streaming, setStreaming] = useState(false);
+  const [applyingIdx, setApplyingIdx] = useState<number | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
+
+  async function applySuggestion(idx: number) {
+    const msg = messages[idx];
+    if (!msg || msg.role !== 'assistant' || !msg.content.trim()) return;
+    setApplyingIdx(idx);
+    try {
+      const res = await fetch(`/api/assistants/runs/${runId}/apply`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ suggestion: msg.content }),
+      });
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(data.error ?? `status ${res.status}`);
+      }
+      const data = (await res.json()) as { output_md?: string };
+      if (data.output_md && onRfpUpdated) onRfpUpdated(data.output_md);
+      setMessages((prev) =>
+        prev.map((m, i) => (i === idx ? { ...m, applied: true } : m)),
+      );
+      toast.success('Sugestão aplicada à RFP');
+    } catch (err) {
+      toast.error('Falha ao aplicar', { description: String(err) });
+    } finally {
+      setApplyingIdx(null);
+    }
+  }
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -145,7 +182,30 @@ export function RfpChatPanel({ runId }: { runId: string }) {
                 ) : m.content.length === 0 && streaming ? (
                   <p className="italic text-muted-foreground">Pensando…</p>
                 ) : (
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
+                  <>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
+                    {/* Apply-to-RFP — only on completed assistant messages */}
+                    {m.content.length > 0 && !streaming && (
+                      <div className="not-prose mt-2">
+                        {m.applied ? (
+                          <span className="inline-flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400">
+                            <Check className="h-3 w-3" /> Aplicado à RFP
+                          </span>
+                        ) : (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            disabled={applyingIdx === i}
+                            onClick={() => applySuggestion(i)}
+                          >
+                            <FilePlus2 className="h-3.5 w-3.5 mr-1" />
+                            {applyingIdx === i ? 'Aplicando…' : 'Aplicar à RFP'}
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             </div>

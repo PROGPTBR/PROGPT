@@ -144,7 +144,12 @@ export function RfpAssistant() {
         />
       )}
 
-      {phase === 'done' && runId && <RfpChatPanel runId={runId} />}
+      {phase === 'done' && runId && (
+        <RfpChatPanel
+          runId={runId}
+          onRfpUpdated={(md) => setOutput(md)}
+        />
+      )}
     </div>
   );
 }
