@@ -1,5 +1,6 @@
 import type { RetrievedChunk } from '@/lib/rag/types';
 import type { RfpParams, TemplateRow } from './types';
+import { splitTemplateBody } from './template-assembly';
 
 // Sub-projeto 20 — Assistente de RFP prompt construction.
 //
@@ -27,9 +28,9 @@ const RFP_SYSTEM_PROMPT = `Você é um especialista sênior em procurement (comp
 
 6. **Não invente fornecedores, cláusulas legais inexistentes, ou benchmarks fabricados**. Se não houver fundamento, use linguagem de "o comprador definirá" / "a ser detalhado pelo comprador" ao invés de inventar.
 
-7. **Não inclua preâmbulo nem epílogo conversacional**. Comece direto pelo título do RFP. Termine na última cláusula. Sem "Aqui está o seu RFP:" ou "Espero que esta versão te ajude!".
+7. **Não inclua preâmbulo nem epílogo conversacional**. Comece direto pelo título do RFP. Termine na última seção customizável (Critérios de Avaliação). Sem "Aqui está o seu RFP:" ou "Espero que esta versão te ajude!".
 
-8. **CRÍTICO — preservar texto legal verbatim**. As seções **6. Termos e Condições** e **7. Código de Conduta e Ética** do template são texto jurídico pré-aprovado. Reproduza-as INTEGRALMENTE, parágrafo por parágrafo, sem parafrasear, sem encurtar, sem omitir cláusulas, sem fundir bullets. A única transformação permitida nessas duas seções é substituir o placeholder {{cliente}} pelo nome real da empresa contratante. Mantenha a numeração e os subtítulos exatamente como aparecem no template. Esse texto é juridicamente significativo — qualquer reescrita criativa é defeito.`;
+8. **CRÍTICO — escopo do output**. O template que você recebe é INTENCIONALMENTE truncado nas seções customizáveis (Apresentação, Info do Projeto, Especificações, Critérios). As seções de Cotação, Termos e Condições e Código de Conduta NÃO estão no template e NÃO devem aparecer no seu output — o sistema vai acrescentá-las automaticamente após você terminar, com placeholders {{cliente}}/{{categoria}}/etc. já resolvidos. NÃO invente cláusulas legais, NÃO recrie a tabela de cotação, NÃO repita o código de ética. Pare quando terminar de gerar a seção de Critérios.`;
 
 function formatCriteria(criteria: string[]): string {
   if (criteria.length === 0) return '(usar critérios padrão de procurement sênior)';
@@ -70,12 +71,18 @@ export function buildRfpPrompt(
 ${formatCriteria(params.criteria)}
 ${params.notes ? `- **Notas adicionais do comprador**: ${params.notes}` : ''}`;
 
-  const templateBlock = `## Template a seguir (estrutura obrigatória)
+  // Programmatic assembly: only the HEAD of the template (sections
+  // customizable by the LLM) is included in the prompt. The verbatim
+  // tail (Cotação + Termos + Código) is appended server-side in onFinish.
+  // This saves ~80% of input/output tokens and eliminates paraphrasing
+  // risk on the legal text.
+  const { head } = splitTemplateBody(template.body_md);
+  const templateBlock = `## Template a seguir (estrutura obrigatória — apenas as seções customizáveis)
 
 Nome do template: **${template.name}**
 ${template.description ? `Descrição: ${template.description}\n` : ''}
 \`\`\`markdown
-${template.body_md}
+${head}
 \`\`\``;
 
   const contextBlock = `## Contexto da base de conhecimento (use para fundamentar, NÃO cite)

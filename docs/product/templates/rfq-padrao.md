@@ -84,6 +84,8 @@ A proposta será avaliada com base nos seguintes critérios:
 
 Cada critério recebe peso definido pelo comitê de compras. O fornecedor deve responder ponto a ponto.
 
+<!-- @verbatim-from-here -->
+
 ---
 
 ## 5. Cotação

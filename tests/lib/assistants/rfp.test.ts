@@ -113,10 +113,20 @@ describe('buildRfpPrompt', () => {
     expect(RFP_SYSTEM_PROMPT).toMatch(/preâmbulo nem epílogo/);
   });
 
-  it('system prompt mandates verbatim preservation of the legal sections (6 and 7)', () => {
-    expect(RFP_SYSTEM_PROMPT).toMatch(/preservar texto legal verbatim|verbatim/i);
-    expect(RFP_SYSTEM_PROMPT).toMatch(/Termos e Condições/);
-    expect(RFP_SYSTEM_PROMPT).toMatch(/Código de Conduta/);
-    expect(RFP_SYSTEM_PROMPT).toMatch(/sem parafrasear/);
+  it('system prompt scopes the LLM output to the customizable head only (no legal text)', () => {
+    expect(RFP_SYSTEM_PROMPT).toMatch(/INTENCIONALMENTE truncado|truncado nas seções customizáveis/);
+    expect(RFP_SYSTEM_PROMPT).toMatch(/NÃO invente cláusulas legais/);
+    expect(RFP_SYSTEM_PROMPT).toMatch(/sistema vai acrescentá-las automaticamente/);
+  });
+
+  it('buildRfpPrompt slices the template at the @verbatim-from-here marker', () => {
+    const templated: TemplateRow = {
+      ...template,
+      body_md:
+        'Head section with {{escopo}}.\n\n<!-- @verbatim-from-here -->\n\nVerbatim tail not for LLM.',
+    };
+    const out = buildRfpPrompt(baseParams, templated, []);
+    expect(out.user).toMatch(/Head section/);
+    expect(out.user).not.toMatch(/Verbatim tail not for LLM/);
   });
 });
