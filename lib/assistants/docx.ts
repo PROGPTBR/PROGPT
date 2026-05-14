@@ -305,11 +305,14 @@ function buildCoverPage(
  * `opts.logo` is rendered on the cover page (when present).
  * `opts.cover` provides the title + category + buyer block for the
  * cover. When omitted, falls back to a minimal title-only cover.
+ * `opts.kraljicChartPng`, when supplied, is inserted as a full-width
+ * image right after the first `## Matriz` heading found in the body.
+ * No-op when the heading isn't present.
  */
 export async function mdToDocxBuffer(
   md: string,
   title: string,
-  opts: { logo?: DocxLogo; cover?: DocxCoverData } = {},
+  opts: { logo?: DocxLogo; cover?: DocxCoverData; kraljicChartPng?: Buffer } = {},
 ): Promise<Buffer> {
   // Strip the literal logo-placeholder line — handled by the cover page.
   const cleaned = md
@@ -359,6 +362,29 @@ export async function mdToDocxBuffer(
     const h2 = line.match(/^##\s+(.*)$/);
     if (h2) {
       body.push(headingParagraph(2, h2[1]!));
+      // Insert the Kraljic chart image right after the first Matriz heading
+      // we encounter in the markdown body. Heuristic: any h2 starting with
+      // "Matriz" (case-insensitive). Only injected once per document.
+      if (
+        opts.kraljicChartPng &&
+        /^matriz/i.test(h2[1]!.trim()) &&
+        !(body as { __kraljicInserted?: boolean }).__kraljicInserted
+      ) {
+        body.push(
+          new Paragraph({
+            alignment: AlignmentType.CENTER,
+            children: [
+              new ImageRun({
+                data: opts.kraljicChartPng,
+                transformation: { width: 560, height: 380 },
+                type: 'png',
+              }),
+            ],
+            spacing: { after: 200 },
+          }),
+        );
+        (body as { __kraljicInserted?: boolean }).__kraljicInserted = true;
+      }
       continue;
     }
     const h1 = line.match(/^#\s+(.*)$/);

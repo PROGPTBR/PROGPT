@@ -2,7 +2,8 @@ import { notFound, redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
 import { getRunForOwner } from '@/lib/assistants/runs';
 import { PastRfpView } from '@/components/assistants/PastRfpView';
-import type { RfpParams } from '@/lib/assistants/types';
+import { PastKraljicView } from '@/components/assistants/PastKraljicView';
+import type { RfpParams, KraljicParams } from '@/lib/assistants/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,9 +21,9 @@ export default async function AssistantRunDetailPage({
   if (run.status !== 'done' || !run.output_md) {
     return (
       <div className="max-w-2xl space-y-3">
-        <h1 className="text-xl font-semibold">RFP em andamento</h1>
+        <h1 className="text-xl font-semibold">Análise em andamento</h1>
         <p className="text-sm text-muted-foreground">
-          Este RFP está com status <span className="font-medium">{run.status}</span>
+          Este run está com status <span className="font-medium">{run.status}</span>
           {run.error_message ? ` — ${run.error_message}` : ''}. Aguarde a finalização ou
           gere novamente.
         </p>
@@ -30,9 +31,17 @@ export default async function AssistantRunDetailPage({
     );
   }
 
-  const scope = (run.params as RfpParams).scope ?? '(sem escopo)';
+  if (run.assistant_type === 'kraljic') {
+    const kp = run.params as KraljicParams;
+    return (
+      <PastKraljicView
+        runId={run.id}
+        initialOutput={run.output_md}
+        portfolioName={kp.portfolioName ?? '(portfólio sem nome)'}
+      />
+    );
+  }
 
-  return (
-    <PastRfpView runId={run.id} initialOutput={run.output_md} scope={scope} />
-  );
+  const scope = (run.params as RfpParams).scope ?? '(sem escopo)';
+  return <PastRfpView runId={run.id} initialOutput={run.output_md} scope={scope} />;
 }

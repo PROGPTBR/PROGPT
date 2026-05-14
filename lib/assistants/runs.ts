@@ -1,5 +1,10 @@
 import { getServerSupabase } from '@/lib/db/supabase';
-import type { AssistantRunRow, AssistantType, RfpParams } from './types';
+import type {
+  AssistantRunRow,
+  AssistantType,
+  RfpParams,
+  KraljicParams,
+} from './types';
 
 // Service-role CRUD for assistant_runs. The API route owns the lifecycle:
 // createRun() at request start, updateRunOutput() in onFinish on success,
@@ -10,7 +15,7 @@ export async function createRun(input: {
   userId: string;
   assistantType: AssistantType;
   templateId: string | null;
-  params: RfpParams;
+  params: RfpParams | KraljicParams;
   traceId: string | null;
 }): Promise<AssistantRunRow | null> {
   const sb = getServerSupabase();

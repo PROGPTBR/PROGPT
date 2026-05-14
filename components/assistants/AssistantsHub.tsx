@@ -1,18 +1,19 @@
 'use client';
 
 import Link from 'next/link';
-import { FileText, Clock, History } from 'lucide-react';
+import { FileText, Clock, History, LayoutGrid } from 'lucide-react';
 
-// Sub-projeto 20: hub page that lists available assistants. v1 has only
-// RFP; future sub-projetos add Spec Técnica, Análise de Cotação, etc.
+// Sub-projeto 20+27: hub page that lists available assistants. Cada
+// novo assistente entra como uma entrada aqui.
 
 type Assistant = {
-  type: 'rfp';
+  type: 'rfp' | 'kraljic';
   href: string;
   title: string;
   description: string;
   cta: string;
   status: 'available' | 'coming-soon';
+  icon: 'document' | 'matrix';
 };
 
 const ASSISTANTS: Assistant[] = [
@@ -24,6 +25,17 @@ const ASSISTANTS: Assistant[] = [
       'Gera um draft completo de RFP (Request for Proposal) com base nos parâmetros da sua categoria, no template selecionado e na base de conhecimento.',
     cta: 'Começar',
     status: 'available',
+    icon: 'document',
+  },
+  {
+    type: 'kraljic',
+    href: '/assistants/kraljic',
+    title: 'Assistente Kraljic',
+    description:
+      'Classifica seu portfólio de categorias na Matriz de Kraljic (Estratégico / Alavancável / Gargalo / Não Crítico), gera plano de ação por quadrante e gráfico bubble 2×2.',
+    cta: 'Começar',
+    status: 'available',
+    icon: 'matrix',
   },
 ];
 
@@ -53,7 +65,11 @@ export function AssistantsHub() {
             <div className="rounded-lg border border-border bg-card hover:bg-accent transition-colors p-5 h-full flex flex-col">
               <div className="flex items-start gap-3">
                 <div className="rounded-md bg-primary/10 p-2 text-primary">
-                  <FileText className="h-5 w-5" />
+                  {a.icon === 'matrix' ? (
+                    <LayoutGrid className="h-5 w-5" />
+                  ) : (
+                    <FileText className="h-5 w-5" />
+                  )}
                 </div>
                 <div className="flex-1">
                   <h2 className="text-sm font-semibold">{a.title}</h2>

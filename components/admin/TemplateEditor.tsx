@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
 export type TemplateDraft = {
+  assistant_type: 'rfp' | 'kraljic';
   name: string;
   description: string;
   body_md: string;
@@ -17,7 +18,12 @@ type Props = {
   onSave: (draft: TemplateDraft) => void | Promise<void>;
 };
 
-const EMPTY: TemplateDraft = { name: '', description: '', body_md: '' };
+const EMPTY: TemplateDraft = {
+  assistant_type: 'rfp',
+  name: '',
+  description: '',
+  body_md: '',
+};
 
 export function TemplateEditor({ open, initial, onCancel, onSave }: Props) {
   const [draft, setDraft] = useState<TemplateDraft>(EMPTY);
@@ -47,6 +53,27 @@ export function TemplateEditor({ open, initial, onCancel, onSave }: Props) {
         </div>
 
         <div className="p-4 space-y-3 overflow-y-auto flex-1">
+          <div>
+            <label className="text-xs text-muted-foreground block mb-1">
+              Tipo de assistente
+            </label>
+            <select
+              value={draft.assistant_type}
+              onChange={(e) =>
+                setDraft((d) => ({ ...d, assistant_type: e.target.value as 'rfp' | 'kraljic' }))
+              }
+              disabled={!!initial}
+              className="w-full h-9 rounded-md border border-input bg-background px-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-60"
+            >
+              <option value="rfp">RFP / Request for Proposal</option>
+              <option value="kraljic">Kraljic / Matriz de portfólio</option>
+            </select>
+            {initial && (
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Tipo não pode ser alterado depois da criação.
+              </p>
+            )}
+          </div>
           <div>
             <label className="text-xs text-muted-foreground block mb-1">
               Nome (obrigatório)
@@ -99,6 +126,7 @@ export function TemplateEditor({ open, initial, onCancel, onSave }: Props) {
               setSaving(true);
               try {
                 await onSave({
+                  assistant_type: draft.assistant_type,
                   name: draft.name.trim(),
                   description: draft.description.trim(),
                   body_md: draft.body_md,
