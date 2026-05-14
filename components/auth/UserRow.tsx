@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { LogOut, Shield } from 'lucide-react';
+import { LogOut, Shield, UserCircle } from 'lucide-react';
 import { supabaseBrowser } from '@/lib/db/supabase-browser';
 
 export function UserRow() {
@@ -35,6 +35,13 @@ export function UserRow() {
 
   return (
     <div className="border-t border-border">
+      <Link
+        href="/profile"
+        className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground"
+      >
+        <UserCircle className="h-4 w-4" />
+        <span>Meu perfil</span>
+      </Link>
       {isAdmin && (
         <Link
           href="/admin"

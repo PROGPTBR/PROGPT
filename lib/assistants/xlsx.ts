@@ -1,6 +1,8 @@
 import ExcelJS from 'exceljs';
 import type { RfpParams } from './types';
 
+export type XlsxLogo = { buffer: Buffer; mime: 'image/png' | 'image/jpeg' };
+
 // Sub-projeto 21 — Cotação export to .xlsx.
 //
 // The RFQ template defines a 22-column quote table with Brazilian fiscal
@@ -43,7 +45,10 @@ const COLUMNS: { header: string; key: string; width: number }[] = [
 // without inserting rows. Mirrors the original .xls (37 rows).
 const EMPTY_ROWS = 37;
 
-export async function buildCotacaoXlsxBuffer(params: RfpParams): Promise<Buffer> {
+export async function buildCotacaoXlsxBuffer(
+  params: RfpParams,
+  opts: { logo?: XlsxLogo } = {},
+): Promise<Buffer> {
   const wb = new ExcelJS.Workbook();
   wb.creator = 'ProcurementGPT';
   wb.created = new Date();
@@ -51,11 +56,24 @@ export async function buildCotacaoXlsxBuffer(params: RfpParams): Promise<Buffer>
     pageSetup: { paperSize: 9, orientation: 'landscape' },
   });
 
-  // Row 1 — banner
+  // Row 1 — banner. If logo present, place it on the left and push the
+  // text banner right; otherwise text takes the whole left block.
   ws.mergeCells('A1:F1');
-  ws.getCell('A1').value = `RFQ — ${params.category}`;
+  ws.getCell('A1').value = opts.logo ? '' : `RFQ — ${params.category}`;
   ws.getCell('A1').font = { bold: true, size: 14 };
   ws.getCell('A1').alignment = { vertical: 'middle', horizontal: 'left' };
+
+  if (opts.logo) {
+    const imageId = wb.addImage({
+      buffer: opts.logo.buffer as unknown as ArrayBuffer,
+      extension: opts.logo.mime === 'image/png' ? 'png' : 'jpeg',
+    });
+    // Anchor inside the merged A1:F1 block (row 1).
+    ws.addImage(imageId, {
+      tl: { col: 0, row: 0 },
+      ext: { width: 160, height: 32 },
+    });
+  }
 
   ws.mergeCells('G1:L1');
   ws.getCell('G1').value = `Comprador: ${params.client}`;

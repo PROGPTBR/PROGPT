@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
 import { getRunForOwner } from '@/lib/assistants/runs';
 import { buildCotacaoXlsxBuffer } from '@/lib/assistants/xlsx';
+import { getUserLogoBuffer } from '@/lib/db/user-logos';
 import type { RfpParams } from '@/lib/assistants/types';
 
 export const runtime = 'nodejs';
@@ -24,7 +25,10 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
     return NextResponse.json({ error: 'not_ready', status: run.status }, { status: 409 });
   }
 
-  const buf = await buildCotacaoXlsxBuffer(run.params as RfpParams);
+  const logo = await getUserLogoBuffer(user.id);
+  const buf = await buildCotacaoXlsxBuffer(run.params as RfpParams, {
+    logo: logo ?? undefined,
+  });
   const filename = `cotacao-${run.id.slice(0, 8)}.xlsx`;
 
   return new NextResponse(buf as unknown as BodyInit, {

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
 import { getRunForOwner } from '@/lib/assistants/runs';
 import { mdToDocxBuffer } from '@/lib/assistants/docx';
+import { getUserLogoBuffer } from '@/lib/db/user-logos';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -23,7 +24,10 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
 
   const scope = (run.params as { scope?: string }).scope ?? 'RFP';
   const titleSafe = `RFP - ${scope}`.slice(0, 120);
-  const buf = await mdToDocxBuffer(run.output_md, titleSafe);
+  const logo = await getUserLogoBuffer(user.id);
+  const buf = await mdToDocxBuffer(run.output_md, titleSafe, {
+    logo: logo ?? undefined,
+  });
 
   // Filename derived from run id (no PII), browser saves it as a .docx.
   const filename = `rfp-${run.id.slice(0, 8)}.docx`;

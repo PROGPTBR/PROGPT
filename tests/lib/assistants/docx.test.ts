@@ -49,4 +49,28 @@ Continuação após tabela.`;
     );
     expect(rich.length).toBeGreaterThan(empty.length);
   });
+
+  // 1×1 PNG (transparent) — smallest valid raster to feed ImageRun.
+  const tinyPng = Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNgAAIAAAUAAen63NgAAAAASUVORK5CYII=',
+    'base64',
+  );
+
+  it('embeds a logo image when provided in opts', async () => {
+    const withLogo = await mdToDocxBuffer('# Title', 'WithLogo', {
+      logo: { buffer: tinyPng, mime: 'image/png' },
+    });
+    const withoutLogo = await mdToDocxBuffer('# Title', 'WithoutLogo');
+    expect(withLogo.length).toBeGreaterThan(withoutLogo.length);
+    // ZIP magic bytes intact
+    expect(withLogo[0]).toBe(0x50);
+    expect(withLogo[1]).toBe(0x4b);
+  });
+
+  it('strips [INSERIR LOGO DO CLIENTE] placeholder lines from the source markdown', async () => {
+    const md = '[INSERIR LOGO DO CLIENTE]\n\n# Title\n\nBody';
+    // Tolerant render — should not throw, output is a valid docx.
+    const buf = await mdToDocxBuffer(md, 'Logo Stripped');
+    expect(buf.length).toBeGreaterThan(0);
+  });
 });

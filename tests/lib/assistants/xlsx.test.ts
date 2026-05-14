@@ -30,4 +30,19 @@ describe('buildCotacaoXlsxBuffer', () => {
     const b = await buildCotacaoXlsxBuffer(params);
     expect(Math.abs(a.length - b.length)).toBeLessThan(200);
   });
+
+  it('embeds a logo image when provided', async () => {
+    const tinyPng = Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNgAAIAAAUAAen63NgAAAAASUVORK5CYII=',
+      'base64',
+    );
+    const withLogo = await buildCotacaoXlsxBuffer(params, {
+      logo: { buffer: tinyPng, mime: 'image/png' },
+    });
+    const withoutLogo = await buildCotacaoXlsxBuffer(params);
+    expect(withLogo.length).toBeGreaterThan(withoutLogo.length);
+    // Still a valid xlsx ZIP archive
+    expect(withLogo[0]).toBe(0x50);
+    expect(withLogo[1]).toBe(0x4b);
+  });
 });
