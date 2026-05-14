@@ -5,7 +5,10 @@ import {
   HeadingLevel,
   TextRun,
   AlignmentType,
+  ImageRun,
 } from 'docx';
+
+export type DocxLogo = { buffer: Buffer; mime: 'image/png' | 'image/jpeg' };
 
 // Sub-projeto 20 — markdown → .docx conversion.
 //
@@ -84,10 +87,41 @@ function plainParagraph(text: string): Paragraph {
 /**
  * Convert markdown text to a docx Buffer.
  * Tolerant: never throws on imperfect markdown.
+ *
+ * `opts.logo`, when supplied, is rendered as a centered image immediately
+ * above the title. Any `[INSERIR LOGO DO CLIENTE]` placeholder lines in
+ * the source markdown are stripped — the image fills that slot.
  */
-export async function mdToDocxBuffer(md: string, title: string): Promise<Buffer> {
-  const lines = md.split('\n');
+export async function mdToDocxBuffer(
+  md: string,
+  title: string,
+  opts: { logo?: DocxLogo } = {},
+): Promise<Buffer> {
+  // Strip the literal logo placeholder regardless of logo presence — it's
+  // a directive to a human filling in by hand, not content.
+  const cleaned = md
+    .split('\n')
+    .filter((l) => !/\[INSERIR LOGO DO CLIENTE\]/i.test(l))
+    .join('\n');
+  const lines = cleaned.split('\n');
   const children: Paragraph[] = [];
+
+  // Logo (centered, ~200×80 max — width-capped to keep aspect ratio loose)
+  if (opts.logo) {
+    children.push(
+      new Paragraph({
+        alignment: AlignmentType.CENTER,
+        children: [
+          new ImageRun({
+            data: opts.logo.buffer,
+            transformation: { width: 200, height: 80 },
+            type: opts.logo.mime === 'image/png' ? 'png' : 'jpg',
+          }),
+        ],
+        spacing: { after: 200 },
+      }),
+    );
+  }
 
   // Title page
   children.push(
