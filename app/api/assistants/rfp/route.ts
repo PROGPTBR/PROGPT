@@ -12,6 +12,7 @@ import { getTemplate } from '@/lib/assistants/templates';
 import { buildRfpPrompt } from '@/lib/assistants/rfp';
 import { createRun, updateRunOutput, failRun } from '@/lib/assistants/runs';
 import { splitTemplateBody, assembleOutput } from '@/lib/assistants/template-assembly';
+import { getUserCompany } from '@/lib/db/user-company';
 
 export const runtime = 'nodejs';
 
@@ -93,7 +94,12 @@ export async function POST(req: Request): Promise<Response> {
   const chunks = await rerank(retrievalQuery, candidates, RERANK_TOP_N);
   rerankSpan.end({ kept: chunks.length, top1Score: chunks[0]?.rerankScore ?? null });
 
-  const { system, user: userPrompt } = buildRfpPrompt(parsed.params, template, chunks);
+  // Company data is part of the prompt context (so the LLM produces a
+  // realistic apresentação with the right email / phone / description)
+  // AND part of the verbatim tail rendering. We fetch once and reuse.
+  const company = await getUserCompany(user.id);
+
+  const { system, user: userPrompt } = buildRfpPrompt(parsed.params, template, chunks, company);
 
   const openai = createOpenAI({ apiKey: requireEnv('OPENAI_API_KEY') });
   const data = new StreamData();
@@ -148,7 +154,7 @@ export async function POST(req: Request): Promise<Response> {
           // Termos + Código) with placeholders resolved. Cost saver: the
           // LLM never re-emitted these ~25 KB of static legal text.
           const { tail } = splitTemplateBody(template.body_md);
-          const assembled = assembleOutput(text, tail, parsed.params);
+          const assembled = assembleOutput(text, tail, parsed.params, company);
           await updateRunOutput(run.id, assembled);
           trace.end({
             chars_out: assembled.length,

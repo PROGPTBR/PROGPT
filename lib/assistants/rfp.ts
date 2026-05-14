@@ -1,6 +1,7 @@
 import type { RetrievedChunk } from '@/lib/rag/types';
 import type { RfpParams, TemplateRow } from './types';
-import { splitTemplateBody } from './template-assembly';
+import { splitTemplateBody, renderPlaceholders } from './template-assembly';
+import type { CompanyData } from '@/lib/db/user-company';
 
 // Sub-projeto 20 — Assistente de RFP prompt construction.
 //
@@ -16,7 +17,7 @@ const RFP_SYSTEM_PROMPT = `Você é um especialista sênior em procurement (comp
 
 ## Regras de geração
 
-1. **Siga o template fornecido como esqueleto**. Mantenha as seções na ordem em que aparecem, traduza os placeholders ({{cliente}}, {{escopo}}, {{categoria}}, {{prazo}}, {{orcamento}}, {{criterios}}, {{notas}}) usando os parâmetros do usuário, e expanda cada seção com conteúdo substantivo. NÃO deixe placeholders no output final.
+1. **Siga o template fornecido como esqueleto**. O template já chega com os valores reais resolvidos (nome do cliente, escopo, prazo, orçamento, e-mail, CNPJ, etc.) — você NÃO precisa preencher placeholders {{...}}, eles já foram substituídos pelo sistema. Mantenha as seções na ordem em que aparecem e expanda cada seção com conteúdo substantivo de procurement sênior.
 
 2. **Profundidade técnica de procurement sênior**. Onde o template pedir critérios de avaliação, traga critérios SMART (mensuráveis, ponderáveis), não bullets genéricos. Onde pedir requisitos, separe obrigatórios (must-have) de desejáveis (nice-to-have). Onde pedir cláusulas comerciais, inclua referência a TCO, SLA, garantias, e penalidades.
 
@@ -59,7 +60,23 @@ export function buildRfpPrompt(
   params: RfpParams,
   template: TemplateRow,
   chunks: RetrievedChunk[],
+  company: CompanyData | null = null,
 ): { system: string; user: string } {
+  const companyBlock = company
+    ? [
+        company.company_legal_name ? `- **Razão social**: ${company.company_legal_name}` : '',
+        company.company_cnpj ? `- **CNPJ**: ${company.company_cnpj}` : '',
+        company.company_email ? `- **E-mail de contato**: ${company.company_email}` : '',
+        company.company_phone ? `- **Telefone**: ${company.company_phone}` : '',
+        company.company_address ? `- **Endereço**: ${company.company_address}` : '',
+        company.company_description
+          ? `- **Descrição da empresa**: ${company.company_description}`
+          : '',
+      ]
+        .filter(Boolean)
+        .join('\n')
+    : '';
+
   const paramsBlock = `## Parâmetros do RFP (fornecidos pelo usuário)
 
 - **Empresa contratante (comprador)**: ${params.client}
@@ -69,20 +86,24 @@ export function buildRfpPrompt(
 - **Orçamento estimado**: ${params.budget}
 - **Critérios de avaliação prioritários**:
 ${formatCriteria(params.criteria)}
-${params.notes ? `- **Notas adicionais do comprador**: ${params.notes}` : ''}`;
+${params.notes ? `- **Notas adicionais do comprador**: ${params.notes}` : ''}${
+    companyBlock ? `\n\n## Dados da empresa do comprador (referência)\n\n${companyBlock}` : ''
+  }`;
 
   // Programmatic assembly: only the HEAD of the template (sections
   // customizable by the LLM) is included in the prompt. The verbatim
   // tail (Cotação + Termos + Código) is appended server-side in onFinish.
-  // This saves ~80% of input/output tokens and eliminates paraphrasing
-  // risk on the legal text.
+  // We also pre-render the head's placeholders so the LLM sees real
+  // values (company name, e-mail, CNPJ, etc.) instead of {{markers}} —
+  // less cognitive load + no risk of leaked placeholders.
   const { head } = splitTemplateBody(template.body_md);
+  const renderedHead = renderPlaceholders(head, params, company);
   const templateBlock = `## Template a seguir (estrutura obrigatória — apenas as seções customizáveis)
 
 Nome do template: **${template.name}**
 ${template.description ? `Descrição: ${template.description}\n` : ''}
 \`\`\`markdown
-${head}
+${renderedHead}
 \`\`\``;
 
   const contextBlock = `## Contexto da base de conhecimento (use para fundamentar, NÃO cite)

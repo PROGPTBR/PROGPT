@@ -8,15 +8,18 @@
 
 [INSERIR LOGO DO CLIENTE]
 
+**{{empresa_nome}}** &mdash; CNPJ {{empresa_cnpj}}
+{{empresa_endereco}}
+
 **Prazo limite para envio do formulário preenchido:** {{prazo}}
 
-Em caso de dúvidas, entrar em contato através do e-mail: [INSERIR E-MAIL] ou através do telefone (xx) [INSERIR TELEFONE].
+Em caso de dúvidas, entrar em contato através do e-mail: {{empresa_email}} ou através do telefone {{empresa_telefone}}.
 
 A/C. Diretor / Gerente Comercial
 
 Prezados Senhores,
 
-[INSERIR DESCRIÇÃO DO CLIENTE]
+{{empresa_descricao}}
 
 {{escopo}}
 

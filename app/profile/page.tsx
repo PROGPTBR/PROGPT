@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
 import { ProfileLogoUpload } from '@/components/profile/ProfileLogoUpload';
+import { ProfileCompanyForm } from '@/components/profile/ProfileCompanyForm';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,6 +27,17 @@ export default async function ProfilePage() {
           </p>
         </div>
         <ProfileLogoUpload />
+      </section>
+
+      <section className="space-y-3">
+        <div>
+          <h2 className="text-base font-medium">Dados da empresa</h2>
+          <p className="text-xs text-muted-foreground mt-1">
+            Estes campos são incluídos automaticamente nos documentos gerados —
+            apresentação do RFP, banner da planilha de cotação e cláusulas de termos.
+          </p>
+        </div>
+        <ProfileCompanyForm />
       </section>
     </div>
   );
