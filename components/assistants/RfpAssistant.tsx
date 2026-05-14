@@ -54,6 +54,7 @@ export function RfpAssistant() {
       // is observable immediately, before the stream is consumed.
       const runIdHeader = res.headers.get('x-run-id');
       if (runIdHeader) setRunId(runIdHeader);
+      const finalRunId = runIdHeader;
 
       // The Vercel AI SDK streams "data stream protocol". We parse only
       // the text deltas (type code "0:") because this isn't a chat — it's a
@@ -82,6 +83,22 @@ export function RfpAssistant() {
           } catch {
             // Tolerant: ignore malformed frames; stream continues.
           }
+        }
+      }
+      // The stream only carries the LLM's portion (sections 1-4). The
+      // verbatim tail (Cotação + Termos + Código) is appended server-side
+      // via programmatic assembly. Fetch the full assembled document so
+      // the UI shows what the .docx download will contain.
+      if (finalRunId) {
+        try {
+          const outRes = await fetch(`/api/assistants/runs/${finalRunId}/output`);
+          if (outRes.ok) {
+            const data = (await outRes.json()) as { output_md?: string };
+            if (data.output_md) setOutput(data.output_md);
+          }
+        } catch {
+          // Non-fatal — user still sees the streamed head; download has
+          // the full version regardless.
         }
       }
       setPhase('done');

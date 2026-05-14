@@ -11,6 +11,7 @@ import { RfpRequestSchema } from '@/lib/assistants/types';
 import { getTemplate } from '@/lib/assistants/templates';
 import { buildRfpPrompt } from '@/lib/assistants/rfp';
 import { createRun, updateRunOutput, failRun } from '@/lib/assistants/runs';
+import { splitTemplateBody, assembleOutput } from '@/lib/assistants/template-assembly';
 
 export const runtime = 'nodejs';
 
@@ -143,8 +144,18 @@ export async function POST(req: Request): Promise<Response> {
         });
 
         if (finishReason === 'stop' && text.length > 0) {
-          await updateRunOutput(run.id, text);
-          trace.end({ chars_out: text.length, runId: run.id });
+          // Programmatic assembly: append the verbatim tail (Cotação +
+          // Termos + Código) with placeholders resolved. Cost saver: the
+          // LLM never re-emitted these ~25 KB of static legal text.
+          const { tail } = splitTemplateBody(template.body_md);
+          const assembled = assembleOutput(text, tail, parsed.params);
+          await updateRunOutput(run.id, assembled);
+          trace.end({
+            chars_out: assembled.length,
+            llm_chars: text.length,
+            tail_appended: tail !== null,
+            runId: run.id,
+          });
         } else {
           await failRun(run.id, `finish_reason=${finishReason}`);
           trace.end({ error: `finish_reason=${finishReason}`, runId: run.id }, 'WARNING');
