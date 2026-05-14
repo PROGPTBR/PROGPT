@@ -34,6 +34,7 @@ export function RfpAssistant() {
         body: JSON.stringify({
           templateId: values.templateId,
           params: {
+            client: values.client,
             scope: values.scope,
             category: values.category,
             deadline: values.deadline,
