@@ -73,4 +73,44 @@ Continuação após tabela.`;
     const buf = await mdToDocxBuffer(md, 'Logo Stripped');
     expect(buf.length).toBeGreaterThan(0);
   });
+
+  it('renders pipe tables as docx Tables (output grows compared to no-table)', async () => {
+    const withTable = await mdToDocxBuffer(
+      '# Title\n\n| A | B | C |\n|---|---|---|\n| 1 | 2 | 3 |\n| 4 | 5 | 6 |\n',
+      'TableDoc',
+    );
+    const withoutTable = await mdToDocxBuffer('# Title\n\nNo table here.', 'PlainDoc');
+    // A real Table element pulls in more XML than three flat paragraphs.
+    expect(withTable.length).toBeGreaterThan(withoutTable.length);
+    expect(withTable[0]).toBe(0x50);
+    expect(withTable[1]).toBe(0x4b);
+  });
+
+  it('tolerates wide tables (>=10 cols) without throwing', async () => {
+    const header = '| ' + Array.from({ length: 22 }, (_, i) => `C${i + 1}`).join(' | ') + ' |';
+    const delim = '| ' + Array.from({ length: 22 }, () => '---').join(' | ') + ' |';
+    const row = '| ' + Array.from({ length: 22 }, (_, i) => `${i}`).join(' | ') + ' |';
+    const md = `# Wide\n\n${header}\n${delim}\n${row}\n${row}\n`;
+    await expect(mdToDocxBuffer(md, 'Wide')).resolves.toBeInstanceOf(Buffer);
+  });
+
+  it('builds a cover page with title and company block when cover data is provided', async () => {
+    const withCover = await mdToDocxBuffer('# Body title\n\nBody.', 'Tested', {
+      cover: {
+        title: 'Tested',
+        category: 'TI / Software',
+        company: {
+          company_name: 'ACME',
+          company_legal_name: null,
+          company_cnpj: '12.345.678/0001-90',
+          company_email: 'a@b.c',
+          company_phone: null,
+          company_address: null,
+          company_description: null,
+        },
+      },
+    });
+    const noCover = await mdToDocxBuffer('# Body title\n\nBody.', 'Tested');
+    expect(withCover.length).toBeGreaterThan(noCover.length);
+  });
 });

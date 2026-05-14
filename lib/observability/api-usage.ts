@@ -25,7 +25,8 @@ export type ApiOperation =
   | 'embed'
   | 'rerank'
   | 'assistant-rfp-generate'
-  | 'assistant-rfp-refine';
+  | 'assistant-rfp-refine'
+  | 'assistant-rfp-apply';
 
 export type RecordUsageInput = {
   provider: ApiProvider;

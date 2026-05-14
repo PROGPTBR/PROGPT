@@ -6,26 +6,40 @@ import {
   TextRun,
   AlignmentType,
   ImageRun,
+  Table,
+  TableRow,
+  TableCell,
+  WidthType,
+  BorderStyle,
+  PageOrientation,
+  PageBreak,
 } from 'docx';
+import type { CompanyData } from '@/lib/db/user-company';
 
 export type DocxLogo = { buffer: Buffer; mime: 'image/png' | 'image/jpeg' };
 
-// Sub-projeto 20 — markdown → .docx conversion.
+export type DocxCoverData = {
+  title: string;
+  category?: string | null;
+  company?: CompanyData | null;
+};
+
+// Sub-projeto 25 — markdown → .docx conversion (v2).
 //
-// The LLM emits markdown; we render it server-side to a .docx Buffer for
-// download. Tolerant to imperfect markdown — falls back to plain paragraphs
-// rather than throwing on edge cases (the LLM occasionally produces broken
-// table syntax or stray ** runs, which a strict parser would reject).
+// Adds:
+//   - Proper docx Tables (parsed from markdown pipe tables) instead of
+//     flattening every row to a paragraph.
+//   - A cover page section (centered logo, title, buyer block) followed
+//     by an explicit page break before the body.
+//   - Tolerant edge handling: pipe tables with mismatched col counts
+//     still render; rows are filled to the widest row.
 //
-// Scope (v1): headings (#, ##, ###), unordered lists (-, *), ordered lists
-// (1., 2.), inline bold (**text**), plain paragraphs. Tables, code blocks,
-// and links are flattened to plain text — good enough for the RFP output
-// we observe; can be extended in a future sub-projeto if admin asks.
+// Scope still capped at: headings, lists, inline bold, paragraphs,
+// pipe tables. Code blocks and links pass through as text.
 
 type Inline = { text: string; bold: boolean };
 
 function parseInlineRuns(line: string): Inline[] {
-  // Split on **bold** spans. Anything not matched is plain text.
   const out: Inline[] = [];
   let remaining = line;
   while (remaining.length > 0) {
@@ -41,10 +55,12 @@ function parseInlineRuns(line: string): Inline[] {
   return out.filter((r) => r.text.length > 0);
 }
 
-function runsFromInline(line: string): TextRun[] {
+function runsFromInline(line: string, opts: { size?: number } = {}): TextRun[] {
   const runs = parseInlineRuns(line);
   if (runs.length === 0) return [new TextRun('')];
-  return runs.map((r) => new TextRun({ text: r.text, bold: r.bold }));
+  return runs.map(
+    (r) => new TextRun({ text: r.text, bold: r.bold, ...(opts.size ? { size: opts.size } : {}) }),
+  );
 }
 
 function headingParagraph(level: 1 | 2 | 3, text: string): Paragraph {
@@ -69,8 +85,6 @@ function bulletParagraph(text: string): Paragraph {
 }
 
 function numberedParagraph(text: string, num: number): Paragraph {
-  // No real list numbering — we prepend the number into the text. For v1
-  // this avoids the docx numbering config dance which is brittle.
   return new Paragraph({
     children: [new TextRun({ text: `${num}. ` }), ...runsFromInline(text)],
     spacing: { after: 80 },
@@ -84,109 +98,298 @@ function plainParagraph(text: string): Paragraph {
   });
 }
 
+// ── Table parsing ────────────────────────────────────────────────────────
+
+function isTableRowLine(line: string): boolean {
+  return /^\s*\|.*\|\s*$/.test(line);
+}
+
+function isTableDelimiterLine(line: string): boolean {
+  return /^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?\s*$/.test(line);
+}
+
+function splitRow(line: string): string[] {
+  // Trim outer pipes then split — preserves empty cells.
+  const trimmed = line.trim().replace(/^\|/, '').replace(/\|$/, '');
+  return trimmed.split('|').map((c) => c.trim());
+}
+
+function buildDocxTable(rows: string[][], headerRow: string[] | null): Table {
+  const colCount = Math.max(headerRow?.length ?? 0, ...rows.map((r) => r.length));
+  const allRows: { cells: string[]; header: boolean }[] = [];
+  if (headerRow) allRows.push({ cells: headerRow, header: true });
+  for (const r of rows) allRows.push({ cells: r, header: false });
+
+  // Compact font for wide tables (≥10 cols) — keeps the table readable
+  // when the column count makes default size overflow the page.
+  const cellFontSize = colCount >= 10 ? 14 : 18; // half-points (7pt / 9pt)
+
+  const docxRows = allRows.map(
+    (r) =>
+      new TableRow({
+        tableHeader: r.header,
+        children: Array.from({ length: colCount }, (_, i) => {
+          const cellText = r.cells[i] ?? '';
+          return new TableCell({
+            children: [
+              new Paragraph({
+                children: runsFromInline(cellText, { size: cellFontSize }).map((run) => {
+                  // Header cells: always bold
+                  if (r.header && 'bold' in run) {
+                    return new TextRun({
+                      text: (run as unknown as { text: string }).text,
+                      bold: true,
+                      size: cellFontSize,
+                    });
+                  }
+                  return run;
+                }),
+                spacing: { after: 0 },
+              }),
+            ],
+            width: { size: Math.floor(10000 / colCount), type: WidthType.DXA },
+            margins: { top: 40, bottom: 40, left: 60, right: 60 },
+          });
+        }),
+      }),
+  );
+
+  return new Table({
+    rows: docxRows,
+    width: { size: 100, type: WidthType.PERCENTAGE },
+    borders: {
+      top: { style: BorderStyle.SINGLE, size: 4, color: '808080' },
+      bottom: { style: BorderStyle.SINGLE, size: 4, color: '808080' },
+      left: { style: BorderStyle.SINGLE, size: 4, color: '808080' },
+      right: { style: BorderStyle.SINGLE, size: 4, color: '808080' },
+      insideHorizontal: { style: BorderStyle.SINGLE, size: 2, color: 'CCCCCC' },
+      insideVertical: { style: BorderStyle.SINGLE, size: 2, color: 'CCCCCC' },
+    },
+  });
+}
+
+// ── Cover page ───────────────────────────────────────────────────────────
+
+function buildCoverPage(
+  cover: DocxCoverData,
+  logo: DocxLogo | undefined,
+): (Paragraph | Table)[] {
+  const out: (Paragraph | Table)[] = [];
+
+  // Vertical spacer pushes the logo down ~1/4 page.
+  out.push(new Paragraph({ children: [new TextRun('')], spacing: { after: 1200 } }));
+
+  if (logo) {
+    out.push(
+      new Paragraph({
+        alignment: AlignmentType.CENTER,
+        children: [
+          new ImageRun({
+            data: logo.buffer,
+            transformation: { width: 280, height: 110 },
+            type: logo.mime === 'image/png' ? 'png' : 'jpg',
+          }),
+        ],
+        spacing: { after: 600 },
+      }),
+    );
+  }
+
+  out.push(
+    new Paragraph({
+      alignment: AlignmentType.CENTER,
+      children: [new TextRun({ text: 'REQUISIÇÃO DE PROPOSTA', bold: true, size: 44 })],
+      spacing: { after: 200 },
+    }),
+  );
+
+  if (cover.category) {
+    out.push(
+      new Paragraph({
+        alignment: AlignmentType.CENTER,
+        children: [new TextRun({ text: cover.category, size: 28, color: '666666' })],
+        spacing: { after: 800 },
+      }),
+    );
+  } else {
+    out.push(new Paragraph({ children: [new TextRun('')], spacing: { after: 800 } }));
+  }
+
+  // Buyer block — only emitted when at least one field is set.
+  const c = cover.company;
+  const buyerRows: { label: string; value: string }[] = [];
+  if (c?.company_name) buyerRows.push({ label: 'Empresa', value: c.company_name });
+  if (c?.company_legal_name)
+    buyerRows.push({ label: 'Razão social', value: c.company_legal_name });
+  if (c?.company_cnpj) buyerRows.push({ label: 'CNPJ', value: c.company_cnpj });
+  if (c?.company_address) buyerRows.push({ label: 'Endereço', value: c.company_address });
+  if (c?.company_email) buyerRows.push({ label: 'E-mail', value: c.company_email });
+  if (c?.company_phone) buyerRows.push({ label: 'Telefone', value: c.company_phone });
+  buyerRows.push({
+    label: 'Data de emissão',
+    value: new Date().toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+    }),
+  });
+
+  if (buyerRows.length > 0) {
+    out.push(
+      new Table({
+        rows: buyerRows.map(
+          (r) =>
+            new TableRow({
+              children: [
+                new TableCell({
+                  children: [
+                    new Paragraph({
+                      children: [new TextRun({ text: r.label, bold: true, size: 20 })],
+                      spacing: { after: 0 },
+                    }),
+                  ],
+                  width: { size: 30, type: WidthType.PERCENTAGE },
+                  margins: { top: 60, bottom: 60, left: 80, right: 80 },
+                }),
+                new TableCell({
+                  children: [
+                    new Paragraph({
+                      children: [new TextRun({ text: r.value, size: 20 })],
+                      spacing: { after: 0 },
+                    }),
+                  ],
+                  width: { size: 70, type: WidthType.PERCENTAGE },
+                  margins: { top: 60, bottom: 60, left: 80, right: 80 },
+                }),
+              ],
+            }),
+        ),
+        width: { size: 70, type: WidthType.PERCENTAGE },
+        alignment: AlignmentType.CENTER,
+        borders: {
+          top: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
+          bottom: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
+          left: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
+          right: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
+          insideHorizontal: { style: BorderStyle.SINGLE, size: 2, color: 'CCCCCC' },
+          insideVertical: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
+        },
+      }),
+    );
+  }
+
+  // Page break before the body.
+  out.push(
+    new Paragraph({
+      children: [new PageBreak()],
+    }),
+  );
+
+  return out;
+}
+
+// ── Public API ───────────────────────────────────────────────────────────
+
 /**
  * Convert markdown text to a docx Buffer.
  * Tolerant: never throws on imperfect markdown.
  *
- * `opts.logo`, when supplied, is rendered as a centered image immediately
- * above the title. Any `[INSERIR LOGO DO CLIENTE]` placeholder lines in
- * the source markdown are stripped — the image fills that slot.
+ * `opts.logo` is rendered on the cover page (when present).
+ * `opts.cover` provides the title + category + buyer block for the
+ * cover. When omitted, falls back to a minimal title-only cover.
  */
 export async function mdToDocxBuffer(
   md: string,
   title: string,
-  opts: { logo?: DocxLogo } = {},
+  opts: { logo?: DocxLogo; cover?: DocxCoverData } = {},
 ): Promise<Buffer> {
-  // Strip the literal logo placeholder regardless of logo presence — it's
-  // a directive to a human filling in by hand, not content.
+  // Strip the literal logo-placeholder line — handled by the cover page.
   const cleaned = md
     .split('\n')
     .filter((l) => !/\[INSERIR LOGO DO CLIENTE\]/i.test(l))
     .join('\n');
   const lines = cleaned.split('\n');
-  const children: Paragraph[] = [];
 
-  // Logo (centered, ~200×80 max — width-capped to keep aspect ratio loose)
-  if (opts.logo) {
-    children.push(
-      new Paragraph({
-        alignment: AlignmentType.CENTER,
-        children: [
-          new ImageRun({
-            data: opts.logo.buffer,
-            transformation: { width: 200, height: 80 },
-            type: opts.logo.mime === 'image/png' ? 'png' : 'jpg',
-          }),
-        ],
-        spacing: { after: 200 },
-      }),
-    );
-  }
-
-  // Title page
-  children.push(
-    new Paragraph({
-      alignment: AlignmentType.CENTER,
-      children: [new TextRun({ text: title, bold: true, size: 36 })],
-      spacing: { after: 400 },
-    }),
-  );
-
+  const body: (Paragraph | Table)[] = [];
   let orderedCounter = 0;
 
-  for (const rawLine of lines) {
-    const line = rawLine.trimEnd();
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]!.trimEnd();
 
-    // Reset ordered counter when we leave an ordered list block.
+    // Table detection: row line followed by a delimiter line on the next.
+    if (
+      isTableRowLine(line) &&
+      i + 1 < lines.length &&
+      isTableDelimiterLine(lines[i + 1]!)
+    ) {
+      const headerCells = splitRow(line);
+      i += 2; // skip header row + delimiter
+      const dataRows: string[][] = [];
+      while (i < lines.length && isTableRowLine(lines[i]!)) {
+        dataRows.push(splitRow(lines[i]!));
+        i++;
+      }
+      body.push(buildDocxTable(dataRows, headerCells));
+      // Spacer after the table.
+      body.push(new Paragraph({ children: [new TextRun('')], spacing: { after: 120 } }));
+      i -= 1; // for-loop will i++ after this iter
+      continue;
+    }
+
     if (!line.match(/^\d+\.\s/) && orderedCounter > 0) orderedCounter = 0;
 
     if (line.length === 0) {
-      children.push(new Paragraph({ children: [new TextRun('')] }));
+      body.push(new Paragraph({ children: [new TextRun('')] }));
       continue;
     }
 
     const h3 = line.match(/^###\s+(.*)$/);
     if (h3) {
-      children.push(headingParagraph(3, h3[1]!));
+      body.push(headingParagraph(3, h3[1]!));
       continue;
     }
     const h2 = line.match(/^##\s+(.*)$/);
     if (h2) {
-      children.push(headingParagraph(2, h2[1]!));
+      body.push(headingParagraph(2, h2[1]!));
       continue;
     }
     const h1 = line.match(/^#\s+(.*)$/);
     if (h1) {
-      children.push(headingParagraph(1, h1[1]!));
+      body.push(headingParagraph(1, h1[1]!));
       continue;
     }
 
     const bullet = line.match(/^\s*[-*]\s+(.*)$/);
     if (bullet) {
-      children.push(bulletParagraph(bullet[1]!));
+      body.push(bulletParagraph(bullet[1]!));
       continue;
     }
 
     const ordered = line.match(/^\s*(\d+)\.\s+(.*)$/);
     if (ordered) {
       orderedCounter += 1;
-      children.push(numberedParagraph(ordered[2]!, orderedCounter));
+      body.push(numberedParagraph(ordered[2]!, orderedCounter));
       continue;
     }
 
-    // Skip table delimiter rows ("|---|---|") and the horizontal rules
-    // ("---" by itself). Render any other line as a paragraph (including
-    // table content rows, which we flatten — good enough for v1).
-    if (/^\s*\|?\s*-{3,}.*$/.test(line)) continue;
+    // Horizontal rule line (---), skip.
+    if (/^\s*-{3,}\s*$/.test(line)) continue;
 
-    plainParagraph(line);
-    children.push(plainParagraph(line));
+    body.push(plainParagraph(line));
   }
+
+  const cover: DocxCoverData = opts.cover ?? { title };
+  const coverPage = buildCoverPage(cover, opts.logo);
 
   const doc = new Document({
     creator: 'ProcurementGPT',
     title,
-    sections: [{ children }],
+    sections: [
+      {
+        properties: { page: { size: { orientation: PageOrientation.PORTRAIT } } },
+        children: [...coverPage, ...body],
+      },
+    ],
   });
   return Packer.toBuffer(doc);
 }

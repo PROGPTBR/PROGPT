@@ -72,9 +72,16 @@ export function renderTail(tail: string, params: RfpParams): string {
   return renderPlaceholders(tail, params, null);
 }
 
+// HTML comment marker we drop into the assembled output. Lets us later
+// split a stored output_md back into "LLM-generated head" and "verbatim
+// tail" without keeping them in separate columns. Invisible in rendered
+// markdown.
+export const ASSEMBLY_BOUNDARY = '<!-- @assembled-tail-below -->';
+
 // Convenience: assemble final output from LLM text + tail rendered with
 // params + company. If the template had no tail, the LLM text is
-// returned as-is.
+// returned as-is. Marker is dropped between head and tail when both are
+// present.
 export function assembleOutput(
   llmText: string,
   tail: string | null,
@@ -83,5 +90,22 @@ export function assembleOutput(
 ): string {
   if (!tail) return llmText;
   const rendered = renderPlaceholders(tail, params, company);
-  return `${llmText.trimEnd()}\n\n${rendered}`;
+  return `${llmText.trimEnd()}\n\n${ASSEMBLY_BOUNDARY}\n\n${rendered}`;
+}
+
+// Inverse of assembleOutput — given a stored output_md, return the
+// LLM-generated head (what the user can edit via "apply suggestion")
+// and the verbatim tail (untouchable). When no marker is present we
+// treat the whole document as head (back-compat with rows stored
+// before this marker was introduced).
+export function splitAssembledOutput(outputMd: string): {
+  head: string;
+  tail: string | null;
+} {
+  const idx = outputMd.indexOf(ASSEMBLY_BOUNDARY);
+  if (idx === -1) return { head: outputMd, tail: null };
+  return {
+    head: outputMd.slice(0, idx).trimEnd(),
+    tail: outputMd.slice(idx + ASSEMBLY_BOUNDARY.length).trimStart(),
+  };
 }
