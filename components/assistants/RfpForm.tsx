@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 // before the round-trip; the server is the source of truth.
 export type RfpFormValues = {
   templateId: string;
+  client: string;
   scope: string;
   category: string;
   deadline: string;
@@ -37,6 +38,7 @@ const DEFAULT_CRITERIA_SUGGESTIONS = [
 
 const EMPTY: RfpFormValues = {
   templateId: '',
+  client: '',
   scope: '',
   category: '',
   deadline: '',
@@ -83,6 +85,7 @@ export function RfpForm({ onSubmit }: { onSubmit: (v: RfpFormValues) => void }) 
 
   const valid =
     values.templateId.length > 0 &&
+    values.client.trim().length >= 2 &&
     values.scope.trim().length >= 10 &&
     values.category.trim().length >= 2 &&
     values.deadline.trim().length >= 1 &&
@@ -121,6 +124,21 @@ export function RfpForm({ onSubmit }: { onSubmit: (v: RfpFormValues) => void }) 
             ))}
           </select>
         )}
+      </div>
+
+      <div>
+        <label className="text-xs font-medium block mb-1">
+          Empresa contratante <span className="text-destructive">*</span>
+        </label>
+        <Input
+          value={values.client}
+          onChange={(e) => setValues((v) => ({ ...v, client: e.target.value }))}
+          placeholder="Ex: Embraer, Petrobras, Universidade Federal Fluminense"
+          maxLength={200}
+        />
+        <p className="text-[10px] text-muted-foreground mt-0.5">
+          Nome da empresa/órgão que está comprando — aparece nos termos do RFP.
+        </p>
       </div>
 
       <div>

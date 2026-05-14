@@ -4,6 +4,7 @@ import type { RfpParams, TemplateRow } from '@/lib/assistants/types';
 import type { RetrievedChunk } from '@/lib/rag/types';
 
 const baseParams: RfpParams = {
+  client: 'Embraer S.A.',
   scope: 'Software de gestão de frota com 200+ veículos',
   category: 'TI / Software',
   deadline: '30 dias',
@@ -47,6 +48,7 @@ describe('buildRfpPrompt', () => {
 
   it('injects every form param into the user message', () => {
     const out = buildRfpPrompt(baseParams, template, []);
+    expect(out.user).toMatch(/Embraer S\.A\./);
     expect(out.user).toMatch(/Software de gestão de frota/);
     expect(out.user).toMatch(/TI \/ Software/);
     expect(out.user).toMatch(/30 dias/);
@@ -55,6 +57,15 @@ describe('buildRfpPrompt', () => {
     expect(out.user).toMatch(/SLA/);
     expect(out.user).toMatch(/ISO 27001/);
     expect(out.user).toMatch(/Integração SAP obrigatória/);
+  });
+
+  it('exposes the client (empresa contratante) in the params block', () => {
+    const out = buildRfpPrompt(baseParams, template, []);
+    expect(out.user).toMatch(/Empresa contratante.*Embraer S\.A\./s);
+  });
+
+  it('lists {{cliente}} among the placeholders the system prompt must resolve', () => {
+    expect(RFP_SYSTEM_PROMPT).toMatch(/\{\{cliente\}\}/);
   });
 
   it('embeds the template body verbatim so the LLM follows the structure', () => {

@@ -55,6 +55,11 @@ export const TemplatePatchSchema = z
 // Tight constraints so we don't waste tokens on a 5000-char "scope" field.
 // The form enforces these client-side; the API revalidates server-side.
 export const RfpParamsSchema = z.object({
+  // Empresa contratante (comprador). Aparece em ~12 pontos do template RFQ
+  // como "padrões da [INSERIR NOME CLIENTE]" / "estratégias da [INSERIR NOME
+  // CLIENTE]". Sem este campo o LLM ou inventa nome ou deixa placeholder
+  // (violando a regra "NÃO deixe placeholders no output final").
+  client: z.string().trim().min(2).max(200),
   scope: z.string().trim().min(10).max(1000),
   category: z.string().trim().min(2).max(200),
   deadline: z.string().trim().min(1).max(100), // free-text "30 dias", "2026-06-15", etc.

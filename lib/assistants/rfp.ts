@@ -15,7 +15,7 @@ const RFP_SYSTEM_PROMPT = `Você é um especialista sênior em procurement (comp
 
 ## Regras de geração
 
-1. **Siga o template fornecido como esqueleto**. Mantenha as seções na ordem em que aparecem, traduza os placeholders ({{escopo}}, {{categoria}}, etc.) usando os parâmetros do usuário, e expanda cada seção com conteúdo substantivo. NÃO deixe placeholders no output final.
+1. **Siga o template fornecido como esqueleto**. Mantenha as seções na ordem em que aparecem, traduza os placeholders ({{cliente}}, {{escopo}}, {{categoria}}, {{prazo}}, {{orcamento}}, {{criterios}}, {{notas}}) usando os parâmetros do usuário, e expanda cada seção com conteúdo substantivo. NÃO deixe placeholders no output final.
 
 2. **Profundidade técnica de procurement sênior**. Onde o template pedir critérios de avaliação, traga critérios SMART (mensuráveis, ponderáveis), não bullets genéricos. Onde pedir requisitos, separe obrigatórios (must-have) de desejáveis (nice-to-have). Onde pedir cláusulas comerciais, inclua referência a TCO, SLA, garantias, e penalidades.
 
@@ -59,6 +59,7 @@ export function buildRfpPrompt(
 ): { system: string; user: string } {
   const paramsBlock = `## Parâmetros do RFP (fornecidos pelo usuário)
 
+- **Empresa contratante (comprador)**: ${params.client}
 - **Escopo**: ${params.scope}
 - **Categoria**: ${params.category}
 - **Prazo de resposta dos fornecedores**: ${params.deadline}
