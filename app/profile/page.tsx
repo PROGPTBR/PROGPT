@@ -1,3 +1,5 @@
+import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
 import { ProfileLogoUpload } from '@/components/profile/ProfileLogoUpload';
@@ -11,6 +13,14 @@ export default async function ProfilePage() {
 
   return (
     <div className="max-w-2xl mx-auto p-6 space-y-8">
+      <Link
+        href="/chat"
+        className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <ArrowLeft className="h-3.5 w-3.5" />
+        Voltar para o chat
+      </Link>
+
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Meu perfil</h1>
         <p className="text-sm text-muted-foreground mt-1">
