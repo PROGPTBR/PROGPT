@@ -123,6 +123,24 @@ function buildDocxTable(rows: string[][], headerRow: string[] | null): Table {
   // Compact font for wide tables (≥10 cols) — keeps the table readable
   // when the column count makes default size overflow the page.
   const cellFontSize = colCount >= 10 ? 14 : 18; // half-points (7pt / 9pt)
+  const cellWidthPct = Math.floor(100 / colCount);
+
+  // Build the docx runs for a single cell. Header cells force bold; body
+  // cells respect inline **bold** markers from the source markdown.
+  function cellRuns(text: string, isHeader: boolean): TextRun[] {
+    const parsed = parseInlineRuns(text);
+    if (parsed.length === 0) {
+      return [new TextRun({ text: '', size: cellFontSize, bold: isHeader })];
+    }
+    return parsed.map(
+      (r) =>
+        new TextRun({
+          text: r.text,
+          size: cellFontSize,
+          bold: isHeader || r.bold,
+        }),
+    );
+  }
 
   const docxRows = allRows.map(
     (r) =>
@@ -133,21 +151,11 @@ function buildDocxTable(rows: string[][], headerRow: string[] | null): Table {
           return new TableCell({
             children: [
               new Paragraph({
-                children: runsFromInline(cellText, { size: cellFontSize }).map((run) => {
-                  // Header cells: always bold
-                  if (r.header && 'bold' in run) {
-                    return new TextRun({
-                      text: (run as unknown as { text: string }).text,
-                      bold: true,
-                      size: cellFontSize,
-                    });
-                  }
-                  return run;
-                }),
+                children: cellRuns(cellText, r.header),
                 spacing: { after: 0 },
               }),
             ],
-            width: { size: Math.floor(10000 / colCount), type: WidthType.DXA },
+            width: { size: cellWidthPct, type: WidthType.PERCENTAGE },
             margins: { top: 40, bottom: 40, left: 60, right: 60 },
           });
         }),

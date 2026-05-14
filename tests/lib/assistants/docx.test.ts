@@ -94,6 +94,23 @@ Continuação após tabela.`;
     await expect(mdToDocxBuffer(md, 'Wide')).resolves.toBeInstanceOf(Buffer);
   });
 
+  it('does not throw on a realistic 22-col Cotação table with empty body cells (regression)', async () => {
+    const headers = [
+      '#', 'Part Number', 'Fornecedor', 'Descrição', 'NCM', 'Local', 'UF',
+      'Regime', 'Incoterm', 'Unid.', 'Qtd.', 'Unit. SEM IPI', 'Total SEM IPI',
+      'Unit. COM IPI', 'Total COM IPI', 'PIS', 'COFINS', 'ICMS', 'IPI',
+      'Pgto', 'Entrega', 'Obs.',
+    ];
+    const hdr = '| ' + headers.join(' | ') + ' |';
+    const del = '|' + '---|'.repeat(22);
+    const row = '| 1 |  |  |  |  |  |  |  |  |  |  | 0,00 | 0,00 | 0,00 | 0,00 |  |  |  |  |  |  |  |';
+    const md = `# RFP\n\n## 5. Cotação\n\n${hdr}\n${del}\n${row}\n${row}\n${row}\n`;
+    const buf = await mdToDocxBuffer(md, 'Cotação big');
+    expect(buf.length).toBeGreaterThan(1000);
+    expect(buf[0]).toBe(0x50);
+    expect(buf[1]).toBe(0x4b);
+  });
+
   it('builds a cover page with title and company block when cover data is provided', async () => {
     const withCover = await mdToDocxBuffer('# Body title\n\nBody.', 'Tested', {
       cover: {
