@@ -115,6 +115,8 @@ export type KraljicItem = z.infer<typeof KraljicItemSchema>;
 
 export const KraljicParamsSchema = z.object({
   portfolioName: z.string().trim().min(1).max(200),
+  // Período da análise. Free-text: "2026 Q2", "Jan-Jun 2026", "Ano fiscal 2025", etc.
+  analysisPeriod: z.string().trim().max(120).optional().default(''),
   notes: z.string().trim().max(2000).optional().default(''),
   items: z.array(KraljicItemSchema).min(2).max(200),
 });

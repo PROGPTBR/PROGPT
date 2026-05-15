@@ -9,8 +9,8 @@ import { rerank } from '@/lib/rag/reranker';
 import { startTrace, flushAsync } from '@/lib/observability/langfuse';
 import { recordApiUsage } from '@/lib/observability/api-usage';
 import { getRunForOwner } from '@/lib/assistants/runs';
-import { buildRefineSystem } from '@/lib/assistants/refine';
-import type { RfpParams } from '@/lib/assistants/types';
+import { buildRefineSystemForType } from '@/lib/assistants/refine';
+import type { RfpParams, KraljicParams } from '@/lib/assistants/types';
 
 export const runtime = 'nodejs';
 
@@ -81,7 +81,12 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   const chunks = await rerank(lastUser.content, candidates, RERANK_TOP_N);
   rerankSpan.end({ kept: chunks.length, top1Score: chunks[0]?.rerankScore ?? null });
 
-  const system = buildRefineSystem(run.output_md, run.params as RfpParams, chunks);
+  const system = buildRefineSystemForType(
+    run.assistant_type,
+    run.output_md,
+    run.params as RfpParams | KraljicParams,
+    chunks,
+  );
 
   const openai = createOpenAI({ apiKey: requireEnv('OPENAI_API_KEY') });
   const generateSpan = trace.span('generate', { systemLen: system.length });

@@ -1,15 +1,14 @@
 import type { RetrievedChunk } from '@/lib/rag/types';
-import type { RfpParams } from './types';
+import type { AssistantType, RfpParams, KraljicParams } from './types';
 
-// Sub-projeto 21 — Post-creation chat refinement.
+// Sub-projeto 21 + 27 — Post-creation chat refinement.
 //
-// After the RFP is generated, the user can chat with the assistant to
-// refine it: ask if a clause is adequate, request stronger SLA wording,
-// inquire about benchmarks. The assistant grounds in (1) the generated
-// RFP itself and (2) the procurement knowledge base via retrieve+rerank.
-//
-// Separate system prompt from the generator because the task shape is
-// different — Q&A about an existing document, not document synthesis.
+// Each assistant type has its own system prompt: RFP-refine is tuned
+// for editing an RFP draft, Kraljic-refine for discussing/refining
+// a portfolio analysis. The chat + apply API routes dispatch on
+// `run.assistant_type` and call the right builder.
+
+// ── RFP refinement ───────────────────────────────────────────────────────
 
 export const RFP_REFINE_SYSTEM_PROMPT = `Você é um especialista sênior em procurement (compras corporativas) ajudando o usuário a refinar um draft de RFP que acabou de ser gerado. Sua função é responder dúvidas sobre o RFP, propor melhorias específicas, apontar riscos e citar boas práticas.
 
@@ -25,7 +24,7 @@ export const RFP_REFINE_SYSTEM_PROMPT = `Você é um especialista sênior em pro
 
 5. **Markdown limpo, conciso**. Headings só quando a resposta tem múltiplas partes. **Bold** para valores-chave. Listas para enumerações de risco/melhoria. Sem preâmbulo conversacional ("Ótima pergunta!", "Vou te ajudar com isso…").`;
 
-export function buildRefineSystem(
+export function buildRfpRefineSystem(
   rfpMarkdown: string,
   params: RfpParams,
   chunks: RetrievedChunk[],
@@ -66,3 +65,100 @@ ${rfpMarkdown}
 ${baseBlock}
 </base>`;
 }
+
+// ── Kraljic refinement ───────────────────────────────────────────────────
+
+export const KRALJIC_REFINE_SYSTEM_PROMPT = `Você é um especialista sênior em procurement ajudando o usuário a refinar uma análise de portfólio via Matriz de Kraljic que acabou de ser gerada. Sua função é responder dúvidas sobre a análise, propor melhorias no plano de ação por quadrante, contestar/refinar classificações pontuais quando o usuário trouxer contexto novo, e apontar oportunidades estratégicas que a análise não capturou.
+
+## Como responder
+
+1. **Seja específico à análise em questão**. O conteúdo aparece no contexto entre \`<analysis>...</analysis>\` e os itens classificados entre \`<items>...</items>\`. Refira-se a itens pelo nome e quadrante ("para 'Embalagens 1' que ficou Estratégico, considere…").
+
+2. **Aplique Kraljic 1983 + Gelderman & Van Weele 2003**. Para cada quadrante, conheça a estratégia canônica:
+   - **Estratégico**: parceria de longo prazo, QBR ativo, co-desenvolvimento, plano de mitigação de fornecedor único, contratos plurianuais com governança.
+   - **Alavancável**: leilão reverso, leverage buying, consolidação de volume, e-procurement, RFQ competitivo.
+   - **Gargalo**: garantir continuidade (estoque de segurança, contrato com penalidade de SLA), desenvolver fornecedor alternativo, monitoramento proativo.
+   - **Não Crítico**: simplificar P2P, automatizar via catálogo, agregar pedidos, evitar atenção gerencial.
+   Gelderman & Van Weele lembram que **itens migram entre quadrantes** ao longo do tempo — sugira movimentos plausíveis quando relevante (ex: desenvolver alternativa para mover de Gargalo para Não Crítico).
+
+3. **Fundamente em teoria quando útil**. Há trechos da base de conhecimento entre \`<base>...</base>\`. Use-os para embasar (Kraljic, SRM, TCO, Cox 1996, Cousins 2008, Lei 14.133 quando for público). NÃO cite autores, IDs ou bibliografia — incorpore como conhecimento próprio.
+
+4. **Reclassificação é DELICADA**. Os scores são input do usuário e o sistema classificou determinísticamente. Se o usuário trouxer contexto novo que mudaria um score, NÃO altere o output_md — explique qual score deveria mudar e proponha uma nova rodada da análise. Para mudanças de narrativa/recomendação, fique à vontade.
+
+5. **Profundidade sênior, sem rodeios**. Quando sugerir ação, dê threshold numérico, cadência, ferramenta concreta. Evite "padrão de mercado".
+
+6. **Diga "depende" quando for o caso**. Se a análise não traz contexto suficiente (ex: TCO total, lead times de switching), peça o dado em vez de inventar.
+
+7. **Markdown limpo, conciso**. Sem preâmbulo conversacional.`;
+
+export function buildKraljicRefineSystem(
+  analysisMarkdown: string,
+  params: KraljicParams,
+  chunks: RetrievedChunk[],
+): string {
+  const paramsSummary = [
+    `Portfólio: ${params.portfolioName}`,
+    params.analysisPeriod ? `Período: ${params.analysisPeriod}` : '',
+    `Itens: ${params.items.length}`,
+    `Spend total: R$ ${params.items.reduce((a, it) => a + (it.spendMM ?? 0), 0).toFixed(2)} MM`,
+    params.notes ? `Notas: ${params.notes}` : '',
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  const itemList = params.items
+    .map(
+      (it) =>
+        `- ${it.name} (${it.category || '-'}) · spend R$ ${it.spendMM.toFixed(2)} MM`,
+    )
+    .join('\n');
+
+  const baseBlock =
+    chunks.length === 0
+      ? '(nenhum trecho relevante recuperado — responda com princípios gerais quando aplicável)'
+      : chunks
+          .map((c) => `### ${c.articleTitle}\n\n${c.content.slice(0, 800)}`)
+          .join('\n\n---\n\n');
+
+  return `${KRALJIC_REFINE_SYSTEM_PROMPT}
+
+## Parâmetros do portfólio
+
+${paramsSummary}
+
+## Itens analisados
+
+<items>
+${itemList}
+</items>
+
+## Análise gerada (relatório completo)
+
+<analysis>
+${analysisMarkdown}
+</analysis>
+
+## Base de conhecimento (procurement)
+
+<base>
+${baseBlock}
+</base>`;
+}
+
+// ── Dispatcher ───────────────────────────────────────────────────────────
+
+export function buildRefineSystemForType(
+  assistantType: AssistantType,
+  outputMd: string,
+  params: RfpParams | KraljicParams,
+  chunks: RetrievedChunk[],
+): string {
+  if (assistantType === 'kraljic') {
+    return buildKraljicRefineSystem(outputMd, params as KraljicParams, chunks);
+  }
+  return buildRfpRefineSystem(outputMd, params as RfpParams, chunks);
+}
+
+// Back-compat alias for the old name used by /api/assistants/runs/[id]/chat
+// — keeps callers that still pass RfpParams working without changes.
+export const buildRefineSystem = buildRfpRefineSystem;

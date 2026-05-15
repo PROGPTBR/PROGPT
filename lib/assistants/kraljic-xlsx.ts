@@ -84,7 +84,9 @@ export async function buildKraljicXlsxBuffer(
   resumo.getCell('A2').font = { bold: true };
 
   resumo.mergeCells('A3:D3');
-  resumo.getCell('A3').value = `Total de itens: ${classified.length} · Spend total: R$ ${totalSpend.toFixed(2)} MM`;
+  resumo.getCell('A3').value = params.analysisPeriod
+    ? `Período: ${params.analysisPeriod} · Total de itens: ${classified.length} · Spend total: R$ ${totalSpend.toFixed(2)} MM`
+    : `Total de itens: ${classified.length} · Spend total: R$ ${totalSpend.toFixed(2)} MM`;
 
   resumo.addRow([]);
   const sumHeader = resumo.addRow(['Quadrante', '# itens', 'Spend (R$ MM)', '% do portfólio']);

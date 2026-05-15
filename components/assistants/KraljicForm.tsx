@@ -7,10 +7,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { KraljicItemTable, EMPTY_ITEM, type ItemDraft } from './KraljicItemTable';
 import { KraljicImportDialog } from './KraljicImportDialog';
+import { KraljicScoringAssistant } from './KraljicScoringAssistant';
 
 export type KraljicFormValues = {
   templateId: string;
   portfolioName: string;
+  analysisPeriod: string;
   notes: string;
   items: ItemDraft[];
 };
@@ -24,6 +26,7 @@ type Template = {
 const EMPTY: KraljicFormValues = {
   templateId: '',
   portfolioName: '',
+  analysisPeriod: '',
   notes: '',
   items: [{ ...EMPTY_ITEM }, { ...EMPTY_ITEM }],
 };
@@ -33,6 +36,7 @@ export function KraljicForm({ onSubmit }: { onSubmit: (v: KraljicFormValues) => 
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loadingTemplates, setLoadingTemplates] = useState(true);
   const [importOpen, setImportOpen] = useState(false);
+  const [scoringRow, setScoringRow] = useState<number | null>(null);
 
   const fetchTemplates = useCallback(async () => {
     setLoadingTemplates(true);
@@ -72,7 +76,7 @@ export function KraljicForm({ onSubmit }: { onSubmit: (v: KraljicFormValues) => 
         if (valid) onSubmit({ ...values, items: validItems });
       }}
     >
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div>
           <label className="text-xs font-medium block mb-1">
             Template <span className="text-destructive">*</span>
@@ -110,6 +114,15 @@ export function KraljicForm({ onSubmit }: { onSubmit: (v: KraljicFormValues) => 
             maxLength={200}
           />
         </div>
+        <div>
+          <label className="text-xs font-medium block mb-1">Período da análise</label>
+          <Input
+            value={values.analysisPeriod}
+            onChange={(e) => setValues((v) => ({ ...v, analysisPeriod: e.target.value }))}
+            placeholder="Ex: 2026 Q2, Jan-Jun 2026"
+            maxLength={120}
+          />
+        </div>
       </div>
 
       <div>
@@ -123,6 +136,7 @@ export function KraljicForm({ onSubmit }: { onSubmit: (v: KraljicFormValues) => 
         <KraljicItemTable
           items={values.items}
           onChange={(items) => setValues((v) => ({ ...v, items }))}
+          onOpenScoringAssistant={(idx) => setScoringRow(idx)}
         />
       </div>
 
@@ -156,6 +170,19 @@ export function KraljicForm({ onSubmit }: { onSubmit: (v: KraljicFormValues) => 
           setValues((v) => ({
             ...v,
             items: [...v.items.filter((it) => it.name.trim().length > 0), ...items],
+          }))
+        }
+      />
+
+      <KraljicScoringAssistant
+        open={scoringRow !== null}
+        rowIndex={scoringRow}
+        current={scoringRow !== null ? values.items[scoringRow] ?? null : null}
+        onClose={() => setScoringRow(null)}
+        onApply={(idx, patch) =>
+          setValues((v) => ({
+            ...v,
+            items: v.items.map((it, i) => (i === idx ? { ...it, ...patch } : it)),
           }))
         }
       />

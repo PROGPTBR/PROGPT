@@ -1,6 +1,6 @@
 'use client';
 
-import { Trash2, Plus, ClipboardPaste } from 'lucide-react';
+import { Trash2, Plus, ClipboardPaste, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 
@@ -42,6 +42,7 @@ const SCORE_OPTIONS = [1, 2, 3, 4] as const;
 type Props = {
   items: ItemDraft[];
   onChange: (items: ItemDraft[]) => void;
+  onOpenScoringAssistant?: (rowIndex: number) => void;
 };
 
 // Tab-separated columns expected when pasting (Excel/Sheets row copy):
@@ -80,7 +81,7 @@ function parsePasted(text: string): ItemDraft[] {
   return out.filter((it) => it.name.length > 0);
 }
 
-export function KraljicItemTable({ items, onChange }: Props) {
+export function KraljicItemTable({ items, onChange, onOpenScoringAssistant }: Props) {
   function update(i: number, patch: Partial<ItemDraft>) {
     onChange(items.map((it, idx) => (idx === i ? { ...it, ...patch } : it)));
   }
@@ -140,6 +141,7 @@ export function KraljicItemTable({ items, onChange }: Props) {
               <th className="p-2 font-medium" title="Rivalidade do Mercado">Riv.</th>
               <th className="p-2 font-medium" title="Poder de Barganha do Fornecedor">Pdr.</th>
               <th className="p-2 font-medium" title="Substituição de Fornecedor">Sub.</th>
+              <th className="p-2"></th>
               <th className="p-2"></th>
             </tr>
           </thead>
@@ -208,6 +210,19 @@ export function KraljicItemTable({ items, onChange }: Props) {
                   </td>
                 ))}
                 <td className="p-1">
+                  {onOpenScoringAssistant && (
+                    <button
+                      type="button"
+                      onClick={() => onOpenScoringAssistant(i)}
+                      aria-label="Assistente de preenchimento"
+                      className="text-muted-foreground hover:text-primary"
+                      title="Assistente de preenchimento"
+                    >
+                      <Sparkles className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </td>
+                <td className="p-1">
                   <button
                     type="button"
                     onClick={() => removeRow(i)}
@@ -222,7 +237,7 @@ export function KraljicItemTable({ items, onChange }: Props) {
             ))}
             {items.length === 0 && (
               <tr>
-                <td colSpan={12} className="text-center text-sm text-muted-foreground p-6">
+                <td colSpan={13} className="text-center text-sm text-muted-foreground p-6">
                   Nenhum item. Clique &quot;Adicionar item&quot; ou &quot;Colar TSV&quot; para começar.
                 </td>
               </tr>

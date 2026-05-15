@@ -194,6 +194,7 @@ export function buildKraljicPrompt(
   const portfolioBlock = `## Portfólio analisado
 
 - **Nome do portfólio**: ${params.portfolioName}
+${params.analysisPeriod ? `- **Período da análise**: ${params.analysisPeriod}` : ''}
 - **Total de itens**: ${classified.length}
 - **Spend total**: R$ ${totalSpend.toFixed(2)} MM
 ${params.notes ? `- **Notas adicionais**: ${params.notes}` : ''}

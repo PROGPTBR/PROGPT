@@ -27,7 +27,8 @@ export type ApiOperation =
   | 'assistant-rfp-generate'
   | 'assistant-rfp-refine'
   | 'assistant-rfp-apply'
-  | 'assistant-kraljic-generate';
+  | 'assistant-kraljic-generate'
+  | 'assistant-kraljic-suggest';
 
 export type RecordUsageInput = {
   provider: ApiProvider;

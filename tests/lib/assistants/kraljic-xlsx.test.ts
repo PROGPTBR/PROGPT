@@ -12,7 +12,7 @@ const items: KraljicItem[] = [
     spendMM: 1, criticality: 1, technicalSpec: 1, customerValue: 1,
     marketStructure: 1, marketRivalry: 1, supplierPower: 1, supplierSwitching: 1 },
 ];
-const params: KraljicParams = { portfolioName: 'Test', notes: '', items };
+const params: KraljicParams = { portfolioName: 'Test', analysisPeriod: '', notes: '', items };
 
 describe('buildKraljicXlsxBuffer', () => {
   it('returns a non-empty Buffer with the xlsx ZIP signature (PK)', async () => {

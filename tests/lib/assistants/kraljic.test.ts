@@ -186,7 +186,7 @@ describe('buildKraljicPrompt', () => {
     ];
     const classified = classifyItems(items);
     const out = buildKraljicPrompt(
-      { portfolioName: 'Test Portfolio', notes: '', items },
+      { portfolioName: 'Test Portfolio', analysisPeriod: '', notes: '', items },
       classified,
       template,
       [],
@@ -205,7 +205,7 @@ describe('buildKraljicPrompt', () => {
     ];
     const classified = classifyItems(items);
     const out = buildKraljicPrompt(
-      { portfolioName: 'P', notes: '', items },
+      { portfolioName: 'P', analysisPeriod: '', notes: '', items },
       classified,
       template,
       [],

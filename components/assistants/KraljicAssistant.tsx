@@ -48,6 +48,7 @@ export function KraljicAssistant() {
           templateId: values.templateId,
           params: {
             portfolioName: values.portfolioName,
+            analysisPeriod: values.analysisPeriod,
             notes: values.notes,
             items,
           },

@@ -20,7 +20,7 @@ const BodySchema = z.object({
   suggestion: z.string().trim().min(5).max(8000),
 });
 
-const SYSTEM_PROMPT = `Você é um especialista sênior em procurement editando um draft de RFP. Receberá:
+const RFP_SYSTEM_PROMPT = `Você é um especialista sênior em procurement editando um draft de RFP. Receberá:
 
 1. O draft ATUAL do RFP (apenas as seções customizáveis — Apresentação, Info do Projeto, Especificações, Critérios).
 2. Uma SUGESTÃO de melhoria proposta pelo consultor (geralmente sua resposta anterior no chat).
@@ -33,6 +33,20 @@ Sua tarefa: produzir a versão atualizada do RFP incorporando a sugestão. Regra
 - Mantenha o tom e estilo do draft original.
 - Mantenha valores reais (nomes, CNPJ, e-mails) — não substitua por placeholders.
 - Se a sugestão for ambígua ou inviável, faça a melhor interpretação razoável.`;
+
+const KRALJIC_SYSTEM_PROMPT = `Você é um especialista sênior em procurement editando uma análise de portfólio via Matriz de Kraljic. Receberá:
+
+1. O relatório ATUAL (apenas as seções customizáveis — Resumo Executivo, Plano por Quadrante, Recomendações por Item, Próximos Passos).
+2. Uma SUGESTÃO de melhoria do consultor.
+
+Regras:
+
+- Output: APENAS o markdown atualizado, sem preâmbulo, sem cercas de código.
+- Preserve a estrutura (mesmas seções, mesma ordem) e o tom.
+- NÃO altere a classificação dos itens nem mude scores/quadrantes — isso é input do sistema. Se a sugestão pede reclassificação, ignore-a e mantenha o quadrante atual; mas pode mencionar no texto que "uma rerun com scores ajustados poderia mover X de Gargalo para Estratégico".
+- Não invente seções novas além do que o relatório já tem.
+- Mantenha valores reais (spend, nomes de itens, % por quadrante).
+- Se a sugestão for ambígua, faça a melhor interpretação razoável.`;
 
 // POST /api/assistants/runs/[id]/apply — merges a refine-chat suggestion
 // into the RFP's customizable head. Verbatim tail (Cotação + Termos +
@@ -96,7 +110,7 @@ Reescreva o RFP acima incorporando a sugestão. Apenas o markdown atualizado, na
   try {
     const result = await generateText({
       model: openai(process.env.OPENAI_MODEL ?? 'gpt-4o-mini'),
-      system: SYSTEM_PROMPT,
+      system: run.assistant_type === 'kraljic' ? KRALJIC_SYSTEM_PROMPT : RFP_SYSTEM_PROMPT,
       messages: [{ role: 'user', content: userPrompt }],
     });
 
