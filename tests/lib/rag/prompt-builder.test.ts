@@ -189,6 +189,47 @@ describe('rag prompt-builder', () => {
     expect(SYSTEM_PROMPT).toMatch(/gargalo/i);
     expect(SYSTEM_PROMPT).toMatch(/n[ãa]o-cr[íi]tico/i);
   });
+
+  // ── assistant-redirect rule (post-Kraljic v2 fix) ────────────────────────
+  // User reported the chat saying "Não tenho fonte" when asked for an RFQ
+  // download, instead of pointing to /assistants/rfp. The system prompt
+  // now has a "Ferramentas dedicadas" section that has priority over the
+  // no-source refusal.
+
+  it('system prompt names the dedicated tools with their URL paths', async () => {
+    const { SYSTEM_PROMPT } = await import('@/lib/rag/prompt-builder');
+    expect(SYSTEM_PROMPT).toMatch(/Ferramentas dedicadas/);
+    expect(SYSTEM_PROMPT).toMatch(/\/assistants\/rfp/);
+    expect(SYSTEM_PROMPT).toMatch(/\/assistants\/kraljic/);
+  });
+
+  it('redirect rule lists artifact-generation cues so the model recognizes them', async () => {
+    const { SYSTEM_PROMPT } = await import('@/lib/rag/prompt-builder');
+    // Concrete words the user is likely to use → forces the model to map
+    // intent → tool instead of trying to satisfy via free text.
+    expect(SYSTEM_PROMPT).toMatch(/baixar|download/i);
+    expect(SYSTEM_PROMPT).toMatch(/template editável|modelo pronto/i);
+    expect(SYSTEM_PROMPT).toMatch(/RFP|RFQ|cota[çc][ãa]o/);
+  });
+
+  it('redirect rule has explicit priority over the no-source-on-file refusal', async () => {
+    const { SYSTEM_PROMPT } = await import('@/lib/rag/prompt-builder');
+    // The ordering matters: the redirect rule must precede the refusal
+    // AND the refusal section must reference the redirect priority so the
+    // model doesn't fall through to "Não tenho fonte" for RFQ/Kraljic asks.
+    const idxRedirect = SYSTEM_PROMPT.indexOf('Ferramentas dedicadas');
+    const idxRefusal = SYSTEM_PROMPT.indexOf('Quando não há fonte na base');
+    expect(idxRedirect).toBeGreaterThan(-1);
+    expect(idxRefusal).toBeGreaterThan(-1);
+    expect(idxRedirect).toBeLessThan(idxRefusal);
+    expect(SYSTEM_PROMPT).toMatch(/tem prioridade sobre esta|prioridade/i);
+  });
+
+  it('redirect rule keeps theoretical questions in the chat (not bounced to tools)', async () => {
+    const { SYSTEM_PROMPT } = await import('@/lib/rag/prompt-builder');
+    expect(SYSTEM_PROMPT).toMatch(/puramente te[óo]rica|teórica/i);
+    expect(SYSTEM_PROMPT).toMatch(/não substitui o ensino te[óo]rico|responda normalmente no chat/i);
+  });
 });
 
 // ── library_overview branch (sub-projeto 18) ─────────────────────────────
