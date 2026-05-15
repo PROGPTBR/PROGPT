@@ -1,5 +1,5 @@
-import { notFound } from 'next/navigation';
-import { requireAdmin, NotAdmin } from '@/lib/auth';
+import { notFound, redirect } from 'next/navigation';
+import { requireAdmin, NotAdmin, NotAuthenticated } from '@/lib/auth';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 
 export const dynamic = 'force-dynamic';
@@ -8,6 +8,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   try {
     await requireAdmin();
   } catch (err) {
+    if (err instanceof NotAuthenticated) redirect('/login?next=/admin');
     if (err instanceof NotAdmin) notFound();
     throw err;
   }
