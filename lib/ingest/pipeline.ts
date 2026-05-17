@@ -9,6 +9,12 @@ import { embed } from '@/lib/llm/voyage';
 import type { ChunkRow } from '@/lib/ingest/types';
 
 const EMBED_BATCH = 16;
+const CHUNK_INSERT_BATCH = 20;
+const CHUNK_INSERT_RETRIES = 3;
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((r) => setTimeout(r, ms));
+}
 
 export async function runPipeline(jobId: string): Promise<void> {
   const sb = getServerSupabase();
@@ -124,8 +130,28 @@ export async function runPipeline(jobId: string): Promise<void> {
       embedding: embeddings[idx],
       metadata: { source_filename: job.filename, ...r.metadata },
     }));
-    for (let i = 0; i < rows.length; i += 50) {
-      await sb.from('chunks').insert(rows.slice(i, i + 50));
+    try {
+      for (let i = 0; i < rows.length; i += CHUNK_INSERT_BATCH) {
+        const batch = rows.slice(i, i + CHUNK_INSERT_BATCH);
+        let lastErr: string | null = null;
+        for (let attempt = 1; attempt <= CHUNK_INSERT_RETRIES; attempt++) {
+          const { error: insErr } = await sb.from('chunks').insert(batch);
+          if (!insErr) {
+            lastErr = null;
+            break;
+          }
+          lastErr = insErr.message;
+          if (attempt < CHUNK_INSERT_RETRIES) await sleep(1000 * attempt);
+        }
+        if (lastErr) {
+          throw new Error(`chunks insert failed at offset ${i}: ${lastErr}`);
+        }
+      }
+    } catch (chunkErr) {
+      // Roll back the orphan article so dedup doesn't lock out a future retry
+      // of the same content, and the user can re-upload cleanly.
+      await sb.from('articles').delete().eq('id', article.id);
+      throw chunkErr;
     }
 
     await deleteFromIngestBucket(job.storage_path);
