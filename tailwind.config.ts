@@ -41,30 +41,35 @@ const config: Config = {
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
+        // 2B Supply brand color — used as pure accent in headlines and emphasis,
+        // matching the same role it plays on 2bsupply.com.br.
+        brand: '#0ed1e0',
         // Material You (Material Design 3) tokens — light mode only for now.
-        // Used by pages/components that opt into the MD3 aesthetic via `bg-md-*`,
-        // `text-md-*`, etc. Existing components stay on the shadcn tokens above.
+        // Palette derived from the 2B Supply brand seed `#0ed1e0` (bright cyan)
+        // using the MD3 HCT tonal scale. Primary lives at tone 40 (accessible
+        // on light surfaces); the pure brand cyan stays available as `bg-brand`
+        // / `text-brand` for highlight spans.
         md: {
-          background: '#FFFBFE',
-          foreground: '#1C1B1F',
-          primary: '#6750A4',
+          background: '#FAFDFD',
+          foreground: '#191C1D',
+          primary: '#006874',
           'on-primary': '#FFFFFF',
-          'primary-container': '#EADDFF',
-          'on-primary-container': '#21005D',
-          secondary: '#625B71',
+          'primary-container': '#97F0FF',
+          'on-primary-container': '#001F24',
+          secondary: '#4A6266',
           'on-secondary': '#FFFFFF',
-          'secondary-container': '#E8DEF8',
-          'on-secondary-container': '#1D192B',
-          tertiary: '#7D5260',
+          'secondary-container': '#CCE7EC',
+          'on-secondary-container': '#051F23',
+          tertiary: '#525E7D',
           'on-tertiary': '#FFFFFF',
-          'tertiary-container': '#FFD8E4',
-          'on-tertiary-container': '#31111D',
-          'surface-container': '#F3EDF7',
-          'surface-container-low': '#E7E0EC',
-          'surface-variant': '#E7E0EC',
-          outline: '#79747E',
-          'outline-variant': '#CAC4D0',
-          'on-surface-variant': '#49454F',
+          'tertiary-container': '#DAE2FF',
+          'on-tertiary-container': '#0E1B37',
+          'surface-container': '#E5EDEE',
+          'surface-container-low': '#EFF1F1',
+          'surface-variant': '#DAE4E5',
+          outline: '#6F7979',
+          'outline-variant': '#BEC8C9',
+          'on-surface-variant': '#3F484A',
         },
       },
       borderRadius: {
@@ -82,7 +87,8 @@ const config: Config = {
       },
       fontFamily: {
         sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],
-        roboto: ['var(--font-roboto)', 'Roboto', 'system-ui', 'sans-serif'],
+        // 2B Supply brand typeface — used on landing and any MD3-styled page.
+        outfit: ['var(--font-outfit)', 'system-ui', 'sans-serif'],
       },
       transitionTimingFunction: {
         // Material You's "Emphasized Decelerate" — confident, never bouncy.

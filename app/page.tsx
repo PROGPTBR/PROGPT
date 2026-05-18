@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import {
   ArrowRight,
@@ -5,12 +6,11 @@ import {
   FileText,
   LayoutGrid,
   MessageCircle,
-  Sparkles,
 } from 'lucide-react';
 
-// Landing page (Material You / Material Design 3 aesthetic).
-// Opt-in via the `md-*` token namespace defined in tailwind.config.ts —
-// this page does not affect the rest of the app's styling.
+// Landing page (Material You aesthetic, 2B Supply brand colors).
+// Opt-in via the `md-*` token namespace + `text-brand` defined in
+// tailwind.config.ts — does not affect the rest of the app's styling.
 
 type SourcingStep = {
   n: number;
@@ -73,43 +73,67 @@ const STEPS: SourcingStep[] = [
 
 export default function Landing() {
   return (
-    <main className="min-h-screen bg-md-background font-roboto text-md-foreground antialiased">
+    <main className="min-h-screen bg-md-background font-outfit text-md-foreground antialiased">
+      {/* ───── Header ───── */}
+      <header className="px-4 pt-6 md:pt-8">
+        <div className="mx-auto max-w-6xl flex items-center justify-between">
+          <Image
+            src="/2bsupply-logo.png"
+            alt="2B Supply"
+            width={241}
+            height={57}
+            priority
+            className="h-7 md:h-9 w-auto"
+          />
+          <Link
+            href="/login"
+            className="inline-flex items-center justify-center rounded-full border border-md-outline text-md-primary px-5 h-9 text-sm font-medium hover:bg-md-primary/5 active:scale-95 transition-all duration-300 ease-md-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-md-primary focus-visible:ring-offset-2"
+          >
+            Entrar
+          </Link>
+        </div>
+      </header>
+
       {/* ───── Hero ───── */}
       <section className="relative overflow-hidden px-4 pt-8 pb-12 md:pt-12 md:pb-20">
         <div className="relative mx-auto max-w-6xl rounded-md-lg md:rounded-md-hero bg-md-surface-container px-6 py-16 md:px-16 md:py-24 overflow-hidden">
-          {/* Decorative organic blur shapes (Material You signature). */}
+          {/* Decorative organic blur shapes (Material You signature),
+              now tinted with the 2B Supply cyan brand seed. */}
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute -top-20 -right-20 h-80 w-80 rounded-full bg-md-primary/30 blur-3xl mix-blend-multiply"
+            className="pointer-events-none absolute -top-20 -right-20 h-80 w-80 rounded-full bg-brand/25 blur-3xl mix-blend-multiply"
           />
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute -bottom-32 -left-20 h-96 w-96 rounded-full bg-md-tertiary/25 blur-3xl mix-blend-multiply"
+            className="pointer-events-none absolute -bottom-32 -left-20 h-96 w-96 rounded-full bg-md-tertiary/20 blur-3xl mix-blend-multiply"
           />
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute top-1/3 left-1/2 h-64 w-64 rounded-full bg-md-secondary-container/60 blur-3xl"
+            className="pointer-events-none absolute top-1/3 left-1/2 h-64 w-64 rounded-full bg-md-primary-container/60 blur-3xl"
           />
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(103,80,164,0.12)_0%,_transparent_50%)]"
+            className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(14,209,224,0.18)_0%,_transparent_50%)]"
           />
 
           <div className="relative">
             <div className="inline-flex items-center gap-2 rounded-full bg-md-primary-container px-4 py-1.5 text-xs font-medium text-md-on-primary-container">
-              <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
-              Parte do ecossistema 2B Supply
+              <span
+                aria-hidden="true"
+                className="inline-block h-1.5 w-1.5 rounded-full bg-brand"
+              />
+              ProcurementGPT · ecossistema 2B Supply
             </div>
 
-            <h1 className="mt-6 text-4xl md:text-6xl font-medium tracking-tight leading-[1.1] max-w-3xl">
+            <h1 className="mt-6 text-4xl md:text-6xl font-semibold tracking-tight leading-[1.05] max-w-3xl">
               Procurement com{' '}
-              <span className="text-md-primary">inteligência aplicada</span>.
+              <span className="text-brand">inteligência aplicada</span>.
             </h1>
 
             <p className="mt-6 text-lg md:text-xl text-md-on-surface-variant max-w-2xl leading-relaxed">
               Chat especialista treinado em centenas de artigos canônicos e
               assistentes que entregam artefatos prontos — alinhados aos 8
-              passos do Strategic Sourcing.
+              passos do <span className="text-brand font-medium">Strategic Sourcing</span>.
             </p>
 
             <div className="mt-10 flex flex-wrap gap-3">
@@ -138,8 +162,8 @@ export default function Landing() {
       >
         <div className="mx-auto max-w-6xl">
           <div className="max-w-2xl">
-            <h2 className="text-3xl md:text-5xl font-medium tracking-tight">
-              Os 8 passos do Strategic Sourcing
+            <h2 className="text-3xl md:text-5xl font-semibold tracking-tight">
+              Os 8 passos do <span className="text-brand">Strategic Sourcing</span>
             </h2>
             <p className="mt-4 text-base md:text-lg text-md-on-surface-variant leading-relaxed">
               Cada passo ganha um assistente dedicado. Hoje, dois já entregam
@@ -211,8 +235,8 @@ export default function Landing() {
                 <MessageCircle className="h-3.5 w-3.5" aria-hidden="true" />
                 Chat com base de conhecimento
               </div>
-              <h2 className="mt-6 text-3xl md:text-5xl font-medium tracking-tight text-md-on-secondary-container">
-                Pergunte a um especialista sênior.
+              <h2 className="mt-6 text-3xl md:text-5xl font-semibold tracking-tight text-md-on-secondary-container">
+                Pergunte a um <span className="text-md-primary">especialista sênior</span>.
               </h2>
               <p className="mt-4 text-base md:text-lg text-md-on-secondary-container/80 leading-relaxed">
                 Retrieval híbrido (vetorial + lexical + rerank) sobre uma
@@ -269,8 +293,9 @@ export default function Landing() {
           />
 
           <div className="relative text-center">
-            <h2 className="text-3xl md:text-5xl font-medium tracking-tight">
-              Pronto para acelerar seu sourcing?
+            <h2 className="text-3xl md:text-5xl font-semibold tracking-tight">
+              Pronto para acelerar seu{' '}
+              <span className="text-brand">sourcing</span>?
             </h2>
             <p className="mt-4 text-base md:text-lg text-md-on-primary/85 max-w-xl mx-auto leading-relaxed">
               Acesso é por convite — faça login com a conta cadastrada pelo

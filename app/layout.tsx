@@ -1,14 +1,16 @@
 import type { Metadata } from 'next';
-import { Inter, Roboto } from 'next/font/google';
+import { Inter, Outfit } from 'next/font/google';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from '@/components/ui/sonner';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
-const roboto = Roboto({
+// Outfit is the 2B Supply brand typeface (used on 2bsupply.com.br). Loaded
+// for the landing and any MD3-styled page; the rest of the app keeps Inter.
+const outfit = Outfit({
   subsets: ['latin'],
-  weight: ['400', '500', '700'],
-  variable: '--font-roboto',
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-outfit',
 });
 
 export const metadata: Metadata = {
@@ -21,7 +23,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html
       lang="pt-BR"
       suppressHydrationWarning
-      className={`${inter.variable} ${roboto.variable}`}
+      className={`${inter.variable} ${outfit.variable}`}
     >
       <body>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
