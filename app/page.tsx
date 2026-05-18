@@ -1,344 +1,703 @@
+'use client';
+
 import Image from 'next/image';
 import Link from 'next/link';
+import { useEffect } from 'react';
 import {
   ArrowRight,
+  Plus,
+  Sparkles,
+  Zap,
+  Eye,
+  ShieldCheck,
+  Database,
   Clock,
-  FileText,
-  LayoutGrid,
-  MessageCircle,
+  Layers,
 } from 'lucide-react';
 
-// Landing page (Material You aesthetic, 2B Supply brand colors).
-// Opt-in via the `md-*` token namespace + `text-brand` defined in
-// tailwind.config.ts — does not affect the rest of the app's styling.
+// Landing page — dark atmospheric aesthetic ported from a reference
+// design, adapted with 2B Supply brand colors (cyan #0ed1e0). Uses the
+// brand Outfit font (loaded in app/layout.tsx). All other surfaces in
+// the app keep their light shadcn tokens — this is a self-contained dark
+// landing that does NOT cascade.
+//
+// Reveal-on-scroll uses a single IntersectionObserver registered in
+// useEffect — no animation library dependency.
 
-type SourcingStep = {
-  n: number;
-  title: string;
-  blurb: string;
-  available?: {
-    assistant: 'rfp' | 'kraljic';
-    label: string;
-  };
-};
+const NAV_LINKS = [
+  { href: '#sobre', label: 'Sobre' },
+  { href: '#assistentes', label: 'Assistentes' },
+  { href: '#como-funciona', label: 'Como funciona' },
+  { href: '#beneficios', label: 'Benefícios' },
+  { href: '#faq', label: 'FAQ' },
+];
 
-const STEPS: SourcingStep[] = [
+const FEATURE_CARDS = [
   {
-    n: 1,
-    title: 'Perfil da Categoria',
+    title: 'Chat especialista',
     blurb:
-      'Entendimento profundo da categoria, suas especificidades e impacto no negócio.',
+      'Centenas de artigos canônicos (Kraljic, Porter, Monczka, Cousins) viraram a memória do seu time. Pergunte como faria para um colega sênior.',
+    image:
+      'https://images.unsplash.com/photo-1666795721503-2e52a7333004?w=800&h=600&q=80&auto=format&fit=crop',
+    alt: 'Interface de chat com cards de sugestão em fundo escuro',
   },
   {
-    n: 2,
-    title: 'Análise da Categoria',
-    blurb: 'Coleta e análise de dados internos: volumes, custos, contratos.',
-  },
-  {
-    n: 3,
-    title: 'Visão do Mercado',
+    title: 'Assistentes que executam',
     blurb:
-      'Mapeamento de fornecedores, tendências, riscos e oportunidades.',
+      'RFP, matriz de Kraljic e mais seis em breve — cada um mapeado a um dos 8 passos do Strategic Sourcing. Entregam o artefato pronto, não só uma explicação.',
+    image:
+      'https://images.unsplash.com/photo-1640627141132-c7030cfbae4f?w=800&h=600&q=80&auto=format&fit=crop',
+    alt: 'Tela de editor com sugestões da IA em segundo plano',
   },
   {
-    n: 4,
-    title: 'Estratégia de Sourcing',
+    title: 'Base curada',
     blurb:
-      'Definição de como abordar o mercado — competição, parcerias, simplificação ou proteção.',
-    available: { assistant: 'kraljic', label: 'Matriz de Kraljic' },
-  },
-  {
-    n: 5,
-    title: 'Engajamento de Fornecedores',
-    blurb: 'Condução do processo de RFI, RFP ou RFQ.',
-    available: { assistant: 'rfp', label: 'Gerador de RFP' },
-  },
-  {
-    n: 6,
-    title: 'Negociação',
-    blurb:
-      'Negociação estruturada para maximizar valor — não apenas reduzir preços.',
-  },
-  {
-    n: 7,
-    title: 'Implementação do Contrato',
-    blurb: 'Formalização de acordos claros, alinhados com a estratégia.',
-  },
-  {
-    n: 8,
-    title: 'Controle e Melhoria',
-    blurb: 'Monitoramento de KPIs, ajustes de estratégia, melhoria contínua.',
+      'Retrieval híbrido (vetorial + lexical + rerank) com gate de relevância — sem alucinação, sem citação fake. Quando não tem fonte na base, o bot diz.',
+    image:
+      'https://images.unsplash.com/photo-1696777406878-0972d2a2db4b?w=800&h=600&q=80&auto=format&fit=crop',
+    alt: 'Painel de dados minimalista sobre montanhas em névoa',
   },
 ];
 
+const USE_CASES = [
+  {
+    id: 'kraljic',
+    label: 'Estratégia · Kraljic',
+    title:
+      'Classifique 30 categorias em 5 minutos e receba um plano de ação por quadrante.',
+    href: '/assistants/kraljic',
+    image:
+      'https://images.unsplash.com/photo-1591174425156-fd472f354be4?w=1200&h=800&q=80&auto=format&fit=crop',
+    alt: 'Visualização de matriz com pontos em fundo escuro',
+  },
+];
+
+const STEPS = [
+  {
+    n: 1,
+    title: 'Pergunte',
+    blurb:
+      'Texto livre, PT ou EN. Faça a pergunta como faria para um colega sênior — sem reescrever em "linguagem de IA".',
+  },
+  {
+    n: 2,
+    title: 'Recupere',
+    blurb:
+      'Retrieval híbrido busca, rankeia e injeta os trechos mais relevantes da biblioteca curada antes do modelo responder.',
+  },
+  {
+    n: 3,
+    title: 'Aplique',
+    blurb:
+      'Receba uma resposta com profundidade de especialista — ou, se for um assistente, um artefato pronto em .docx / .xlsx.',
+  },
+];
+
+const BENEFITS = [
+  {
+    icon: Layers,
+    title: 'Retrieval híbrido',
+    blurb: 'Vetorial + lexical FTS + Cohere rerank — nunca só cosine.',
+  },
+  {
+    icon: ShieldCheck,
+    title: 'Sem alucinação',
+    blurb:
+      'Respostas fundamentadas na base. Sem fonte, o bot diz. Sem IDs ou citações falsas no texto.',
+  },
+  {
+    icon: Eye,
+    title: 'PDF multimodal',
+    blurb:
+      'Tabelas e figuras viram chunks dedicados. Captions e estrutura preservadas.',
+  },
+  {
+    icon: Database,
+    title: 'Biblioteca curada',
+    blurb:
+      'Admin controla taxonomia, classifica candidatos, promove temas canônicos quando estabilizam.',
+  },
+  {
+    icon: Clock,
+    title: 'Histórico persistente',
+    blurb:
+      'Cada conversa e cada RFP/análise fica salva — recuperável a qualquer momento.',
+  },
+  {
+    icon: Zap,
+    title: 'Streaming nativo',
+    blurb: 'Resposta começa em < 3s via SSE. Sem tela em branco esperando.',
+  },
+];
+
+const FAQS = [
+  'O que é o ProcurementGPT?',
+  'Qual a diferença em relação a um ChatGPT genérico?',
+  'A base de conhecimento é da minha empresa ou compartilhada?',
+  'Como funciona o assistente de Kraljic?',
+  'Posso baixar os artefatos em Word ou Excel?',
+  'Como solicito acesso?',
+];
+
 export default function Landing() {
+  // Reveal-on-scroll: add `active` class when element enters viewport.
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries, obs) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('active');
+            obs.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.15 },
+    );
+    document.querySelectorAll('.reveal').forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, []);
+
+  // Navbar scroll effect — solidify on scroll past 50px.
+  useEffect(() => {
+    const navbar = document.getElementById('landing-navbar');
+    if (!navbar) return;
+    const onScroll = () => {
+      if (window.scrollY > 50) {
+        navbar.classList.add('bg-black/80', 'backdrop-blur-xl');
+        navbar.classList.remove('bg-black/20');
+      } else {
+        navbar.classList.add('bg-black/20');
+        navbar.classList.remove('bg-black/80', 'backdrop-blur-xl');
+      }
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
   return (
-    <main className="min-h-screen bg-md-background font-outfit text-md-foreground antialiased">
-      {/* ───── Header ───── */}
-      <header className="px-4 pt-6 md:pt-8">
-        <div className="mx-auto max-w-6xl flex items-center justify-between">
-          <Image
-            src="/2bsupply-logo.png"
-            alt="2B Supply"
-            width={241}
-            height={57}
-            priority
-            className="h-7 md:h-9 w-auto"
-          />
+    <>
+      <style jsx global>{`
+        .reveal {
+          opacity: 0;
+          transform: translateY(30px);
+          transition: opacity 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+            transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        .reveal.active {
+          opacity: 1;
+          transform: translateY(0);
+        }
+        .reveal-delay-1 {
+          transition-delay: 100ms;
+        }
+        .reveal-delay-2 {
+          transition-delay: 200ms;
+        }
+        .reveal-delay-3 {
+          transition-delay: 300ms;
+        }
+        .landing-text-gradient {
+          background: linear-gradient(180deg, #ffffff 0%, #a3a3a3 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+      `}</style>
+
+      <div className="min-h-screen bg-[#0d0d0d] text-white font-outfit antialiased overflow-x-hidden selection:bg-brand selection:text-black">
+        {/* ───── Navbar ───── */}
+        <nav
+          id="landing-navbar"
+          className="fixed top-0 left-0 w-full z-50 transition-all duration-300 backdrop-blur-md bg-black/20 border-b border-white/5 py-4 px-6 md:px-12 flex justify-between items-center"
+        >
+          <Link href="/" className="flex items-center gap-2">
+            <Image
+              src="/2bsupply-logo.png"
+              alt="2B Supply"
+              width={241}
+              height={57}
+              priority
+              className="h-6 md:h-7 w-auto brightness-0 invert"
+            />
+          </Link>
+
+          <div className="hidden md:flex space-x-8 items-center text-sm font-medium text-gray-300">
+            {NAV_LINKS.map((link) => (
+              <a
+                key={link.href}
+                href={link.href}
+                className="hover:text-white transition-colors"
+              >
+                {link.label}
+              </a>
+            ))}
+          </div>
+
           <Link
             href="/login"
-            className="inline-flex items-center justify-center rounded-full border border-md-outline text-md-primary px-5 h-9 text-sm font-medium hover:bg-md-primary/5 active:scale-95 transition-all duration-300 ease-md-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-md-primary focus-visible:ring-offset-2"
+            className="inline-flex items-center justify-center bg-brand text-black px-5 h-9 rounded-full text-sm font-medium hover:bg-brand/90 active:scale-95 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d0d0d]"
           >
             Entrar
           </Link>
-        </div>
-      </header>
+        </nav>
 
-      {/* ───── Hero ───── */}
-      <section className="relative overflow-hidden px-4 pt-8 pb-12 md:pt-12 md:pb-20">
-        <div className="relative mx-auto max-w-6xl rounded-md-lg md:rounded-md-hero bg-md-surface-container px-6 py-16 md:px-16 md:py-24 overflow-hidden">
-          {/* Decorative organic blur shapes (Material You signature),
-              now tinted with the 2B Supply cyan brand seed. */}
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute -top-20 -right-20 h-80 w-80 rounded-full bg-brand/25 blur-3xl mix-blend-multiply"
-          />
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute -bottom-32 -left-20 h-96 w-96 rounded-full bg-md-tertiary/20 blur-3xl mix-blend-multiply"
-          />
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute top-1/3 left-1/2 h-64 w-64 rounded-full bg-md-primary-container/60 blur-3xl"
-          />
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(14,209,224,0.18)_0%,_transparent_50%)]"
-          />
+        {/* ───── Hero ───── */}
+        <section className="relative min-h-screen flex items-center justify-center pt-20 overflow-hidden">
+          <div className="absolute inset-0 z-0 pointer-events-none">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="https://images.unsplash.com/photo-1731507104902-7c679c3eec85?w=1600&h=1080&q=80&auto=format&fit=crop"
+              alt=""
+              aria-hidden="true"
+              className="w-full h-full object-cover opacity-70"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#0d0d0d]/80 to-[#0d0d0d]" />
+            {/* Cyan glow shape to reinforce brand */}
+            <div
+              aria-hidden="true"
+              className="absolute top-1/4 right-1/4 h-96 w-96 rounded-full bg-brand/20 blur-3xl mix-blend-screen"
+            />
+          </div>
 
-          <div className="relative">
-            <div className="inline-flex items-center gap-2 rounded-full bg-md-primary-container px-4 py-1.5 text-xs font-medium text-md-on-primary-container">
-              <span
-                aria-hidden="true"
-                className="inline-block h-1.5 w-1.5 rounded-full bg-brand"
-              />
-              ProcurementGPT · ecossistema 2B Supply
-            </div>
-
-            <h1 className="mt-6 text-4xl md:text-6xl font-semibold tracking-tight leading-[1.05] max-w-3xl">
-              Procurement com{' '}
-              <span className="text-brand">inteligência aplicada</span>.
+          <div className="relative z-10 text-center px-6 max-w-4xl mx-auto flex flex-col items-center mt-16 md:mt-0">
+            <h1 className="text-5xl md:text-7xl lg:text-8xl font-medium tracking-tighter leading-[1.05] mb-6 reveal">
+              <span className="text-white">Onde decisões</span>
+              <br />
+              <span className="text-brand">ganham profundidade.</span>
             </h1>
-
-            <p className="mt-6 text-lg md:text-xl text-md-on-surface-variant max-w-2xl leading-relaxed">
-              Chat especialista treinado em centenas de artigos canônicos e
-              assistentes que entregam artefatos prontos — alinhados aos 8
-              passos do <span className="text-brand font-medium">Strategic Sourcing</span>.
+            <p className="text-lg md:text-xl text-gray-300 mb-10 max-w-xl mx-auto reveal reveal-delay-1 leading-relaxed font-light">
+              Um especialista de procurement com a clareza de quem leu Kraljic,
+              Porter, Monczka e Cousins — e a velocidade da IA.
             </p>
-
-            <div className="mt-10 flex flex-wrap gap-3">
+            <div className="reveal reveal-delay-2 flex flex-wrap gap-3 justify-center">
               <Link
                 href="/login"
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-md-primary text-md-on-primary px-8 h-12 text-sm font-medium shadow-sm hover:bg-md-primary/90 hover:shadow-md active:scale-95 transition-all duration-300 ease-md-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-md-primary focus-visible:ring-offset-2"
+                className="inline-flex items-center justify-center gap-2 bg-brand text-black px-8 py-3 rounded-full text-sm font-medium hover:bg-brand/90 active:scale-95 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d0d0d]"
               >
-                Entrar
-                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                Começar agora
+                <ArrowRight className="w-4 h-4" aria-hidden="true" />
               </Link>
               <a
-                href="#passos"
-                className="inline-flex items-center justify-center rounded-full border border-md-outline text-md-primary px-8 h-12 text-sm font-medium hover:bg-md-primary/5 active:scale-95 transition-all duration-300 ease-md-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-md-primary focus-visible:ring-offset-2"
+                href="#assistentes"
+                className="inline-flex items-center justify-center bg-white/5 text-white px-8 py-3 rounded-full text-sm font-medium hover:bg-white/10 active:scale-95 transition-all duration-300 border border-white/10"
               >
-                Conhecer os assistentes
+                Ver assistentes
               </a>
             </div>
           </div>
-        </div>
-      </section>
 
-      {/* ───── 8 passos do Strategic Sourcing ───── */}
-      <section
-        id="passos"
-        className="relative px-4 py-16 md:py-24"
-      >
-        <div className="mx-auto max-w-6xl">
-          <div className="max-w-2xl">
-            <h2 className="text-3xl md:text-5xl font-semibold tracking-tight">
-              Os 8 passos do <span className="text-brand">Strategic Sourcing</span>
+          <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center opacity-50 reveal reveal-delay-3">
+            <svg
+              className="w-5 h-5 mb-2 animate-bounce"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="1.5"
+                d="M19 14l-7 7m0 0l-7-7m7 7V3"
+              />
+            </svg>
+            <span className="text-xs uppercase tracking-widest">Role para explorar</span>
+          </div>
+        </section>
+
+        {/* ───── Intro · 3 cards ───── */}
+        <section
+          id="sobre"
+          className="py-24 px-6 md:px-12 max-w-7xl mx-auto relative z-10 bg-[#0d0d0d]"
+        >
+          <div className="mb-16 reveal">
+            <div className="flex items-center gap-2 mb-4">
+              <div
+                aria-hidden="true"
+                className="w-1.5 h-1.5 rounded-full bg-brand"
+              />
+              <span className="text-sm text-gray-400 font-medium">
+                ProcurementGPT · ecossistema 2B Supply
+              </span>
+            </div>
+            <h2 className="text-4xl md:text-5xl font-medium tracking-tight max-w-4xl">
+              <span className="text-white">Inteligência invisível</span>{' '}
+              <span className="text-gray-500">
+                acelerando cada um dos 8 passos do Strategic Sourcing.
+              </span>
             </h2>
-            <p className="mt-4 text-base md:text-lg text-md-on-surface-variant leading-relaxed">
-              Cada passo ganha um assistente dedicado. Hoje, dois já entregam
-              artefatos prontos; os demais estão na fila.
-            </p>
           </div>
 
-          <ol className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {STEPS.map((step) => (
-              <li
-                key={step.n}
-                className="group relative rounded-md-lg bg-md-surface-container p-6 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300 ease-md-standard"
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {FEATURE_CARDS.map((card, idx) => (
+              <div
+                key={card.title}
+                className={`reveal ${
+                  idx === 1 ? 'reveal-delay-1' : idx === 2 ? 'reveal-delay-2' : ''
+                }`}
               >
-                <div className="flex items-start justify-between gap-3">
-                  <div
-                    aria-hidden="true"
-                    className="flex h-10 w-10 items-center justify-center rounded-full bg-md-primary-container text-md-on-primary-container text-sm font-medium"
-                  >
+                <div className="rounded-2xl overflow-hidden mb-6 bg-[#1a1a1a] aspect-[4/3] relative">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={card.image}
+                    alt={card.alt}
+                    className="w-full h-full object-cover opacity-80 mix-blend-luminosity hover:mix-blend-normal transition-all duration-500"
+                  />
+                </div>
+                <h3 className="text-xl font-medium text-white mb-2">{card.title}</h3>
+                <p className="text-gray-400 text-sm leading-relaxed">{card.blurb}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ───── Use cases (tabs simulado) ───── */}
+        <section
+          id="assistentes"
+          className="py-24 px-6 md:px-12 max-w-7xl mx-auto border-t border-white/5"
+        >
+          <div className="mb-12 reveal">
+            <div className="flex items-center gap-2 mb-4">
+              <div aria-hidden="true" className="w-1.5 h-1.5 rounded-full bg-brand" />
+              <span className="text-sm text-gray-400 font-medium">Casos de uso</span>
+            </div>
+            <h2 className="text-4xl md:text-5xl font-medium tracking-tight max-w-4xl">
+              <span className="text-white">Diferentes caminhos,</span>{' '}
+              <span className="text-gray-500">guiados por um especialista silencioso.</span>
+            </h2>
+          </div>
+
+          <div className="reveal">
+            <div className="flex space-x-6 border-b border-white/10 mb-10 overflow-x-auto whitespace-nowrap pb-px">
+              <button className="text-white border-b-2 border-brand pb-3 px-1 text-sm font-medium">
+                Estratégia · Kraljic
+              </button>
+              <button className="text-gray-500 hover:text-gray-300 border-b-2 border-transparent pb-3 px-1 text-sm font-medium transition-colors">
+                RFP / RFQ
+              </button>
+              <button className="text-gray-500 hover:text-gray-300 border-b-2 border-transparent pb-3 px-1 text-sm font-medium transition-colors">
+                Análise de portfólio
+              </button>
+              <button className="text-gray-500 hover:text-gray-300 border-b-2 border-transparent pb-3 px-1 text-sm font-medium transition-colors">
+                Negociação <span className="ml-1 text-xs text-gray-600">(em breve)</span>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+              <div className="rounded-2xl overflow-hidden bg-[#1a1a1a] aspect-video relative">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={USE_CASES[0]!.image}
+                  alt={USE_CASES[0]!.alt}
+                  className="w-full h-full object-cover"
+                />
+                <div
+                  aria-hidden="true"
+                  className="absolute inset-0 bg-gradient-to-tr from-brand/10 via-transparent to-transparent"
+                />
+              </div>
+              <div className="lg:pl-8">
+                <span className="text-sm text-brand mb-4 block font-medium">
+                  {USE_CASES[0]!.label}
+                </span>
+                <h3 className="text-3xl font-medium text-white mb-6 leading-tight">
+                  {USE_CASES[0]!.title}
+                </h3>
+                <Link
+                  href={USE_CASES[0]!.href}
+                  className="inline-flex items-center justify-center gap-2 bg-brand text-black px-6 py-2.5 rounded-full text-sm font-medium hover:bg-brand/90 active:scale-95 transition-all duration-300"
+                >
+                  Conhecer o assistente
+                  <ArrowRight className="w-4 h-4" aria-hidden="true" />
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ───── How It Works ───── */}
+        <section
+          id="como-funciona"
+          className="py-24 px-6 md:px-12 max-w-7xl mx-auto border-t border-white/5"
+        >
+          <div className="mb-16 reveal">
+            <div className="flex items-center gap-2 mb-4">
+              <div aria-hidden="true" className="w-1.5 h-1.5 rounded-full bg-brand" />
+              <span className="text-sm text-gray-400 font-medium">Como funciona</span>
+            </div>
+            <h2 className="text-4xl md:text-5xl font-medium tracking-tight">
+              <span className="text-white">Uma pergunta,</span>
+              <br />
+              <span className="text-gray-500">três passos até a clareza.</span>
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            <div className="order-2 lg:order-1 rounded-2xl overflow-hidden bg-[#1a1a1a] aspect-[4/3] relative reveal">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="https://images.unsplash.com/photo-1760952851538-17a59f691efe?w=1000&h=800&q=80&auto=format&fit=crop"
+                alt=""
+                aria-hidden="true"
+                className="w-full h-full object-cover opacity-90"
+              />
+              <div
+                aria-hidden="true"
+                className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-brand/15"
+              />
+            </div>
+
+            <div className="order-1 lg:order-2 space-y-12">
+              {STEPS.map((step, idx) => (
+                <div
+                  key={step.n}
+                  className={`flex gap-6 reveal ${
+                    idx === 1 ? 'reveal-delay-1' : idx === 2 ? 'reveal-delay-2' : ''
+                  }`}
+                >
+                  <div className="mt-1 flex-shrink-0 w-10 h-10 rounded-full border border-brand/30 bg-brand/5 flex items-center justify-center text-brand text-sm font-medium">
                     {step.n}
                   </div>
-                  {step.available ? (
-                    <span className="inline-flex items-center rounded-full bg-md-tertiary-container px-2.5 py-0.5 text-[10px] font-medium text-md-on-tertiary-container">
-                      Disponível
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 text-[10px] text-md-on-surface-variant">
-                      <Clock className="h-3 w-3" aria-hidden="true" />
-                      Em breve
-                    </span>
-                  )}
-                </div>
-                <h3 className="mt-5 text-lg font-medium tracking-tight">
-                  {step.title}
-                </h3>
-                <p className="mt-2 text-sm text-md-on-surface-variant leading-relaxed">
-                  {step.blurb}
-                </p>
-                {step.available && (
-                  <div className="mt-4 inline-flex items-center gap-1.5 text-xs font-medium text-md-primary">
-                    {step.available.assistant === 'kraljic' ? (
-                      <LayoutGrid className="h-3.5 w-3.5" aria-hidden="true" />
-                    ) : (
-                      <FileText className="h-3.5 w-3.5" aria-hidden="true" />
-                    )}
-                    {step.available.label}
+                  <div>
+                    <h4 className="text-xl font-medium text-white mb-2">{step.title}</h4>
+                    <p className="text-gray-400 text-sm leading-relaxed">{step.blurb}</p>
                   </div>
-                )}
-              </li>
-            ))}
-          </ol>
-        </div>
-      </section>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
 
-      {/* ───── Chat especialista ───── */}
-      <section className="relative px-4 py-16 md:py-24">
-        <div className="relative mx-auto max-w-6xl rounded-md-xxl md:rounded-md-hero bg-md-secondary-container px-6 py-16 md:px-16 md:py-20 overflow-hidden">
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute -top-20 -right-32 h-72 w-72 rounded-full bg-md-primary/20 blur-3xl"
-          />
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute -bottom-24 right-1/4 h-64 w-64 rounded-full bg-md-tertiary/20 blur-3xl"
-          />
+        {/* ───── Benefits grid ───── */}
+        <section
+          id="beneficios"
+          className="py-24 px-6 md:px-12 max-w-7xl mx-auto border-t border-white/5"
+        >
+          <div className="mb-16 reveal">
+            <div className="flex items-center gap-2 mb-4">
+              <div aria-hidden="true" className="w-1.5 h-1.5 rounded-full bg-brand" />
+              <span className="text-sm text-gray-400 font-medium">Benefícios</span>
+            </div>
+            <h2 className="text-4xl md:text-5xl font-medium tracking-tight max-w-4xl">
+              <span className="text-white">Poder invisível ao seu lado,</span>{' '}
+              <span className="text-gray-500">entregando resultados todos os dias.</span>
+            </h2>
+          </div>
 
-          <div className="relative grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
-            <div>
-              <div className="inline-flex items-center gap-2 rounded-full bg-white/50 backdrop-blur-sm px-4 py-1.5 text-xs font-medium text-md-on-secondary-container">
-                <MessageCircle className="h-3.5 w-3.5" aria-hidden="true" />
-                Chat com base de conhecimento
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-white/5 border border-white/5 rounded-2xl overflow-hidden">
+            {BENEFITS.map((b, idx) => {
+              const Icon = b.icon;
+              return (
+                <div
+                  key={b.title}
+                  className={`bg-[#111111] p-8 reveal hover:bg-[#151515] transition-colors ${
+                    idx % 3 === 1
+                      ? 'reveal-delay-1'
+                      : idx % 3 === 2
+                        ? 'reveal-delay-2'
+                        : ''
+                  }`}
+                >
+                  <div className="w-10 h-10 rounded-full border border-brand/30 bg-brand/5 flex items-center justify-center mb-6 text-brand">
+                    <Icon className="w-5 h-5" aria-hidden="true" />
+                  </div>
+                  <h4 className="text-white font-medium mb-3">{b.title}</h4>
+                  <p className="text-gray-400 text-sm leading-relaxed">{b.blurb}</p>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* ───── Como acessar (substitui pricing — invite-only) ───── */}
+        <section className="py-24 px-6 md:px-12 max-w-7xl mx-auto border-t border-white/5">
+          <div className="mb-12 reveal">
+            <div className="flex items-center gap-2 mb-4">
+              <div aria-hidden="true" className="w-1.5 h-1.5 rounded-full bg-brand" />
+              <span className="text-sm text-gray-400 font-medium">Acesso</span>
+            </div>
+            <h2 className="text-4xl md:text-5xl font-medium tracking-tight max-w-3xl">
+              <span className="text-white">Por convite,</span>{' '}
+              <span className="text-gray-500">via 2B Supply.</span>
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 reveal">
+            <div className="bg-[#111111] border border-white/5 rounded-2xl p-8">
+              <div className="inline-flex items-center gap-2 mb-4 text-brand text-xs font-medium uppercase tracking-wider">
+                <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
+                Já tem acesso
               </div>
-              <h2 className="mt-6 text-3xl md:text-5xl font-semibold tracking-tight text-md-on-secondary-container">
-                Pergunte a um <span className="text-md-primary">especialista sênior</span>.
-              </h2>
-              <p className="mt-4 text-base md:text-lg text-md-on-secondary-container/80 leading-relaxed">
-                Retrieval híbrido (vetorial + lexical + rerank) sobre uma
-                biblioteca curada de Kraljic, Porter, Monczka, Cousins e
-                outros — sem alucinação, sem citações soltas, com a profundidade
-                de quem leu o material.
+              <h3 className="text-xl font-medium text-white mb-3">
+                Entre com sua conta
+              </h3>
+              <p className="text-gray-400 text-sm mb-8 leading-relaxed">
+                Login via email/senha ou Google. Sua biblioteca e histórico ficam
+                isolados por organização.
               </p>
               <Link
-                href="/chat"
-                className="mt-8 inline-flex items-center justify-center gap-2 rounded-full bg-md-primary text-md-on-primary px-8 h-12 text-sm font-medium shadow-sm hover:bg-md-primary/90 hover:shadow-md active:scale-95 transition-all duration-300 ease-md-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-md-primary focus-visible:ring-offset-2"
+                href="/login"
+                className="inline-flex w-full items-center justify-center gap-2 bg-brand text-black py-2.5 rounded-full text-sm font-medium hover:bg-brand/90 active:scale-95 transition-all duration-300"
               >
-                Abrir o chat
-                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                Entrar
+                <ArrowRight className="w-4 h-4" aria-hidden="true" />
               </Link>
             </div>
 
-            {/* Mock-up bubble showing a chat turn */}
-            <div className="relative">
-              <div className="rounded-md-lg bg-white/70 backdrop-blur-sm border border-white/40 p-6 shadow-md">
-                <p className="text-xs font-medium text-md-on-surface-variant uppercase tracking-wider">
-                  Você
-                </p>
-                <p className="mt-2 text-sm text-md-foreground">
-                  Como aplicar o quadrante &ldquo;Alavancável&rdquo; do Kraljic
-                  em uma categoria de embalagens?
-                </p>
-                <div className="mt-5 rounded-md-md bg-md-primary-container p-4">
-                  <p className="text-xs font-medium text-md-on-primary-container uppercase tracking-wider">
-                    ProcurementGPT
-                  </p>
-                  <p className="mt-2 text-sm text-md-on-primary-container leading-relaxed">
-                    Embalagens costumam cair em <em>Alavancável</em> quando há
-                    alto impacto financeiro e mercado fornecedor maduro (Kraljic,
-                    HBR 1983). A jogada padrão é leverage buying: pool spend,
-                    competição cruzada e renegociação trimestral via RFQ...
-                  </p>
-                </div>
+            <div className="bg-[#1a1a1a] border border-white/10 rounded-2xl p-8">
+              <div className="inline-flex items-center gap-2 mb-4 text-gray-400 text-xs font-medium uppercase tracking-wider">
+                Quer experimentar
               </div>
+              <h3 className="text-xl font-medium text-white mb-3">
+                Solicite acesso
+              </h3>
+              <p className="text-gray-400 text-sm mb-8 leading-relaxed">
+                Beta fechado. Mande um email com o nome da sua empresa e o caso
+                de uso prioritário — você entra na fila do próximo ciclo de
+                convites.
+              </p>
+              <a
+                href="mailto:rgoalves@gmail.com?subject=Quero%20acesso%20ao%20ProcurementGPT"
+                className="inline-flex w-full items-center justify-center bg-white/5 border border-white/10 text-white py-2.5 rounded-full text-sm font-medium hover:bg-white/10 active:scale-95 transition-all duration-300"
+              >
+                Falar com o time
+              </a>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* ───── CTA final ───── */}
-      <section className="relative px-4 pb-20 md:pb-32">
-        <div className="relative mx-auto max-w-4xl rounded-md-xxl md:rounded-md-hero bg-md-primary text-md-on-primary px-6 py-16 md:px-16 md:py-20 overflow-hidden shadow-lg">
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute -top-32 -left-20 h-80 w-80 rounded-full bg-white/15 blur-3xl"
-          />
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute -bottom-24 -right-16 h-64 w-64 rounded-full bg-md-tertiary/40 blur-3xl"
-          />
-
-          <div className="relative text-center">
-            <h2 className="text-3xl md:text-5xl font-semibold tracking-tight">
-              Pronto para acelerar seu{' '}
-              <span className="text-brand">sourcing</span>?
+        {/* ───── FAQ ───── */}
+        <section
+          id="faq"
+          className="py-24 px-6 md:px-12 max-w-7xl mx-auto border-t border-white/5"
+        >
+          <div className="mb-16 reveal">
+            <div className="flex items-center gap-2 mb-4">
+              <div aria-hidden="true" className="w-1.5 h-1.5 rounded-full bg-brand" />
+              <span className="text-sm text-gray-400 font-medium">FAQ</span>
+            </div>
+            <h2 className="text-4xl md:text-5xl font-medium tracking-tight">
+              <span className="text-white">Suas dúvidas,</span>{' '}
+              <span className="text-gray-500">respondidas com clareza.</span>
             </h2>
-            <p className="mt-4 text-base md:text-lg text-md-on-primary/85 max-w-xl mx-auto leading-relaxed">
-              Acesso é por convite — faça login com a conta cadastrada pelo
-              admin da sua organização.
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-4 reveal">
+            <div className="space-y-4">
+              {FAQS.slice(0, 3).map((q) => (
+                <div
+                  key={q}
+                  className="border-b border-white/5 py-4 flex justify-between items-center cursor-pointer group"
+                >
+                  <span className="text-sm text-gray-300 group-hover:text-white transition-colors">
+                    {q}
+                  </span>
+                  <Plus className="w-4 h-4 text-gray-500 group-hover:text-brand transition-colors" aria-hidden="true" />
+                </div>
+              ))}
+            </div>
+            <div className="space-y-4">
+              {FAQS.slice(3).map((q) => (
+                <div
+                  key={q}
+                  className="border-b border-white/5 py-4 flex justify-between items-center cursor-pointer group"
+                >
+                  <span className="text-sm text-gray-300 group-hover:text-white transition-colors">
+                    {q}
+                  </span>
+                  <Plus className="w-4 h-4 text-gray-500 group-hover:text-brand transition-colors" aria-hidden="true" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ───── Final CTA ───── */}
+        <section className="py-12 px-6 md:px-12 max-w-7xl mx-auto reveal">
+          <div className="relative rounded-3xl overflow-hidden min-h-[400px] flex items-center p-8 md:p-12">
+            <div className="absolute inset-0 z-0 pointer-events-none">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="https://images.unsplash.com/photo-1760060530300-b6374dab9534?w=1200&h=600&q=80&auto=format&fit=crop"
+                alt=""
+                aria-hidden="true"
+                className="w-full h-full object-cover opacity-50"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-[#0d0d0d] via-[#0d0d0d]/80 to-transparent" />
+              <div
+                aria-hidden="true"
+                className="absolute top-1/3 right-1/4 h-72 w-72 rounded-full bg-brand/25 blur-3xl mix-blend-screen"
+              />
+            </div>
+
+            <div className="relative z-10 max-w-lg">
+              <h2 className="text-4xl md:text-5xl font-medium text-white mb-6 leading-tight">
+                Da pergunta ao artefato,{' '}
+                <span className="text-brand">sem fricção.</span>
+              </h2>
+              <p className="text-gray-300 mb-8 leading-relaxed">
+                Acesso é por convite. Entre com a conta cadastrada pelo admin da
+                sua organização.
+              </p>
+              <Link
+                href="/login"
+                className="inline-flex items-center justify-center gap-2 bg-brand text-black px-8 py-3 rounded-full text-sm font-medium hover:bg-brand/90 active:scale-95 transition-all duration-300"
+              >
+                Entrar agora
+                <ArrowRight className="w-4 h-4" aria-hidden="true" />
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* ───── Footer ───── */}
+        <footer className="py-12 px-6 md:px-12 max-w-7xl mx-auto border-t border-white/5 mt-12 flex flex-col md:flex-row justify-between items-start md:items-center gap-12">
+          <div className="max-w-xs">
+            <Image
+              src="/2bsupply-logo.png"
+              alt="2B Supply"
+              width={241}
+              height={57}
+              className="h-7 w-auto brightness-0 invert mb-4"
+            />
+            <p className="text-sm text-gray-500 mb-6">
+              ProcurementGPT — parte do ecossistema 2B Supply. Inteligência
+              aplicada para cada passo do Strategic Sourcing.
             </p>
+            <div className="text-xs text-gray-600">
+              <a
+                href="https://2bsupply.com.br/en/"
+                target="_blank"
+                rel="noreferrer noopener"
+                className="text-gray-400 hover:text-brand transition-colors"
+              >
+                2bsupply.com.br ↗
+              </a>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-x-16 gap-y-3">
+            <span className="text-sm font-medium text-white mb-2 col-span-2">
+              Navegação
+            </span>
+            {NAV_LINKS.map((link) => (
+              <a
+                key={link.href}
+                href={link.href}
+                className="text-sm text-gray-500 hover:text-white transition-colors"
+              >
+                {link.label}
+              </a>
+            ))}
             <Link
               href="/login"
-              className="mt-8 inline-flex items-center justify-center gap-2 rounded-full bg-white text-md-primary px-8 h-12 text-sm font-medium shadow-sm hover:shadow-md active:scale-95 transition-all duration-300 ease-md-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-md-primary"
+              className="text-sm text-gray-500 hover:text-white transition-colors"
             >
               Entrar
-              <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </Link>
           </div>
-        </div>
-      </section>
-
-      {/* ───── Footer ───── */}
-      <footer className="border-t border-md-outline-variant px-4 py-8">
-        <div className="mx-auto max-w-6xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 text-xs text-md-on-surface-variant">
-          <div>
-            ProcurementGPT · parte do ecossistema{' '}
-            <a
-              href="https://2bsupply.com.br/en/"
-              target="_blank"
-              rel="noreferrer noopener"
-              className="text-md-primary hover:underline"
-            >
-              2B Supply
-            </a>
-          </div>
-          <div className="flex gap-6">
-            <Link href="/login" className="hover:text-md-foreground transition-colors">
-              Entrar
-            </Link>
-            <a
-              href="mailto:rgoalves@gmail.com"
-              className="hover:text-md-foreground transition-colors"
-            >
-              Contato
-            </a>
-          </div>
-        </div>
-      </footer>
-    </main>
+        </footer>
+      </div>
+    </>
   );
 }
