@@ -31,10 +31,20 @@ async function setupMocks(opts: {
   classifyTitle?: string;
   classifyTheme?: string;
   classifySummary?: string;
+  /**
+   * If set, chunks.insert returns `{ error: { message } }` on the Nth call
+   * (1-indexed). Used to test retry + cleanup behavior. The behavior at
+   * the failing call repeats forever unless `chunksFailUntil` is also set.
+   */
+  chunksFailAt?: number;
+  /** If set, chunks.insert fails for the first N calls then succeeds. */
+  chunksFailUntil?: number;
 }) {
   const updateCalls: Array<Record<string, unknown>> = [];
   const insertedArticles: Array<Record<string, unknown>> = [];
   const insertedChunkBatches: Array<Array<Record<string, unknown>>> = [];
+  const deletedArticleIds: string[] = [];
+  let chunksInsertCallCount = 0;
 
   vi.doMock('@/lib/db/storage', () => ({
     INGEST_BUCKET: 'ingest-uploads',
@@ -71,16 +81,37 @@ async function setupMocks(opts: {
       from: (table: string) => {
         const builder: Record<string, unknown> = {};
         let pendingInsert: unknown = null;
+        let deletePending = false;
         builder.select = vi.fn().mockReturnThis();
-        builder.eq = vi.fn().mockReturnThis();
+        builder.eq = vi.fn().mockImplementation((_col: string, val: unknown) => {
+          if (deletePending && table === 'articles') {
+            deletedArticleIds.push(String(val));
+            deletePending = false;
+          }
+          return builder;
+        });
         builder.update = vi.fn().mockImplementation((payload: Record<string, unknown>) => {
           if (table === 'ingestion_jobs') updateCalls.push(payload);
+          return builder;
+        });
+        builder.delete = vi.fn().mockImplementation(() => {
+          deletePending = true;
           return builder;
         });
         builder.insert = vi.fn().mockImplementation((payload: unknown) => {
           pendingInsert = payload;
           if (table === 'articles') insertedArticles.push(payload as Record<string, unknown>);
-          if (table === 'chunks') insertedChunkBatches.push(payload as Array<Record<string, unknown>>);
+          if (table === 'chunks') {
+            chunksInsertCallCount++;
+            insertedChunkBatches.push(payload as Array<Record<string, unknown>>);
+            const shouldFail =
+              (opts.chunksFailAt && chunksInsertCallCount >= opts.chunksFailAt) ||
+              (opts.chunksFailUntil && chunksInsertCallCount <= opts.chunksFailUntil);
+            if (shouldFail) {
+              return Promise.resolve({ error: { message: 'simulated chunks insert failure' } });
+            }
+            return Promise.resolve({ error: null });
+          }
           return builder;
         });
         builder.single = vi.fn().mockImplementation(async () => {
@@ -109,6 +140,7 @@ async function setupMocks(opts: {
     updateCalls,
     insertedArticles,
     insertedChunkBatches,
+    deletedArticleIds,
     classifyContent: classifyContentMod.classifyContent as ReturnType<typeof vi.fn>,
   };
 }
@@ -243,5 +275,34 @@ describe('lib/ingest/pipeline', () => {
     const { runPipeline } = await import('@/lib/ingest/pipeline');
     await runPipeline('job-1');
     expect(m.classifyContent).not.toHaveBeenCalled();
+  });
+
+  it('chunks insert failure: rolls back the article row + marks job as error', async () => {
+    // Force every chunks.insert call to return an error → 3 retries exhausted.
+    const m = await setupMocks({ job: baseJob, chunksFailAt: 1 });
+    const { runPipeline } = await import('@/lib/ingest/pipeline');
+    await runPipeline('job-1');
+    // Article was inserted, then deleted as rollback.
+    expect(m.insertedArticles).toHaveLength(1);
+    expect(m.deletedArticleIds).toContain('new-art-1');
+    // Job ends in error, not done.
+    const finalUpdate = m.updateCalls[m.updateCalls.length - 1]!;
+    expect(finalUpdate.status).toBe('error');
+    expect(String(finalUpdate.error_message)).toMatch(/chunks insert failed/i);
+  });
+
+  it('chunks insert: transient failure recovered by retry → still marks done', async () => {
+    // Fail the first call, succeed on retry.
+    const m = await setupMocks({
+      job: baseJob,
+      parsed: { kind: 'text', text: 'Texto longo. '.repeat(40) },
+      chunksFailUntil: 1,
+    });
+    const { runPipeline } = await import('@/lib/ingest/pipeline');
+    await runPipeline('job-1');
+    expect(m.deletedArticleIds).not.toContain('new-art-1');
+    const finalUpdate = m.updateCalls[m.updateCalls.length - 1]!;
+    expect(finalUpdate.status).toBe('done');
+    expect(finalUpdate.chunks_count).toBeGreaterThan(0);
   });
 });
