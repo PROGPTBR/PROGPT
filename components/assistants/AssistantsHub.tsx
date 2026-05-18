@@ -1,53 +1,117 @@
 'use client';
 
 import Link from 'next/link';
-import { FileText, Clock, History, LayoutGrid } from 'lucide-react';
+import {
+  FileText,
+  Clock,
+  History,
+  LayoutGrid,
+  type LucideIcon,
+} from 'lucide-react';
 
-// Sub-projeto 20+27: hub page that lists available assistants. Cada
-// novo assistente entra como uma entrada aqui.
+// Sub-projeto 20+27+28: hub organizada pelos 8 passos do strategic sourcing.
+// Cada novo assistente entra no `assistants` do passo correspondente.
 
-type Assistant = {
+type AssistantCard = {
   type: 'rfp' | 'kraljic';
   href: string;
   title: string;
   description: string;
-  cta: string;
-  status: 'available' | 'coming-soon';
-  icon: 'document' | 'matrix';
+  icon: LucideIcon;
 };
 
-const ASSISTANTS: Assistant[] = [
+type SourcingStep = {
+  n: number;
+  title: string;
+  blurb: string;
+  assistants: AssistantCard[];
+};
+
+const STEPS: SourcingStep[] = [
   {
-    type: 'rfp',
-    href: '/assistants/rfp',
-    title: 'Assistente de RFP',
-    description:
-      'Gera um draft completo de RFP (Request for Proposal) com base nos parâmetros da sua categoria, no template selecionado e na base de conhecimento.',
-    cta: 'Começar',
-    status: 'available',
-    icon: 'document',
+    n: 1,
+    title: 'Perfil da Categoria',
+    blurb:
+      'Entendimento profundo da categoria, suas especificidades e como ela impacta o negócio.',
+    assistants: [],
   },
   {
-    type: 'kraljic',
-    href: '/assistants/kraljic',
-    title: 'Assistente Kraljic',
-    description:
-      'Classifica seu portfólio de categorias na Matriz de Kraljic (Estratégico / Alavancável / Gargalo / Não Crítico), gera plano de ação por quadrante e gráfico bubble 2×2.',
-    cta: 'Começar',
-    status: 'available',
-    icon: 'matrix',
+    n: 2,
+    title: 'Análise da Categoria',
+    blurb:
+      'Coleta e análise de dados internos: volumes, custos, contratos, histórico de fornecimento.',
+    assistants: [],
+  },
+  {
+    n: 3,
+    title: 'Visão do Mercado Fornecedor',
+    blurb:
+      'Mapeamento de fornecedores, tendências de mercado, riscos e oportunidades.',
+    assistants: [],
+  },
+  {
+    n: 4,
+    title: 'Estratégia de Sourcing',
+    blurb:
+      'Definição de como abordar o mercado — negociação competitiva, parcerias, simplificação ou proteção de fornecimento.',
+    assistants: [
+      {
+        type: 'kraljic',
+        href: '/assistants/kraljic',
+        title: 'Assistente Kraljic',
+        description:
+          'Classifica seu portfólio na Matriz de Kraljic (Estratégico / Alavancável / Gargalo / Não Crítico), gera plano de ação por quadrante e gráfico bubble 2×2.',
+        icon: LayoutGrid,
+      },
+    ],
+  },
+  {
+    n: 5,
+    title: 'Engajamento dos Fornecedores',
+    blurb: 'Condução do processo de RFI, RFP ou RFQ.',
+    assistants: [
+      {
+        type: 'rfp',
+        href: '/assistants/rfp',
+        title: 'Assistente de RFP',
+        description:
+          'Gera um draft completo de RFP/RFQ com base nos parâmetros da categoria, no template selecionado e na base de conhecimento.',
+        icon: FileText,
+      },
+    ],
+  },
+  {
+    n: 6,
+    title: 'Negociação',
+    blurb:
+      'Negociação estruturada para maximizar valor — não apenas reduzir preços.',
+    assistants: [],
+  },
+  {
+    n: 7,
+    title: 'Implementação do Contrato',
+    blurb: 'Formalização de acordos claros, alinhados com a estratégia.',
+    assistants: [],
+  },
+  {
+    n: 8,
+    title: 'Controle e Melhoria Contínua',
+    blurb:
+      'Monitoramento de KPIs, ajustes de estratégia, busca incessante por melhoria.',
+    assistants: [],
   },
 ];
 
 export function AssistantsHub() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Assistentes</h1>
           <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
-            Cada assistente combina a base de conhecimento com templates curados pra te entregar
-            um artefato pronto pra usar. Mais assistentes em breve.
+            Organizados pelos 8 passos do Strategic Sourcing. Cada assistente
+            combina a base de conhecimento com templates curados para entregar
+            um artefato pronto.
           </p>
         </div>
         <Link
@@ -55,52 +119,62 @@ export function AssistantsHub() {
           className="inline-flex items-center gap-1.5 text-sm rounded-md border border-input bg-background hover:bg-accent px-3 h-9"
         >
           <History className="h-4 w-4" />
-          Meus RFPs
+          Meu histórico
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {ASSISTANTS.map((a) => {
-          const Inner = (
-            <div className="rounded-lg border border-border bg-card hover:bg-accent transition-colors p-5 h-full flex flex-col">
-              <div className="flex items-start gap-3">
-                <div className="rounded-md bg-primary/10 p-2 text-primary">
-                  {a.icon === 'matrix' ? (
-                    <LayoutGrid className="h-5 w-5" />
-                  ) : (
-                    <FileText className="h-5 w-5" />
-                  )}
-                </div>
-                <div className="flex-1">
-                  <h2 className="text-sm font-semibold">{a.title}</h2>
-                  <p className="text-xs text-muted-foreground mt-1">{a.description}</p>
-                </div>
-              </div>
-              <div className="mt-4 flex items-center justify-between">
-                {a.status === 'coming-soon' ? (
-                  <span className="text-xs text-muted-foreground flex items-center gap-1">
-                    <Clock className="h-3 w-3" /> Em breve
-                  </span>
+      <ol className="space-y-4">
+        {STEPS.map((step) => (
+          <li key={step.n} className="flex gap-4">
+            <div
+              aria-hidden="true"
+              className="flex-shrink-0 w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-semibold"
+            >
+              {step.n}
+            </div>
+            <div className="flex-1 min-w-0">
+              <h2 className="text-sm font-semibold">{step.title}</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {step.blurb}
+              </p>
+              <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
+                {step.assistants.length === 0 ? (
+                  <div className="rounded-md border border-dashed border-border p-3 flex items-center gap-2 text-xs text-muted-foreground">
+                    <Clock className="h-3.5 w-3.5" />
+                    Em breve
+                  </div>
                 ) : (
-                  <span className="text-xs text-primary font-medium">{a.cta} →</span>
+                  step.assistants.map((a) => {
+                    const Icon = a.icon;
+                    return (
+                      <Link
+                        key={a.type}
+                        href={a.href}
+                        className="rounded-md border border-border bg-card hover:bg-accent transition-colors p-3 block"
+                      >
+                        <div className="flex items-start gap-2">
+                          <div className="rounded-md bg-primary/10 p-1.5 text-primary">
+                            <Icon className="h-4 w-4" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium">{a.title}</div>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              {a.description}
+                            </p>
+                            <span className="mt-2 inline-block text-xs text-primary font-medium">
+                              Começar →
+                            </span>
+                          </div>
+                        </div>
+                      </Link>
+                    );
+                  })
                 )}
               </div>
             </div>
-          );
-          if (a.status === 'available') {
-            return (
-              <Link key={a.type} href={a.href} className="block">
-                {Inner}
-              </Link>
-            );
-          }
-          return (
-            <div key={a.type} className="opacity-60 cursor-not-allowed">
-              {Inner}
-            </div>
-          );
-        })}
-      </div>
+          </li>
+        ))}
+      </ol>
     </div>
   );
 }
