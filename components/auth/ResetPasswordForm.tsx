@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabaseBrowser } from '@/lib/db/supabase-browser';
-import { Button } from '@/components/ui/button';
 
 export function ResetPasswordForm() {
   const router = useRouter();
@@ -23,12 +22,17 @@ export function ResetPasswordForm() {
 
   if (hasSession === false) {
     return (
-      <div className="w-full max-w-sm mx-auto p-6 space-y-3">
-        <h1 className="text-xl font-semibold">Link expirado</h1>
-        <p className="text-sm text-muted-foreground">
+      <div className="space-y-4 text-center">
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Link expirado <span className="text-brand">.</span>
+        </h1>
+        <p className="text-sm text-gray-400 leading-relaxed">
           Sua sessão de recuperação não está mais ativa.
         </p>
-        <Link href="/forgot-password" className="text-primary hover:underline text-sm">
+        <Link
+          href="/forgot-password"
+          className="text-brand hover:text-brand/80 transition-colors text-sm inline-block pt-2"
+        >
           Solicitar novo link
         </Link>
       </div>
@@ -54,38 +58,62 @@ export function ResetPasswordForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="w-full max-w-sm mx-auto p-6 space-y-4">
+    <form onSubmit={onSubmit} className="space-y-6">
       <div>
-        <h1 className="text-xl font-semibold">Redefinir senha</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Redefinir senha <span className="text-brand">.</span>
+        </h1>
+        <p className="mt-1.5 text-sm text-gray-400">
+          Escolha uma nova senha para sua conta.
+        </p>
       </div>
       <div>
-        <label htmlFor="pwd" className="block text-sm mb-1">Nova senha</label>
+        <label
+          htmlFor="pwd"
+          className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-2"
+        >
+          Nova senha
+        </label>
         <input
           id="pwd"
           type="password"
           required
           value={pwd}
           onChange={(e) => setPwd(e.target.value)}
-          className="w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+          className="w-full rounded-lg bg-white/5 border border-white/10 px-4 py-2.5 text-sm text-white placeholder-gray-600 outline-none focus:border-brand focus:bg-white/10 transition-colors"
         />
       </div>
       <div>
-        <label htmlFor="confirm" className="block text-sm mb-1">Confirmar nova senha</label>
+        <label
+          htmlFor="confirm"
+          className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-2"
+        >
+          Confirmar nova senha
+        </label>
         <input
           id="confirm"
           type="password"
           required
           value={confirm}
           onChange={(e) => setConfirm(e.target.value)}
-          className="w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+          className="w-full rounded-lg bg-white/5 border border-white/10 px-4 py-2.5 text-sm text-white placeholder-gray-600 outline-none focus:border-brand focus:bg-white/10 transition-colors"
         />
       </div>
       {error ? (
-        <div role="alert" className="text-sm text-destructive">{error}</div>
+        <div
+          role="alert"
+          className="rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm text-red-300"
+        >
+          {error}
+        </div>
       ) : null}
-      <Button type="submit" disabled={loading} className="w-full">
+      <button
+        type="submit"
+        disabled={loading}
+        className="w-full inline-flex items-center justify-center bg-brand text-black h-11 rounded-full text-sm font-medium hover:bg-brand/90 disabled:opacity-60 disabled:cursor-not-allowed active:scale-95 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-[#111111]"
+      >
         {loading ? 'Redefinindo…' : 'Redefinir'}
-      </Button>
+      </button>
     </form>
   );
 }
