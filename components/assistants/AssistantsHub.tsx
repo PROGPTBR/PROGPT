@@ -104,43 +104,46 @@ const STEPS: SourcingStep[] = [
 
 export function AssistantsHub() {
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Assistentes</h1>
-          <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
-            Organizados pelos 8 passos do Strategic Sourcing. Cada assistente
-            combina a base de conhecimento com templates curados para entregar
-            um artefato pronto.
+          <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">
+            Assistentes <span className="text-brand">.</span>
+          </h1>
+          <p className="text-sm text-gray-400 mt-2 max-w-2xl leading-relaxed">
+            Organizados pelos 8 passos do{' '}
+            <span className="text-brand font-medium">Strategic Sourcing</span>.
+            Cada assistente combina a base de conhecimento com templates
+            curados para entregar um artefato pronto.
           </p>
         </div>
         <Link
           href="/assistants/history"
-          className="inline-flex items-center gap-1.5 text-sm rounded-md border border-input bg-background hover:bg-accent px-3 h-9"
+          className="inline-flex items-center gap-1.5 text-sm rounded-full border border-white/10 bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white px-4 h-9 transition-all duration-300 active:scale-95"
         >
-          <History className="h-4 w-4" />
+          <History className="h-4 w-4" aria-hidden="true" />
           Meu histórico
         </Link>
       </div>
 
       <ol className="space-y-4">
         {STEPS.map((step) => (
-          <li key={step.n} className="flex gap-4">
+          <li key={step.n} className="flex gap-4 md:gap-5">
             <div
               aria-hidden="true"
-              className="flex-shrink-0 w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-semibold"
+              className="flex-shrink-0 w-10 h-10 rounded-full border border-brand/30 bg-brand/5 text-brand flex items-center justify-center text-sm font-medium"
             >
               {step.n}
             </div>
             <div className="flex-1 min-w-0">
-              <h2 className="text-sm font-semibold">{step.title}</h2>
-              <p className="text-xs text-muted-foreground mt-0.5">
+              <h2 className="text-base md:text-lg font-medium">{step.title}</h2>
+              <p className="text-xs md:text-sm text-gray-500 mt-1 leading-relaxed">
                 {step.blurb}
               </p>
-              <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
                 {step.assistants.length === 0 ? (
-                  <div className="rounded-md border border-dashed border-border p-3 flex items-center gap-2 text-xs text-muted-foreground">
-                    <Clock className="h-3.5 w-3.5" />
+                  <div className="rounded-xl border border-dashed border-white/10 bg-white/[0.02] p-4 flex items-center gap-2 text-xs text-gray-500">
+                    <Clock className="h-3.5 w-3.5" aria-hidden="true" />
                     Em breve
                   </div>
                 ) : (
@@ -150,18 +153,20 @@ export function AssistantsHub() {
                       <Link
                         key={a.type}
                         href={a.href}
-                        className="rounded-md border border-border bg-card hover:bg-accent transition-colors p-3 block"
+                        className="group rounded-xl border border-white/5 bg-[#141414] hover:bg-[#181818] hover:border-brand/30 transition-all duration-300 p-4 block active:scale-[0.98]"
                       >
-                        <div className="flex items-start gap-2">
-                          <div className="rounded-md bg-primary/10 p-1.5 text-primary">
-                            <Icon className="h-4 w-4" />
+                        <div className="flex items-start gap-3">
+                          <div className="flex-shrink-0 rounded-lg bg-brand/10 border border-brand/20 p-2 text-brand">
+                            <Icon className="h-4 w-4" aria-hidden="true" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="text-sm font-medium">{a.title}</div>
-                            <p className="text-xs text-muted-foreground mt-0.5">
+                            <div className="text-sm font-medium text-white">
+                              {a.title}
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1 leading-relaxed">
                               {a.description}
                             </p>
-                            <span className="mt-2 inline-block text-xs text-primary font-medium">
+                            <span className="mt-3 inline-block text-xs font-medium text-brand group-hover:text-brand/80 transition-colors">
                               Começar →
                             </span>
                           </div>
