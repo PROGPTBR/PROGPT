@@ -9,7 +9,7 @@ import { startTrace, flushAsync } from '@/lib/observability/langfuse';
 import { recordApiUsage } from '@/lib/observability/api-usage';
 import { PorterRequestSchema } from '@/lib/assistants/types';
 import { getTemplate } from '@/lib/assistants/templates';
-import { buildPorterPrompt } from '@/lib/assistants/porter';
+import { buildPorterPrompt, classifyPorterForces } from '@/lib/assistants/porter';
 import { createRun, updateRunOutput, failRun } from '@/lib/assistants/runs';
 import { splitTemplateBody, assembleOutput } from '@/lib/assistants/template-assembly';
 import { getUserCompany } from '@/lib/db/user-company';
@@ -98,10 +98,27 @@ export async function POST(req: Request): Promise<Response> {
 
   const company = await getUserCompany(user.id);
 
+  // Deterministic step: classify the 35 statement scorings into per-force
+  // weighted averages + intensities. This is what the LLM narrates.
+  const classifySpan = trace.span('classify', {
+    statementCount: parsed.params.statements.length,
+  });
+  const classification = classifyPorterForces(parsed.params.statements);
+  classifySpan.end({
+    overall: classification.overallAvg,
+    overallIntensity: classification.overallIntensity,
+    byForce: classification.byForce.map((f) => ({
+      force: f.force,
+      avg: f.weightedAvg,
+      intensity: f.intensity,
+    })),
+  });
+
   const { system, user: userPrompt } = buildPorterPrompt(
     parsed.params,
     template,
     chunks,
+    classification,
     company,
   );
 

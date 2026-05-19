@@ -155,6 +155,20 @@ export type ClassifiedKraljicItem = KraljicItem & {
 // in canonical sources (Porter 1979, 1985; Cox 1996 for buyer power
 // reframing). No deterministic component — pure prompt + retrieval.
 
+// Cada uma das 35 afirmações canônicas (ver lib/assistants/porter-
+// statements.ts) é pontuada pelo usuário com:
+//   weight (0-3)  — relevância da afirmação no setor em análise
+//   score  (1-5)  — quão verdadeira ela é hoje
+// O servidor calcula a média ponderada por força (Σ w*s / Σ w) e
+// converte em intensidade (baixa < 2 ≤ média < 3.5 ≤ alta).
+export const PorterStatementScoreSchema = z.object({
+  id: z.string().regex(/^S[1-5]-\d{1,2}$/),
+  weight: z.number().int().min(0).max(3),
+  score: z.number().int().min(1).max(5),
+});
+
+export type PorterStatementScore = z.infer<typeof PorterStatementScoreSchema>;
+
 export const PorterParamsSchema = z.object({
   categoria: z.string().trim().min(2).max(200),
   segmento: z.string().trim().max(200).optional().default(''),
@@ -164,6 +178,10 @@ export const PorterParamsSchema = z.object({
   // Observações adicionais do comprador (contexto da empresa, dados
   // de share, restrições). Vai pro prompt como contexto extra.
   observacoes: z.string().trim().max(2000).optional().default(''),
+  // 35 statement scorings — see lib/assistants/porter-statements.ts.
+  // Min 35 / max 35 enforced loosely (>=5 to allow lighter UIs in v2).
+  // Order doesn't matter; classifyPorterForces() groups by `id` prefix.
+  statements: z.array(PorterStatementScoreSchema).min(5).max(35),
 });
 
 export type PorterParams = z.infer<typeof PorterParamsSchema>;
