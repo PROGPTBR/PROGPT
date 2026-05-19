@@ -69,6 +69,12 @@ function ChatRootMounted() {
             session={sessionsApi.current}
             initialRatings={sessionsApi.ratings}
             onMessagesChange={sessionsApi.updateMessages}
+            onTitleChange={
+              sessionsApi.setTitleLocal
+                ? (title) =>
+                    sessionsApi.setTitleLocal!(sessionsApi.currentId, title)
+                : undefined
+            }
           />
         </ChatErrorBoundary>
       </div>

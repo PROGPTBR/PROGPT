@@ -140,17 +140,34 @@ export function useChatSessionsRemote(): UseChatSessions {
 
   const updateMessages = useCallback(
     async (messages: ChatMessage[]) => {
-      const title = deriveTitle(messages);
       const updatedAt = Date.now();
+      // Provisional client-side title — used immediately so the sidebar
+      // entry shows something while the LLM-generated summary streams in
+      // via the chat annotation. The DB write deliberately omits `title`
+      // so it doesn't clobber a server-written summary that may have
+      // landed during the same turn.
+      const provisional = deriveTitle(messages);
       setSessions((prev) =>
-        prev.map((s) => (s.id === currentId ? { ...s, messages, title, updatedAt } : s)),
+        prev.map((s) =>
+          s.id === currentId
+            ? {
+                ...s,
+                messages,
+                // Only overwrite if the existing title is the default
+                // "Nova conversa" — otherwise the user already has a
+                // summary and we shouldn't replace it with the truncated
+                // first message.
+                title: s.title === 'Nova conversa' ? provisional : s.title,
+                updatedAt,
+              }
+            : s,
+        ),
       );
       const sb = supabaseBrowser();
       const { error } = await sb
         .from('sessions')
         .update({
           messages,
-          title,
           updated_at: new Date(updatedAt).toISOString(),
         })
         .eq('id', currentId);
@@ -160,6 +177,13 @@ export function useChatSessionsRemote(): UseChatSessions {
     },
     [currentId],
   );
+
+  const setTitleLocal = useCallback((id: string, title: string) => {
+    if (!title) return;
+    setSessions((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, title } : s)),
+    );
+  }, []);
 
   if (!hydrated) {
     return {
@@ -171,6 +195,7 @@ export function useChatSessionsRemote(): UseChatSessions {
       createNew: createNew as unknown as () => void,
       deleteSession: deleteSession as unknown as (id: string) => void,
       updateMessages: updateMessages as unknown as (messages: ChatMessage[]) => void,
+      setTitleLocal,
     };
   }
 
@@ -185,5 +210,6 @@ export function useChatSessionsRemote(): UseChatSessions {
     createNew: createNew as unknown as () => void,
     deleteSession: deleteSession as unknown as (id: string) => void,
     updateMessages: updateMessages as unknown as (messages: ChatMessage[]) => void,
+    setTitleLocal,
   };
 }

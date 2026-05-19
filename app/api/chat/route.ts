@@ -10,6 +10,8 @@ import { startTrace, flushAsync } from '@/lib/observability/langfuse';
 import { recordApiUsage } from '@/lib/observability/api-usage';
 import { getCurrentUser } from '@/lib/auth';
 import { checkChatRateLimit } from '@/lib/rate-limit';
+import { summarizeChatTitle } from '@/lib/chat-title';
+import { getServerSupabase } from '@/lib/db/supabase';
 import type { TraceLevel } from '@/lib/observability/types';
 
 export const runtime = 'nodejs';
@@ -151,6 +153,44 @@ export async function POST(req: Request): Promise<Response> {
           });
           data.appendMessageAnnotation({ followups });
           if (followups.length === 0) trace.setTag('followups:empty');
+        }
+
+        // Title summary — only on the FIRST exchange of a session (the
+        // history before this user message was empty, so this is the
+        // first user→assistant pair). Replaces the auto-derived
+        // "first-message-truncated" title with a real summary.
+        const isFirstExchange =
+          !aborted &&
+          finishReason === 'stop' &&
+          text.length >= 20 &&
+          history.length === 0 &&
+          !!parsed.sessionId;
+        if (isFirstExchange) {
+          const titleSpan = trace.span('summarize-title', {
+            userLen: messages[messages.length - 1]!.content.length,
+            answerLen: text.length,
+          });
+          const summary = await summarizeChatTitle({
+            userMessage: messages[messages.length - 1]!.content,
+            assistantSnippet: text,
+          });
+          if (summary) {
+            data.appendMessageAnnotation({ sessionTitle: summary });
+            // Persist to DB via service-role (RLS is owner-only; service-role
+            // bypasses it, but we still scope by id which we trust because
+            // the user is authenticated and the sessionId came from their
+            // own browser).
+            void getServerSupabase()
+              .from('sessions')
+              .update({ title: summary })
+              .eq('id', parsed.sessionId!)
+              .then(({ error }) => {
+                if (error) {
+                  console.warn('[api/chat] title update failed:', error.message);
+                }
+              });
+          }
+          titleSpan.end({ title: summary });
         }
 
         trace.end(

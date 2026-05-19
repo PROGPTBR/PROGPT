@@ -19,6 +19,13 @@ export type UseChatSessions = {
   createNew: () => void;
   deleteSession: (id: string) => void;
   updateMessages: (messages: ChatMessage[]) => void;
+  /**
+   * Locally rename the current session without writing to the backing
+   * store. Used when the server-generated chat title arrives via the
+   * stream annotation — the DB is already up to date there, so the
+   * client only needs to refresh its in-memory list.
+   */
+  setTitleLocal?: (id: string, title: string) => void;
 };
 
 /**

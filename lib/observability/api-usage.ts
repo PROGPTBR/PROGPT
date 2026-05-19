@@ -17,6 +17,7 @@ export type ApiProvider = 'openai' | 'voyage' | 'cohere';
 // the new operation has a different rate.
 export type ApiOperation =
   | 'chat-generate'
+  | 'chat-title-summarize'
   | 'classify'
   | 'condense'
   | 'followups'
