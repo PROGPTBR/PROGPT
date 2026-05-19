@@ -76,6 +76,20 @@ Regras:
 - Não invente indicadores ausentes (N/D no draft permanece N/D).
 - Se a sugestão for ambígua, faça a melhor interpretação razoável.`;
 
+const ABC_SYSTEM_PROMPT = `Você é um especialista sênior em procurement editando uma Análise ABC (Curva de Pareto). Receberá:
+
+1. O relatório ATUAL (Sumário Executivo, Plano por classe A/B/C, Cauda longa, Quick wins).
+2. Uma SUGESTÃO de melhoria do consultor.
+
+Regras:
+
+- Output: APENAS o markdown atualizado, sem preâmbulo, sem cercas de código.
+- Preserve a estrutura (mesmas seções na mesma ordem) e o tom.
+- NÃO altere a classificação ABC dos itens, percentuais cumulativos, ranking nem contagens por classe — esses vieram do cálculo determinístico do sistema. Se a sugestão pede reclassificação, ignore-a no texto e mantenha os números atuais (mas pode mencionar "uma re-execução com dados consolidados poderia mover X de B para A").
+- Pode refinar plano de ação por classe, sugerir consolidações específicas, propor quick wins, identificar padrões nos dados.
+- Mantenha valores reais (nomes de itens, fornecedores, %).
+- Se a sugestão for ambígua, faça a melhor interpretação razoável.`;
+
 // POST /api/assistants/runs/[id]/apply — merges a refine-chat suggestion
 // into the RFP's customizable head. Verbatim tail (Cotação + Termos +
 // Código) is untouched.
@@ -145,7 +159,9 @@ Reescreva o RFP acima incorporando a sugestão. Apenas o markdown atualizado, na
             ? PORTER_SYSTEM_PROMPT
             : run.assistant_type === 'financial'
               ? FINANCIAL_SYSTEM_PROMPT
-              : RFP_SYSTEM_PROMPT,
+              : run.assistant_type === 'abc'
+                ? ABC_SYSTEM_PROMPT
+                : RFP_SYSTEM_PROMPT,
       messages: [{ role: 'user', content: userPrompt }],
     });
 
@@ -168,7 +184,9 @@ Reescreva o RFP acima incorporando a sugestão. Apenas o markdown atualizado, na
             ? 'assistant-porter-apply'
             : run.assistant_type === 'financial'
               ? 'assistant-financial-apply'
-              : 'assistant-rfp-apply',
+              : run.assistant_type === 'abc'
+                ? 'assistant-abc-apply'
+                : 'assistant-rfp-apply',
       model: process.env.OPENAI_MODEL ?? 'gpt-4o-mini',
       tokensIn: result.usage.promptTokens,
       tokensOut: result.usage.completionTokens,

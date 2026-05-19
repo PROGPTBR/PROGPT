@@ -38,7 +38,10 @@ export type ApiOperation =
   | 'assistant-financial-generate'
   | 'assistant-financial-refine'
   | 'assistant-financial-apply'
-  | 'assistant-financial-extract';
+  | 'assistant-financial-extract'
+  | 'assistant-abc-generate'
+  | 'assistant-abc-refine'
+  | 'assistant-abc-apply';
 
 export type RecordUsageInput = {
   provider: ApiProvider;

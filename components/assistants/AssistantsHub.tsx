@@ -10,6 +10,7 @@ import { KraljicMatrixPreview } from './previews/KraljicMatrixPreview';
 import { RfpDocumentPreview } from './previews/RfpDocumentPreview';
 import { PorterForcesPreview } from './previews/PorterForcesPreview';
 import { FinancialScorePreview } from './previews/FinancialScorePreview';
+import { AbcCurvePreview } from './previews/AbcCurvePreview';
 
 // Hub layout — Spotlight + Roadmap.
 //
@@ -30,6 +31,20 @@ type SpotlightAssistant = {
 };
 
 const SPOTLIGHTS: SpotlightAssistant[] = [
+  {
+    step: 2,
+    stepCategory: 'Análise',
+    href: '/assistants/abc',
+    title: 'Análise ABC',
+    short:
+      'Classifica spend pela curva de Pareto (80/95%), gera plano de ação por classe A/B/C e curva visual.',
+    bullets: [
+      'Upload de planilha (XLSX, XLS ou CSV)',
+      'Classificação determinística A/B/C',
+      '.docx + .xlsx multi-sheet + chart',
+    ],
+    Preview: AbcCurvePreview,
+  },
   {
     step: 3,
     stepCategory: 'Mercado',
@@ -98,7 +113,7 @@ type RoadmapStep = {
 
 const STEPS: RoadmapStep[] = [
   { n: 1, shortLabel: 'Perfil', fullName: 'Perfil da Categoria', available: false },
-  { n: 2, shortLabel: 'Análise', fullName: 'Análise da Categoria', available: false },
+  { n: 2, shortLabel: 'Análise', fullName: 'Análise da Categoria', available: true, href: '/assistants/abc' },
   { n: 3, shortLabel: 'Mercado', fullName: 'Visão do Mercado Fornecedor', available: true, href: '/assistants/porter' },
   { n: 4, shortLabel: 'Estratégia', fullName: 'Estratégia de Sourcing', available: true, href: '/assistants/kraljic' },
   { n: 5, shortLabel: 'Engajamento', fullName: 'Engajamento dos Fornecedores', available: true, href: '/assistants/rfp' },

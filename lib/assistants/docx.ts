@@ -308,11 +308,18 @@ function buildCoverPage(
  * `opts.kraljicChartPng`, when supplied, is inserted as a full-width
  * image right after the first `## Matriz` heading found in the body.
  * No-op when the heading isn't present.
+ * `opts.abcChartPng`, similarly, is inserted after the first `## Curva`
+ * heading (case-insensitive) for ABC reports.
  */
 export async function mdToDocxBuffer(
   md: string,
   title: string,
-  opts: { logo?: DocxLogo; cover?: DocxCoverData; kraljicChartPng?: Buffer } = {},
+  opts: {
+    logo?: DocxLogo;
+    cover?: DocxCoverData;
+    kraljicChartPng?: Buffer;
+    abcChartPng?: Buffer;
+  } = {},
 ): Promise<Buffer> {
   // Strip the literal logo-placeholder line — handled by the cover page.
   const cleaned = md
@@ -384,6 +391,28 @@ export async function mdToDocxBuffer(
           }),
         );
         (body as { __kraljicInserted?: boolean }).__kraljicInserted = true;
+      }
+      // ABC: insert the curve image right after the first heading that
+      // mentions "curva" (case-insensitive). Same one-shot guard.
+      if (
+        opts.abcChartPng &&
+        /curva|pareto/i.test(h2[1]!.trim()) &&
+        !(body as { __abcInserted?: boolean }).__abcInserted
+      ) {
+        body.push(
+          new Paragraph({
+            alignment: AlignmentType.CENTER,
+            children: [
+              new ImageRun({
+                data: opts.abcChartPng,
+                transformation: { width: 600, height: 340 },
+                type: 'png',
+              }),
+            ],
+            spacing: { after: 200 },
+          }),
+        );
+        (body as { __abcInserted?: boolean }).__abcInserted = true;
       }
       continue;
     }

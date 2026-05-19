@@ -9,13 +9,19 @@ import { z } from 'zod';
 //   2. the templates CHECK constraint (new migration)
 //   3. ApiOperation in lib/observability/api-usage.ts
 //   4. add /api/assistants/<type>/route.ts + UI page
-export type AssistantType = 'rfp' | 'kraljic' | 'porter' | 'financial';
+export type AssistantType =
+  | 'rfp'
+  | 'kraljic'
+  | 'porter'
+  | 'financial'
+  | 'abc';
 
 export const ASSISTANT_TYPES = [
   'rfp',
   'kraljic',
   'porter',
   'financial',
+  'abc',
 ] as const;
 
 export type ThemeStatusRow = 'running' | 'done' | 'error';
@@ -283,6 +289,87 @@ export const FINANCIAL_RECOMMENDATION_LABELS: Record<
   do_not_buy: 'Não recomendado',
 };
 
+// ── ABC Curve (Spend Analysis) params ────────────────────────────────────
+// Sub-projeto 31 — Análise ABC (curva de Pareto sobre spend).
+//
+// Cada item é uma transação de compra com nome + valor. O sistema:
+//   1. Soma o spend por item (consolida duplicatas opcionalmente)
+//   2. Ordena descendente
+//   3. Calcula % de cada item e % cumulativo
+//   4. Classifica:
+//        A = items até 80% do cumulativo (poucos itens, muito valor)
+//        B = 80% < cum ≤ 95%
+//        C = cum > 95% (muitos itens, pouco valor)
+//
+// LLM gera: plano de ação por classe + análise de concentração + insights
+// de oportunidade (top spend, fornecedor único, etc.).
+
+export const AbcItemSchema = z.object({
+  name: z.string().trim().min(1).max(300),
+  supplier: z.string().trim().max(200).optional().default(''),
+  category: z.string().trim().max(200).optional().default(''),
+  quantity: z.number().nonnegative().optional(),
+  unit: z.string().trim().max(20).optional().default(''),
+  spend: z.number().nonnegative(), // R$ (não MM — itens individuais podem ser pequenos)
+});
+
+export type AbcItem = z.infer<typeof AbcItemSchema>;
+
+export const AbcParamsSchema = z.object({
+  analysisName: z.string().trim().min(1).max(200),
+  analysisPeriod: z.string().trim().max(120).optional().default(''),
+  notes: z.string().trim().max(2000).optional().default(''),
+  // Whether to consolidate items by (name) before classifying. Default
+  // true — a typical spend export has the same SKU appearing across many
+  // POs and the user expects A/B/C per SKU, not per PO line.
+  consolidate: z.boolean().optional().default(true),
+  items: z.array(AbcItemSchema).min(5).max(5000),
+});
+
+export type AbcParams = z.infer<typeof AbcParamsSchema>;
+
+export const AbcRequestSchema = z.object({
+  templateId: z.string().uuid(),
+  params: AbcParamsSchema,
+});
+
+export type AbcRequest = z.infer<typeof AbcRequestSchema>;
+
+export type AbcClass = 'A' | 'B' | 'C';
+
+export const ABC_CLASS_LABELS: Record<AbcClass, string> = {
+  A: 'A — alta importância',
+  B: 'B — importância média',
+  C: 'C — baixa importância',
+};
+
+export type ClassifiedAbcItem = {
+  name: string;
+  supplier: string;
+  category: string;
+  quantity?: number;
+  unit: string;
+  spend: number;
+  rank: number; // 1 = highest spend
+  share: number; // 0-1
+  cumulativeShare: number; // 0-1
+  abcClass: AbcClass;
+};
+
+export type AbcClassSummary = {
+  count: number;
+  totalSpend: number;
+  spendShare: number; // 0-1
+  itemShare: number; // 0-1 (% de items)
+};
+
+export type AbcAnalysis = {
+  items: ClassifiedAbcItem[];
+  totalSpend: number;
+  totalItems: number;
+  byClass: Record<AbcClass, AbcClassSummary>;
+};
+
 // ── Assistant run row shape (DB serialization) ───────────────────────────
 // `params` is discriminated by `assistant_type`. We type it as the union
 // here and narrow at the call site.
@@ -291,7 +378,12 @@ export type AssistantRunRow = {
   user_id: string;
   assistant_type: AssistantType;
   template_id: string | null;
-  params: RfpParams | KraljicParams | PorterParams | FinancialParams;
+  params:
+    | RfpParams
+    | KraljicParams
+    | PorterParams
+    | FinancialParams
+    | AbcParams;
   output_md: string | null;
   status: ThemeStatusRow;
   error_message: string | null;

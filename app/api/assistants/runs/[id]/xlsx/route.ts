@@ -5,8 +5,15 @@ import { buildCotacaoXlsxBuffer } from '@/lib/assistants/xlsx';
 import { buildKraljicXlsxBuffer } from '@/lib/assistants/kraljic-xlsx';
 import { classifyItems } from '@/lib/assistants/kraljic';
 import { renderKraljicChartPng } from '@/lib/assistants/kraljic-chart';
+import { buildAbcXlsxBuffer } from '@/lib/assistants/abc-xlsx';
+import { classifyAbc } from '@/lib/assistants/abc';
+import { renderAbcChartPng } from '@/lib/assistants/abc-chart';
 import { getUserLogoBuffer } from '@/lib/db/user-logos';
-import type { RfpParams, KraljicParams } from '@/lib/assistants/types';
+import type {
+  RfpParams,
+  KraljicParams,
+  AbcParams,
+} from '@/lib/assistants/types';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -42,6 +49,20 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
       chartPng,
     });
     filename = `kraljic-${run.id.slice(0, 8)}.xlsx`;
+  } else if (run.assistant_type === 'abc') {
+    const abcParams = run.params as AbcParams;
+    const analysis = classifyAbc(abcParams);
+    let chartPng: Buffer | undefined;
+    try {
+      chartPng = await renderAbcChartPng(analysis);
+    } catch (err) {
+      console.warn('[xlsx] abc chart render failed:', err);
+    }
+    buf = await buildAbcXlsxBuffer(abcParams, analysis, {
+      logo: logo ?? undefined,
+      chartPng,
+    } as Parameters<typeof buildAbcXlsxBuffer>[2]);
+    filename = `abc-${run.id.slice(0, 8)}.xlsx`;
   } else {
     buf = await buildCotacaoXlsxBuffer(run.params as RfpParams, {
       logo: logo ?? undefined,

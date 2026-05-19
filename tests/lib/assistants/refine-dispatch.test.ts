@@ -5,12 +5,14 @@ import {
   KRALJIC_REFINE_SYSTEM_PROMPT,
   PORTER_REFINE_SYSTEM_PROMPT,
   FINANCIAL_REFINE_SYSTEM_PROMPT,
+  ABC_REFINE_SYSTEM_PROMPT,
 } from '@/lib/assistants/refine';
 import type {
   RfpParams,
   KraljicParams,
   PorterParams,
   FinancialParams,
+  AbcParams,
 } from '@/lib/assistants/types';
 
 const rfpParams: RfpParams = {
@@ -143,5 +145,39 @@ describe('buildRefineSystemForType', () => {
   it('Financial refine prompt protects the deterministic score', () => {
     expect(FINANCIAL_REFINE_SYSTEM_PROMPT).toMatch(/NÃO altere a pontuação|score/i);
     expect(FINANCIAL_REFINE_SYSTEM_PROMPT).toMatch(/buy|caution|do_not_buy/i);
+  });
+
+  it('returns the ABC refine system prompt when assistant_type=abc', () => {
+    const abcParams: AbcParams = {
+      analysisName: 'Spend MRO Q1/2026',
+      analysisPeriod: '2026 Q1',
+      notes: '',
+      consolidate: true,
+      items: [
+        { name: 'Item A', spend: 100000, supplier: '', category: '', unit: '' },
+        { name: 'Item B', spend: 50000, supplier: '', category: '', unit: '' },
+        { name: 'Item C', spend: 30000, supplier: '', category: '', unit: '' },
+        { name: 'Item D', spend: 15000, supplier: '', category: '', unit: '' },
+        { name: 'Item E', spend: 5000, supplier: '', category: '', unit: '' },
+      ],
+    };
+    const out = buildRefineSystemForType(
+      'abc',
+      '# Análise ABC',
+      abcParams,
+      [],
+    );
+    expect(out).toContain(ABC_REFINE_SYSTEM_PROMPT);
+    expect(out).not.toContain(RFP_REFINE_SYSTEM_PROMPT);
+    expect(out).not.toContain(KRALJIC_REFINE_SYSTEM_PROMPT);
+    expect(out).not.toContain(PORTER_REFINE_SYSTEM_PROMPT);
+    expect(out).not.toContain(FINANCIAL_REFINE_SYSTEM_PROMPT);
+    expect(out).toMatch(/<report>/);
+    expect(out).toMatch(/Spend MRO Q1\/2026/);
+  });
+
+  it('ABC refine prompt protects the deterministic classification', () => {
+    expect(ABC_REFINE_SYSTEM_PROMPT).toMatch(/NÃO altere a classificação|percentuais/i);
+    expect(ABC_REFINE_SYSTEM_PROMPT).toMatch(/Pareto|cumulativo/i);
   });
 });
