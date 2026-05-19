@@ -6,7 +6,12 @@ import { getUserLogoBuffer } from '@/lib/db/user-logos';
 import { getUserCompany } from '@/lib/db/user-company';
 import { classifyItems } from '@/lib/assistants/kraljic';
 import { renderKraljicChartPng } from '@/lib/assistants/kraljic-chart';
-import type { RfpParams, KraljicParams, PorterParams } from '@/lib/assistants/types';
+import type {
+  RfpParams,
+  KraljicParams,
+  PorterParams,
+  FinancialParams,
+} from '@/lib/assistants/types';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -49,6 +54,12 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
     const pp = run.params as PorterParams;
     titleSafe = `5 Forças de Porter - ${pp.categoria}`.slice(0, 120);
     categoryForCover = pp.segmento || pp.categoria;
+  } else if (run.assistant_type === 'financial') {
+    const fp = run.params as FinancialParams;
+    titleSafe = `Análise Financeira - ${fp.supplierName}`.slice(0, 120);
+    categoryForCover = fp.referenceYear
+      ? `Análise financeira ${fp.referenceYear}`
+      : 'Análise financeira de fornecedor';
   } else {
     const rfpParams = run.params as RfpParams;
     const scope = rfpParams.scope ?? 'RFP';

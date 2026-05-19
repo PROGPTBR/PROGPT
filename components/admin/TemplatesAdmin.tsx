@@ -10,7 +10,7 @@ import { TemplateEditor, type TemplateDraft } from '@/components/admin/TemplateE
 
 type TemplateRow = {
   id: string;
-  assistant_type: 'rfp' | 'kraljic' | 'porter';
+  assistant_type: 'rfp' | 'kraljic' | 'porter' | 'financial';
   name: string;
   description: string | null;
   body_md: string;
@@ -22,6 +22,7 @@ const ASSISTANT_LABEL: Record<string, string> = {
   rfp: 'RFP',
   kraljic: 'Kraljic',
   porter: 'Porter',
+  financial: 'Financial',
 };
 
 export function TemplatesAdmin() {

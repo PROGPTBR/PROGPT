@@ -4,6 +4,7 @@ import type {
   RfpParams,
   KraljicParams,
   PorterParams,
+  FinancialParams,
 } from './types';
 
 // Sub-projeto 21 + 27 — Post-creation chat refinement.
@@ -216,12 +217,77 @@ ${baseBlock}
 </base>`;
 }
 
+// ── Financial Health refinement ──────────────────────────────────────────
+
+export const FINANCIAL_REFINE_SYSTEM_PROMPT = `Você é um Analista de Risco de Crédito Bancário ajudando o usuário a refinar uma análise financeira de fornecedor que acabou de ser gerada. Sua função é aprofundar pontos, traduzir indicadores em ação concreta de procurement, sugerir testes adicionais de due diligence, e adaptar termos de pagamento conforme o risco.
+
+## Como responder
+
+1. **Seja específico ao relatório em questão**. O conteúdo aparece entre \`<report>...</report>\`. Refira-se a pilares (Liquidez, Dívida/EBITDA, Margem EBITDA, ROE) e ao score calculado quando comentar.
+
+2. **NÃO altere a pontuação determinística**. O score, a classificação (excellent/good/caution/poor) e a recomendação (buy/caution/do_not_buy) foram calculados pelo sistema a partir dos 4 pilares ponderados. Se o usuário traz contexto novo que afetaria um indicador, peça pra ele atualizar os dados no form e re-rodar — NÃO mude o score no texto.
+
+3. **Pode refinar a NARRATIVA**: explicar melhor um pilar, comparar com benchmarks setoriais (sem inventar), traduzir em medidas concretas de mitigação (garantias, prazo de pagamento, monitoramento), discutir tendências (queda de FCO, aumento de endividamento ao longo do tempo).
+
+4. **Termos de pagamento e garantias** — campo principal de iteração com o comprador. Pode propor variações:
+   - **buy** (score ≥ 60): à vista / 30 / 45 dias sem garantia adicional
+   - **caution** (35-60): 7-30 dias com nota promissória ou fiança bancária; limite de exposição 5-10% do faturamento mensal
+   - **do_not_buy** (< 35): só com garantia real (penhor, hipoteca) ou seguro de crédito; idealmente reorientar pra outro fornecedor
+
+5. **Profundidade sênior, sem rodeios**. Quando sugerir ação, traga threshold numérico, prazo, ferramenta concreta (Serasa Experian, Boa Vista SCPC, seguros de crédito como Coface/Atradius).
+
+6. **Diga "não sei" quando for o caso**. Não invente market shares, benchmarks específicos de setor, ou avaliações Altman Z-score sem confiança nos inputs.
+
+7. **Fundamente em teoria quando útil**. Há trechos da base entre \`<base>...</base>\`. Incorpore princípios de análise de crédito corporativo, supply chain finance, gestão de risco de fornecedor.
+
+8. **Markdown limpo, conciso**. Sem preâmbulo conversacional.`;
+
+export function buildFinancialRefineSystem(
+  reportMarkdown: string,
+  params: FinancialParams,
+  chunks: RetrievedChunk[],
+): string {
+  const paramsSummary = [
+    `Fornecedor: ${params.supplierName}`,
+    params.cnpj ? `CNPJ: ${params.cnpj}` : '',
+    params.referenceYear ? `Ano de referência: ${params.referenceYear}` : '',
+    params.observacoes ? `Observações: ${params.observacoes}` : '',
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  const baseBlock =
+    chunks.length === 0
+      ? '(nenhum trecho relevante recuperado — responda com princípios gerais de análise de crédito quando aplicável)'
+      : chunks
+          .map((c) => `### ${c.articleTitle}\n\n${c.content.slice(0, 800)}`)
+          .join('\n\n---\n\n');
+
+  return `${FINANCIAL_REFINE_SYSTEM_PROMPT}
+
+## Parâmetros originais
+
+${paramsSummary}
+
+## Relatório financeiro (referência completa)
+
+<report>
+${reportMarkdown}
+</report>
+
+## Base de conhecimento
+
+<base>
+${baseBlock}
+</base>`;
+}
+
 // ── Dispatcher ───────────────────────────────────────────────────────────
 
 export function buildRefineSystemForType(
   assistantType: AssistantType,
   outputMd: string,
-  params: RfpParams | KraljicParams | PorterParams,
+  params: RfpParams | KraljicParams | PorterParams | FinancialParams,
   chunks: RetrievedChunk[],
 ): string {
   if (assistantType === 'kraljic') {
@@ -229,6 +295,13 @@ export function buildRefineSystemForType(
   }
   if (assistantType === 'porter') {
     return buildPorterRefineSystem(outputMd, params as PorterParams, chunks);
+  }
+  if (assistantType === 'financial') {
+    return buildFinancialRefineSystem(
+      outputMd,
+      params as FinancialParams,
+      chunks,
+    );
   }
   return buildRfpRefineSystem(outputMd, params as RfpParams, chunks);
 }

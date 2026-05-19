@@ -34,7 +34,11 @@ export type ApiOperation =
   | 'assistant-kraljic-suggest'
   | 'assistant-porter-generate'
   | 'assistant-porter-refine'
-  | 'assistant-porter-apply';
+  | 'assistant-porter-apply'
+  | 'assistant-financial-generate'
+  | 'assistant-financial-refine'
+  | 'assistant-financial-apply'
+  | 'assistant-financial-extract';
 
 export type RecordUsageInput = {
   provider: ApiProvider;

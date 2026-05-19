@@ -62,6 +62,20 @@ Regras:
 - Mantenha o tom técnico-sênior do draft original.
 - Se a sugestão for ambígua, faça a melhor interpretação razoável.`;
 
+const FINANCIAL_SYSTEM_PROMPT = `Você é um Analista de Risco de Crédito Bancário editando um relatório de análise financeira de fornecedor. Receberá:
+
+1. O relatório ATUAL (Sumário, 4 pilares pontuados, Demonstrativo resumido, Recomendação, Termos de pagamento, Risco de falência).
+2. Uma SUGESTÃO de melhoria do consultor.
+
+Regras:
+
+- Output: APENAS o markdown atualizado, sem preâmbulo, sem cercas de código.
+- NÃO altere o score numérico (0-100), a pontuação por pilar, a classificação (excellent/good/caution/poor) nem a recomendação (buy/caution/do_not_buy) — esses vieram do cálculo determinístico do sistema. Se a sugestão pede mudança nesses valores, ignore-a no texto e mantenha os valores originais (mas pode mencionar "uma nova análise com indicadores atualizados poderia mudar essa pontuação").
+- Pode refinar narrativa, sugerir testes de DD adicionais, propor termos de pagamento alternativos, comparar com benchmarks (sem inventar números setoriais específicos).
+- Mantenha o tom técnico-bancário do draft original.
+- Não invente indicadores ausentes (N/D no draft permanece N/D).
+- Se a sugestão for ambígua, faça a melhor interpretação razoável.`;
+
 // POST /api/assistants/runs/[id]/apply — merges a refine-chat suggestion
 // into the RFP's customizable head. Verbatim tail (Cotação + Termos +
 // Código) is untouched.
@@ -129,7 +143,9 @@ Reescreva o RFP acima incorporando a sugestão. Apenas o markdown atualizado, na
           ? KRALJIC_SYSTEM_PROMPT
           : run.assistant_type === 'porter'
             ? PORTER_SYSTEM_PROMPT
-            : RFP_SYSTEM_PROMPT,
+            : run.assistant_type === 'financial'
+              ? FINANCIAL_SYSTEM_PROMPT
+              : RFP_SYSTEM_PROMPT,
       messages: [{ role: 'user', content: userPrompt }],
     });
 
@@ -150,7 +166,9 @@ Reescreva o RFP acima incorporando a sugestão. Apenas o markdown atualizado, na
           ? 'assistant-kraljic-suggest'
           : run.assistant_type === 'porter'
             ? 'assistant-porter-apply'
-            : 'assistant-rfp-apply',
+            : run.assistant_type === 'financial'
+              ? 'assistant-financial-apply'
+              : 'assistant-rfp-apply',
       model: process.env.OPENAI_MODEL ?? 'gpt-4o-mini',
       tokensIn: result.usage.promptTokens,
       tokensOut: result.usage.completionTokens,
