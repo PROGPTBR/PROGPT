@@ -123,6 +123,25 @@ export function KraljicResult({ markdown, runId, portfolioName, generating, onRe
         </div>
       </div>
 
+      {/* Bubble chart — shown as soon as runId is available (run row
+          exists in DB after classifyItems persists params). Mirrors
+          what gets embedded into .docx and .xlsx so the user sees the
+          same artifact on screen. */}
+      {runId && !generating && (
+        <figure className="rounded-md border border-border bg-card p-4 space-y-2">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={`/api/assistants/runs/${runId}/chart`}
+            alt="Matriz de Kraljic — gráfico bubble 2×2"
+            className="w-full h-auto rounded bg-white"
+            loading="lazy"
+          />
+          <figcaption className="text-xs text-muted-foreground text-center">
+            Matriz de Kraljic · X: complexidade do mercado · Y: impacto no negócio · raio: spend share
+          </figcaption>
+        </figure>
+      )}
+
       <article className="rounded-md border border-border bg-card p-6 prose prose-sm prose-invert max-w-none overflow-x-auto [&_table]:block [&_table]:overflow-x-auto [&_table]:whitespace-nowrap [&_table]:max-w-full [&_th]:px-2 [&_td]:px-2">
         {markdown.length === 0 && generating ? (
           <p className="text-muted-foreground italic">
