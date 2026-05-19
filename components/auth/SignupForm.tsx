@@ -4,7 +4,6 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabaseBrowser } from '@/lib/db/supabase-browser';
-import { Button } from '@/components/ui/button';
 
 const MIN_PASSWORD = 6;
 
@@ -59,9 +58,6 @@ export function SignupForm() {
       setState({ kind: 'error', message: friendlyError(error) ?? 'Erro desconhecido' });
       return;
     }
-    // If Supabase has email confirmation ON, `session` is null — user must
-    // click the email link before they can log in. If it's OFF, `session`
-    // is populated and we can route straight to /chat.
     if (data.session) {
       router.push(next);
       router.refresh();
@@ -72,14 +68,17 @@ export function SignupForm() {
 
   if (state.kind === 'check-email') {
     return (
-      <div className="w-full max-w-sm mx-auto p-6 space-y-4 text-center">
-        <h1 className="text-xl font-semibold">Confira seu email</h1>
-        <p className="text-sm text-muted-foreground">
-          Enviamos um link de confirmação para <span className="font-medium text-foreground">{email}</span>.
-          Clique no link para ativar a conta e poder entrar.
+      <div className="space-y-4 text-center">
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Confira seu email <span className="text-brand">.</span>
+        </h1>
+        <p className="text-sm text-gray-400 leading-relaxed">
+          Enviamos um link de confirmação para{' '}
+          <span className="font-medium text-white">{email}</span>. Clique no link
+          para ativar a conta e poder entrar.
         </p>
-        <div className="text-sm">
-          <Link href="/login" className="text-primary hover:underline">
+        <div className="text-sm pt-2">
+          <Link href="/login" className="text-brand hover:text-brand/80 transition-colors">
             Voltar para Entrar
           </Link>
         </div>
@@ -91,27 +90,39 @@ export function SignupForm() {
   const errorMessage = state.kind === 'error' ? state.message : null;
 
   return (
-    <div className="w-full max-w-sm mx-auto p-6 space-y-6">
+    <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-semibold">Criar conta</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Criar conta <span className="text-brand">.</span>
+        </h1>
+        <p className="mt-1.5 text-sm text-gray-400">
           Use seu email para começar.
         </p>
       </div>
-      <form onSubmit={onSubmit} className="space-y-3">
+      <form onSubmit={onSubmit} className="space-y-4">
         <div>
-          <label htmlFor="signup-email" className="block text-sm mb-1">Email</label>
+          <label
+            htmlFor="signup-email"
+            className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-2"
+          >
+            Email
+          </label>
           <input
             id="signup-email"
             type="email"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+            className="w-full rounded-lg bg-white/5 border border-white/10 px-4 py-2.5 text-sm text-white placeholder-gray-600 outline-none focus:border-brand focus:bg-white/10 transition-colors"
           />
         </div>
         <div>
-          <label htmlFor="signup-password" className="block text-sm mb-1">Senha</label>
+          <label
+            htmlFor="signup-password"
+            className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-2"
+          >
+            Senha
+          </label>
           <input
             id="signup-password"
             type="password"
@@ -119,23 +130,33 @@ export function SignupForm() {
             minLength={MIN_PASSWORD}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+            className="w-full rounded-lg bg-white/5 border border-white/10 px-4 py-2.5 text-sm text-white placeholder-gray-600 outline-none focus:border-brand focus:bg-white/10 transition-colors"
           />
-          <p className="mt-1 text-xs text-muted-foreground">
+          <p className="mt-2 text-xs text-gray-500">
             Mínimo {MIN_PASSWORD} caracteres.
           </p>
         </div>
         {errorMessage ? (
-          <div role="alert" className="text-sm text-destructive">
+          <div
+            role="alert"
+            className="rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm text-red-300"
+          >
             {errorMessage}
           </div>
         ) : null}
-        <Button type="submit" disabled={submitting} className="w-full">
+        <button
+          type="submit"
+          disabled={submitting}
+          className="w-full inline-flex items-center justify-center bg-brand text-black h-11 rounded-full text-sm font-medium hover:bg-brand/90 disabled:opacity-60 disabled:cursor-not-allowed active:scale-95 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-[#111111]"
+        >
           {submitting ? 'Cadastrando…' : 'Cadastrar'}
-        </Button>
+        </button>
       </form>
-      <div className="text-sm text-center">
-        <Link href={`/login?next=${encodeURIComponent(next)}`} className="text-primary hover:underline">
+      <div className="text-sm text-center pt-2 border-t border-white/5">
+        <Link
+          href={`/login?next=${encodeURIComponent(next)}`}
+          className="text-brand hover:text-brand/80 transition-colors inline-block pt-4"
+        >
           Já tenho conta
         </Link>
       </div>

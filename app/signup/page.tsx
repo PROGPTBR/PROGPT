@@ -1,12 +1,13 @@
 import { Suspense } from 'react';
+import { AuthShell } from '@/components/brand/AuthShell';
 import { SignupForm } from '@/components/auth/SignupForm';
 
 export default function SignupPage() {
   return (
-    <main className="min-h-screen flex items-center justify-center bg-background">
+    <AuthShell>
       <Suspense fallback={null}>
         <SignupForm />
       </Suspense>
-    </main>
+    </AuthShell>
   );
 }
