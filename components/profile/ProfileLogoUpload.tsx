@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Upload, Trash2, ImageOff } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 
 // Sub-projeto 22 — Logo upload UI.
 //
@@ -43,8 +42,6 @@ export function ProfileLogoUpload() {
   useEffect(() => {
     void refresh();
     return () => {
-      // Component-level cleanup — also handled inside refresh, but
-      // protects against unmount-while-fetching.
       setLogoUrl((prev) => {
         if (prev) URL.revokeObjectURL(prev);
         return null;
@@ -98,25 +95,29 @@ export function ProfileLogoUpload() {
   }
 
   return (
-    <div className="rounded-md border border-border bg-card p-4 space-y-3">
-      <div className="flex items-center gap-4">
-        <div className="h-24 w-24 rounded-md border border-border bg-background flex items-center justify-center overflow-hidden">
+    <div className="rounded-2xl border border-white/5 bg-[#111111] p-6 space-y-4">
+      <div className="flex items-start gap-5">
+        <div className="h-24 w-24 rounded-xl border border-white/10 bg-white/5 flex items-center justify-center overflow-hidden flex-shrink-0">
           {loading ? (
-            <span className="text-xs text-muted-foreground">…</span>
+            <span className="text-xs text-gray-500">…</span>
           ) : logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={logoUrl} alt="Logo" className="max-h-full max-w-full object-contain" />
+            <img
+              src={logoUrl}
+              alt="Logo da empresa"
+              className="max-h-full max-w-full object-contain"
+            />
           ) : (
-            <div className="flex flex-col items-center text-muted-foreground gap-1">
-              <ImageOff className="h-6 w-6" />
+            <div className="flex flex-col items-center text-gray-500 gap-1">
+              <ImageOff className="h-6 w-6" aria-hidden="true" />
               <span className="text-[10px]">Sem logo</span>
             </div>
           )}
         </div>
 
         <div className="flex-1 flex flex-col gap-2">
-          <label className="inline-flex items-center justify-center gap-1.5 text-sm cursor-pointer rounded-md border border-input bg-background px-3 h-9 hover:bg-accent disabled:opacity-50 w-fit">
-            <Upload className="h-3.5 w-3.5" />
+          <label className="inline-flex items-center justify-center gap-1.5 text-sm cursor-pointer rounded-full bg-brand text-black px-5 h-10 hover:bg-brand/90 disabled:opacity-50 active:scale-95 transition-all duration-300 font-medium w-fit">
+            <Upload className="h-3.5 w-3.5" aria-hidden="true" />
             {busy ? 'Enviando…' : logoUrl ? 'Trocar logo' : 'Enviar logo'}
             <input
               type="file"
@@ -131,23 +132,21 @@ export function ProfileLogoUpload() {
             />
           </label>
           {logoUrl && (
-            <Button
+            <button
               type="button"
-              variant="outline"
-              size="sm"
               onClick={handleRemove}
               disabled={busy}
-              className="w-fit"
+              className="inline-flex items-center justify-center gap-1.5 rounded-full border border-white/10 bg-white/5 text-gray-300 px-4 h-9 text-xs hover:bg-white/10 hover:text-white active:scale-95 transition-all duration-300 w-fit disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Trash2 className="h-3.5 w-3.5 mr-1" />
+              <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
               Remover
-            </Button>
+            </button>
           )}
         </div>
       </div>
-      <p className="text-[11px] text-muted-foreground">
-        Formatos: PNG ou JPG. Tamanho ideal: 200×200 px ou superior, fundo transparente
-        (PNG) para integração limpa nos documentos.
+      <p className="text-[11px] text-gray-500 leading-relaxed">
+        Formatos: PNG ou JPG. Tamanho ideal: 200×200 px ou superior, fundo
+        transparente (PNG) para integração limpa nos documentos.
       </p>
     </div>
   );
