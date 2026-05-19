@@ -1,22 +1,18 @@
 'use client';
 
+import { type FormEvent } from 'react';
 import { useChat, type Message as AIMessage } from 'ai/react';
 import { toast } from 'sonner';
 import type { ChatMessage } from '@/lib/rag/types';
 import type { StoredSession } from '@/lib/chat-storage';
 import { EmptyState } from './EmptyState';
 import { MessageList } from './MessageList';
-import { Composer } from './Composer';
+import { Composer, type ChatAttachment } from './Composer';
 
 type Props = {
   session: StoredSession;
   initialRatings?: Map<string, 'up' | 'down'>;
   onMessagesChange: (messages: ChatMessage[]) => void;
-  /**
-   * Invoked when the server-generated session title arrives via the
-   * stream annotation. Updates the sidebar list locally; the DB write
-   * already happened server-side.
-   */
   onTitleChange?: (title: string) => void;
 };
 
@@ -32,6 +28,35 @@ function pickSessionTitle(msg: AIMessage): string | undefined {
   const ann = msg.annotations as SessionTitleAnnotation[] | undefined;
   const hit = ann?.find((a) => typeof a?.sessionTitle === 'string');
   return hit?.sessionTitle;
+}
+
+function fmtSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+/**
+ * Build the user-message text that gets POSTed to /api/chat. When the user
+ * attached a file, prepend an <anexo>…</anexo> XML-style block with the
+ * parsed text so the LLM has the context inline. The chat route stays
+ * text-only — it doesn't need to know attachments exist.
+ */
+export function wrapWithAttachment(
+  userText: string,
+  attachment: ChatAttachment | undefined,
+): string {
+  const trimmed = userText.trim();
+  if (!attachment) return trimmed;
+  const sizeLabel = fmtSize(attachment.sizeBytes);
+  const header = `<anexo arquivo="${attachment.filename}" tipo="${attachment.kind}" tamanho="${sizeLabel}">`;
+  const footer = '</anexo>';
+  // Default question when the user attached a file with no text.
+  const question =
+    trimmed.length > 0
+      ? trimmed
+      : `Analise o conteúdo do anexo "${attachment.filename}" e me explique os pontos principais.`;
+  return `${header}\n${attachment.parsedText}\n${footer}\n\n${question}`;
 }
 
 export function ChatSession({
@@ -74,6 +99,23 @@ export function ChatSession({
     void append({ role: 'user', content: text });
   };
 
+  const onComposerSubmit = (
+    e?: FormEvent,
+    attachment?: ChatAttachment,
+  ) => {
+    if (!attachment) {
+      handleSubmit(e);
+      return;
+    }
+    // Attachment present: bypass handleSubmit (which would send only
+    // `input`) and route through append() with the wrapped content. The
+    // textarea is cleared by setInput('').
+    e?.preventDefault();
+    const wrapped = wrapWithAttachment(input, attachment);
+    setInput('');
+    void append({ role: 'user', content: wrapped });
+  };
+
   return (
     <>
       {messages.length === 0 ? (
@@ -95,7 +137,7 @@ export function ChatSession({
       <Composer
         input={input}
         onChange={setInput}
-        onSubmit={handleSubmit}
+        onSubmit={onComposerSubmit}
         isLoading={isLoading}
         onStop={stop}
       />

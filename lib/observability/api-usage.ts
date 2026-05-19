@@ -18,6 +18,8 @@ export type ApiProvider = 'openai' | 'voyage' | 'cohere';
 export type ApiOperation =
   | 'chat-generate'
   | 'chat-title-summarize'
+  | 'chat-attachment-parse'
+  | 'chat-attachment-vision'
   | 'classify'
   | 'condense'
   | 'followups'
