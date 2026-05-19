@@ -4,11 +4,13 @@ import {
   RFP_REFINE_SYSTEM_PROMPT,
   KRALJIC_REFINE_SYSTEM_PROMPT,
   PORTER_REFINE_SYSTEM_PROMPT,
+  FINANCIAL_REFINE_SYSTEM_PROMPT,
 } from '@/lib/assistants/refine';
 import type {
   RfpParams,
   KraljicParams,
   PorterParams,
+  FinancialParams,
 } from '@/lib/assistants/types';
 
 const rfpParams: RfpParams = {
@@ -109,5 +111,37 @@ describe('buildRefineSystemForType', () => {
     expect(PORTER_REFINE_SYSTEM_PROMPT).toMatch(
       /Reclassificação.*OK|diferente de Kraljic/i,
     );
+  });
+
+  it('returns the Financial refine system prompt when assistant_type=financial', () => {
+    const financialParams: FinancialParams = {
+      supplierName: 'Acme Indústria S.A.',
+      cnpj: '00.000.000/0001-00',
+      referenceYear: '2024',
+      observacoes: '',
+      indicators: {
+        liquidezCorrente: 1.5,
+        dividaLiquidaEbitda: 2,
+        margemEbitdaPct: 15,
+        roePct: 12,
+      },
+    };
+    const out = buildRefineSystemForType(
+      'financial',
+      '# Relatório financeiro',
+      financialParams,
+      [],
+    );
+    expect(out).toContain(FINANCIAL_REFINE_SYSTEM_PROMPT);
+    expect(out).not.toContain(RFP_REFINE_SYSTEM_PROMPT);
+    expect(out).not.toContain(KRALJIC_REFINE_SYSTEM_PROMPT);
+    expect(out).not.toContain(PORTER_REFINE_SYSTEM_PROMPT);
+    expect(out).toMatch(/<report>/);
+    expect(out).toMatch(/Acme Indústria/);
+  });
+
+  it('Financial refine prompt protects the deterministic score', () => {
+    expect(FINANCIAL_REFINE_SYSTEM_PROMPT).toMatch(/NÃO altere a pontuação|score/i);
+    expect(FINANCIAL_REFINE_SYSTEM_PROMPT).toMatch(/buy|caution|do_not_buy/i);
   });
 });

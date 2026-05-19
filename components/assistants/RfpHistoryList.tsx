@@ -21,7 +21,7 @@ import {
 
 type RunSummary = {
   id: string;
-  assistant_type: 'rfp' | 'kraljic' | 'porter';
+  assistant_type: 'rfp' | 'kraljic' | 'porter' | 'financial';
   template_id: string | null;
   params: {
     // RFP
@@ -34,6 +34,10 @@ type RunSummary = {
     // Porter
     categoria?: string;
     segmento?: string;
+    // Financial
+    supplierName?: string;
+    cnpj?: string;
+    referenceYear?: string;
   };
   status: 'running' | 'done' | 'error';
   error_message: string | null;
@@ -83,7 +87,7 @@ export function RfpHistoryList() {
 
   async function downloadBlob(
     runId: string,
-    assistantType: 'rfp' | 'kraljic' | 'porter',
+    assistantType: 'rfp' | 'kraljic' | 'porter' | 'financial',
     kind: 'docx' | 'xlsx',
   ) {
     const prefix =
@@ -91,9 +95,11 @@ export function RfpHistoryList() {
         ? 'kraljic'
         : assistantType === 'porter'
           ? 'porter'
-          : kind === 'docx'
-            ? 'rfp'
-            : 'cotacao';
+          : assistantType === 'financial'
+            ? 'financial'
+            : kind === 'docx'
+              ? 'rfp'
+              : 'cotacao';
     const filename = `${prefix}-${runId.slice(0, 8)}.${kind}`;
     const errLabel =
       kind === 'docx' ? 'Falha ao baixar .docx' : 'Falha ao baixar planilha';
@@ -161,20 +167,26 @@ export function RfpHistoryList() {
           {runs.map((r) => {
             const isKraljic = r.assistant_type === 'kraljic';
             const isPorter = r.assistant_type === 'porter';
+            const isFinancial = r.assistant_type === 'financial';
             const scope = isKraljic
               ? (r.params.portfolioName ?? '(portfólio sem nome)')
               : isPorter
                 ? (r.params.categoria ?? '(sem categoria)')
-                : (r.params.scope ?? '(sem escopo)');
+                : isFinancial
+                  ? (r.params.supplierName ?? '(fornecedor sem nome)')
+                  : (r.params.scope ?? '(sem escopo)');
             const category = isKraljic
               ? `${r.params.items?.length ?? 0} item(ns)`
               : isPorter
                 ? (r.params.segmento || 'Análise de mercado')
-                : (r.params.category ?? '—');
-            const client = isKraljic || isPorter ? '' : (r.params.client ?? '');
+                : isFinancial
+                  ? (r.params.referenceYear || 'Análise de fornecedor')
+                  : (r.params.category ?? '—');
+            const client =
+              isKraljic || isPorter || isFinancial ? '' : (r.params.client ?? '');
             const isDone = r.status === 'done';
-            // Porter doesn't produce a .xlsx — hide that button for porter rows.
-            const showXlsx = !isPorter;
+            // Porter and Financial don't produce a .xlsx.
+            const showXlsx = !isPorter && !isFinancial;
             return (
               <li
                 key={r.id}

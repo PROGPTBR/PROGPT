@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
 export type TemplateDraft = {
-  assistant_type: 'rfp' | 'kraljic' | 'porter';
+  assistant_type: 'rfp' | 'kraljic' | 'porter' | 'financial';
   name: string;
   description: string;
   body_md: string;
@@ -62,7 +62,7 @@ export function TemplateEditor({ open, initial, onCancel, onSave }: Props) {
               onChange={(e) =>
                 setDraft((d) => ({
                   ...d,
-                  assistant_type: e.target.value as 'rfp' | 'kraljic' | 'porter',
+                  assistant_type: e.target.value as 'rfp' | 'kraljic' | 'porter' | 'financial',
                 }))
               }
               disabled={!!initial}
@@ -71,6 +71,7 @@ export function TemplateEditor({ open, initial, onCancel, onSave }: Props) {
               <option value="rfp">RFP / Request for Proposal</option>
               <option value="kraljic">Kraljic / Matriz de portfólio</option>
               <option value="porter">Porter / 5 Forças Competitivas</option>
+              <option value="financial">Financial / Análise Financeira</option>
             </select>
             {initial && (
               <p className="text-[10px] text-muted-foreground mt-1">

@@ -1,10 +1,19 @@
-import type { RfpParams, KraljicParams, PorterParams } from './types';
+import type {
+  RfpParams,
+  KraljicParams,
+  PorterParams,
+  FinancialParams,
+} from './types';
 import type { CompanyData } from '@/lib/db/user-company';
 
 // Union of every assistant's form-params shape. Each branch contributes
 // its own set of `{{placeholders}}` to the substitution map below; we
 // detect which branch we have via "field in params" narrowing.
-export type AssistantParams = RfpParams | KraljicParams | PorterParams;
+export type AssistantParams =
+  | RfpParams
+  | KraljicParams
+  | PorterParams
+  | FinancialParams;
 
 // Sub-projeto 23 — Programmatic template assembly.
 //
@@ -92,6 +101,13 @@ export function renderPlaceholders(
     substitutions.categoria = params.categoria;
     substitutions.segmento = params.segmento ?? '';
     substitutions.escopo = params.escopo ?? '';
+    substitutions.observacoes = params.observacoes ?? '';
+  } else if ('supplierName' in params) {
+    // Financial
+    substitutions.fornecedor = params.supplierName;
+    substitutions.supplier_name = params.supplierName;
+    substitutions.cnpj = params.cnpj ?? '';
+    substitutions.ano_referencia = params.referenceYear ?? '';
     substitutions.observacoes = params.observacoes ?? '';
   }
 

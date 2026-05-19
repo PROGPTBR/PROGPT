@@ -4,10 +4,12 @@ import { getRunForOwner } from '@/lib/assistants/runs';
 import { PastRfpView } from '@/components/assistants/PastRfpView';
 import { PastKraljicView } from '@/components/assistants/PastKraljicView';
 import { PastPorterView } from '@/components/assistants/PastPorterView';
+import { PastFinancialView } from '@/components/assistants/PastFinancialView';
 import type {
   RfpParams,
   KraljicParams,
   PorterParams,
+  FinancialParams,
 } from '@/lib/assistants/types';
 
 export const dynamic = 'force-dynamic';
@@ -54,6 +56,17 @@ export default async function AssistantRunDetailPage({
         runId={run.id}
         initialOutput={run.output_md}
         categoria={pp.categoria ?? '(sem categoria)'}
+      />
+    );
+  }
+
+  if (run.assistant_type === 'financial') {
+    const fp = run.params as FinancialParams;
+    return (
+      <PastFinancialView
+        runId={run.id}
+        initialOutput={run.output_md}
+        supplierName={fp.supplierName ?? '(sem fornecedor)'}
       />
     );
   }

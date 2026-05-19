@@ -9,9 +9,14 @@ import { z } from 'zod';
 //   2. the templates CHECK constraint (new migration)
 //   3. ApiOperation in lib/observability/api-usage.ts
 //   4. add /api/assistants/<type>/route.ts + UI page
-export type AssistantType = 'rfp' | 'kraljic' | 'porter';
+export type AssistantType = 'rfp' | 'kraljic' | 'porter' | 'financial';
 
-export const ASSISTANT_TYPES = ['rfp', 'kraljic', 'porter'] as const;
+export const ASSISTANT_TYPES = [
+  'rfp',
+  'kraljic',
+  'porter',
+  'financial',
+] as const;
 
 export type ThemeStatusRow = 'running' | 'done' | 'error';
 
@@ -209,6 +214,75 @@ export const PORTER_FORCE_LABELS: Record<PorterForce, string> = {
   'poder-comprador': 'Poder de barganha dos compradores',
 };
 
+// ── Financial Health Analyzer params (form input) ────────────────────────
+// Sub-projeto 30 — Análise financeira de fornecedor.
+//
+// Os 12 indicadores canônicos seguem o template "Buyer Financial Health".
+// Cada um é opcional individualmente (form aceita parcial), mas os 4
+// pilares de scoring (liquidez, dívida/EBITDA, margem EBITDA, ROE)
+// precisam estar preenchidos para o cálculo determinístico produzir
+// um score.
+
+export const FinancialIndicatorsSchema = z.object({
+  // Demonstrativo de Resultado (DRE)
+  receitaLiquida: z.number().optional(), // R$ MM
+  ebitda: z.number().optional(), // R$ MM
+  lucroLiquido: z.number().optional(), // R$ MM
+  // Margens (%)
+  margemLiquidaPct: z.number().optional(),
+  margemEbitdaPct: z.number().optional(),
+  // Endividamento
+  dividaLiquidaEbitda: z.number().optional(), // x EBITDA
+  endividamentoGeralPct: z.number().optional(),
+  // Balanço
+  liquidezCorrente: z.number().optional(),
+  patrimonioLiquido: z.number().optional(), // R$ MM
+  // Rentabilidade (%)
+  roePct: z.number().optional(),
+  roicPct: z.number().optional(),
+  // Caixa
+  fluxoCaixaOperacional: z.number().optional(), // R$ MM
+});
+
+export type FinancialIndicators = z.infer<typeof FinancialIndicatorsSchema>;
+
+export const FinancialParamsSchema = z.object({
+  supplierName: z.string().trim().min(2).max(200),
+  cnpj: z.string().trim().max(32).optional().default(''),
+  referenceYear: z.string().trim().max(20).optional().default(''),
+  observacoes: z.string().trim().max(2000).optional().default(''),
+  indicators: FinancialIndicatorsSchema,
+});
+
+export type FinancialParams = z.infer<typeof FinancialParamsSchema>;
+
+export const FinancialRequestSchema = z.object({
+  templateId: z.string().uuid(),
+  params: FinancialParamsSchema,
+});
+
+export type FinancialRequest = z.infer<typeof FinancialRequestSchema>;
+
+// Recommendation discriminants used in the prompt + scorecard UI.
+export type FinancialRating = 'excellent' | 'good' | 'caution' | 'poor';
+export type FinancialRecommendation = 'buy' | 'caution' | 'do_not_buy';
+
+export const FINANCIAL_RATING_LABELS: Record<FinancialRating, string> = {
+  excellent: 'Excelente',
+  good: 'Bom',
+  caution: 'Cuidado',
+  poor: 'Crítico',
+};
+
+export const FINANCIAL_RECOMMENDATION_LABELS: Record<
+  FinancialRecommendation,
+  string
+> = {
+  buy: 'Recomendado contratar',
+  caution: 'Contratar com cautela',
+  do_not_buy: 'Não recomendado',
+};
+
 // ── Assistant run row shape (DB serialization) ───────────────────────────
 // `params` is discriminated by `assistant_type`. We type it as the union
 // here and narrow at the call site.
@@ -217,7 +291,7 @@ export type AssistantRunRow = {
   user_id: string;
   assistant_type: AssistantType;
   template_id: string | null;
-  params: RfpParams | KraljicParams | PorterParams;
+  params: RfpParams | KraljicParams | PorterParams | FinancialParams;
   output_md: string | null;
   status: ThemeStatusRow;
   error_message: string | null;

@@ -14,6 +14,7 @@ import type {
   RfpParams,
   KraljicParams,
   PorterParams,
+  FinancialParams,
   AssistantType,
 } from '@/lib/assistants/types';
 import type { ApiOperation } from '@/lib/observability/api-usage';
@@ -90,7 +91,11 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   const system = buildRefineSystemForType(
     run.assistant_type,
     run.output_md,
-    run.params as RfpParams | KraljicParams | PorterParams,
+    run.params as
+      | RfpParams
+      | KraljicParams
+      | PorterParams
+      | FinancialParams,
     chunks,
   );
 
@@ -98,6 +103,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     {
       kraljic: 'assistant-kraljic-suggest',
       porter: 'assistant-porter-refine',
+      financial: 'assistant-financial-refine',
       rfp: 'assistant-rfp-refine',
     } as Record<AssistantType, ApiOperation>
   )[run.assistant_type];
