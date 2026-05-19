@@ -38,24 +38,24 @@ const FEATURE_CARDS = [
     blurb:
       'Centenas de artigos canônicos (Kraljic, Porter, Monczka, Cousins) viraram a memória do seu time. Pergunte como faria para um colega sênior.',
     image:
-      'https://images.unsplash.com/photo-1666795721503-2e52a7333004?w=800&h=600&q=80&auto=format&fit=crop',
-    alt: 'Interface de chat com cards de sugestão em fundo escuro',
+      'https://images.unsplash.com/photo-1568667256549-094345857637?w=800&h=600&q=80&auto=format&fit=crop',
+    alt: 'Biblioteca em espiral repleta de livros — base de conhecimento curada',
   },
   {
     title: 'Assistentes que executam',
     blurb:
       'RFP, matriz de Kraljic e mais seis em breve — cada um mapeado a um dos 8 passos do Strategic Sourcing. Entregam o artefato pronto, não só uma explicação.',
     image:
-      'https://images.unsplash.com/photo-1640627141132-c7030cfbae4f?w=800&h=600&q=80&auto=format&fit=crop',
-    alt: 'Tela de editor com sugestões da IA em segundo plano',
+      'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=800&h=600&q=80&auto=format&fit=crop',
+    alt: 'Documentos financeiros e calculadora — artefatos prontos para usar',
   },
   {
     title: 'Base curada',
     blurb:
       'Retrieval híbrido (vetorial + lexical + rerank) com gate de relevância — sem alucinação, sem citação fake. Quando não tem fonte na base, o bot diz.',
     image:
-      'https://images.unsplash.com/photo-1696777406878-0972d2a2db4b?w=800&h=600&q=80&auto=format&fit=crop',
-    alt: 'Painel de dados minimalista sobre montanhas em névoa',
+      'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=800&h=600&q=80&auto=format&fit=crop',
+    alt: 'Mão assinando um contrato — fundamentação documentada',
   },
 ];
 
@@ -67,8 +67,8 @@ const USE_CASES = [
       'Classifique 30 categorias em 5 minutos e receba um plano de ação por quadrante.',
     href: '/assistants/kraljic',
     image:
-      'https://images.unsplash.com/photo-1591174425156-fd472f354be4?w=1200&h=800&q=80&auto=format&fit=crop',
-    alt: 'Visualização de matriz com pontos em fundo escuro',
+      'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200&h=800&q=80&auto=format&fit=crop',
+    alt: 'Dashboard de analytics com gráficos — visualização de portfólio',
   },
 ];
 
@@ -246,7 +246,7 @@ export default function Landing() {
           <div className="absolute inset-0 z-0 pointer-events-none">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="https://images.unsplash.com/photo-1731507104902-7c679c3eec85?w=1600&h=1080&q=80&auto=format&fit=crop"
+              src="https://images.unsplash.com/photo-1494412651409-8963ce7935a7?w=1600&h=1080&q=80&auto=format&fit=crop"
               alt=""
               aria-hidden="true"
               className="w-full h-full object-cover opacity-70"
@@ -436,7 +436,7 @@ export default function Landing() {
             <div className="order-2 lg:order-1 rounded-2xl overflow-hidden bg-[#1a1a1a] aspect-[4/3] relative reveal">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="https://images.unsplash.com/photo-1760952851538-17a59f691efe?w=1000&h=800&q=80&auto=format&fit=crop"
+                src="https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=1000&h=800&q=80&auto=format&fit=crop"
                 alt=""
                 aria-hidden="true"
                 className="w-full h-full object-cover opacity-90"
@@ -618,7 +618,7 @@ export default function Landing() {
             <div className="absolute inset-0 z-0 pointer-events-none">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="https://images.unsplash.com/photo-1760060530300-b6374dab9534?w=1200&h=600&q=80&auto=format&fit=crop"
+                src="https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=1200&h=600&q=80&auto=format&fit=crop"
                 alt=""
                 aria-hidden="true"
                 className="w-full h-full object-cover opacity-50"
