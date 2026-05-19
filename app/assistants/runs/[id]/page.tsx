@@ -5,11 +5,13 @@ import { PastRfpView } from '@/components/assistants/PastRfpView';
 import { PastKraljicView } from '@/components/assistants/PastKraljicView';
 import { PastPorterView } from '@/components/assistants/PastPorterView';
 import { PastFinancialView } from '@/components/assistants/PastFinancialView';
+import { PastAbcView } from '@/components/assistants/PastAbcView';
 import type {
   RfpParams,
   KraljicParams,
   PorterParams,
   FinancialParams,
+  AbcParams,
 } from '@/lib/assistants/types';
 
 export const dynamic = 'force-dynamic';
@@ -67,6 +69,17 @@ export default async function AssistantRunDetailPage({
         runId={run.id}
         initialOutput={run.output_md}
         supplierName={fp.supplierName ?? '(sem fornecedor)'}
+      />
+    );
+  }
+
+  if (run.assistant_type === 'abc') {
+    const ap = run.params as AbcParams;
+    return (
+      <PastAbcView
+        runId={run.id}
+        initialOutput={run.output_md}
+        analysisName={ap.analysisName ?? '(análise sem nome)'}
       />
     );
   }

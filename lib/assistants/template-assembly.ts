@@ -3,6 +3,7 @@ import type {
   KraljicParams,
   PorterParams,
   FinancialParams,
+  AbcParams,
 } from './types';
 import type { CompanyData } from '@/lib/db/user-company';
 
@@ -13,7 +14,8 @@ export type AssistantParams =
   | RfpParams
   | KraljicParams
   | PorterParams
-  | FinancialParams;
+  | FinancialParams
+  | AbcParams;
 
 // Sub-projeto 23 — Programmatic template assembly.
 //
@@ -109,6 +111,13 @@ export function renderPlaceholders(
     substitutions.cnpj = params.cnpj ?? '';
     substitutions.ano_referencia = params.referenceYear ?? '';
     substitutions.observacoes = params.observacoes ?? '';
+  } else if ('analysisName' in params) {
+    // ABC
+    substitutions.analise = params.analysisName;
+    substitutions.analysis_name = params.analysisName;
+    substitutions.periodo = params.analysisPeriod ?? '';
+    substitutions.num_itens = String(params.items.length);
+    substitutions.notas = params.notes ?? '';
   }
 
   return text.replace(/\{\{([a-z_]+)\}\}/g, (full, key: string) => {

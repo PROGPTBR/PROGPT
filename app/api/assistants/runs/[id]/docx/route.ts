@@ -11,7 +11,10 @@ import type {
   KraljicParams,
   PorterParams,
   FinancialParams,
+  AbcParams,
 } from '@/lib/assistants/types';
+import { classifyAbc } from '@/lib/assistants/abc';
+import { renderAbcChartPng } from '@/lib/assistants/abc-chart';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -39,6 +42,7 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
   let titleSafe: string;
   let categoryForCover: string | null | undefined;
   let kraljicChartPng: Buffer | undefined;
+  let abcChartPng: Buffer | undefined;
 
   if (run.assistant_type === 'kraljic') {
     const kp = run.params as KraljicParams;
@@ -60,6 +64,18 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
     categoryForCover = fp.referenceYear
       ? `Análise financeira ${fp.referenceYear}`
       : 'Análise financeira de fornecedor';
+  } else if (run.assistant_type === 'abc') {
+    const ap = run.params as AbcParams;
+    titleSafe = `Análise ABC - ${ap.analysisName}`.slice(0, 120);
+    categoryForCover = ap.analysisPeriod
+      ? `Análise ABC ${ap.analysisPeriod}`
+      : 'Análise ABC / Curva de Pareto';
+    try {
+      const analysis = classifyAbc(ap);
+      abcChartPng = await renderAbcChartPng(analysis);
+    } catch (err) {
+      console.warn('[docx] abc chart render failed:', err);
+    }
   } else {
     const rfpParams = run.params as RfpParams;
     const scope = rfpParams.scope ?? 'RFP';
@@ -75,6 +91,7 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
       company,
     },
     kraljicChartPng,
+    abcChartPng,
   });
 
   // Filename derived from run id (no PII), browser saves it as a .docx.

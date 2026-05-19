@@ -5,6 +5,7 @@ import type {
   KraljicParams,
   PorterParams,
   FinancialParams,
+  AbcParams,
 } from './types';
 
 // Sub-projeto 21 + 27 — Post-creation chat refinement.
@@ -282,12 +283,83 @@ ${baseBlock}
 </base>`;
 }
 
+// ── ABC refinement ───────────────────────────────────────────────────────
+
+export const ABC_REFINE_SYSTEM_PROMPT = `Você é um especialista sênior em procurement ajudando o usuário a refinar uma Análise ABC (Curva de Pareto) que acabou de ser gerada. Função: aprofundar o plano de ação por classe, identificar oportunidades de consolidação de fornecedor / catalogação / leilão reverso, e sugerir quick wins concretos a partir dos itens listados.
+
+## Como responder
+
+1. **Seja específico à análise**. O relatório aparece entre \`<report>...</report>\`. Refira-se a itens por nome e classe ("o item X que ficou em classe A representa Y% do spend — sugiro Z…").
+
+2. **NÃO altere a classificação ABC nem os percentuais**. A classe (A/B/C), o ranking e os % cumulativos foram calculados deterministicamente pelo sistema. Se o usuário trouxer contexto novo (item duplicado em SKUs diferentes, fornecedor pivô que muda a foto), explique qual ajuste de input mudaria a análise e proponha uma nova rodada — não reescreva os números no texto.
+
+3. **Plano por classe** — pode refinar:
+   - **A**: priorização de RFPs/RFQs, montagem de QBR, contratos plurianuais com revisão semestral, plano de mitigação de fornecedor único.
+   - **B**: cadência de RFQ (trimestral/semestral), 2-3 fornecedores qualificados, política de spot-buy.
+   - **C**: consolidação de pedidos (passar de N pedidos pequenos para M maiores), catálogo eletrônico, distribuidor master, autonomia de compra do requisitante até limite definido.
+
+4. **Quick wins**: identifique padrões nos dados — fornecedor único com muitos itens C (alvo de consolidação), mesmo material descrito em múltiplos SKUs (oportunidade de catalogação), itens A sem contrato (renegociação obrigatória), cauda longa com fornecedor único (risco de continuidade).
+
+5. **Profundidade sênior**. Threshold numérico, prazo, ferramenta concreta. Evite "padrão de mercado".
+
+6. **Fundamente em teoria quando útil**. Há trechos da base entre \`<base>...</base>\`. Use princípios de spend cube, lei de Pareto, gestão de capital de giro, e-procurement.
+
+7. **Diga "depende" quando for o caso**. Não invente fornecedores ou benchmarks específicos.
+
+8. **Markdown limpo**. Sem preâmbulo conversacional.`;
+
+export function buildAbcRefineSystem(
+  reportMarkdown: string,
+  params: AbcParams,
+  chunks: RetrievedChunk[],
+): string {
+  const paramsSummary = [
+    `Análise: ${params.analysisName}`,
+    params.analysisPeriod ? `Período: ${params.analysisPeriod}` : '',
+    `Itens enviados: ${params.items.length}`,
+    `Consolidação aplicada: ${params.consolidate ? 'sim' : 'não'}`,
+    params.notes ? `Notas: ${params.notes}` : '',
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  const baseBlock =
+    chunks.length === 0
+      ? '(nenhum trecho relevante recuperado — responda com princípios gerais de spend analysis)'
+      : chunks
+          .map((c) => `### ${c.articleTitle}\n\n${c.content.slice(0, 800)}`)
+          .join('\n\n---\n\n');
+
+  return `${ABC_REFINE_SYSTEM_PROMPT}
+
+## Parâmetros originais
+
+${paramsSummary}
+
+## Relatório ABC (referência completa)
+
+<report>
+${reportMarkdown}
+</report>
+
+## Base de conhecimento
+
+<base>
+${baseBlock}
+</base>`;
+}
+
 // ── Dispatcher ───────────────────────────────────────────────────────────
 
 export function buildRefineSystemForType(
   assistantType: AssistantType,
   outputMd: string,
-  params: RfpParams | KraljicParams | PorterParams | FinancialParams,
+  params:
+    | RfpParams
+    | KraljicParams
+    | PorterParams
+    | FinancialParams
+    | AbcParams,
   chunks: RetrievedChunk[],
 ): string {
   if (assistantType === 'kraljic') {
@@ -302,6 +374,9 @@ export function buildRefineSystemForType(
       params as FinancialParams,
       chunks,
     );
+  }
+  if (assistantType === 'abc') {
+    return buildAbcRefineSystem(outputMd, params as AbcParams, chunks);
   }
   return buildRfpRefineSystem(outputMd, params as RfpParams, chunks);
 }

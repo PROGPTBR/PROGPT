@@ -19,9 +19,11 @@ import {
 // owner check). Each row carries enough metadata to render without an
 // extra fetch.
 
+type AssistantTypeLocal = 'rfp' | 'kraljic' | 'porter' | 'financial' | 'abc';
+
 type RunSummary = {
   id: string;
-  assistant_type: 'rfp' | 'kraljic' | 'porter' | 'financial';
+  assistant_type: AssistantTypeLocal;
   template_id: string | null;
   params: {
     // RFP
@@ -38,6 +40,9 @@ type RunSummary = {
     supplierName?: string;
     cnpj?: string;
     referenceYear?: string;
+    // ABC
+    analysisName?: string;
+    analysisPeriod?: string;
   };
   status: 'running' | 'done' | 'error';
   error_message: string | null;
@@ -87,7 +92,7 @@ export function RfpHistoryList() {
 
   async function downloadBlob(
     runId: string,
-    assistantType: 'rfp' | 'kraljic' | 'porter' | 'financial',
+    assistantType: AssistantTypeLocal,
     kind: 'docx' | 'xlsx',
   ) {
     const prefix =
@@ -97,9 +102,11 @@ export function RfpHistoryList() {
           ? 'porter'
           : assistantType === 'financial'
             ? 'financial'
-            : kind === 'docx'
-              ? 'rfp'
-              : 'cotacao';
+            : assistantType === 'abc'
+              ? 'abc'
+              : kind === 'docx'
+                ? 'rfp'
+                : 'cotacao';
     const filename = `${prefix}-${runId.slice(0, 8)}.${kind}`;
     const errLabel =
       kind === 'docx' ? 'Falha ao baixar .docx' : 'Falha ao baixar planilha';
@@ -168,22 +175,29 @@ export function RfpHistoryList() {
             const isKraljic = r.assistant_type === 'kraljic';
             const isPorter = r.assistant_type === 'porter';
             const isFinancial = r.assistant_type === 'financial';
+            const isAbc = r.assistant_type === 'abc';
             const scope = isKraljic
               ? (r.params.portfolioName ?? '(portfólio sem nome)')
               : isPorter
                 ? (r.params.categoria ?? '(sem categoria)')
                 : isFinancial
                   ? (r.params.supplierName ?? '(fornecedor sem nome)')
-                  : (r.params.scope ?? '(sem escopo)');
+                  : isAbc
+                    ? (r.params.analysisName ?? '(análise sem nome)')
+                    : (r.params.scope ?? '(sem escopo)');
             const category = isKraljic
               ? `${r.params.items?.length ?? 0} item(ns)`
               : isPorter
                 ? (r.params.segmento || 'Análise de mercado')
                 : isFinancial
                   ? (r.params.referenceYear || 'Análise de fornecedor')
-                  : (r.params.category ?? '—');
+                  : isAbc
+                    ? `${r.params.items?.length ?? 0} item(ns)`
+                    : (r.params.category ?? '—');
             const client =
-              isKraljic || isPorter || isFinancial ? '' : (r.params.client ?? '');
+              isKraljic || isPorter || isFinancial || isAbc
+                ? ''
+                : (r.params.client ?? '');
             const isDone = r.status === 'done';
             // Porter and Financial don't produce a .xlsx.
             const showXlsx = !isPorter && !isFinancial;
