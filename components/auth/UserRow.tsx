@@ -17,8 +17,14 @@ export function UserRow() {
       const u = data.user;
       setEmail(u?.email ?? null);
       if (!u) return;
-      const { data: profile } = await sb.from('profiles').select('role').eq('id', u.id).maybeSingle();
-      setIsAdmin(((profile as { role?: string } | null)?.role ?? 'user') === 'admin');
+      const { data: profile } = await sb
+        .from('profiles')
+        .select('role')
+        .eq('id', u.id)
+        .maybeSingle();
+      setIsAdmin(
+        ((profile as { role?: string } | null)?.role ?? 'user') === 'admin',
+      );
     });
   }, []);
 
@@ -34,38 +40,38 @@ export function UserRow() {
   }
 
   return (
-    <div className="border-t border-border">
+    <div className="border-t border-white/5">
       <Link
         href="/profile"
-        className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground"
+        className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-400 hover:bg-white/5 hover:text-white transition-colors"
       >
-        <UserCircle className="h-4 w-4" />
+        <UserCircle className="h-4 w-4" aria-hidden="true" />
         <span>Meu perfil</span>
       </Link>
       {isAdmin && (
         <Link
           href="/admin"
-          className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground"
+          className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-400 hover:bg-white/5 hover:text-white transition-colors"
         >
-          <Shield className="h-4 w-4" />
+          <Shield className="h-4 w-4" aria-hidden="true" />
           <span>Admin</span>
         </Link>
       )}
-      <div className="flex items-center gap-2 p-3">
-        <div className="h-7 w-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-semibold shrink-0">
+      <div className="flex items-center gap-3 p-4 border-t border-white/5">
+        <div className="h-8 w-8 rounded-full bg-brand text-black flex items-center justify-center text-xs font-semibold shrink-0">
           {initial}
         </div>
         <div className="flex-1 min-w-0">
-          <div className="truncate text-sm">{email}</div>
+          <div className="truncate text-sm text-gray-300">{email}</div>
         </div>
         <button
           type="button"
           onClick={handleLogout}
           aria-label="Sair"
-          className="text-muted-foreground hover:text-foreground transition-colors"
+          className="text-gray-500 hover:text-red-400 transition-colors"
           title="Sair"
         >
-          <LogOut className="h-4 w-4" />
+          <LogOut className="h-4 w-4" aria-hidden="true" />
         </button>
       </div>
     </div>

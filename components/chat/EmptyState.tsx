@@ -10,30 +10,34 @@ const SUGGESTIONS: Suggestion[] = [
 ];
 
 // Sub-projeto 18: discoverability suggestion that triggers the
-// `library_overview` classifier intent. Lives separately from the four
-// task-oriented cards so it stands out as the "first question to ask".
+// `library_overview` classifier intent.
 const LIBRARY_OVERVIEW_QUERY = 'Sobre o que você pode me ensinar?';
 
 export function EmptyState({ onPick }: { onPick: (text: string) => void }) {
   return (
-    <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 gap-8">
+    <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 gap-10">
       <div className="text-center">
-        <h1 className="text-2xl font-semibold tracking-tight">ProcurementGPT</h1>
-        <p className="mt-2 text-sm text-muted-foreground max-w-md">
-          Especialista em teorias de procurement. Pergunte sobre frameworks, aplicações e casos.
+        <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">
+          ProcurementGPT <span className="text-brand">.</span>
+        </h1>
+        <p className="mt-3 text-sm text-gray-400 max-w-md">
+          Especialista em teorias de procurement. Pergunte sobre frameworks,
+          aplicações e casos.
         </p>
       </div>
       <div className="w-full max-w-xl flex flex-col gap-3">
         <button
           type="button"
           onClick={() => onPick(LIBRARY_OVERVIEW_QUERY)}
-          className="text-left rounded-lg border border-primary/40 bg-primary/5 hover:bg-primary/10 transition-colors p-4"
+          className="text-left rounded-xl border border-brand/30 bg-brand/5 hover:bg-brand/10 hover:border-brand/50 transition-all duration-300 p-4 active:scale-[0.99]"
         >
-          <div className="text-xs font-semibold uppercase tracking-wide text-primary">
+          <div className="text-[10px] font-semibold uppercase tracking-wider text-brand">
             Descobrir
           </div>
-          <div className="mt-1 text-sm text-foreground">{LIBRARY_OVERVIEW_QUERY}</div>
-          <div className="mt-1 text-xs text-muted-foreground">
+          <div className="mt-1.5 text-sm text-white font-medium">
+            {LIBRARY_OVERVIEW_QUERY}
+          </div>
+          <div className="mt-1 text-xs text-gray-500">
             Lista os temas que estão na base de conhecimento agora
           </div>
         </button>
@@ -43,12 +47,12 @@ export function EmptyState({ onPick }: { onPick: (text: string) => void }) {
               key={s.label}
               type="button"
               onClick={() => onPick(s.query)}
-              className="text-left rounded-lg border border-border bg-card hover:bg-accent transition-colors p-4"
+              className="text-left rounded-xl border border-white/5 bg-[#141414] hover:bg-[#181818] hover:border-white/10 transition-all duration-300 p-4 active:scale-[0.99]"
             >
-              <div className="text-xs font-semibold uppercase tracking-wide text-primary">
+              <div className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">
                 {s.label}
               </div>
-              <div className="mt-1 text-sm text-foreground">{s.query}</div>
+              <div className="mt-1.5 text-sm text-white">{s.query}</div>
             </button>
           ))}
         </div>

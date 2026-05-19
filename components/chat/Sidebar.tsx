@@ -1,8 +1,8 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { Plus, Trash2, Sparkles } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import type { StoredSession } from '@/lib/chat-storage';
 import { UserRow } from '@/components/auth/UserRow';
@@ -26,37 +26,69 @@ function formatRelative(ts: number): string {
   return `${day} d`;
 }
 
-export function Sidebar({ sessions, currentId, onSwitch, onNew, onDelete }: Props) {
+export function Sidebar({
+  sessions,
+  currentId,
+  onSwitch,
+  onNew,
+  onDelete,
+}: Props) {
   return (
-    <aside className="w-72 shrink-0 border-r border-border bg-card flex flex-col h-full">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-        <span className="text-sm font-semibold tracking-tight">ProcurementGPT</span>
-        <Button size="sm" variant="ghost" onClick={onNew} aria-label="Nova conversa">
-          <Plus className="h-4 w-4" />
-        </Button>
+    <aside className="w-72 shrink-0 border-r border-white/5 bg-black/40 backdrop-blur-md flex flex-col h-full">
+      <div className="flex items-center justify-between px-4 py-4 border-b border-white/5">
+        <Link href="/" className="inline-flex items-center gap-2">
+          <Image
+            src="/2bsupply-logo.png"
+            alt="2B Supply"
+            width={241}
+            height={57}
+            priority
+            className="h-6 w-auto brightness-0 invert"
+          />
+        </Link>
+        <button
+          type="button"
+          onClick={onNew}
+          aria-label="Nova conversa"
+          title="Nova conversa"
+          className="inline-flex items-center justify-center rounded-full bg-brand text-black w-8 h-8 hover:bg-brand/90 active:scale-95 transition-all duration-300"
+        >
+          <Plus className="h-4 w-4" aria-hidden="true" />
+        </button>
       </div>
       <Link
         href="/assistants"
-        className="flex items-center gap-2 px-4 py-2 text-sm font-medium border-b border-border text-primary hover:bg-primary/5"
+        className="group flex items-center gap-2 px-4 py-3 text-sm font-medium border-b border-white/5 text-brand hover:bg-brand/5 transition-colors"
       >
-        <Sparkles className="h-4 w-4" />
+        <Sparkles className="h-4 w-4" aria-hidden="true" />
         <span>Assistentes</span>
+        <span className="ml-auto text-xs text-gray-500 group-hover:text-brand/80 transition-colors">
+          →
+        </span>
       </Link>
       <ScrollArea className="flex-1">
-        <ul className="p-2 space-y-1">
+        <ul className="p-2 space-y-0.5">
           {sessions.map((s) => {
             const active = s.id === currentId;
             return (
               <li key={s.id}>
                 <div
-                  className={`group flex items-center gap-2 rounded-md px-3 py-2 cursor-pointer text-sm ${
-                    active ? 'bg-primary/10 text-foreground' : 'hover:bg-accent text-foreground'
+                  className={`group flex items-center gap-2 rounded-lg px-3 py-2 cursor-pointer text-sm transition-colors ${
+                    active
+                      ? 'bg-brand/10 border border-brand/20'
+                      : 'hover:bg-white/5 border border-transparent'
                   }`}
                   onClick={() => onSwitch(s.id)}
                 >
                   <div className="flex-1 min-w-0">
-                    <div className="truncate">{s.title}</div>
-                    <div className="text-xs text-muted-foreground">{formatRelative(s.updatedAt)}</div>
+                    <div
+                      className={`truncate ${active ? 'text-white' : 'text-gray-300'}`}
+                    >
+                      {s.title}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {formatRelative(s.updatedAt)}
+                    </div>
                   </div>
                   <button
                     type="button"
@@ -65,9 +97,9 @@ export function Sidebar({ sessions, currentId, onSwitch, onNew, onDelete }: Prop
                       e.stopPropagation();
                       onDelete(s.id);
                     }}
-                    className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
+                    className="opacity-0 group-hover:opacity-100 text-gray-500 hover:text-red-400 transition-all"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="h-4 w-4" aria-hidden="true" />
                   </button>
                 </div>
               </li>
