@@ -73,6 +73,15 @@ describe('buildRefineSystemForType', () => {
       segmento: 'Direto',
       escopo: 'Brasil',
       observacoes: '',
+      // Minimum 5 entries — see PorterParamsSchema. Content is irrelevant
+      // for the dispatch test; this exercises only the type plumbing.
+      statements: [
+        { id: 'S1-1', weight: 2, score: 3 },
+        { id: 'S2-1', weight: 2, score: 3 },
+        { id: 'S3-1', weight: 2, score: 3 },
+        { id: 'S4-1', weight: 2, score: 3 },
+        { id: 'S5-1', weight: 2, score: 3 },
+      ],
     };
     const out = buildRefineSystemForType(
       'porter',

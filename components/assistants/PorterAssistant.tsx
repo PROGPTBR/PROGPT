@@ -46,6 +46,7 @@ export function PorterAssistant() {
             segmento: values.segmento,
             escopo: values.escopo,
             observacoes: values.observacoes,
+            statements: values.statements,
           },
         }),
       });
