@@ -2,184 +2,297 @@
 
 import Link from 'next/link';
 import {
-  FileText,
-  Clock,
+  ArrowRight,
+  Check,
   History,
-  LayoutGrid,
-  type LucideIcon,
 } from 'lucide-react';
+import { KraljicMatrixPreview } from './previews/KraljicMatrixPreview';
+import { RfpDocumentPreview } from './previews/RfpDocumentPreview';
 
-// Sub-projeto 20+27+28: hub organizada pelos 8 passos do strategic sourcing.
-// Cada novo assistente entra no `assistants` do passo correspondente.
+// Hub layout — Spotlight + Roadmap.
+//
+// Section 1: header + macro progress bar (X/8 ativos)
+// Section 2: 2 large spotlight cards for available assistants, each with
+//            a stylized SVG preview of the output
+// Section 3: compact 8-node roadmap strip (horizontal desktop, vertical
+//            mobile) showing the full sourcing pipeline + status
 
-type AssistantCard = {
-  type: 'rfp' | 'kraljic';
+type SpotlightAssistant = {
+  step: number;
+  stepCategory: string;
   href: string;
   title: string;
-  description: string;
-  icon: LucideIcon;
+  short: string;
+  bullets: string[];
+  Preview: React.ComponentType;
 };
 
-type SourcingStep = {
-  n: number;
-  title: string;
-  blurb: string;
-  assistants: AssistantCard[];
-};
-
-const STEPS: SourcingStep[] = [
+const SPOTLIGHTS: SpotlightAssistant[] = [
   {
-    n: 1,
-    title: 'Perfil da Categoria',
-    blurb:
-      'Entendimento profundo da categoria, suas especificidades e como ela impacta o negócio.',
-    assistants: [],
-  },
-  {
-    n: 2,
-    title: 'Análise da Categoria',
-    blurb:
-      'Coleta e análise de dados internos: volumes, custos, contratos, histórico de fornecimento.',
-    assistants: [],
-  },
-  {
-    n: 3,
-    title: 'Visão do Mercado Fornecedor',
-    blurb:
-      'Mapeamento de fornecedores, tendências de mercado, riscos e oportunidades.',
-    assistants: [],
-  },
-  {
-    n: 4,
-    title: 'Estratégia de Sourcing',
-    blurb:
-      'Definição de como abordar o mercado — negociação competitiva, parcerias, simplificação ou proteção de fornecimento.',
-    assistants: [
-      {
-        type: 'kraljic',
-        href: '/assistants/kraljic',
-        title: 'Assistente Kraljic',
-        description:
-          'Classifica seu portfólio na Matriz de Kraljic (Estratégico / Alavancável / Gargalo / Não Crítico), gera plano de ação por quadrante e gráfico bubble 2×2.',
-        icon: LayoutGrid,
-      },
+    step: 4,
+    stepCategory: 'Estratégia',
+    href: '/assistants/kraljic',
+    title: 'Kraljic',
+    short:
+      'Classifica seu portfólio na Matriz de Kraljic e gera plano de ação por quadrante.',
+    bullets: [
+      'Portfólio 2-200 itens',
+      'Bubble chart 2×2 + plano',
+      '.docx + .xlsx multi-sheet',
     ],
+    Preview: KraljicMatrixPreview,
   },
   {
-    n: 5,
-    title: 'Engajamento dos Fornecedores',
-    blurb: 'Condução do processo de RFI, RFP ou RFQ.',
-    assistants: [
-      {
-        type: 'rfp',
-        href: '/assistants/rfp',
-        title: 'Assistente de RFP',
-        description:
-          'Gera um draft completo de RFP/RFQ com base nos parâmetros da categoria, no template selecionado e na base de conhecimento.',
-        icon: FileText,
-      },
+    step: 5,
+    stepCategory: 'Engajamento',
+    href: '/assistants/rfp',
+    title: 'RFP',
+    short:
+      'Gera draft completo de RFP/RFQ a partir de parâmetros + base de conhecimento.',
+    bullets: [
+      'Cliente, escopo, prazo, orçamento',
+      'Markdown + .docx + .xlsx',
+      'Chat de refinamento',
     ],
-  },
-  {
-    n: 6,
-    title: 'Negociação',
-    blurb:
-      'Negociação estruturada para maximizar valor — não apenas reduzir preços.',
-    assistants: [],
-  },
-  {
-    n: 7,
-    title: 'Implementação do Contrato',
-    blurb: 'Formalização de acordos claros, alinhados com a estratégia.',
-    assistants: [],
-  },
-  {
-    n: 8,
-    title: 'Controle e Melhoria Contínua',
-    blurb:
-      'Monitoramento de KPIs, ajustes de estratégia, busca incessante por melhoria.',
-    assistants: [],
+    Preview: RfpDocumentPreview,
   },
 ];
 
+type RoadmapStep = {
+  n: number;
+  shortLabel: string;
+  fullName: string;
+  available: boolean;
+  href?: string;
+};
+
+const STEPS: RoadmapStep[] = [
+  { n: 1, shortLabel: 'Perfil', fullName: 'Perfil da Categoria', available: false },
+  { n: 2, shortLabel: 'Análise', fullName: 'Análise da Categoria', available: false },
+  { n: 3, shortLabel: 'Mercado', fullName: 'Visão do Mercado Fornecedor', available: false },
+  { n: 4, shortLabel: 'Estratégia', fullName: 'Estratégia de Sourcing', available: true, href: '/assistants/kraljic' },
+  { n: 5, shortLabel: 'Engajamento', fullName: 'Engajamento dos Fornecedores', available: true, href: '/assistants/rfp' },
+  { n: 6, shortLabel: 'Negociação', fullName: 'Negociação', available: false },
+  { n: 7, shortLabel: 'Contrato', fullName: 'Implementação do Contrato', available: false },
+  { n: 8, shortLabel: 'Controle', fullName: 'Controle e Melhoria Contínua', available: false },
+];
+
+const ACTIVE_COUNT = STEPS.filter((s) => s.available).length;
+const PROGRESS_PCT = Math.round((ACTIVE_COUNT / STEPS.length) * 100);
+
 export function AssistantsHub() {
   return (
-    <div className="space-y-10">
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">
-            Assistentes <span className="text-brand">.</span>
-          </h1>
-          <p className="text-sm text-gray-400 mt-2 max-w-2xl leading-relaxed">
-            Organizados pelos 8 passos do{' '}
-            <span className="text-brand font-medium">Strategic Sourcing</span>.
-            Cada assistente combina a base de conhecimento com templates
-            curados para entregar um artefato pronto.
-          </p>
+    <div className="space-y-12">
+      {/* ───── Section 1: Header + progress ───── */}
+      <header className="space-y-5">
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">
+              Assistentes <span className="text-brand">.</span>
+            </h1>
+            <p className="text-sm text-gray-400 mt-2">
+              {ACTIVE_COUNT} de {STEPS.length} passos do{' '}
+              <span className="text-brand font-medium">Strategic Sourcing</span>{' '}
+              com assistente ativo.
+            </p>
+          </div>
+          <Link
+            href="/assistants/history"
+            className="inline-flex items-center gap-1.5 text-sm rounded-full border border-white/10 bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white px-4 h-9 transition-all duration-300 active:scale-95"
+          >
+            <History className="h-4 w-4" aria-hidden="true" />
+            Meu histórico
+          </Link>
         </div>
-        <Link
-          href="/assistants/history"
-          className="inline-flex items-center gap-1.5 text-sm rounded-full border border-white/10 bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white px-4 h-9 transition-all duration-300 active:scale-95"
-        >
-          <History className="h-4 w-4" aria-hidden="true" />
-          Meu histórico
-        </Link>
-      </div>
 
-      <ol className="space-y-4">
-        {STEPS.map((step) => (
-          <li key={step.n} className="flex gap-4 md:gap-5">
+        {/* Progress bar */}
+        <div className="space-y-1.5">
+          <div className="h-1 w-full rounded-full bg-white/5 overflow-hidden">
             <div
-              aria-hidden="true"
-              className="flex-shrink-0 w-10 h-10 rounded-full border border-brand/30 bg-brand/5 text-brand flex items-center justify-center text-sm font-medium"
-            >
-              {step.n}
-            </div>
-            <div className="flex-1 min-w-0">
-              <h2 className="text-base md:text-lg font-medium">{step.title}</h2>
-              <p className="text-xs md:text-sm text-gray-500 mt-1 leading-relaxed">
-                {step.blurb}
-              </p>
-              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-                {step.assistants.length === 0 ? (
-                  <div className="rounded-xl border border-dashed border-white/10 bg-white/[0.02] p-4 flex items-center gap-2 text-xs text-gray-500">
-                    <Clock className="h-3.5 w-3.5" aria-hidden="true" />
-                    Em breve
+              className="h-full bg-brand rounded-full transition-all duration-500 ease-out"
+              style={{ width: `${PROGRESS_PCT}%` }}
+              role="progressbar"
+              aria-valuenow={ACTIVE_COUNT}
+              aria-valuemin={0}
+              aria-valuemax={STEPS.length}
+              aria-label={`${ACTIVE_COUNT} de ${STEPS.length} passos ativos`}
+            />
+          </div>
+          <div className="flex justify-between text-[10px] text-gray-500 font-medium tracking-wider uppercase">
+            <span>Roadmap do produto</span>
+            <span>{PROGRESS_PCT}%</span>
+          </div>
+        </div>
+      </header>
+
+      {/* ───── Section 2: Spotlight ───── */}
+      <section aria-label="Assistentes disponíveis">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {SPOTLIGHTS.map((a) => {
+            const { Preview } = a;
+            return (
+              <Link
+                key={a.href}
+                href={a.href}
+                className="group flex flex-col rounded-2xl border border-white/5 bg-[#141414] hover:bg-[#181818] hover:border-brand/30 transition-all duration-300 p-6 active:scale-[0.99]"
+              >
+                {/* Preview */}
+                <div className="rounded-xl bg-black/40 overflow-hidden aspect-[16/9] mb-5 ring-1 ring-white/5">
+                  <Preview />
+                </div>
+
+                {/* Step badge */}
+                <div className="text-[10px] font-medium uppercase tracking-wider text-gray-500 mb-1.5">
+                  Passo {a.step} · {a.stepCategory}
+                </div>
+
+                {/* Title */}
+                <h2 className="text-2xl font-semibold tracking-tight text-white">
+                  {a.title}
+                </h2>
+
+                {/* Short description */}
+                <p className="text-sm text-gray-400 mt-2 leading-relaxed">
+                  {a.short}
+                </p>
+
+                {/* Capability bullets */}
+                <ul className="mt-4 space-y-1.5">
+                  {a.bullets.map((b) => (
+                    <li
+                      key={b}
+                      className="flex items-center gap-2 text-xs text-gray-300"
+                    >
+                      <Check
+                        className="h-3 w-3 text-brand flex-shrink-0"
+                        aria-hidden="true"
+                      />
+                      {b}
+                    </li>
+                  ))}
+                </ul>
+
+                {/* CTA */}
+                <div className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-brand group-hover:text-brand/80 transition-colors">
+                  Abrir assistente
+                  <ArrowRight
+                    className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform"
+                    aria-hidden="true"
+                  />
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* ───── Section 3: Roadmap strip ───── */}
+      <section aria-label="Roadmap dos 8 passos">
+        <div className="text-[10px] font-medium uppercase tracking-wider text-gray-500 mb-5">
+          No roadmap
+        </div>
+
+        {/* Desktop: horizontal strip */}
+        <div className="hidden md:block relative">
+          {/* Connecting line */}
+          <div
+            aria-hidden="true"
+            className="absolute top-5 left-[5%] right-[5%] h-px bg-white/10"
+          />
+
+          <ol className="relative grid grid-cols-8 gap-1">
+            {STEPS.map((s) => {
+              const tooltip = s.available
+                ? `Disponível — ${s.fullName}`
+                : `Em breve — ${s.fullName}`;
+              const NodeWrapper: React.ElementType = s.available
+                ? Link
+                : 'div';
+              const wrapperProps = s.available
+                ? { href: s.href!, title: tooltip }
+                : { title: tooltip };
+              return (
+                <li key={s.n} className="flex flex-col items-center gap-2">
+                  <NodeWrapper
+                    {...wrapperProps}
+                    className={`relative flex items-center justify-center w-10 h-10 rounded-full text-xs font-semibold transition-all duration-300 ${
+                      s.available
+                        ? 'bg-brand/10 border-2 border-brand text-brand hover:bg-brand/20 hover:scale-110 cursor-pointer active:scale-95'
+                        : 'bg-[#0d0d0d] border border-white/10 text-gray-500 cursor-default'
+                    }`}
+                  >
+                    {s.n}
+                  </NodeWrapper>
+                  <div className="text-center">
+                    <div
+                      className={`text-[10px] font-medium ${
+                        s.available ? 'text-white' : 'text-gray-500'
+                      }`}
+                    >
+                      {s.shortLabel}
+                    </div>
+                    <div
+                      className={`mt-0.5 text-[9px] uppercase tracking-wider ${
+                        s.available ? 'text-brand' : 'text-gray-600'
+                      }`}
+                    >
+                      {s.available ? 'Disponível' : 'Em breve'}
+                    </div>
                   </div>
-                ) : (
-                  step.assistants.map((a) => {
-                    const Icon = a.icon;
-                    return (
-                      <Link
-                        key={a.type}
-                        href={a.href}
-                        className="group rounded-xl border border-white/5 bg-[#141414] hover:bg-[#181818] hover:border-brand/30 transition-all duration-300 p-4 block active:scale-[0.98]"
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className="flex-shrink-0 rounded-lg bg-brand/10 border border-brand/20 p-2 text-brand">
-                            <Icon className="h-4 w-4" aria-hidden="true" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="text-sm font-medium text-white">
-                              {a.title}
-                            </div>
-                            <p className="text-xs text-gray-500 mt-1 leading-relaxed">
-                              {a.description}
-                            </p>
-                            <span className="mt-3 inline-block text-xs font-medium text-brand group-hover:text-brand/80 transition-colors">
-                              Começar →
-                            </span>
-                          </div>
-                        </div>
-                      </Link>
-                    );
-                  })
-                )}
-              </div>
-            </div>
-          </li>
-        ))}
-      </ol>
+                </li>
+              );
+            })}
+          </ol>
+        </div>
+
+        {/* Mobile: vertical compact list */}
+        <ol className="md:hidden relative pl-8 space-y-3">
+          {/* Vertical dashed line */}
+          <div
+            aria-hidden="true"
+            className="absolute top-5 bottom-5 left-[19px] w-px border-l border-dashed border-white/10"
+          />
+          {STEPS.map((s) => {
+            const tooltip = s.available
+              ? `Disponível — ${s.fullName}`
+              : `Em breve — ${s.fullName}`;
+            const NodeWrapper: React.ElementType = s.available ? Link : 'div';
+            const wrapperProps = s.available
+              ? { href: s.href!, title: tooltip }
+              : { title: tooltip };
+            return (
+              <li key={s.n} className="relative flex items-center gap-3">
+                <NodeWrapper
+                  {...wrapperProps}
+                  className={`absolute -left-8 flex items-center justify-center w-8 h-8 rounded-full text-xs font-semibold transition-colors ${
+                    s.available
+                      ? 'bg-brand/10 border-2 border-brand text-brand active:scale-95'
+                      : 'bg-[#0d0d0d] border border-white/10 text-gray-500'
+                  }`}
+                >
+                  {s.n}
+                </NodeWrapper>
+                <div className="flex items-center justify-between w-full">
+                  <div
+                    className={`text-sm ${
+                      s.available ? 'text-white' : 'text-gray-400'
+                    }`}
+                  >
+                    {s.fullName}
+                  </div>
+                  <span
+                    className={`text-[10px] uppercase tracking-wider ${
+                      s.available ? 'text-brand' : 'text-gray-600'
+                    }`}
+                  >
+                    {s.available ? 'Disponível' : 'Em breve'}
+                  </span>
+                </div>
+              </li>
+            );
+          })}
+        </ol>
+      </section>
     </div>
   );
 }
