@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { KraljicMatrixPreview } from './previews/KraljicMatrixPreview';
 import { RfpDocumentPreview } from './previews/RfpDocumentPreview';
+import { PorterForcesPreview } from './previews/PorterForcesPreview';
 
 // Hub layout — Spotlight + Roadmap.
 //
@@ -28,6 +29,20 @@ type SpotlightAssistant = {
 };
 
 const SPOTLIGHTS: SpotlightAssistant[] = [
+  {
+    step: 3,
+    stepCategory: 'Mercado',
+    href: '/assistants/porter',
+    title: 'Porter',
+    short:
+      'Análise das 5 Forças de Porter (1979) para uma categoria, com classificação de intensidade e recomendações.',
+    bullets: [
+      'Rivalidade, entrantes, substitutos, fornecedores, compradores',
+      'Intensidade baixa / média / alta por força',
+      'Markdown + .docx + chat de refinamento',
+    ],
+    Preview: PorterForcesPreview,
+  },
   {
     step: 4,
     stepCategory: 'Estratégia',
@@ -69,7 +84,7 @@ type RoadmapStep = {
 const STEPS: RoadmapStep[] = [
   { n: 1, shortLabel: 'Perfil', fullName: 'Perfil da Categoria', available: false },
   { n: 2, shortLabel: 'Análise', fullName: 'Análise da Categoria', available: false },
-  { n: 3, shortLabel: 'Mercado', fullName: 'Visão do Mercado Fornecedor', available: false },
+  { n: 3, shortLabel: 'Mercado', fullName: 'Visão do Mercado Fornecedor', available: true, href: '/assistants/porter' },
   { n: 4, shortLabel: 'Estratégia', fullName: 'Estratégia de Sourcing', available: true, href: '/assistants/kraljic' },
   { n: 5, shortLabel: 'Engajamento', fullName: 'Engajamento dos Fornecedores', available: true, href: '/assistants/rfp' },
   { n: 6, shortLabel: 'Negociação', fullName: 'Negociação', available: false },
@@ -127,7 +142,7 @@ export function AssistantsHub() {
 
       {/* ───── Section 2: Spotlight ───── */}
       <section aria-label="Assistentes disponíveis">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {SPOTLIGHTS.map((a) => {
             const { Preview } = a;
             return (

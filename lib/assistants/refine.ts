@@ -1,5 +1,10 @@
 import type { RetrievedChunk } from '@/lib/rag/types';
-import type { AssistantType, RfpParams, KraljicParams } from './types';
+import type {
+  AssistantType,
+  RfpParams,
+  KraljicParams,
+  PorterParams,
+} from './types';
 
 // Sub-projeto 21 + 27 — Post-creation chat refinement.
 //
@@ -145,16 +150,85 @@ ${baseBlock}
 </base>`;
 }
 
+// ── Porter refinement ────────────────────────────────────────────────────
+
+export const PORTER_REFINE_SYSTEM_PROMPT = `Você é um especialista sênior em estratégia competitiva ajudando o usuário a refinar uma análise das 5 Forças de Porter que acabou de ser gerada. Sua função é aprofundar pontos, contestar/refinar classificações de intensidade quando o usuário trouxer contexto novo, sugerir movimentos estratégicos não cobertos, e aplicar os trade-offs canônicos da literatura (Porter 1979/1985, Cox 1996, Cousins).
+
+## Como responder
+
+1. **Seja específico à análise em questão**. O conteúdo aparece entre \`<analysis>...</analysis>\`. Refira-se às forças por nome (rivalidade, novos entrantes, substitutos, poder dos fornecedores, poder dos compradores) e a intensidade já atribuída quando comentar.
+
+2. **Aplique Porter 1979 + 1985 com fidelidade**. Conheça os drivers canônicos de cada força:
+   - **Rivalidade**: concentração (HHI), crescimento do mercado, custos fixos, diferenciação, barreiras de saída, paridade competitiva.
+   - **Novos entrantes**: economias de escala, capital, identidade de marca, acesso a canais, switching costs do cliente, retaliação esperada, política governamental.
+   - **Substitutos**: relação preço-desempenho, custo de mudança para o substituto, propensão do comprador a substituir.
+   - **Poder dos fornecedores**: concentração, diferenciação do input, custos de troca, ameaça de integração para frente, importância do volume para o fornecedor.
+   - **Poder dos compradores**: concentração, volume relativo, padronização, custo de troca, informação, ameaça de integração para trás.
+   Cox 1996 complementa: o poder estratégico vem da posse de recursos críticos não-substituíveis — útil quando o usuário discute alianças/concentração.
+
+3. **Reclassificação de intensidade é OK** (diferente de Kraljic, aqui não há scoring determinístico). Se o usuário traz contexto novo (ex: "fornecedor X anunciou integração para frente"), proponha mudar intensidade da força afetada e ajuste a recomendação.
+
+4. **Profundidade sênior, sem rodeios**. Quando sugerir ação, traga threshold, prazo, ferramenta concreta. Evite "padrão de mercado".
+
+5. **Fundamente em teoria quando útil**. Há trechos da base entre \`<base>...</base>\`. Use-os para embasar — NÃO cite autores, IDs nem bibliografia.
+
+6. **Diga "não sei" quando for o caso**. Não invente market shares, players específicos ou números de concentração.
+
+7. **Markdown limpo, conciso**. Sem preâmbulo conversacional.`;
+
+export function buildPorterRefineSystem(
+  analysisMarkdown: string,
+  params: PorterParams,
+  chunks: RetrievedChunk[],
+): string {
+  const paramsSummary = [
+    `Categoria: ${params.categoria}`,
+    params.segmento ? `Segmento: ${params.segmento}` : '',
+    params.escopo ? `Escopo: ${params.escopo}` : '',
+    params.observacoes ? `Observações: ${params.observacoes}` : '',
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  const baseBlock =
+    chunks.length === 0
+      ? '(nenhum trecho relevante recuperado — responda com princípios gerais quando aplicável)'
+      : chunks
+          .map((c) => `### ${c.articleTitle}\n\n${c.content.slice(0, 800)}`)
+          .join('\n\n---\n\n');
+
+  return `${PORTER_REFINE_SYSTEM_PROMPT}
+
+## Parâmetros originais da análise
+
+${paramsSummary}
+
+## Análise gerada (relatório completo)
+
+<analysis>
+${analysisMarkdown}
+</analysis>
+
+## Base de conhecimento (procurement + estratégia)
+
+<base>
+${baseBlock}
+</base>`;
+}
+
 // ── Dispatcher ───────────────────────────────────────────────────────────
 
 export function buildRefineSystemForType(
   assistantType: AssistantType,
   outputMd: string,
-  params: RfpParams | KraljicParams,
+  params: RfpParams | KraljicParams | PorterParams,
   chunks: RetrievedChunk[],
 ): string {
   if (assistantType === 'kraljic') {
     return buildKraljicRefineSystem(outputMd, params as KraljicParams, chunks);
+  }
+  if (assistantType === 'porter') {
+    return buildPorterRefineSystem(outputMd, params as PorterParams, chunks);
   }
   return buildRfpRefineSystem(outputMd, params as RfpParams, chunks);
 }

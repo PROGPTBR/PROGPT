@@ -1,5 +1,10 @@
-import type { RfpParams } from './types';
+import type { RfpParams, KraljicParams, PorterParams } from './types';
 import type { CompanyData } from '@/lib/db/user-company';
+
+// Union of every assistant's form-params shape. Each branch contributes
+// its own set of `{{placeholders}}` to the substitution map below; we
+// detect which branch we have via "field in params" narrowing.
+export type AssistantParams = RfpParams | KraljicParams | PorterParams;
 
 // Sub-projeto 23 — Programmatic template assembly.
 //
@@ -26,32 +31,28 @@ export function splitTemplateBody(bodyMd: string): {
 }
 
 // Replace every `{{<key>}}` occurrence with the corresponding value.
-// Supports form-derived placeholders (cliente/escopo/...) AND profile
-// company data placeholders (empresa_nome/empresa_cnpj/...). Unknown
-// placeholders are left untouched (defensive — surfaces a bug rather
-// than silently emitting an empty string).
+// Supports form-derived placeholders (per-assistant) AND profile
+// company-data placeholders (empresa_*). Unknown placeholders are left
+// untouched (defensive — surfaces a bug rather than silently emitting
+// an empty string).
+//
+// Each assistant contributes its own placeholder vocabulary:
+//   RFP     → cliente, categoria, escopo, prazo, orcamento, criterios, notas
+//   Kraljic → portfolio, periodo, num_itens, spend_total, notas
+//   Porter  → categoria, segmento, escopo, observacoes
+//
+// Field names are distinct across branches (RFP uses English-derived
+// 'category'/'scope' fields exposed under PT placeholders; Porter uses
+// the PT field names directly), so type-narrowing via `in` is reliable.
 export function renderPlaceholders(
   text: string,
-  params: RfpParams,
+  params: AssistantParams,
   company: CompanyData | null = null,
 ): string {
   const c = company ?? null;
   const substitutions: Record<string, string> = {
-    // Form-derived
-    cliente: params.client,
-    categoria: params.category,
-    escopo: params.scope,
-    prazo: params.deadline,
-    orcamento: params.budget,
-    criterios:
-      params.criteria.length === 0
-        ? '(critérios padrão de procurement)'
-        : params.criteria.map((cr) => `- ${cr}`).join('\n'),
-    notas: params.notes ?? '',
-    // Profile-derived. When a field is unset we fall back to a visible
-    // marker so the user knows to fill the profile rather than seeing a
-    // silent blank in the document.
-    empresa_nome: c?.company_name ?? params.client,
+    // Profile-derived (always available, independent of assistant type).
+    empresa_nome: c?.company_name ?? '',
     empresa_razao_social: c?.company_legal_name ?? '',
     empresa_cnpj: c?.company_cnpj ?? '',
     empresa_email: c?.company_email ?? '',
@@ -61,6 +62,39 @@ export function renderPlaceholders(
     empresa_descricao: c?.company_description ?? '',
   };
 
+  if ('client' in params) {
+    // RFP
+    substitutions.cliente = params.client;
+    substitutions.categoria = params.category;
+    substitutions.escopo = params.scope;
+    substitutions.prazo = params.deadline;
+    substitutions.orcamento = params.budget;
+    substitutions.criterios =
+      params.criteria.length === 0
+        ? '(critérios padrão de procurement)'
+        : params.criteria.map((cr) => `- ${cr}`).join('\n');
+    substitutions.notas = params.notes ?? '';
+    // Profile-name falls back to client name when blank — keeps the
+    // verbatim tail (assinatura, foro, etc.) sensible if profile is
+    // empty.
+    if (!substitutions.empresa_nome) substitutions.empresa_nome = params.client;
+  } else if ('portfolioName' in params) {
+    // Kraljic
+    substitutions.portfolio = params.portfolioName;
+    substitutions.periodo = params.analysisPeriod ?? '';
+    substitutions.num_itens = String(params.items.length);
+    substitutions.spend_total = params.items
+      .reduce((a, it) => a + (it.spendMM ?? 0), 0)
+      .toFixed(2);
+    substitutions.notas = params.notes ?? '';
+  } else if ('categoria' in params) {
+    // Porter
+    substitutions.categoria = params.categoria;
+    substitutions.segmento = params.segmento ?? '';
+    substitutions.escopo = params.escopo ?? '';
+    substitutions.observacoes = params.observacoes ?? '';
+  }
+
   return text.replace(/\{\{([a-z_]+)\}\}/g, (full, key: string) => {
     const v = substitutions[key];
     return typeof v === 'string' ? v : full;
@@ -68,7 +102,7 @@ export function renderPlaceholders(
 }
 
 // Back-compat alias for callers that still pass two args.
-export function renderTail(tail: string, params: RfpParams): string {
+export function renderTail(tail: string, params: AssistantParams): string {
   return renderPlaceholders(tail, params, null);
 }
 
@@ -85,7 +119,7 @@ export const ASSEMBLY_BOUNDARY = '<!-- @assembled-tail-below -->';
 export function assembleOutput(
   llmText: string,
   tail: string | null,
-  params: RfpParams,
+  params: AssistantParams,
   company: CompanyData | null = null,
 ): string {
   if (!tail) return llmText;

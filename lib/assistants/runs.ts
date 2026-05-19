@@ -4,6 +4,7 @@ import type {
   AssistantType,
   RfpParams,
   KraljicParams,
+  PorterParams,
 } from './types';
 
 // Service-role CRUD for assistant_runs. The API route owns the lifecycle:
@@ -15,7 +16,7 @@ export async function createRun(input: {
   userId: string;
   assistantType: AssistantType;
   templateId: string | null;
-  params: RfpParams | KraljicParams;
+  params: RfpParams | KraljicParams | PorterParams;
   traceId: string | null;
 }): Promise<AssistantRunRow | null> {
   const sb = getServerSupabase();
