@@ -4,18 +4,20 @@ import { useState } from 'react';
 import { RfpForm, type RfpFormValues } from './RfpForm';
 import { RfpResult } from './RfpResult';
 import { RfpChatPanel } from './RfpChatPanel';
+import { AssistantEntryChoice } from './AssistantEntryChoice';
 
 // Top-level state machine for the RFP assistant page:
+//   'choice'      — entry screen: download template OR start guided form
 //   'form'        — user filling out parameters
 //   'generating'  — streaming response from /api/assistants/rfp
 //   'done'        — output complete + downloadable
 // We hold the form values and the streamed markdown here; the child
 // components are dumb.
 
-type Phase = 'form' | 'generating' | 'done';
+type Phase = 'choice' | 'form' | 'generating' | 'done';
 
 export function RfpAssistant() {
-  const [phase, setPhase] = useState<Phase>('form');
+  const [phase, setPhase] = useState<Phase>('choice');
   const [output, setOutput] = useState('');
   const [runId, setRunId] = useState<string | null>(null);
   const [scope, setScope] = useState('');
@@ -110,16 +112,33 @@ export function RfpAssistant() {
   }
 
   function handleReset() {
-    setPhase('form');
+    setPhase('choice');
     setOutput('');
     setRunId(null);
     setError(null);
   }
 
+  if (phase === 'choice') {
+    return (
+      <AssistantEntryChoice
+        title="Assistente de RFP"
+        subtitle="Escolha como quer trabalhar: baixar o template para preencher manualmente, ou usar o formulário guiado e deixar o assistente gerar o draft."
+        templateHref="/templates/rfp-template.xls"
+        templateFilename="RFP-template.xls"
+        templateFormat=".xls · planilha"
+        templateDescription="Template completo de RFP/RFQ (Request for Quotation & Qualification) em Excel. 7 sheets com seções padrão, cláusulas legais e cotação. Você preenche offline."
+        assistedDescription="Informe escopo, categoria, prazo, orçamento e critérios. O assistente gera um draft completo de RFP em markdown — pronto pra baixar como .docx + planilha de cotação .xlsx."
+        onAssistedClick={() => setPhase('form')}
+      />
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Assistente de RFP</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Assistente de RFP <span className="text-brand">.</span>
+        </h1>
         <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
           Preencha os parâmetros da contratação. O assistente gera um draft completo de RFP em
           markdown, pronto pra copiar ou baixar como .docx.
