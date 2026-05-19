@@ -12,6 +12,12 @@ type Props = {
   session: StoredSession;
   initialRatings?: Map<string, 'up' | 'down'>;
   onMessagesChange: (messages: ChatMessage[]) => void;
+  /**
+   * Invoked when the server-generated session title arrives via the
+   * stream annotation. Updates the sidebar list locally; the DB write
+   * already happened server-side.
+   */
+  onTitleChange?: (title: string) => void;
 };
 
 function toChatMessages(messages: AIMessage[]): ChatMessage[] {
@@ -20,7 +26,20 @@ function toChatMessages(messages: AIMessage[]): ChatMessage[] {
     .map((m) => ({ role: m.role, content: m.content }));
 }
 
-export function ChatSession({ session, initialRatings, onMessagesChange }: Props) {
+type SessionTitleAnnotation = { sessionTitle?: string };
+
+function pickSessionTitle(msg: AIMessage): string | undefined {
+  const ann = msg.annotations as SessionTitleAnnotation[] | undefined;
+  const hit = ann?.find((a) => typeof a?.sessionTitle === 'string');
+  return hit?.sessionTitle;
+}
+
+export function ChatSession({
+  session,
+  initialRatings,
+  onMessagesChange,
+  onTitleChange,
+}: Props) {
   const { messages, input, setInput, handleSubmit, isLoading, stop, append } = useChat({
     api: '/api/chat',
     id: session.id,
@@ -45,6 +64,8 @@ export function ChatSession({ session, initialRatings, onMessagesChange }: Props
     onFinish: (assistant) => {
       const next = toChatMessages([...messages, assistant]);
       onMessagesChange(next);
+      const title = pickSessionTitle(assistant);
+      if (title && onTitleChange) onTitleChange(title);
     },
   });
 
