@@ -123,7 +123,7 @@ describe('useChatSessionsRemote', () => {
     expect(m.insertCalls.length).toBeGreaterThanOrEqual(1);
   });
 
-  it('updateMessages updates the current row with messages + derived title (optimistic local update)', async () => {
+  it('updateMessages writes messages to DB (no title — server owns it) and applies a provisional client title while default', async () => {
     const initial: Row = { id: 'a', title: 'Nova conversa', messages: [], updated_at: '2026-05-02T10:00:00Z' };
     const m = mockBrowser({ initialRows: [initial] });
     const { useChatSessionsRemote } = await import('@/hooks/useChatSessionsRemote');
@@ -137,11 +137,54 @@ describe('useChatSessionsRemote', () => {
       await result.current.updateMessages(msgs);
     });
     expect(result.current.current.messages).toEqual(msgs);
+    // Client applies a provisional title because the existing one was the
+    // default 'Nova conversa' — gives the sidebar something to show while
+    // the server-side LLM summary streams in via the annotation.
     expect(result.current.current.title).toBe('O que é Kraljic?');
     expect(m.updateCalls.length).toBe(1);
     expect(m.updateCalls[0]!.id).toBe('a');
-    expect(m.updateCalls[0]!.title).toBe('O que é Kraljic?');
+    // Server owns the title — client does NOT write it. The DB column
+    // gets updated only when /api/chat onFinish completes the summary.
+    expect(m.updateCalls[0]!.title).toBeUndefined();
     expect(m.updateCalls[0]!.messages).toEqual(msgs);
+  });
+
+  it('updateMessages preserves an existing non-default title (does not clobber server summary)', async () => {
+    const initial: Row = {
+      id: 'a',
+      title: 'Aplicar Kraljic em Embalagens',
+      messages: [],
+      updated_at: '2026-05-02T10:00:00Z',
+    };
+    const m = mockBrowser({ initialRows: [initial] });
+    const { useChatSessionsRemote } = await import('@/hooks/useChatSessionsRemote');
+    const { result } = renderHook(() => useChatSessionsRemote());
+    await waitFor(() => expect(result.current.sessions).toHaveLength(1));
+    const msgs: ChatMessage[] = [
+      { role: 'user', content: 'Como aplicar Kraljic?' },
+      { role: 'assistant', content: 'A matriz...' },
+    ];
+    await act(async () => {
+      await result.current.updateMessages(msgs);
+    });
+    // Existing summary stays — client must not overwrite it.
+    expect(result.current.current.title).toBe('Aplicar Kraljic em Embalagens');
+    expect(m.updateCalls[0]!.title).toBeUndefined();
+  });
+
+  it('setTitleLocal updates the in-memory sessions list without writing to DB', async () => {
+    const initial: Row = { id: 'a', title: 'Nova conversa', messages: [], updated_at: '2026-05-02T10:00:00Z' };
+    const m = mockBrowser({ initialRows: [initial] });
+    const { useChatSessionsRemote } = await import('@/hooks/useChatSessionsRemote');
+    const { result } = renderHook(() => useChatSessionsRemote());
+    await waitFor(() => expect(result.current.sessions).toHaveLength(1));
+    const beforeUpdates = m.updateCalls.length;
+    act(() => {
+      result.current.setTitleLocal?.('a', 'Estratégia para TI');
+    });
+    expect(result.current.current.title).toBe('Estratégia para TI');
+    // No DB roundtrip — server already persisted the title in /api/chat.
+    expect(m.updateCalls.length).toBe(beforeUpdates);
   });
 
   it('deleteSession removes the row from DB and from local state; switches current if deleted was current', async () => {
