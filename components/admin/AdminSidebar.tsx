@@ -1,8 +1,18 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Users, FileText, Upload, MessageSquare, Tag, DollarSign, FileCode, ArrowLeft } from 'lucide-react';
+import {
+  Users,
+  FileText,
+  Upload,
+  MessageSquare,
+  Tag,
+  DollarSign,
+  FileCode,
+  ArrowLeft,
+} from 'lucide-react';
 
 const ITEMS = [
   { href: '/admin/users', label: 'Usuários', Icon: Users },
@@ -17,35 +27,48 @@ const ITEMS = [
 export function AdminSidebar() {
   const pathname = usePathname();
   return (
-    <aside className="w-52 shrink-0 border-r border-border bg-card flex flex-col h-full">
-      <div className="px-4 py-3 border-b border-border">
-        <span className="text-sm font-semibold tracking-tight">Admin</span>
+    <aside className="w-56 shrink-0 border-r border-white/5 bg-black/40 backdrop-blur-md flex flex-col h-screen sticky top-0">
+      <div className="px-4 py-4 border-b border-white/5">
+        <Link href="/" className="inline-flex items-center gap-2 mb-3">
+          <Image
+            src="/2bsupply-logo.png"
+            alt="2B Supply"
+            width={241}
+            height={57}
+            priority
+            className="h-6 w-auto brightness-0 invert"
+          />
+        </Link>
+        <div className="text-[10px] font-medium uppercase tracking-wider text-brand">
+          Admin
+        </div>
       </div>
-      <nav className="flex-1 p-2 space-y-1">
+      <nav className="flex-1 p-2 space-y-0.5">
         {ITEMS.map(({ href, label, Icon }) => {
-          const active = pathname === href || pathname?.startsWith(href + '/');
+          const active =
+            pathname === href || pathname?.startsWith(href + '/');
           return (
             <Link
               key={href}
               href={href}
-              className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm ${
+              className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${
                 active
-                  ? 'bg-primary/10 text-foreground font-medium'
-                  : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+                  ? 'bg-brand/10 border border-brand/20 text-white font-medium'
+                  : 'text-gray-400 hover:bg-white/5 hover:text-white border border-transparent'
               }`}
             >
-              <Icon className="h-4 w-4" />
+              <Icon className="h-4 w-4" aria-hidden="true" />
               <span>{label}</span>
             </Link>
           );
         })}
       </nav>
-      <div className="p-2 border-t border-border">
+      <div className="p-2 border-t border-white/5">
         <Link
           href="/chat"
-          className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground"
+          className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-400 hover:bg-white/5 hover:text-white transition-colors"
         >
-          <ArrowLeft className="h-4 w-4" />
+          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
           <span>Voltar ao chat</span>
         </Link>
       </div>
