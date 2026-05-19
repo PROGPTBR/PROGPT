@@ -6,7 +6,26 @@
 
 ## Sumário executivo
 
-Síntese da saúde financeira do fornecedor **{{fornecedor}}** com base nos 12 indicadores canônicos e na pontuação determinística calculada pelo sistema (bloco \<financial-classification\>). Cite o score (0-100), a classificação (excellent/good/caution/poor) e a recomendação de compra (buy/caution/do_not_buy). Em 2-3 frases, traga a tese central de risco.
+A SEÇÃO MAIS IMPORTANTE do relatório. Estruturada em 3 blocos obrigatórios, nessa ordem:
+
+### Veredito
+
+Uma única linha em **negrito** seguindo este formato exato:
+
+> **Recomendação: <buy | caution | do_not_buy>** — score X/100 (classificação <excellent | good | caution | poor>).
+
+### Diagnóstico
+
+3-5 frases narrando sua análise crítica dos números. Identifique os **2-3 indicadores que mais pesam na decisão** (positivos E negativos), explique o que eles dizem sobre a saúde financeira do fornecedor **{{fornecedor}}**, e aponte qual é o **risco principal que o comprador precisa monitorar**. NÃO repita números numa lista — narre a história ("O que mais chama atenção é X, que combinado com Y indica Z").
+
+### Bottom line
+
+2-3 frases fechando a recomendação. Comece com:
+- **"Recomendamos a contratação deste fornecedor porque..."** (buy)
+- **"Recomendamos contratar com cautela porque..."** (caution)
+- **"Não recomendamos a contratação deste fornecedor porque..."** (do_not_buy)
+
+Justifique em termos práticos pro comprador: prazo seguro de exposição, garantia exigida, gatilho de reavaliação (ex.: "revisar em 6 meses se FCO continuar negativo").
 
 ## 1. Liquidez Corrente (peso 30%)
 
