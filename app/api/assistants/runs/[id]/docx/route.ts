@@ -6,7 +6,7 @@ import { getUserLogoBuffer } from '@/lib/db/user-logos';
 import { getUserCompany } from '@/lib/db/user-company';
 import { classifyItems } from '@/lib/assistants/kraljic';
 import { renderKraljicChartPng } from '@/lib/assistants/kraljic-chart';
-import type { RfpParams, KraljicParams } from '@/lib/assistants/types';
+import type { RfpParams, KraljicParams, PorterParams } from '@/lib/assistants/types';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -45,6 +45,10 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
     } catch (err) {
       console.warn('[docx] kraljic chart render failed:', err);
     }
+  } else if (run.assistant_type === 'porter') {
+    const pp = run.params as PorterParams;
+    titleSafe = `5 Forças de Porter - ${pp.categoria}`.slice(0, 120);
+    categoryForCover = pp.segmento || pp.categoria;
   } else {
     const rfpParams = run.params as RfpParams;
     const scope = rfpParams.scope ?? 'RFP';
@@ -63,7 +67,7 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
   });
 
   // Filename derived from run id (no PII), browser saves it as a .docx.
-  const filename = `${run.assistant_type === 'kraljic' ? 'kraljic' : 'rfp'}-${run.id.slice(0, 8)}.docx`;
+  const filename = `${run.assistant_type}-${run.id.slice(0, 8)}.docx`;
   return new NextResponse(buf as unknown as BodyInit, {
     status: 200,
     headers: {

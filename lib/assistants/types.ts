@@ -9,9 +9,9 @@ import { z } from 'zod';
 //   2. the templates CHECK constraint (new migration)
 //   3. ApiOperation in lib/observability/api-usage.ts
 //   4. add /api/assistants/<type>/route.ts + UI page
-export type AssistantType = 'rfp' | 'kraljic';
+export type AssistantType = 'rfp' | 'kraljic' | 'porter';
 
-export const ASSISTANT_TYPES = ['rfp', 'kraljic'] as const;
+export const ASSISTANT_TYPES = ['rfp', 'kraljic', 'porter'] as const;
 
 export type ThemeStatusRow = 'running' | 'done' | 'error';
 
@@ -147,16 +147,59 @@ export type ClassifiedKraljicItem = KraljicItem & {
   quadrant: KraljicQuadrant;
 };
 
+// ── Porter 5 Forces params (form input) ──────────────────────────────────
+// Sub-projeto 29 — Análise das 5 Forças de Porter (1979).
+//
+// Conceptual analysis, not data-entry. The user picks a category +
+// segmento and the LLM generates the full structured analysis grounded
+// in canonical sources (Porter 1979, 1985; Cox 1996 for buyer power
+// reframing). No deterministic component — pure prompt + retrieval.
+
+export const PorterParamsSchema = z.object({
+  categoria: z.string().trim().min(2).max(200),
+  segmento: z.string().trim().max(200).optional().default(''),
+  // Escopo geográfico ou de mercado (Brasil, América Latina, global,
+  // nicho específico). Free-text para preservar a riqueza da análise.
+  escopo: z.string().trim().max(300).optional().default(''),
+  // Observações adicionais do comprador (contexto da empresa, dados
+  // de share, restrições). Vai pro prompt como contexto extra.
+  observacoes: z.string().trim().max(2000).optional().default(''),
+});
+
+export type PorterParams = z.infer<typeof PorterParamsSchema>;
+
+export const PorterRequestSchema = z.object({
+  templateId: z.string().uuid(),
+  params: PorterParamsSchema,
+});
+
+export type PorterRequest = z.infer<typeof PorterRequestSchema>;
+
+// As 5 forças canônicas + classificação de intensidade.
+export type PorterForce =
+  | 'rivalidade'
+  | 'novos-entrantes'
+  | 'substitutos'
+  | 'poder-fornecedor'
+  | 'poder-comprador';
+
+export const PORTER_FORCE_LABELS: Record<PorterForce, string> = {
+  rivalidade: 'Rivalidade entre concorrentes',
+  'novos-entrantes': 'Ameaça de novos entrantes',
+  substitutos: 'Ameaça de produtos substitutos',
+  'poder-fornecedor': 'Poder de barganha dos fornecedores',
+  'poder-comprador': 'Poder de barganha dos compradores',
+};
+
 // ── Assistant run row shape (DB serialization) ───────────────────────────
 // `params` is discriminated by `assistant_type`. We type it as the union
-// here and narrow at the call site. Existing callers that read RFP runs
-// continue to cast to RfpParams; new Kraljic callers cast to KraljicParams.
+// here and narrow at the call site.
 export type AssistantRunRow = {
   id: string;
   user_id: string;
   assistant_type: AssistantType;
   template_id: string | null;
-  params: RfpParams | KraljicParams;
+  params: RfpParams | KraljicParams | PorterParams;
   output_md: string | null;
   status: ThemeStatusRow;
   error_message: string | null;

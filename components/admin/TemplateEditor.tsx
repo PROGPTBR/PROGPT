@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
 export type TemplateDraft = {
-  assistant_type: 'rfp' | 'kraljic';
+  assistant_type: 'rfp' | 'kraljic' | 'porter';
   name: string;
   description: string;
   body_md: string;
@@ -60,13 +60,17 @@ export function TemplateEditor({ open, initial, onCancel, onSave }: Props) {
             <select
               value={draft.assistant_type}
               onChange={(e) =>
-                setDraft((d) => ({ ...d, assistant_type: e.target.value as 'rfp' | 'kraljic' }))
+                setDraft((d) => ({
+                  ...d,
+                  assistant_type: e.target.value as 'rfp' | 'kraljic' | 'porter',
+                }))
               }
               disabled={!!initial}
               className="w-full h-9 rounded-md border border-input bg-background px-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-60"
             >
               <option value="rfp">RFP / Request for Proposal</option>
               <option value="kraljic">Kraljic / Matriz de portfólio</option>
+              <option value="porter">Porter / 5 Forças Competitivas</option>
             </select>
             {initial && (
               <p className="text-[10px] text-muted-foreground mt-1">

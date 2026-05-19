@@ -10,7 +10,13 @@ import { startTrace, flushAsync } from '@/lib/observability/langfuse';
 import { recordApiUsage } from '@/lib/observability/api-usage';
 import { getRunForOwner } from '@/lib/assistants/runs';
 import { buildRefineSystemForType } from '@/lib/assistants/refine';
-import type { RfpParams, KraljicParams } from '@/lib/assistants/types';
+import type {
+  RfpParams,
+  KraljicParams,
+  PorterParams,
+  AssistantType,
+} from '@/lib/assistants/types';
+import type { ApiOperation } from '@/lib/observability/api-usage';
 
 export const runtime = 'nodejs';
 
@@ -84,9 +90,17 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   const system = buildRefineSystemForType(
     run.assistant_type,
     run.output_md,
-    run.params as RfpParams | KraljicParams,
+    run.params as RfpParams | KraljicParams | PorterParams,
     chunks,
   );
+
+  const refineOp: ApiOperation = (
+    {
+      kraljic: 'assistant-kraljic-suggest',
+      porter: 'assistant-porter-refine',
+      rfp: 'assistant-rfp-refine',
+    } as Record<AssistantType, ApiOperation>
+  )[run.assistant_type];
 
   const openai = createOpenAI({ apiKey: requireEnv('OPENAI_API_KEY') });
   const generateSpan = trace.span('generate', { systemLen: system.length });
@@ -110,7 +124,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
         });
         void recordApiUsage({
           provider: 'openai',
-          operation: 'assistant-rfp-refine',
+          operation: refineOp,
           model: process.env.OPENAI_MODEL ?? 'gpt-4o-mini',
           tokensIn: usage.promptTokens,
           tokensOut: usage.completionTokens,

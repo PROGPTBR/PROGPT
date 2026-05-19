@@ -48,6 +48,20 @@ Regras:
 - Mantenha valores reais (spend, nomes de itens, % por quadrante).
 - Se a sugestão for ambígua, faça a melhor interpretação razoável.`;
 
+const PORTER_SYSTEM_PROMPT = `Você é um especialista sênior em estratégia editando uma análise das 5 Forças de Porter. Receberá:
+
+1. O relatório ATUAL (Sumário Executivo, Análise por Força, Síntese, Recomendações).
+2. Uma SUGESTÃO de melhoria do consultor.
+
+Regras:
+
+- Output: APENAS o markdown atualizado, sem preâmbulo, sem cercas de código.
+- Preserve as cinco forças canônicas (rivalidade, novos entrantes, substitutos, poder dos fornecedores, poder dos compradores) e a estrutura geral.
+- Pode reclassificar intensidade (baixa/média/alta) de uma força quando o consultor traz contexto novo — diferente de Kraljic, aqui não há scoring determinístico.
+- Não invente players, market shares ou números de mercado que não estejam no draft ou na sugestão.
+- Mantenha o tom técnico-sênior do draft original.
+- Se a sugestão for ambígua, faça a melhor interpretação razoável.`;
+
 // POST /api/assistants/runs/[id]/apply — merges a refine-chat suggestion
 // into the RFP's customizable head. Verbatim tail (Cotação + Termos +
 // Código) is untouched.
@@ -110,7 +124,12 @@ Reescreva o RFP acima incorporando a sugestão. Apenas o markdown atualizado, na
   try {
     const result = await generateText({
       model: openai(process.env.OPENAI_MODEL ?? 'gpt-4o-mini'),
-      system: run.assistant_type === 'kraljic' ? KRALJIC_SYSTEM_PROMPT : RFP_SYSTEM_PROMPT,
+      system:
+        run.assistant_type === 'kraljic'
+          ? KRALJIC_SYSTEM_PROMPT
+          : run.assistant_type === 'porter'
+            ? PORTER_SYSTEM_PROMPT
+            : RFP_SYSTEM_PROMPT,
       messages: [{ role: 'user', content: userPrompt }],
     });
 
@@ -126,7 +145,12 @@ Reescreva o RFP acima incorporando a sugestão. Apenas o markdown atualizado, na
     });
     void recordApiUsage({
       provider: 'openai',
-      operation: 'assistant-rfp-apply',
+      operation:
+        run.assistant_type === 'kraljic'
+          ? 'assistant-kraljic-suggest'
+          : run.assistant_type === 'porter'
+            ? 'assistant-porter-apply'
+            : 'assistant-rfp-apply',
       model: process.env.OPENAI_MODEL ?? 'gpt-4o-mini',
       tokensIn: result.usage.promptTokens,
       tokensOut: result.usage.completionTokens,

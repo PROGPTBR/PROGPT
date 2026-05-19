@@ -21,14 +21,19 @@ import {
 
 type RunSummary = {
   id: string;
-  assistant_type: 'rfp' | 'kraljic';
+  assistant_type: 'rfp' | 'kraljic' | 'porter';
   template_id: string | null;
   params: {
+    // RFP
     scope?: string;
     category?: string;
     client?: string;
+    // Kraljic
     portfolioName?: string;
     items?: Array<{ name?: string }>;
+    // Porter
+    categoria?: string;
+    segmento?: string;
   };
   status: 'running' | 'done' | 'error';
   error_message: string | null;
@@ -78,11 +83,17 @@ export function RfpHistoryList() {
 
   async function downloadBlob(
     runId: string,
-    assistantType: 'rfp' | 'kraljic',
+    assistantType: 'rfp' | 'kraljic' | 'porter',
     kind: 'docx' | 'xlsx',
   ) {
     const prefix =
-      assistantType === 'kraljic' ? 'kraljic' : kind === 'docx' ? 'rfp' : 'cotacao';
+      assistantType === 'kraljic'
+        ? 'kraljic'
+        : assistantType === 'porter'
+          ? 'porter'
+          : kind === 'docx'
+            ? 'rfp'
+            : 'cotacao';
     const filename = `${prefix}-${runId.slice(0, 8)}.${kind}`;
     const errLabel =
       kind === 'docx' ? 'Falha ao baixar .docx' : 'Falha ao baixar planilha';
@@ -149,14 +160,21 @@ export function RfpHistoryList() {
         <ul className="space-y-2">
           {runs.map((r) => {
             const isKraljic = r.assistant_type === 'kraljic';
+            const isPorter = r.assistant_type === 'porter';
             const scope = isKraljic
               ? (r.params.portfolioName ?? '(portfólio sem nome)')
-              : (r.params.scope ?? '(sem escopo)');
+              : isPorter
+                ? (r.params.categoria ?? '(sem categoria)')
+                : (r.params.scope ?? '(sem escopo)');
             const category = isKraljic
               ? `${r.params.items?.length ?? 0} item(ns)`
-              : (r.params.category ?? '—');
-            const client = isKraljic ? '' : (r.params.client ?? '');
+              : isPorter
+                ? (r.params.segmento || 'Análise de mercado')
+                : (r.params.category ?? '—');
+            const client = isKraljic || isPorter ? '' : (r.params.client ?? '');
             const isDone = r.status === 'done';
+            // Porter doesn't produce a .xlsx — hide that button for porter rows.
+            const showXlsx = !isPorter;
             return (
               <li
                 key={r.id}
@@ -215,20 +233,22 @@ export function RfpHistoryList() {
                       <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
                       Abrir
                     </Link>
-                    <button
-                      type="button"
-                      disabled={!isDone || downloadingId === `${r.id}-xlsx`}
-                      onClick={() =>
-                        downloadBlob(r.id, r.assistant_type, 'xlsx')
-                      }
-                      title="Planilha"
-                      className="inline-flex items-center justify-center rounded-full border border-white/10 bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white w-8 h-8 transition-all duration-300 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
-                    >
-                      <FileSpreadsheet
-                        className="h-3.5 w-3.5"
-                        aria-hidden="true"
-                      />
-                    </button>
+                    {showXlsx && (
+                      <button
+                        type="button"
+                        disabled={!isDone || downloadingId === `${r.id}-xlsx`}
+                        onClick={() =>
+                          downloadBlob(r.id, r.assistant_type, 'xlsx')
+                        }
+                        title="Planilha"
+                        className="inline-flex items-center justify-center rounded-full border border-white/10 bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white w-8 h-8 transition-all duration-300 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        <FileSpreadsheet
+                          className="h-3.5 w-3.5"
+                          aria-hidden="true"
+                        />
+                      </button>
+                    )}
                     <button
                       type="button"
                       disabled={!isDone || downloadingId === `${r.id}-docx`}

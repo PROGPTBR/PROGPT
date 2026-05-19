@@ -3,7 +3,12 @@ import { getCurrentUser } from '@/lib/auth';
 import { getRunForOwner } from '@/lib/assistants/runs';
 import { PastRfpView } from '@/components/assistants/PastRfpView';
 import { PastKraljicView } from '@/components/assistants/PastKraljicView';
-import type { RfpParams, KraljicParams } from '@/lib/assistants/types';
+import { PastPorterView } from '@/components/assistants/PastPorterView';
+import type {
+  RfpParams,
+  KraljicParams,
+  PorterParams,
+} from '@/lib/assistants/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -38,6 +43,17 @@ export default async function AssistantRunDetailPage({
         runId={run.id}
         initialOutput={run.output_md}
         portfolioName={kp.portfolioName ?? '(portfólio sem nome)'}
+      />
+    );
+  }
+
+  if (run.assistant_type === 'porter') {
+    const pp = run.params as PorterParams;
+    return (
+      <PastPorterView
+        runId={run.id}
+        initialOutput={run.output_md}
+        categoria={pp.categoria ?? '(sem categoria)'}
       />
     );
   }
