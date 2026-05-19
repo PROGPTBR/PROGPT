@@ -174,7 +174,7 @@ export function RfpChatPanel({ runId, onRfpUpdated }: Props) {
                 className={`flex-1 ${
                   m.role === 'user'
                     ? 'text-foreground'
-                    : 'prose prose-sm dark:prose-invert max-w-none'
+                    : 'prose prose-sm prose-invert max-w-none'
                 }`}
               >
                 {m.role === 'user' ? (

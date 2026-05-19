@@ -77,4 +77,38 @@
   * {
     @apply border-border;
   }
+
+  /*
+   * .brand-dark — opt-in scope that overrides the shadcn HSL CSS variables
+   * with the 2B Supply dark + cyan brand palette. Internal pages (assistants
+   * forms, admin) wrap their content in `<div className="brand-dark">` so any
+   * shadcn primitive (Input, Button, Card, etc.) renders correctly without a
+   * per-component refactor. The explicit-color landing/auth/chat pages do
+   * not need this — they already paint their own surfaces.
+   *
+   * Note: alpha-modulated borders (`border-white/10`) are not expressible as
+   * a single HSL string, so --border / --input are set to a dark gray that
+   * reads as a subtle hairline on #141414 surfaces.
+   */
+  .brand-dark {
+    --background: 0 0% 5%;            /* #0d0d0d */
+    --foreground: 0 0% 100%;          /* white */
+    --card: 0 0% 8%;                  /* #141414 */
+    --card-foreground: 0 0% 100%;
+    --popover: 0 0% 8%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 186 88% 47%;           /* #0ed1e0 brand cyan */
+    --primary-foreground: 0 0% 0%;
+    --secondary: 0 0% 12%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 60%;     /* gray-400-ish */
+    --accent: 0 0% 14%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 18%;
+    --input: 0 0% 16%;
+    --ring: 186 88% 47%;
+  }
 }
