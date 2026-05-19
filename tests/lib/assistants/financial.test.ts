@@ -188,6 +188,29 @@ describe('buildFinancialPrompt', () => {
     expect(FINANCIAL_SYSTEM_PROMPT).toMatch(/Termos de pagamento/i);
   });
 
+  it('system prompt requires the structured executive summary (3 blocks)', () => {
+    // The exec summary is the most important section — it must contain
+    // the verdict line, the diagnosis, and a clear bottom-line.
+    expect(FINANCIAL_SYSTEM_PROMPT).toMatch(/SUM[ÁA]RIO EXECUTIVO/i);
+    expect(FINANCIAL_SYSTEM_PROMPT).toMatch(/Veredito/i);
+    expect(FINANCIAL_SYSTEM_PROMPT).toMatch(/Diagn[óo]stico/i);
+    expect(FINANCIAL_SYSTEM_PROMPT).toMatch(/Bottom line/i);
+  });
+
+  it('system prompt mandates the "Recomendação:" verdict line format', () => {
+    // Must instruct the LLM to emit a literal "Recomendação: <buy|...>"
+    // first line so the UI can scan-and-highlight if needed later.
+    expect(FINANCIAL_SYSTEM_PROMPT).toMatch(
+      /Recomenda[çc][ãa]o:.*buy.*caution.*do_not_buy/i,
+    );
+  });
+
+  it('system prompt instructs to narrate (not list) the diagnosis', () => {
+    expect(FINANCIAL_SYSTEM_PROMPT).toMatch(
+      /N[ÃA]O repita n[úu]meros numa lista|narre a hist[óo]ria/i,
+    );
+  });
+
   it('uses retrieval chunks when provided', () => {
     const chunk: RetrievedChunk = {
       chunkId: 'c1',
