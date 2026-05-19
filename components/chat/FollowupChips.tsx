@@ -11,14 +11,14 @@ export function FollowupChips({ followups, onPick, disabled }: Props) {
   if (!followups || followups.length === 0) return null;
 
   return (
-    <div className="mt-3 flex flex-wrap gap-2">
+    <div className="mt-4 flex flex-wrap gap-2 pt-3 border-t border-white/5">
       {followups.map((text, i) => (
         <button
           key={`${i}-${text}`}
           type="button"
           onClick={() => onPick(text)}
           aria-label={`Follow-up sugerido: ${text}`}
-          className="rounded-full border border-border bg-background px-3 py-1.5 text-xs text-foreground hover:bg-muted hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary transition-colors"
+          className="rounded-full border border-white/10 bg-white/5 hover:bg-brand/10 hover:border-brand/40 hover:text-brand px-3 py-1.5 text-xs text-gray-300 transition-all duration-300 active:scale-95"
         >
           {text}
         </button>

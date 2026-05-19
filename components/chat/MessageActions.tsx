@@ -74,21 +74,25 @@ export function MessageActions({ traceId, sessionId, initialRating }: Props) {
   };
 
   return (
-    <div className="mt-2 flex flex-col gap-2">
-      <div className="flex items-center gap-2">
+    <div className="mt-3 flex flex-col gap-2 pt-3 border-t border-white/5">
+      <div className="flex items-center gap-1">
         <button
           type="button"
           onClick={() => click('up')}
           aria-pressed={rating === 'up'}
           aria-label="Resposta útil"
           title="Resposta boa"
-          className={
+          className={`inline-flex items-center justify-center w-8 h-8 rounded-full transition-colors ${
             rating === 'up'
-              ? 'text-primary'
-              : 'text-muted-foreground hover:text-foreground'
-          }
+              ? 'text-brand bg-brand/10'
+              : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'
+          }`}
         >
-          <ThumbsUp className="h-4 w-4" fill={rating === 'up' ? 'currentColor' : 'none'} />
+          <ThumbsUp
+            className="h-3.5 w-3.5"
+            fill={rating === 'up' ? 'currentColor' : 'none'}
+            aria-hidden="true"
+          />
         </button>
         <button
           type="button"
@@ -96,22 +100,26 @@ export function MessageActions({ traceId, sessionId, initialRating }: Props) {
           aria-pressed={rating === 'down'}
           aria-label="Resposta não útil"
           title="Resposta ruim"
-          className={
+          className={`inline-flex items-center justify-center w-8 h-8 rounded-full transition-colors ${
             rating === 'down'
-              ? 'text-primary'
-              : 'text-muted-foreground hover:text-foreground'
-          }
+              ? 'text-brand bg-brand/10'
+              : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'
+          }`}
         >
-          <ThumbsDown className="h-4 w-4" fill={rating === 'down' ? 'currentColor' : 'none'} />
+          <ThumbsDown
+            className="h-3.5 w-3.5"
+            fill={rating === 'down' ? 'currentColor' : 'none'}
+            aria-hidden="true"
+          />
         </button>
       </div>
       {showComment ? (
-        <div className="flex flex-col gap-2 max-w-md">
+        <div className="flex flex-col gap-2 max-w-md mt-1">
           <textarea
             value={comment}
             onChange={(e) => setComment(e.target.value.slice(0, COMMENT_MAX))}
             placeholder="O que faltou? (opcional, até 1000 caracteres)"
-            className="rounded-md border border-border bg-background p-2 text-sm"
+            className="rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-sm text-white placeholder-gray-600 outline-none focus:border-brand focus:bg-white/10 transition-colors"
             rows={3}
           />
           <div className="flex items-center gap-2">
@@ -119,9 +127,9 @@ export function MessageActions({ traceId, sessionId, initialRating }: Props) {
               type="button"
               onClick={submitComment}
               disabled={submitting}
-              className="rounded-md bg-primary text-primary-foreground px-3 py-1 text-xs disabled:opacity-50"
+              className="rounded-full bg-brand text-black px-4 h-8 text-xs font-medium hover:bg-brand/90 disabled:opacity-50 active:scale-95 transition-all duration-300"
             >
-              Enviar
+              {submitting ? 'Enviando…' : 'Enviar'}
             </button>
             <button
               type="button"
@@ -129,7 +137,7 @@ export function MessageActions({ traceId, sessionId, initialRating }: Props) {
                 setShowComment(false);
                 setComment('');
               }}
-              className="text-xs text-muted-foreground hover:text-foreground"
+              className="text-xs text-gray-500 hover:text-white transition-colors"
             >
               Cancelar
             </button>
