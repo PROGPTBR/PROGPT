@@ -42,7 +42,15 @@ export async function runRag(query: string, opts: RunRagOpts = {}): Promise<RagR
   // library_overview short-circuits both retrieval AND the standard
   // prompt-builder. The data source is the DB snapshot, not the chunk
   // corpus, so any retrieval would just return noise.
-  if (classification.intent === 'library_overview') {
+  //
+  // EXCEPTION (sub-projeto 34 follow-up): when the user has a Perfil
+  // ativo, questions like "me conte sobre minha categoria" / "quais
+  // subcategorias" misfire as library_overview but the answer should
+  // come from the active Profile, not from the library snapshot. We
+  // skip this short-circuit when profileContext is set so the query
+  // falls through to the standard retrieval + prompt-builder path,
+  // where the <active-profile> block is included in the user message.
+  if (classification.intent === 'library_overview' && !opts.profileContext) {
     const snapshotSpan = trace?.span('library-snapshot', {});
     const snapshot = await getLibrarySnapshot();
     snapshotSpan?.end({
@@ -72,7 +80,17 @@ export async function runRag(query: string, opts: RunRagOpts = {}): Promise<RagR
     };
   }
 
-  if (classification.needsRetrieval) {
+  // When a Perfil is active and the classifier marked the turn as
+  // library_overview (which carries needsRetrieval=false), force
+  // retrieval back on. The user wants the answer grounded in BOTH
+  // their category AND the article corpus — explicit request:
+  // "relacionar este contexto com as teorias dos artigos que temos".
+  const forceRetrievalForProfile =
+    !!opts.profileContext && classification.intent === 'library_overview';
+  if (classification.needsRetrieval || forceRetrievalForProfile) {
+    if (forceRetrievalForProfile) {
+      trace?.setTag('profile-overrides-library_overview');
+    }
     const tRetrieveStart = performance.now();
     const retrieveSpan = trace?.span('retrieve', { query, k: 30 });
     const candidates = await retrieve(query, { preEmbedded: opts._preEmbeddedQuery });

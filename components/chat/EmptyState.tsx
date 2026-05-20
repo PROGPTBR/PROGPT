@@ -1,5 +1,8 @@
 'use client';
 
+import Link from 'next/link';
+import { FolderOpen, ArrowRight } from 'lucide-react';
+
 type Suggestion = { label: string; query: string };
 
 const SUGGESTIONS: Suggestion[] = [
@@ -26,6 +29,36 @@ export function EmptyState({ onPick }: { onPick: (text: string) => void }) {
         </p>
       </div>
       <div className="w-full max-w-xl flex flex-col gap-3">
+        {/* Sub-projeto 34 follow-up — orientar o usuário a criar um Perfil
+            da Categoria, que ativa respostas direcionadas no chat. */}
+        <Link
+          href="/assistants/profile"
+          className="group flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.06] hover:border-white/20 transition-all duration-300 p-4 active:scale-[0.99]"
+        >
+          <div className="flex items-start gap-3 min-w-0">
+            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-brand/10 border border-brand/30 flex items-center justify-center text-brand">
+              <FolderOpen className="h-4 w-4" aria-hidden="true" />
+            </div>
+            <div className="min-w-0">
+              <div className="text-[10px] font-semibold uppercase tracking-wider text-brand">
+                Personalize
+              </div>
+              <div className="mt-0.5 text-sm text-white font-medium">
+                Crie um Perfil da Categoria
+              </div>
+              <div className="mt-0.5 text-xs text-gray-400 leading-relaxed">
+                Caracterize sua categoria de compra (sub-segmentos,
+                requisitos, prioridade) e use no chat com o seletor acima
+                do campo de mensagem. As respostas passam a usar isso como
+                contexto.
+              </div>
+            </div>
+          </div>
+          <ArrowRight
+            className="flex-shrink-0 h-4 w-4 text-gray-500 group-hover:text-white group-hover:translate-x-0.5 transition-all"
+            aria-hidden="true"
+          />
+        </Link>
         <button
           type="button"
           onClick={() => onPick(LIBRARY_OVERVIEW_QUERY)}

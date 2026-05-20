@@ -136,6 +136,57 @@ describe('rag runRag', () => {
     expect(result.user).toMatch(/NÃO recuse/);
   });
 
+  it('library_overview is OVERRIDDEN when profileContext is active (sub-projeto 34 follow-up)', async () => {
+    // "me conte sobre minha categoria" gets classified as library_overview
+    // by the LLM classifier, but with an active Perfil the answer should
+    // come from the Profile + retrieved chunks, NOT the library snapshot.
+    vi.doMock('@/lib/rag/classifier', () => ({
+      classify: vi.fn().mockResolvedValue({
+        theory: null,
+        intent: 'library_overview',
+        language: 'pt',
+        needsRetrieval: false, // classifier sets this for library_overview
+      }),
+    }));
+    const retrieved = [chunk('a')];
+    const retrieveSpy = vi.fn().mockResolvedValue(retrieved);
+    const rerankSpy = vi
+      .fn()
+      .mockResolvedValue([{ ...retrieved[0]!, rerankScore: 0.9 }]);
+    vi.doMock('@/lib/rag/retriever', () => ({ retrieve: retrieveSpy }));
+    vi.doMock('@/lib/rag/reranker', () => ({ rerank: rerankSpy }));
+    const snapshotSpy = vi.fn();
+    vi.doMock('@/lib/rag/library-snapshot', () => ({
+      getLibrarySnapshot: snapshotSpy,
+    }));
+
+    const { runRag } = await import('@/lib/rag');
+    const result = await runRag('me conte sobre minha categoria', {
+      profileContext: {
+        id: 'a8c8eb1c-1234-4def-8abc-1234567890ab',
+        nomeCategoria: 'Embalagens flexíveis',
+        descricao: 'Filmes laminados.',
+        subSegmentos: ['filmes laminados'],
+        escopoIncluido: 'Filmes mono e multicamada.',
+        escopoNaoIncluido: '',
+        requisitosTecnicos: 'ABNT NBR 14937.',
+        restricoesRegulatorias: '',
+        prioridadeEstrategica: 'qualidade',
+      },
+    });
+
+    // Library snapshot is NOT consulted
+    expect(snapshotSpy).not.toHaveBeenCalled();
+    // Retrieval IS performed (forced on because user wants to relate to theory)
+    expect(retrieveSpy).toHaveBeenCalled();
+    expect(rerankSpy).toHaveBeenCalled();
+    // User prompt has the active-profile block AND the chunk content
+    expect(result.user).toMatch(/<active-profile>/);
+    expect(result.user).toMatch(/Embalagens flexíveis/);
+    // No library snapshot wording
+    expect(result.user).not.toMatch(/Snapshot da base/);
+  });
+
   it('library_overview English: prompts the model to respond in English', async () => {
     vi.doMock('@/lib/rag/classifier', () => ({
       classify: vi.fn().mockResolvedValue({
