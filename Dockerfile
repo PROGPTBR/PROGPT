@@ -23,7 +23,18 @@ FROM node:22-bookworm AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-ENV NEXT_TELEMETRY_DISABLED=1
+
+# NEXT_PUBLIC_* must be available at BUILD time — Next.js inlines them
+# into the browser bundle. With Dockerfile builds, Railway forwards
+# service variables as Docker build args ONLY when declared with ARG.
+# Without these, the client bundle has `undefined` as the Supabase
+# URL/key and login hangs forever ("entrando…") because supabase-js
+# can't reach a real endpoint.
+ARG NEXT_PUBLIC_SUPABASE_URL
+ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
+ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL \
+    NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY \
+    NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 
 FROM node:22-bookworm AS runner
