@@ -1,4 +1,3 @@
-import { z } from 'zod';
 import { getOpenAI, getOpenAIModel } from '@/lib/llm/openai';
 import { recordApiUsage } from '@/lib/observability/api-usage';
 import {
