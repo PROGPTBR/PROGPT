@@ -1,51 +1,39 @@
 'use client';
 
 import { useState } from 'react';
-import { BarChart3 } from 'lucide-react';
-import { AbcForm, type AbcFormValues } from './AbcForm';
-import { AbcResult } from './AbcResult';
+import { FileText } from 'lucide-react';
+import { ProfileForm, type ProfileFormValues } from './ProfileForm';
+import { ProfileResult } from './ProfileResult';
 import { RfpChatPanel } from './RfpChatPanel';
 import { AssistantEntryChoice } from './AssistantEntryChoice';
 
-// Sub-projeto 31 — Assistente de Análise ABC (Curva de Pareto).
+// Sub-projeto 33 — Profile (Perfil da Categoria) assistant.
 //
-// State machine mirrors RFP/Kraljic/Porter/Financial:
-//   choice    — entry screen (download template OR start guided form)
-//   form      — upload xlsx/csv + nome da análise + observações
-//   generating — streaming response from /api/assistants/abc
-//   done      — output complete + downloadable (.docx + .xlsx + chart)
+// State machine mirrors the other 5 assistants:
+//   choice → form → generating → done
 
 type Phase = 'choice' | 'form' | 'generating' | 'done';
 
-export function AbcAssistant() {
+export function ProfileAssistant() {
   const [phase, setPhase] = useState<Phase>('choice');
   const [output, setOutput] = useState('');
   const [runId, setRunId] = useState<string | null>(null);
-  const [analysisName, setAnalysisName] = useState('');
+  const [nomeCategoria, setNomeCategoria] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  async function handleSubmit(values: AbcFormValues) {
+  async function handleSubmit(values: ProfileFormValues) {
     setPhase('generating');
     setOutput('');
     setRunId(null);
-    setAnalysisName(values.analysisName);
+    setNomeCategoria(values.nomeCategoria);
     setError(null);
 
     try {
-      const res = await fetch('/api/assistants/abc', {
+      const { templateId, ...params } = values;
+      const res = await fetch('/api/assistants/profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          templateId: values.templateId,
-          params: {
-            analysisName: values.analysisName,
-            analysisPeriod: values.analysisPeriod,
-            notes: values.notes,
-            consolidate: values.consolidate,
-            items: values.items,
-            ...(values.perfilId ? { perfilId: values.perfilId } : {}),
-          },
-        }),
+        body: JSON.stringify({ templateId, params }),
       });
       if (!res.ok || !res.body) {
         const data = (await res.json().catch(() => ({}))) as { error?: string };
@@ -88,7 +76,7 @@ export function AbcAssistant() {
             if (data.output_md) setOutput(data.output_md);
           }
         } catch {
-          // Non-fatal — streamed head still on screen.
+          // Non-fatal.
         }
       }
       setPhase('done');
@@ -109,14 +97,14 @@ export function AbcAssistant() {
   if (phase === 'choice') {
     return (
       <AssistantEntryChoice
-        title="Assistente ABC"
-        subtitle="Escolha como quer trabalhar: baixar o template do Procurement Garage para classificar offline, ou usar o formulário guiado e deixar o assistente classificar os itens + gerar relatório com curva de Pareto."
-        templateHref="/templates/abc-template.xls"
-        templateFilename="Exercicio-Curva-ABC.xls"
-        templateFormat=".xls · planilha"
-        templateDescription="Template Procurement Garage com colunas para nome, fornecedor, quantidade, preço unitário e cálculo automático de spend acumulado. Use offline para preencher e depois fazer upload aqui."
-        assistedDescription="Faça upload da planilha de spend (XLSX, XLS ou CSV). O sistema classifica cada item nas classes A/B/C usando a lei de Pareto (80/95% cumulativo), gera relatório executivo, plano de ação por classe e gráfico da curva — pronto para .docx e .xlsx."
-        AssistedIcon={BarChart3}
+        title="Assistente Perfil"
+        subtitle="Caracterize uma categoria de compra antes de partir para análise de spend, mercado ou sourcing. Escolha como quer trabalhar."
+        templateHref="/templates/profile-template.md"
+        templateFilename="Perfil-Categoria-referencia.md"
+        templateFormat=".md · referência"
+        templateDescription="Roteiro de Perfil da Categoria baseado em Monczka + O'Brien — 15 campos em 5 blocos. Use offline como guia para preencher o form ou para preparar a entrevista com stakeholders."
+        assistedDescription="Preencha o form guiado (15 campos) ou faça upload de um Perfil em PDF/DOCX que você já tenha — o sistema extrai os campos automaticamente. O assistente gera o documento estruturado com persona sênior, fundamentado na base de conhecimento."
+        AssistedIcon={FileText}
         onAssistedClick={() => setPhase('form')}
       />
     );
@@ -126,12 +114,11 @@ export function AbcAssistant() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">
-          Assistente ABC <span className="text-brand">.</span>
+          Assistente Perfil <span className="text-brand">.</span>
         </h1>
         <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
-          Análise ABC (Curva de Pareto) de spend. Suba sua planilha de pedidos ou
-          itens com valor — o sistema ranqueia, classifica em A/B/C pelos cortes
-          80/95% cumulativo e gera plano de ação por classe.
+          Perfil da Categoria (Strategic Sourcing Step 1) — caracterização
+          estruturada que alimenta os próximos passos (ABC, Kraljic, Porter, RFP).
         </p>
       </div>
 
@@ -141,13 +128,13 @@ export function AbcAssistant() {
         </div>
       )}
 
-      {phase === 'form' && <AbcForm onSubmit={handleSubmit} />}
+      {phase === 'form' && <ProfileForm onSubmit={handleSubmit} />}
 
       {(phase === 'generating' || phase === 'done') && (
-        <AbcResult
+        <ProfileResult
           markdown={output}
           runId={runId}
-          analysisName={analysisName}
+          nomeCategoria={nomeCategoria}
           generating={phase === 'generating'}
           onReset={handleReset}
         />

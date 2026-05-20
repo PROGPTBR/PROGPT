@@ -7,6 +7,7 @@ import type {
   PorterParams,
   FinancialParams,
   AbcParams,
+  ProfileParams,
 } from './types';
 
 // Service-role CRUD for assistant_runs. The API route owns the lifecycle:
@@ -23,7 +24,8 @@ export async function createRun(input: {
     | KraljicParams
     | PorterParams
     | FinancialParams
-    | AbcParams;
+    | AbcParams
+    | ProfileParams;
   traceId: string | null;
 }): Promise<AssistantRunRow | null> {
   const sb = getServerSupabase();
@@ -99,11 +101,13 @@ export type AssistantRunSummary = {
 // Owner-scoped paginated list. Most recent first. Caps `limit` at 200 to
 // keep the JSON payload bounded. `cursor` (optional) is the `created_at`
 // of the last item from the previous page — rows with `created_at <
-// cursor` are returned. Used by /assistants/history with "Carregar mais".
+// cursor` are returned. `assistantType` (optional) narrows by kind, used
+// by UseProfilePicker. Used by /assistants/history with "Carregar mais".
 export async function listRunsForOwner(
   userId: string,
   limit = 50,
   cursor: string | null = null,
+  assistantType: AssistantType | null = null,
 ): Promise<{ runs: AssistantRunSummary[]; nextCursor: string | null }> {
   const sb = getServerSupabase();
   const cappedLimit = Math.min(Math.max(limit, 1), 200);
@@ -118,6 +122,9 @@ export async function listRunsForOwner(
     .limit(cappedLimit + 1);
   if (cursor) {
     q = q.lt('created_at', cursor);
+  }
+  if (assistantType) {
+    q = q.eq('assistant_type', assistantType);
   }
   const { data, error } = await q;
   if (error) {

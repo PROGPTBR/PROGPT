@@ -54,6 +54,7 @@ export function KraljicAssistant() {
             analysisPeriod: values.analysisPeriod,
             notes: values.notes,
             items,
+            ...(values.perfilId ? { perfilId: values.perfilId } : {}),
           },
         }),
       });

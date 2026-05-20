@@ -47,6 +47,7 @@ export function PorterAssistant() {
             escopo: values.escopo,
             observacoes: values.observacoes,
             statements: values.statements,
+            ...(values.perfilId ? { perfilId: values.perfilId } : {}),
           },
         }),
       });

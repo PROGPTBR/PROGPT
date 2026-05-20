@@ -4,6 +4,7 @@ import type {
   PorterParams,
   FinancialParams,
   AbcParams,
+  ProfileParams,
 } from './types';
 import type { CompanyData } from '@/lib/db/user-company';
 
@@ -15,7 +16,8 @@ export type AssistantParams =
   | KraljicParams
   | PorterParams
   | FinancialParams
-  | AbcParams;
+  | AbcParams
+  | ProfileParams;
 
 // Sub-projeto 23 — Programmatic template assembly.
 //
@@ -118,6 +120,41 @@ export function renderPlaceholders(
     substitutions.periodo = params.analysisPeriod ?? '';
     substitutions.num_itens = String(params.items.length);
     substitutions.notas = params.notes ?? '';
+  } else if ('nomeCategoria' in params) {
+    // Profile (Perfil da Categoria)
+    substitutions.categoria = params.nomeCategoria;
+    substitutions.nome_categoria = params.nomeCategoria;
+    substitutions.descricao = params.descricao;
+    substitutions.sub_segmentos = params.subSegmentos
+      .map((s) => `- ${s}`)
+      .join('\n');
+    substitutions.escopo_incluido = params.escopoIncluido;
+    substitutions.escopo_nao_incluido = params.escopoNaoIncluido ?? '';
+    substitutions.requisitos_tecnicos = params.requisitosTecnicos;
+    substitutions.restricoes_regulatorias =
+      params.restricoesRegulatorias ?? '';
+    substitutions.criterios_avaliacao = params.criteriosAvaliacao
+      .map((cr, i) => `${i + 1}. ${cr}`)
+      .join('\n');
+    substitutions.stakeholders = params.stakeholders
+      .map((s) => `- ${s.nome} (${s.papel})`)
+      .join('\n');
+    substitutions.prioridade = params.prioridadeEstrategica;
+    substitutions.spend_anual =
+      typeof params.spendAnualBRL === 'number'
+        ? params.spendAnualBRL.toLocaleString('pt-BR', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })
+        : '';
+    substitutions.volume_fisico = params.volumeFisico ?? '';
+    substitutions.numero_fornecedores =
+      typeof params.numeroFornecedoresAtivos === 'number'
+        ? String(params.numeroFornecedoresAtivos)
+        : '';
+    substitutions.sazonalidade = params.sazonalidade ?? '';
+    substitutions.observacoes = params.observacoes ?? '';
+    substitutions.notas = params.observacoes ?? '';
   }
 
   return text.replace(/\{\{([a-z_]+)\}\}/g, (full, key: string) => {

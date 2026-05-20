@@ -16,6 +16,7 @@ import type {
   PorterParams,
   FinancialParams,
   AbcParams,
+  ProfileParams,
   AssistantType,
 } from '@/lib/assistants/types';
 import type { ApiOperation } from '@/lib/observability/api-usage';
@@ -97,7 +98,8 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       | KraljicParams
       | PorterParams
       | FinancialParams
-      | AbcParams,
+      | AbcParams
+      | ProfileParams,
     chunks,
   );
 
@@ -107,6 +109,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       porter: 'assistant-porter-refine',
       financial: 'assistant-financial-refine',
       abc: 'assistant-abc-refine',
+      profile: 'assistant-profile-refine',
       rfp: 'assistant-rfp-refine',
     } as Record<AssistantType, ApiOperation>
   )[run.assistant_type];

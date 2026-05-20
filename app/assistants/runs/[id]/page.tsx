@@ -6,12 +6,14 @@ import { PastKraljicView } from '@/components/assistants/PastKraljicView';
 import { PastPorterView } from '@/components/assistants/PastPorterView';
 import { PastFinancialView } from '@/components/assistants/PastFinancialView';
 import { PastAbcView } from '@/components/assistants/PastAbcView';
+import { PastProfileView } from '@/components/assistants/PastProfileView';
 import type {
   RfpParams,
   KraljicParams,
   PorterParams,
   FinancialParams,
   AbcParams,
+  ProfileParams,
 } from '@/lib/assistants/types';
 
 export const dynamic = 'force-dynamic';
@@ -80,6 +82,17 @@ export default async function AssistantRunDetailPage({
         runId={run.id}
         initialOutput={run.output_md}
         analysisName={ap.analysisName ?? '(análise sem nome)'}
+      />
+    );
+  }
+
+  if (run.assistant_type === 'profile') {
+    const pf = run.params as ProfileParams;
+    return (
+      <PastProfileView
+        runId={run.id}
+        initialOutput={run.output_md}
+        nomeCategoria={pf.nomeCategoria ?? '(categoria sem nome)'}
       />
     );
   }

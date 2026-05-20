@@ -44,6 +44,7 @@ export function RfpAssistant() {
             budget: values.budget,
             criteria: values.criteria,
             notes: values.notes,
+            ...(values.perfilId ? { perfilId: values.perfilId } : {}),
           },
         }),
       });
