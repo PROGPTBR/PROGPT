@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
 import { ProfileLogoUpload } from '@/components/profile/ProfileLogoUpload';
 import { ProfileCompanyForm } from '@/components/profile/ProfileCompanyForm';
+import { ProfileCategoriesList } from '@/components/profile/ProfileCategoriesList';
 
 export const dynamic = 'force-dynamic';
 
@@ -82,6 +83,19 @@ export default async function ProfilePage() {
             </p>
           </div>
           <ProfileCompanyForm />
+        </section>
+
+        <section className="space-y-3">
+          <div>
+            <h2 className="text-base font-medium">Minhas categorias</h2>
+            <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+              Perfis de categoria que você cadastrou. Use no chat (seletor
+              acima do campo de mensagem) ou no botão &quot;Iniciar de um
+              Perfil&quot; dentro dos assistentes RFP / Kraljic / Porter /
+              ABC para pré-popular os campos.
+            </p>
+          </div>
+          <ProfileCategoriesList />
         </section>
       </main>
     </div>
