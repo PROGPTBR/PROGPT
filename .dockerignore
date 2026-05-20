@@ -1,0 +1,35 @@
+# Keep the build context small.
+
+node_modules
+.next
+.turbo
+dist
+out
+
+# Local env / secrets / logs
+.env*
+*.log
+dev.log
+
+# VCS + IDE
+.git
+.github
+.vscode
+.idea
+
+# Test + dev artifacts
+coverage
+.nyc_output
+.cache
+playwright-report
+test-results
+
+# Local-only docs/dirs that don't affect runtime
+.claude
+docs
+scripts/.venv
+scripts/__pycache__
+
+# OS
+.DS_Store
+Thumbs.db
