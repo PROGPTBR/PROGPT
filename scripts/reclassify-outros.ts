@@ -36,22 +36,26 @@ async function main(): Promise<void> {
   const includeCanon = process.argv.includes('--include-canon');
   const sb = getServerSupabase();
 
-  let query = sb
+  // Two-phase fetch: first get only IDs (fast even with hundreds of rows),
+  // then load raw_md one article at a time inside the loop. Avoids the
+  // Supabase statement_timeout when raw_md is large (hundreds of KB per
+  // row × hundreds of rows = single SELECT exceeds 60s).
+  let idQuery = sb
     .from('articles')
-    .select('id, title, theme, raw_md, metadata')
+    .select('id')
     .order('ingested_at', { ascending: true });
   if (!includeCanon) {
-    query = query.eq('theme', 'Outros');
+    idQuery = idQuery.eq('theme', 'Outros');
   }
 
-  const { data, error } = await query;
-  if (error) {
-    console.error(`[reclassify-outros] select failed: ${error.message}`);
+  const { data: idRows, error: idError } = await idQuery;
+  if (idError) {
+    console.error(`[reclassify-outros] select ids failed: ${idError.message}`);
     process.exit(1);
   }
-  const rows = (data ?? []) as ArticleRow[];
+  const ids = (idRows ?? []).map((r) => (r as { id: string }).id);
   console.log(
-    `[reclassify-outros] processing ${rows.length} articles ${dryRun ? '(dry-run)' : '(LIVE)'}${
+    `[reclassify-outros] processing ${ids.length} articles ${dryRun ? '(dry-run)' : '(LIVE)'}${
       includeCanon ? ' [include-canon]' : ' [Outros only]'
     }`,
   );
@@ -62,7 +66,20 @@ async function main(): Promise<void> {
   let movedCandidate = 0;
   let failed = 0;
 
-  for (const row of rows) {
+  for (const id of ids) {
+    const { data: rowData, error: rowError } = await sb
+      .from('articles')
+      .select('id, title, theme, raw_md, metadata')
+      .eq('id', id)
+      .single();
+    if (rowError || !rowData) {
+      console.error(
+        `[reclassify-outros] fetch ${id.slice(0, 8)} failed: ${rowError?.message ?? 'no row'}`,
+      );
+      failed++;
+      continue;
+    }
+    const row = rowData as ArticleRow;
     const filename =
       (row.metadata?.['source_filename'] as string | undefined) ?? row.id;
     if (!row.raw_md || row.raw_md.trim().length < 100) {
@@ -99,7 +116,7 @@ async function main(): Promise<void> {
   }
 
   console.log('\n[reclassify-outros] summary');
-  console.log(`  total processed: ${rows.length}`);
+  console.log(`  total processed: ${ids.length}`);
   console.log(`  moved to canonical (non-Outros): ${movedCanonical}`);
   console.log(`  moved to candidate (new theme):  ${movedCandidate}`);
   console.log(`  stayed in Outros:                 ${stayedOutros}`);

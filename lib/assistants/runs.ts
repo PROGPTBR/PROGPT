@@ -96,26 +96,41 @@ export type AssistantRunSummary = {
   finished_at: string | null;
 };
 
-// Owner-scoped list. Most recent first. Caps the result at `limit`.
-// Used by /assistants/history.
+// Owner-scoped paginated list. Most recent first. Caps `limit` at 200 to
+// keep the JSON payload bounded. `cursor` (optional) is the `created_at`
+// of the last item from the previous page — rows with `created_at <
+// cursor` are returned. Used by /assistants/history with "Carregar mais".
 export async function listRunsForOwner(
   userId: string,
   limit = 50,
-): Promise<AssistantRunSummary[]> {
+  cursor: string | null = null,
+): Promise<{ runs: AssistantRunSummary[]; nextCursor: string | null }> {
   const sb = getServerSupabase();
-  const { data, error } = await sb
+  const cappedLimit = Math.min(Math.max(limit, 1), 200);
+  let q = sb
     .from('assistant_runs')
     .select(
       'id, assistant_type, template_id, params, status, error_message, created_at, finished_at',
     )
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
-    .limit(Math.min(Math.max(limit, 1), 200));
+    // Fetch one extra row to know if there's a next page without a count.
+    .limit(cappedLimit + 1);
+  if (cursor) {
+    q = q.lt('created_at', cursor);
+  }
+  const { data, error } = await q;
   if (error) {
     console.warn('[assistants/runs] listRunsForOwner failed:', error.message);
-    return [];
+    return { runs: [], nextCursor: null };
   }
-  return (data ?? []) as AssistantRunSummary[];
+  const rows = (data ?? []) as AssistantRunSummary[];
+  const hasMore = rows.length > cappedLimit;
+  const trimmed = hasMore ? rows.slice(0, cappedLimit) : rows;
+  const nextCursor = hasMore
+    ? (trimmed[trimmed.length - 1]?.created_at ?? null)
+    : null;
+  return { runs: trimmed, nextCursor };
 }
 
 // Owner-scoped lookup. Used by the docx download endpoint to verify the

@@ -65,26 +65,60 @@ function fmtDate(iso: string): string {
   }
 }
 
+const PAGE_SIZE = 25;
+
 export function RfpHistoryList() {
   const [runs, setRuns] = useState<RunSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+
+  const fetchPage = useCallback(
+    async (cursor: string | null): Promise<{
+      runs: RunSummary[];
+      nextCursor: string | null;
+    }> => {
+      const qs = new URLSearchParams({ limit: String(PAGE_SIZE) });
+      if (cursor) qs.set('cursor', cursor);
+      const res = await fetch(`/api/assistants/runs?${qs.toString()}`, {
+        cache: 'no-store',
+      });
+      if (!res.ok) throw new Error(`status ${res.status}`);
+      return (await res.json()) as {
+        runs: RunSummary[];
+        nextCursor: string | null;
+      };
+    },
+    [],
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/assistants/runs?limit=50', {
-        cache: 'no-store',
-      });
-      if (!res.ok) throw new Error(`status ${res.status}`);
-      const data = (await res.json()) as { runs: RunSummary[] };
+      const data = await fetchPage(null);
       setRuns(data.runs);
+      setNextCursor(data.nextCursor);
     } catch (err) {
       toast.error('Falha ao carregar histórico', { description: String(err) });
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [fetchPage]);
+
+  const loadMore = useCallback(async () => {
+    if (!nextCursor || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const data = await fetchPage(nextCursor);
+      setRuns((prev) => [...prev, ...data.runs]);
+      setNextCursor(data.nextCursor);
+    } catch (err) {
+      toast.error('Falha ao carregar mais', { description: String(err) });
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [fetchPage, nextCursor, loadingMore]);
 
   useEffect(() => {
     void load();
@@ -292,6 +326,26 @@ export function RfpHistoryList() {
             );
           })}
         </ul>
+      )}
+
+      {nextCursor && (
+        <div className="flex justify-center pt-2">
+          <button
+            type="button"
+            onClick={loadMore}
+            disabled={loadingMore}
+            className="inline-flex items-center gap-1.5 text-sm rounded-full border border-white/10 bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white px-5 h-9 transition-all duration-300 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loadingMore ? (
+              <>
+                <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+                Carregando…
+              </>
+            ) : (
+              'Carregar mais'
+            )}
+          </button>
+        </div>
       )}
     </div>
   );
