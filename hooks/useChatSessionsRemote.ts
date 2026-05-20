@@ -11,6 +11,7 @@ type DBRow = {
   title: string;
   messages: ChatMessage[] | null;
   updated_at: string;
+  active_perfil_id?: string | null;
 };
 
 function rowToSession(r: DBRow): StoredSession {
@@ -19,6 +20,7 @@ function rowToSession(r: DBRow): StoredSession {
     title: r.title,
     messages: (r.messages as ChatMessage[]) ?? [],
     updatedAt: new Date(r.updated_at).getTime(),
+    activePerfilId: r.active_perfil_id ?? null,
   };
 }
 
@@ -36,7 +38,7 @@ export function useChatSessionsRemote(): UseChatSessions {
       const sb = supabaseBrowser();
       const { data, error } = await sb
         .from('sessions')
-        .select('id, title, messages, updated_at')
+        .select('id, title, messages, updated_at, active_perfil_id')
         .order('updated_at', { ascending: false });
       if (cancelled) return;
       if (error) {
@@ -49,7 +51,7 @@ export function useChatSessionsRemote(): UseChatSessions {
         const { data: created, error: insErr } = await sb
           .from('sessions')
           .insert({})
-          .select('id, title, messages, updated_at')
+          .select('id, title, messages, updated_at, active_perfil_id')
           .single();
         if (cancelled) return;
         if (insErr || !created) {
@@ -106,7 +108,7 @@ export function useChatSessionsRemote(): UseChatSessions {
     const { data, error } = await sb
       .from('sessions')
       .insert({})
-      .select('id, title, messages, updated_at')
+      .select('id, title, messages, updated_at, active_perfil_id')
       .single();
     if (error || !data) {
       console.warn('[useChatSessionsRemote] createNew failed:', error);
@@ -185,6 +187,22 @@ export function useChatSessionsRemote(): UseChatSessions {
     );
   }, []);
 
+  // Sub-projeto 34 — client-only state for the active Perfil. The actual
+  // DB write happens in /api/chat onFinish (when the user sends a turn).
+  // That way the UX "aplica do próximo turno em diante" is implicit:
+  // picking without sending = transient.
+  const setActivePerfil = useCallback(
+    (perfilId: string | null) => {
+      if (!currentId) return;
+      setSessions((prev) =>
+        prev.map((s) =>
+          s.id === currentId ? { ...s, activePerfilId: perfilId } : s,
+        ),
+      );
+    },
+    [currentId],
+  );
+
   if (!hydrated) {
     return {
       sessions: [],
@@ -196,6 +214,7 @@ export function useChatSessionsRemote(): UseChatSessions {
       deleteSession: deleteSession as unknown as (id: string) => void,
       updateMessages: updateMessages as unknown as (messages: ChatMessage[]) => void,
       setTitleLocal,
+      setActivePerfil,
     };
   }
 
@@ -211,5 +230,6 @@ export function useChatSessionsRemote(): UseChatSessions {
     deleteSession: deleteSession as unknown as (id: string) => void,
     updateMessages: updateMessages as unknown as (messages: ChatMessage[]) => void,
     setTitleLocal,
+    setActivePerfil,
   };
 }

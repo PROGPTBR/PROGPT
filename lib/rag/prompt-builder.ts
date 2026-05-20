@@ -1,4 +1,9 @@
-import type { Classification, RetrievedChunk, SourceRef } from './types';
+import type {
+  Classification,
+  ProfileSnapshot,
+  RetrievedChunk,
+  SourceRef,
+} from './types';
 import type { LibrarySnapshot } from './library-snapshot';
 
 // SYSTEM_PROMPT must stay byte-identical across every turn of every session
@@ -85,10 +90,48 @@ const NO_CONTEXT_MARKER_PT =
 const NO_CONTEXT_MARKER_EN =
   '## Knowledge base context\n\n(no relevant passage was retrieved for this question — follow the "no source on file" rule)';
 
+// Sub-projeto 34 — bloco emitido SÓ no user message quando o usuário tem
+// um Perfil da Categoria ativo (selecionado via Pill acima do Composer).
+// O SYSTEM_PROMPT permanece byte-stable (prefix cache OpenAI), o contexto
+// da categoria entra como prefixo do user message — mesmo padrão do
+// library_overview (sub-projeto 18).
+function formatProfileBlock(p: ProfileSnapshot, isEN: boolean): string {
+  const subs =
+    p.subSegmentos.length > 0
+      ? p.subSegmentos.map((s) => `- ${s}`).join('\n')
+      : '_(nenhum)_';
+  const lines: string[] = [];
+  lines.push(isEN ? '## Active category (user-selected)' : '## Categoria ativa (selecionada pelo usuário)');
+  lines.push('');
+  lines.push(
+    isEN
+      ? 'The user has activated a category profile. Direct your answer to this category — use its scope, sub-segments, and constraints as the lens for the response. Do NOT invent facts not present in this profile. Do NOT mention this block explicitly; just let it inform the answer.'
+      : 'O usuário ativou um Perfil de Categoria. Direcione a resposta para essa categoria — use o escopo, sub-segmentos e restrições como lente. NÃO invente fatos que não estão no Perfil. NÃO mencione este bloco explicitamente; só deixe a resposta refletir o contexto.',
+  );
+  lines.push('');
+  lines.push('<active-profile>');
+  lines.push(`**Nome da categoria**: ${p.nomeCategoria}`);
+  lines.push(`**Descrição**: ${p.descricao}`);
+  lines.push('**Sub-segmentos**:');
+  lines.push(subs);
+  lines.push(`**Escopo incluído**: ${p.escopoIncluido}`);
+  if (p.escopoNaoIncluido && p.escopoNaoIncluido.trim().length > 0) {
+    lines.push(`**Escopo NÃO incluído**: ${p.escopoNaoIncluido}`);
+  }
+  lines.push(`**Requisitos técnicos (literal)**: ${p.requisitosTecnicos}`);
+  if (p.restricoesRegulatorias && p.restricoesRegulatorias.trim().length > 0) {
+    lines.push(`**Restrições regulatórias (literal)**: ${p.restricoesRegulatorias}`);
+  }
+  lines.push(`**Prioridade estratégica**: ${p.prioridadeEstrategica}`);
+  lines.push('</active-profile>');
+  return lines.join('\n');
+}
+
 export function buildPrompt(
   query: string,
   chunks: RetrievedChunk[],
   classification: Classification,
+  profileContext: ProfileSnapshot | null = null,
 ): { system: string; user: string; sources: SourceRef[] } {
   const sources: SourceRef[] = chunks.map((c, i) => ({
     number: i + 1,
@@ -100,6 +143,13 @@ export function buildPrompt(
   const isEN = classification.language === 'en';
 
   const userParts: string[] = [];
+  // Active profile block goes FIRST so the LLM reads the category lens
+  // before the retrieved chunks. Cache stays warm because the block is
+  // in the user message, not the system.
+  if (profileContext) {
+    userParts.push(formatProfileBlock(profileContext, isEN));
+    userParts.push('---');
+  }
   if (chunks.length > 0) {
     userParts.push(isEN ? CONTEXT_HEADER_EN : CONTEXT_HEADER_PT);
     chunks.forEach((c) => {

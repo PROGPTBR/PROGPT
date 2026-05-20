@@ -8,12 +8,15 @@ import type { StoredSession } from '@/lib/chat-storage';
 import { EmptyState } from './EmptyState';
 import { MessageList } from './MessageList';
 import { Composer, type ChatAttachment } from './Composer';
+import { ActiveProfileChip } from './ActiveProfileChip';
 
 type Props = {
   session: StoredSession;
   initialRatings?: Map<string, 'up' | 'down'>;
   onMessagesChange: (messages: ChatMessage[]) => void;
   onTitleChange?: (title: string) => void;
+  // Sub-projeto 34 — Perfil ativo no chat.
+  onActivePerfilChange?: (perfilId: string | null) => void;
 };
 
 function toChatMessages(messages: AIMessage[]): ChatMessage[] {
@@ -64,7 +67,13 @@ export function ChatSession({
   initialRatings,
   onMessagesChange,
   onTitleChange,
+  onActivePerfilChange,
 }: Props) {
+  // Sub-projeto 34 — perfilId is read at SUBMIT time (not at hook init)
+  // because useChat captures `body` once. Pass it via the per-call
+  // ChatRequestOptions.body which the SDK merges with the hook body.
+  // `session.activePerfilId` is the source of truth — set via the chip
+  // picker which calls onActivePerfilChange.
   const { messages, input, setInput, handleSubmit, isLoading, stop, append } = useChat({
     api: '/api/chat',
     id: session.id,
@@ -94,9 +103,13 @@ export function ChatSession({
     },
   });
 
+  const perfilBody = () => ({
+    perfilId: session.activePerfilId ?? null,
+  });
+
   const onPickFollowup = (text: string) => {
     if (isLoading) return;
-    void append({ role: 'user', content: text });
+    void append({ role: 'user', content: text }, { body: perfilBody() });
   };
 
   const onComposerSubmit = (
@@ -104,7 +117,7 @@ export function ChatSession({
     attachment?: ChatAttachment,
   ) => {
     if (!attachment) {
-      handleSubmit(e);
+      handleSubmit(e, { body: perfilBody() });
       return;
     }
     // Attachment present: bypass handleSubmit (which would send only
@@ -113,7 +126,7 @@ export function ChatSession({
     e?.preventDefault();
     const wrapped = wrapWithAttachment(input, attachment);
     setInput('');
-    void append({ role: 'user', content: wrapped });
+    void append({ role: 'user', content: wrapped }, { body: perfilBody() });
   };
 
   return (
@@ -132,6 +145,12 @@ export function ChatSession({
           sessionId={session.id}
           initialRatings={initialRatings}
           onPickFollowup={onPickFollowup}
+        />
+      )}
+      {onActivePerfilChange && (
+        <ActiveProfileChip
+          activePerfilId={session.activePerfilId ?? null}
+          onChange={onActivePerfilChange}
         />
       )}
       <Composer

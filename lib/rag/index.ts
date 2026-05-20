@@ -3,7 +3,7 @@ import { retrieve } from './retriever';
 import { rerank } from './reranker';
 import { buildPrompt, buildLibraryOverviewPrompt } from './prompt-builder';
 import { getLibrarySnapshot } from './library-snapshot';
-import type { RagResult, RetrievedChunk } from './types';
+import type { ProfileSnapshot, RagResult, RetrievedChunk } from './types';
 import type { Trace } from '@/lib/observability/types';
 
 const RERANK_TOP_N = 8;
@@ -12,6 +12,15 @@ export type RunRagOpts = {
   parentTrace?: Trace;
   /** Internal hook for eval batching: skip embed call if vector already known. */
   _preEmbeddedQuery?: number[];
+  /**
+   * Sub-projeto 34 — Perfil da Categoria ativo no chat.
+   *
+   * When present, a Perfil block is prepended to the user message so the
+   * LLM treats the active category as the lens for the answer. SYSTEM_PROMPT
+   * is unchanged (prefix cache intact). Retriever is NOT biased — the
+   * category influences only the prompt, never the query embedding.
+   */
+  profileContext?: ProfileSnapshot | null;
 };
 
 export async function runRag(query: string, opts: RunRagOpts = {}): Promise<RagResult> {
@@ -82,8 +91,20 @@ export async function runRag(query: string, opts: RunRagOpts = {}): Promise<RagR
     rerankMs = performance.now() - tRerankStart;
   }
 
-  const promptSpan = trace?.span('build-prompt', { sources: chunks.length });
-  const { system, user, sources } = buildPrompt(query, chunks, classification);
+  const profileContext = opts.profileContext ?? null;
+  if (profileContext) {
+    trace?.setTag(`perfil:${profileContext.id}`);
+  }
+  const promptSpan = trace?.span('build-prompt', {
+    sources: chunks.length,
+    hasProfile: !!profileContext,
+  });
+  const { system, user, sources } = buildPrompt(
+    query,
+    chunks,
+    classification,
+    profileContext,
+  );
   promptSpan?.end({ systemLen: system.length, userLen: user.length });
 
   return {
@@ -103,4 +124,10 @@ export async function runRag(query: string, opts: RunRagOpts = {}): Promise<RagR
   };
 }
 
-export type { Classification, RetrievedChunk, SourceRef, RagResult } from './types';
+export type {
+  Classification,
+  ProfileSnapshot,
+  RetrievedChunk,
+  SourceRef,
+  RagResult,
+} from './types';

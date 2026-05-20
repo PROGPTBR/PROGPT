@@ -5,7 +5,7 @@ import { requireEnv } from '@/lib/env';
 import { runRag } from '@/lib/rag';
 import { condenseQuery } from '@/lib/rag/condenser';
 import { suggestFollowups } from '@/lib/rag/followups';
-import type { ChatMessage } from '@/lib/rag/types';
+import type { ChatMessage, ProfileSnapshot } from '@/lib/rag/types';
 import { startTrace, flushAsync } from '@/lib/observability/langfuse';
 import { recordApiUsage } from '@/lib/observability/api-usage';
 import { getCurrentUser } from '@/lib/auth';
@@ -13,6 +13,8 @@ import { checkChatRateLimit } from '@/lib/rate-limit';
 import { summarizeChatTitle } from '@/lib/chat-title';
 import { getServerSupabase } from '@/lib/db/supabase';
 import type { TraceLevel } from '@/lib/observability/types';
+import { getRunForOwner } from '@/lib/assistants/runs';
+import type { ProfileParams } from '@/lib/assistants/types';
 
 export const runtime = 'nodejs';
 
@@ -27,11 +29,31 @@ const Body = z
       )
       .min(1),
     sessionId: z.string().uuid().optional(),
+    // Sub-projeto 34 — Perfil da Categoria ativo no chat.
+    // null/undefined = sem categoria (comportamento default).
+    perfilId: z.string().uuid().nullable().optional(),
   })
   .refine(
     (b) => b.messages.length > 0 && b.messages[b.messages.length - 1]!.role === 'user',
     { message: 'last message must be from user' },
   );
+
+function profileParamsToSnapshot(
+  id: string,
+  p: ProfileParams,
+): ProfileSnapshot {
+  return {
+    id,
+    nomeCategoria: p.nomeCategoria,
+    descricao: p.descricao,
+    subSegmentos: p.subSegmentos,
+    escopoIncluido: p.escopoIncluido,
+    escopoNaoIncluido: p.escopoNaoIncluido ?? '',
+    requisitosTecnicos: p.requisitosTecnicos,
+    restricoesRegulatorias: p.restricoesRegulatorias ?? '',
+    prioridadeEstrategica: p.prioridadeEstrategica,
+  };
+}
 
 export async function POST(req: Request): Promise<Response> {
   let parsed;
@@ -61,11 +83,39 @@ export async function POST(req: Request): Promise<Response> {
   const messages: ChatMessage[] = parsed.messages;
   const env = process.env.APP_ENV ?? 'production';
 
+  // Resolve the active Perfil snapshot BEFORE opening the trace so we can
+  // log perfilName in the trace input. Silent fallback: invalid/foreign/
+  // non-done perfilId → snapshot stays null and chat runs default.
+  let profileSnapshot: ProfileSnapshot | null = null;
+  if (parsed.perfilId) {
+    const run = await getRunForOwner(parsed.perfilId, user.id);
+    if (
+      run &&
+      run.assistant_type === 'profile' &&
+      run.status === 'done' &&
+      run.params
+    ) {
+      profileSnapshot = profileParamsToSnapshot(
+        run.id,
+        run.params as ProfileParams,
+      );
+    } else {
+      console.warn(
+        `[api/chat] perfilId ${parsed.perfilId} invalid/foreign/not-done — falling back to default`,
+      );
+    }
+  }
+
   const trace = await startTrace({
     name: 'chat.turn',
     userId: user.id,
     sessionId: parsed.sessionId,
-    input: { messages },
+    input: {
+      messages,
+      perfilName: profileSnapshot
+        ? profileSnapshot.nomeCategoria.slice(0, 80)
+        : null,
+    },
     tags: [`env:${env}`],
   });
 
@@ -74,7 +124,10 @@ export async function POST(req: Request): Promise<Response> {
     const standalone = await condenseQuery(messages);
     condenseSpan.end({ standalone });
 
-    const rag = await runRag(standalone, { parentTrace: trace });
+    const rag = await runRag(standalone, {
+      parentTrace: trace,
+      profileContext: profileSnapshot,
+    });
 
     const history = messages.slice(0, -1);
     const llmMessages: ChatMessage[] = [
@@ -141,6 +194,28 @@ export async function POST(req: Request): Promise<Response> {
         const aborted = finishReason === 'error';
         const level: TraceLevel = aborted ? 'WARNING' : 'DEFAULT';
         if (aborted) trace.setTag('aborted');
+
+        // Sub-projeto 34 — persist the resolved perfilId on the session
+        // row so reloads remember the active category. We persist EVEN
+        // when the user explicitly clears it (perfilId === null) — that's
+        // a deliberate "no category" choice. We skip persistence when the
+        // user didn't send the field at all (undefined), avoiding stomping
+        // an existing selection from a client that's not yet updated.
+        if (parsed.sessionId && parsed.perfilId !== undefined) {
+          const valueToWrite = profileSnapshot ? profileSnapshot.id : null;
+          void getServerSupabase()
+            .from('sessions')
+            .update({ active_perfil_id: valueToWrite })
+            .eq('id', parsed.sessionId)
+            .then(({ error }) => {
+              if (error) {
+                console.warn(
+                  '[api/chat] active_perfil_id update failed:',
+                  error.message,
+                );
+              }
+            });
+        }
 
         const shouldSuggest = !aborted && finishReason === 'stop' && text.length >= 20;
         if (shouldSuggest) {
