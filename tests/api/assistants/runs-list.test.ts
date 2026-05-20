@@ -16,9 +16,23 @@ function setupMocks(opts: Opts = {}) {
       .mockResolvedValue(opts.authed === false ? null : { id: 'u-1', email: 'u@x.y' }),
   }));
 
-  // The list query builder: from(...).select(...).eq(...).order(...).limit(...)
+  // The list query builder. After sub-projeto 32 the builder also has
+  // `.lt('created_at', cursor)` when a cursor is passed; we install lt
+  // on the same intermediate so either branch is observable.
   const queryResult = { data: opts.rows ?? [], error: null };
-  const limit = vi.fn().mockResolvedValue(queryResult);
+  // The cursor branch ends at .lt(...); the no-cursor branch ends at
+  // .limit(...). Both must resolve to the query result.
+  const lt = vi.fn().mockResolvedValue(queryResult);
+  const limit = vi.fn().mockReturnValue({ lt, then: undefined });
+  // limit() needs to be both awaitable (no-cursor path) and chainable
+  // via .lt() (cursor path). vitest mocks allow attaching .then via a
+  // thenable, but the simpler approach is to make limit() return a
+  // promise-like that also exposes lt. We do that with a Proxy.
+  const limitResult = {
+    lt,
+    then: (resolve: (v: unknown) => void) => resolve(queryResult),
+  };
+  limit.mockReturnValue(limitResult);
   const order = vi.fn().mockReturnValue({ limit });
   const eq = vi.fn().mockReturnValue({ order });
   const select = vi.fn().mockReturnValue({ eq });
@@ -27,7 +41,7 @@ function setupMocks(opts: Opts = {}) {
       from: () => ({ select }),
     }),
   }));
-  return { select, eq, order, limit };
+  return { select, eq, order, limit, lt };
 }
 
 function buildGet(url = 'http://x/api/assistants/runs'): Request {
@@ -82,6 +96,19 @@ describe('GET /api/assistants/runs', () => {
     const m = setupMocks({ rows: [] });
     const { GET } = await import('@/app/api/assistants/runs/route');
     await GET(buildGet('http://x/api/assistants/runs?limit=10'));
-    expect(m.limit).toHaveBeenCalledWith(10);
+    // Server fetches limit+1 rows to detect whether a next page exists
+    // without an extra COUNT query.
+    expect(m.limit).toHaveBeenCalledWith(11);
+  });
+
+  it('passes ?cursor= to a created_at LT filter', async () => {
+    const m = setupMocks({ rows: [] });
+    const { GET } = await import('@/app/api/assistants/runs/route');
+    await GET(
+      buildGet(
+        'http://x/api/assistants/runs?cursor=2026-05-15T10%3A00%3A00Z',
+      ),
+    );
+    expect(m.lt).toHaveBeenCalledWith('created_at', '2026-05-15T10:00:00Z');
   });
 });
