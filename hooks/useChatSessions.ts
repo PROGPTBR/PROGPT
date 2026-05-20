@@ -26,6 +26,12 @@ export type UseChatSessions = {
    * client only needs to refresh its in-memory list.
    */
   setTitleLocal?: (id: string, title: string) => void;
+  /**
+   * Sub-projeto 34 — set the active Perfil for the current session.
+   * Client-only state until the next chat turn (the /api/chat onFinish
+   * persists `active_perfil_id` in the DB). null = clear (sem categoria).
+   */
+  setActivePerfil?: (perfilId: string | null) => void;
 };
 
 /**

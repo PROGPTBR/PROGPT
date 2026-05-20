@@ -75,6 +75,7 @@ function ChatRootMounted() {
                     sessionsApi.setTitleLocal!(sessionsApi.currentId, title)
                 : undefined
             }
+            onActivePerfilChange={sessionsApi.setActivePerfil}
           />
         </ChatErrorBoundary>
       </div>

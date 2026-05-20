@@ -61,3 +61,21 @@ export type ChatMessage = {
   role: 'user' | 'assistant';
   content: string;
 };
+
+// Sub-projeto 34 — Perfil da Categoria ativo no chat.
+//
+// Subset enxuto dos 15 campos de ProfileParams. Vai pro user message
+// como contexto direcional. Não incluímos campos administrativos
+// (spend, fornecedores, etc.) pra não inflar o prompt — só o que o LLM
+// precisa pra direcionar a resposta.
+export type ProfileSnapshot = {
+  id: string;
+  nomeCategoria: string;
+  descricao: string;
+  subSegmentos: string[];
+  escopoIncluido: string;
+  escopoNaoIncluido: string;
+  requisitosTecnicos: string;
+  restricoesRegulatorias: string;
+  prioridadeEstrategica: string;
+};

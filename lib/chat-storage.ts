@@ -12,6 +12,9 @@ export type StoredSession = {
   title: string;
   messages: ChatMessage[];
   updatedAt: number;
+  // Sub-projeto 34 — Perfil da Categoria ativo no chat. Null/undefined =
+  // sem categoria (comportamento default do /api/chat).
+  activePerfilId?: string | null;
 };
 
 const KEY = 'pgpt:sessions:v1';
