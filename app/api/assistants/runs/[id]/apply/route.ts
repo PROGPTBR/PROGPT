@@ -90,6 +90,20 @@ Regras:
 - Mantenha valores reais (nomes de itens, fornecedores, %).
 - Se a sugestão for ambígua, faça a melhor interpretação razoável.`;
 
+const PROFILE_SYSTEM_PROMPT = `Você é um especialista sênior em procurement editando um Perfil da Categoria (Strategic Sourcing Step 1). Receberá:
+
+1. O relatório ATUAL (caracterização da categoria, stakeholders, prioridade, requisitos técnicos, restrições regulatórias, recomendações para próximos passos).
+2. Uma SUGESTÃO de melhoria do consultor.
+
+Regras:
+
+- Output: APENAS o markdown atualizado, sem preâmbulo, sem cercas de código.
+- Preserve a estrutura (mesmas seções na mesma ordem) e o tom.
+- CRÍTICO: NÃO altere texto LITERAL dos campos audit-críticos: **Requisitos técnicos** e **Restrições regulatórias**. Esses precisam aparecer palavra por palavra como já estão no relatório. Se a sugestão pede paráfrase desses campos, ignore-a e mantenha o texto literal (pode mencionar "uma alteração desses campos exigiria editar o form e regerar o Perfil").
+- Pode refinar: descrição, sub-segmentos (adicionar/reordenar), escopo, critérios de avaliação, stakeholders, observações, recomendações para próximos passos.
+- Mantenha valores reais (nome da categoria, nomes de stakeholders, prioridade escolhida).
+- Se a sugestão for ambígua, faça a melhor interpretação razoável.`;
+
 // POST /api/assistants/runs/[id]/apply — merges a refine-chat suggestion
 // into the RFP's customizable head. Verbatim tail (Cotação + Termos +
 // Código) is untouched.
@@ -161,7 +175,9 @@ Reescreva o RFP acima incorporando a sugestão. Apenas o markdown atualizado, na
               ? FINANCIAL_SYSTEM_PROMPT
               : run.assistant_type === 'abc'
                 ? ABC_SYSTEM_PROMPT
-                : RFP_SYSTEM_PROMPT,
+                : run.assistant_type === 'profile'
+                  ? PROFILE_SYSTEM_PROMPT
+                  : RFP_SYSTEM_PROMPT,
       messages: [{ role: 'user', content: userPrompt }],
     });
 
@@ -186,7 +202,9 @@ Reescreva o RFP acima incorporando a sugestão. Apenas o markdown atualizado, na
               ? 'assistant-financial-apply'
               : run.assistant_type === 'abc'
                 ? 'assistant-abc-apply'
-                : 'assistant-rfp-apply',
+                : run.assistant_type === 'profile'
+                  ? 'assistant-profile-apply'
+                  : 'assistant-rfp-apply',
       model: process.env.OPENAI_MODEL ?? 'gpt-4o-mini',
       tokensIn: result.usage.promptTokens,
       tokensOut: result.usage.completionTokens,

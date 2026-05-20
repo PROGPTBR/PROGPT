@@ -19,7 +19,13 @@ import {
 // owner check). Each row carries enough metadata to render without an
 // extra fetch.
 
-type AssistantTypeLocal = 'rfp' | 'kraljic' | 'porter' | 'financial' | 'abc';
+type AssistantTypeLocal =
+  | 'rfp'
+  | 'kraljic'
+  | 'porter'
+  | 'financial'
+  | 'abc'
+  | 'profile';
 
 type RunSummary = {
   id: string;
@@ -43,6 +49,9 @@ type RunSummary = {
     // ABC
     analysisName?: string;
     analysisPeriod?: string;
+    // Profile
+    nomeCategoria?: string;
+    subSegmentos?: string[];
   };
   status: 'running' | 'done' | 'error';
   error_message: string | null;
@@ -138,9 +147,11 @@ export function RfpHistoryList() {
             ? 'financial'
             : assistantType === 'abc'
               ? 'abc'
-              : kind === 'docx'
-                ? 'rfp'
-                : 'cotacao';
+              : assistantType === 'profile'
+                ? 'perfil'
+                : kind === 'docx'
+                  ? 'rfp'
+                  : 'cotacao';
     const filename = `${prefix}-${runId.slice(0, 8)}.${kind}`;
     const errLabel =
       kind === 'docx' ? 'Falha ao baixar .docx' : 'Falha ao baixar planilha';
@@ -210,6 +221,7 @@ export function RfpHistoryList() {
             const isPorter = r.assistant_type === 'porter';
             const isFinancial = r.assistant_type === 'financial';
             const isAbc = r.assistant_type === 'abc';
+            const isProfile = r.assistant_type === 'profile';
             const scope = isKraljic
               ? (r.params.portfolioName ?? '(portfólio sem nome)')
               : isPorter
@@ -218,7 +230,9 @@ export function RfpHistoryList() {
                   ? (r.params.supplierName ?? '(fornecedor sem nome)')
                   : isAbc
                     ? (r.params.analysisName ?? '(análise sem nome)')
-                    : (r.params.scope ?? '(sem escopo)');
+                    : isProfile
+                      ? (r.params.nomeCategoria ?? '(categoria sem nome)')
+                      : (r.params.scope ?? '(sem escopo)');
             const category = isKraljic
               ? `${r.params.items?.length ?? 0} item(ns)`
               : isPorter
@@ -227,14 +241,16 @@ export function RfpHistoryList() {
                   ? (r.params.referenceYear || 'Análise de fornecedor')
                   : isAbc
                     ? `${r.params.items?.length ?? 0} item(ns)`
-                    : (r.params.category ?? '—');
+                    : isProfile
+                      ? `${r.params.subSegmentos?.length ?? 0} sub-segmento(s)`
+                      : (r.params.category ?? '—');
             const client =
-              isKraljic || isPorter || isFinancial || isAbc
+              isKraljic || isPorter || isFinancial || isAbc || isProfile
                 ? ''
                 : (r.params.client ?? '');
             const isDone = r.status === 'done';
-            // Porter and Financial don't produce a .xlsx.
-            const showXlsx = !isPorter && !isFinancial;
+            // Porter, Financial and Profile don't produce a .xlsx.
+            const showXlsx = !isPorter && !isFinancial && !isProfile;
             return (
               <li
                 key={r.id}

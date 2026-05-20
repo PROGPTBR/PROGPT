@@ -11,6 +11,7 @@ import { RfpDocumentPreview } from './previews/RfpDocumentPreview';
 import { PorterForcesPreview } from './previews/PorterForcesPreview';
 import { FinancialScorePreview } from './previews/FinancialScorePreview';
 import { AbcCurvePreview } from './previews/AbcCurvePreview';
+import { ProfileDocPreview } from './previews/ProfileDocPreview';
 
 // Hub layout — Spotlight + Roadmap.
 //
@@ -31,6 +32,20 @@ type SpotlightAssistant = {
 };
 
 const SPOTLIGHTS: SpotlightAssistant[] = [
+  {
+    step: 1,
+    stepCategory: 'Perfil',
+    href: '/assistants/profile',
+    title: 'Perfil da Categoria',
+    short:
+      'Caracterize uma categoria de compra antes de ir pra análise. 15 campos estruturados que alimentam os próximos passos.',
+    bullets: [
+      'Upload de PDF/DOCX pré-preenche o form',
+      'Botão "Iniciar de um Perfil" nos outros assistentes',
+      'Markdown + .docx + chat de refinamento',
+    ],
+    Preview: ProfileDocPreview,
+  },
   {
     step: 2,
     stepCategory: 'Análise',
@@ -112,7 +127,7 @@ type RoadmapStep = {
 };
 
 const STEPS: RoadmapStep[] = [
-  { n: 1, shortLabel: 'Perfil', fullName: 'Perfil da Categoria', available: false },
+  { n: 1, shortLabel: 'Perfil', fullName: 'Perfil da Categoria', available: true, href: '/assistants/profile' },
   { n: 2, shortLabel: 'Análise', fullName: 'Análise da Categoria', available: true, href: '/assistants/abc' },
   { n: 3, shortLabel: 'Mercado', fullName: 'Visão do Mercado Fornecedor', available: true, href: '/assistants/porter' },
   { n: 4, shortLabel: 'Estratégia', fullName: 'Estratégia de Sourcing', available: true, href: '/assistants/kraljic' },

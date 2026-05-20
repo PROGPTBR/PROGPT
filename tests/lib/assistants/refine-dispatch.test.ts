@@ -6,6 +6,7 @@ import {
   PORTER_REFINE_SYSTEM_PROMPT,
   FINANCIAL_REFINE_SYSTEM_PROMPT,
   ABC_REFINE_SYSTEM_PROMPT,
+  PROFILE_REFINE_SYSTEM_PROMPT,
 } from '@/lib/assistants/refine';
 import type {
   RfpParams,
@@ -13,6 +14,7 @@ import type {
   PorterParams,
   FinancialParams,
   AbcParams,
+  ProfileParams,
 } from '@/lib/assistants/types';
 
 const rfpParams: RfpParams = {
@@ -179,5 +181,43 @@ describe('buildRefineSystemForType', () => {
   it('ABC refine prompt protects the deterministic classification', () => {
     expect(ABC_REFINE_SYSTEM_PROMPT).toMatch(/NÃO altere a classificação|percentuais/i);
     expect(ABC_REFINE_SYSTEM_PROMPT).toMatch(/Pareto|cumulativo/i);
+  });
+
+  it('returns the Profile refine system prompt when assistant_type=profile', () => {
+    const profileParams: ProfileParams = {
+      nomeCategoria: 'Embalagens flexíveis',
+      descricao: 'Filmes e laminados para embalagem.',
+      subSegmentos: ['filmes laminados'],
+      escopoIncluido: 'Filmes mono e multicamada.',
+      escopoNaoIncluido: '',
+      requisitosTecnicos: 'ABNT NBR 14937.',
+      restricoesRegulatorias: '',
+      criteriosAvaliacao: ['Qualidade'],
+      stakeholders: [{ nome: 'Maria', papel: 'aprovador' }],
+      prioridadeEstrategica: 'qualidade',
+      observacoes: '',
+      volumeFisico: '',
+      sazonalidade: '',
+    };
+    const out = buildRefineSystemForType(
+      'profile',
+      '# Perfil',
+      profileParams,
+      [],
+    );
+    expect(out).toContain(PROFILE_REFINE_SYSTEM_PROMPT);
+    expect(out).not.toContain(RFP_REFINE_SYSTEM_PROMPT);
+    expect(out).not.toContain(KRALJIC_REFINE_SYSTEM_PROMPT);
+    expect(out).not.toContain(PORTER_REFINE_SYSTEM_PROMPT);
+    expect(out).not.toContain(FINANCIAL_REFINE_SYSTEM_PROMPT);
+    expect(out).not.toContain(ABC_REFINE_SYSTEM_PROMPT);
+    expect(out).toMatch(/<report>/);
+    expect(out).toMatch(/Embalagens flexíveis/);
+  });
+
+  it('Profile refine prompt protects audit-critical literal fields', () => {
+    expect(PROFILE_REFINE_SYSTEM_PROMPT).toMatch(/NÃO altere|preservar|literal/i);
+    expect(PROFILE_REFINE_SYSTEM_PROMPT).toMatch(/[Rr]equisitos técnicos/);
+    expect(PROFILE_REFINE_SYSTEM_PROMPT).toMatch(/[Rr]estrições regulatórias/);
   });
 });

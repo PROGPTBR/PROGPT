@@ -6,6 +6,7 @@ import type {
   PorterParams,
   FinancialParams,
   AbcParams,
+  ProfileParams,
 } from './types';
 
 // Sub-projeto 21 + 27 — Post-creation chat refinement.
@@ -349,6 +350,72 @@ ${baseBlock}
 </base>`;
 }
 
+// ── Profile refinement ───────────────────────────────────────────────────
+
+export const PROFILE_REFINE_SYSTEM_PROMPT = `Você é um especialista sênior em procurement ajudando o usuário a refinar um Perfil da Categoria (Strategic Sourcing Step 1) que acabou de ser gerado. Função: aprofundar a caracterização, sugerir sub-segmentos faltantes, propor stakeholders a incluir, alertar para restrições regulatórias plausíveis na categoria, e indicar como o Perfil orienta os próximos passos (ABC, Kraljic, Porter, RFP).
+
+## Como responder
+
+1. **Seja específico ao documento**. O relatório aparece entre \`<report>...</report>\`. Refira-se a campos pelo nome ("o sub-segmento 'filmes laminados' que você listou…", "a prioridade 'qualidade' que você escolheu…").
+
+2. **CRÍTICO — NÃO altere campos audit-críticos**. Requisitos técnicos e restrições regulatórias do Perfil são LITERAIS — qualquer alteração quebra rastreabilidade. Se o usuário pedir paráfrase desses campos, recuse e explique que precisa ser editado no form (e regerado), não no refine chat.
+
+3. **Pode sugerir alterações em**: descrição, sub-segmentos, escopo (incluído/não-incluído), critérios de avaliação (re-priorizar), stakeholders (adicionar/remover), observações, prioridade estratégica.
+
+4. **Profundidade sênior**. Threshold concreto, exemplo de categoria comparável, referência cruzada com framework (ex.: "essa caracterização sugere quadrante Estratégico no Kraljic" / "o número de fornecedores ativos aponta para Cox 1996 'single-source-by-design'"). Evite "padrão de mercado" genérico.
+
+5. **Fundamente em teoria quando útil**. Há trechos da base entre \`<base>...</base>\`. Use princípios de Category Management (Monczka, O'Brien), Strategic Sourcing pipeline, Kraljic 1983.
+
+6. **Diga "depende" quando for o caso**. Não invente fornecedores específicos, market shares, ou benchmarks numéricos.
+
+7. **Aponte continuidade do funil**. Quando útil, sugira "esse Perfil sustenta uma análise ABC de spend nos próximos passos — clique no botão 'Iniciar de um Perfil' dentro do ABC".
+
+8. **Markdown limpo**. Sem preâmbulo conversacional.`;
+
+export function buildProfileRefineSystem(
+  reportMarkdown: string,
+  params: ProfileParams,
+  chunks: RetrievedChunk[],
+): string {
+  const paramsSummary = [
+    `Categoria: ${params.nomeCategoria}`,
+    `Sub-segmentos: ${params.subSegmentos.join(', ')}`,
+    `Prioridade estratégica: ${params.prioridadeEstrategica}`,
+    `Stakeholders: ${params.stakeholders.length} pessoas`,
+    `Critérios priorizados: ${params.criteriosAvaliacao.length}`,
+    typeof params.spendAnualBRL === 'number'
+      ? `Spend anual: R$ ${params.spendAnualBRL.toFixed(2)}`
+      : '',
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  const baseBlock =
+    chunks.length === 0
+      ? '(nenhum trecho relevante recuperado — responda com princípios gerais de Category Management)'
+      : chunks
+          .map((c) => `### ${c.articleTitle}\n\n${c.content.slice(0, 800)}`)
+          .join('\n\n---\n\n');
+
+  return `${PROFILE_REFINE_SYSTEM_PROMPT}
+
+## Parâmetros originais
+
+${paramsSummary}
+
+## Relatório do Perfil (referência completa)
+
+<report>
+${reportMarkdown}
+</report>
+
+## Base de conhecimento
+
+<base>
+${baseBlock}
+</base>`;
+}
+
 // ── Dispatcher ───────────────────────────────────────────────────────────
 
 export function buildRefineSystemForType(
@@ -359,7 +426,8 @@ export function buildRefineSystemForType(
     | KraljicParams
     | PorterParams
     | FinancialParams
-    | AbcParams,
+    | AbcParams
+    | ProfileParams,
   chunks: RetrievedChunk[],
 ): string {
   if (assistantType === 'kraljic') {
@@ -377,6 +445,9 @@ export function buildRefineSystemForType(
   }
   if (assistantType === 'abc') {
     return buildAbcRefineSystem(outputMd, params as AbcParams, chunks);
+  }
+  if (assistantType === 'profile') {
+    return buildProfileRefineSystem(outputMd, params as ProfileParams, chunks);
   }
   return buildRfpRefineSystem(outputMd, params as RfpParams, chunks);
 }

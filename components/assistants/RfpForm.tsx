@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { UseProfilePicker } from './UseProfilePicker';
+import type { ProfileParams } from '@/lib/assistants/types';
 
 // Form values match RfpRequestSchema in lib/assistants/types.ts.
 // Validation is duplicated lightly client-side to surface inline errors
@@ -17,6 +19,9 @@ export type RfpFormValues = {
   budget: string;
   criteria: string[];
   notes: string;
+  // Sub-projeto 33: when the user starts from a Profile, perfilId is
+  // stored in the run's params JSONB for future cross-referencing.
+  perfilId?: string;
 };
 
 type Template = {
@@ -91,6 +96,19 @@ export function RfpForm({ onSubmit }: { onSubmit: (v: RfpFormValues) => void }) 
     void prefillFromProfile();
   }, [fetchTemplates, prefillFromProfile]);
 
+  function handleProfileSelected(perfilId: string, p: ProfileParams) {
+    setValues((v) => ({
+      ...v,
+      category: p.nomeCategoria,
+      scope:
+        v.scope.trim().length > 0
+          ? v.scope
+          : `${p.descricao}\n\n**Escopo incluído:** ${p.escopoIncluido}${p.escopoNaoIncluido ? `\n\n**Escopo NÃO incluído:** ${p.escopoNaoIncluido}` : ''}`,
+      criteria: v.criteria.length > 0 ? v.criteria : p.criteriosAvaliacao,
+      perfilId,
+    }));
+  }
+
   function toggleCriterion(c: string) {
     setValues((v) => ({
       ...v,
@@ -116,6 +134,9 @@ export function RfpForm({ onSubmit }: { onSubmit: (v: RfpFormValues) => void }) 
         if (valid) onSubmit(values);
       }}
     >
+      <div className="flex justify-end">
+        <UseProfilePicker onProfileSelected={handleProfileSelected} />
+      </div>
       <div>
         <label className="text-xs font-medium block mb-1">
           Template <span className="text-destructive">*</span>

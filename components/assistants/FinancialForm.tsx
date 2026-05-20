@@ -5,8 +5,12 @@ import { toast } from 'sonner';
 import { Upload, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import type { FinancialIndicators } from '@/lib/assistants/types';
+import type {
+  FinancialIndicators,
+  ProfileParams,
+} from '@/lib/assistants/types';
 import { calculateFinancialScore } from '@/lib/assistants/financial';
+import { UseProfilePicker } from './UseProfilePicker';
 
 // Sub-projeto 30 — Form para análise financeira de fornecedor.
 //
@@ -26,6 +30,7 @@ export type FinancialFormValues = {
   referenceYear: string;
   observacoes: string;
   indicators: FinancialIndicators;
+  perfilId?: string;
 };
 
 type Template = {
@@ -97,7 +102,18 @@ export function FinancialForm({
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loadingTemplates, setLoadingTemplates] = useState(true);
   const [extracting, setExtracting] = useState(false);
+  const [perfilId, setPerfilId] = useState<string | undefined>(undefined);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Financial is per-supplier, not per-category. The Profile picker
+  // only pre-fills the "observações" with category context, since the
+  // supplier identity must come from the analyst. perfilId is still
+  // stored for cross-referencing.
+  function handleProfileSelected(id: string, p: ProfileParams) {
+    const note = `Categoria de compra: ${p.nomeCategoria}. ${p.descricao}`;
+    if (observacoes.trim().length === 0) setObservacoes(note);
+    setPerfilId(id);
+  }
 
   const fetchTemplates = useCallback(async () => {
     setLoadingTemplates(true);
@@ -214,6 +230,7 @@ export function FinancialForm({
       referenceYear: referenceYear.trim(),
       observacoes: observacoes.trim(),
       indicators,
+      perfilId,
     });
   }
 
@@ -222,6 +239,9 @@ export function FinancialForm({
       onSubmit={handleSubmit}
       className="space-y-6 rounded-md border border-border bg-card p-6 max-w-4xl"
     >
+      <div className="flex justify-end">
+        <UseProfilePicker onProfileSelected={handleProfileSelected} />
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="md:col-span-2">
           <label className="text-xs font-medium block mb-1">Template</label>

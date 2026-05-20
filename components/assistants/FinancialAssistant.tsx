@@ -35,6 +35,7 @@ export function FinancialAssistant() {
             referenceYear: values.referenceYear,
             observacoes: values.observacoes,
             indicators: values.indicators,
+            ...(values.perfilId ? { perfilId: values.perfilId } : {}),
           },
         }),
       });

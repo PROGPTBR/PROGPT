@@ -5,7 +5,11 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ChevronDown, ChevronRight } from 'lucide-react';
-import type { PorterForce, PorterStatementScore } from '@/lib/assistants/types';
+import type {
+  PorterForce,
+  PorterStatementScore,
+  ProfileParams,
+} from '@/lib/assistants/types';
 import { PORTER_FORCE_LABELS } from '@/lib/assistants/types';
 import {
   PORTER_STATEMENTS_BY_FORCE,
@@ -13,6 +17,7 @@ import {
   PORTER_INTENSITY_LABELS,
   intensityFromScore,
 } from '@/lib/assistants/porter-statements';
+import { UseProfilePicker } from './UseProfilePicker';
 
 // Sub-projeto 29 v2 — Quantitative Porter form (PG model).
 //
@@ -32,6 +37,7 @@ export type PorterFormValues = {
   escopo: string;
   observacoes: string;
   statements: PorterStatementScore[];
+  perfilId?: string;
 };
 
 type Template = {
@@ -79,6 +85,7 @@ export function PorterForm({
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loadingTemplates, setLoadingTemplates] = useState(true);
   const [collapsed, setCollapsed] = useState<Set<PorterForce>>(new Set());
+  const [perfilId, setPerfilId] = useState<string | undefined>(undefined);
 
   const fetchTemplates = useCallback(async () => {
     setLoadingTemplates(true);
@@ -142,6 +149,14 @@ export function PorterForm({
     return templateId.length > 0 && categoria.trim().length >= 2;
   }
 
+  function handleProfileSelected(id: string, p: ProfileParams) {
+    if (categoria.trim().length === 0) setCategoria(p.nomeCategoria);
+    if (segmento.trim().length === 0 && p.subSegmentos.length > 0)
+      setSegmento(p.subSegmentos[0]!);
+    if (escopo.trim().length === 0) setEscopo(p.escopoIncluido);
+    setPerfilId(id);
+  }
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!valid()) return;
@@ -152,6 +167,7 @@ export function PorterForm({
       escopo: escopo.trim(),
       observacoes: observacoes.trim(),
       statements,
+      perfilId,
     });
   }
 
@@ -160,6 +176,9 @@ export function PorterForm({
       onSubmit={handleSubmit}
       className="space-y-6 rounded-md border border-border bg-card p-6 max-w-4xl"
     >
+      <div className="flex justify-end">
+        <UseProfilePicker onProfileSelected={handleProfileSelected} />
+      </div>
       {/* ── Top-level inputs ──────────────────────────────────────────── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="md:col-span-2">

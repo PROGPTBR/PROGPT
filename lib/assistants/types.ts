@@ -14,7 +14,8 @@ export type AssistantType =
   | 'kraljic'
   | 'porter'
   | 'financial'
-  | 'abc';
+  | 'abc'
+  | 'profile';
 
 export const ASSISTANT_TYPES = [
   'rfp',
@@ -22,6 +23,7 @@ export const ASSISTANT_TYPES = [
   'porter',
   'financial',
   'abc',
+  'profile',
 ] as const;
 
 export type ThemeStatusRow = 'running' | 'done' | 'error';
@@ -79,6 +81,10 @@ export const RfpParamsSchema = z.object({
   // string[] before sending. Empty array is OK — model defaults to standard.
   criteria: z.array(z.string().trim().min(1).max(80)).max(20),
   notes: z.string().trim().max(2000).optional().default(''),
+  // Sub-projeto 33: when the user invokes "Iniciar de um Perfil" in the
+  // form, the UUID of the source Profile run is stored here for cross-
+  // referencing. Optional and JSONB — no migration needed.
+  perfilId: z.string().uuid().optional(),
 });
 
 export type RfpParams = z.infer<typeof RfpParamsSchema>;
@@ -130,6 +136,7 @@ export const KraljicParamsSchema = z.object({
   analysisPeriod: z.string().trim().max(120).optional().default(''),
   notes: z.string().trim().max(2000).optional().default(''),
   items: z.array(KraljicItemSchema).min(2).max(200),
+  perfilId: z.string().uuid().optional(),
 });
 
 export type KraljicParams = z.infer<typeof KraljicParamsSchema>;
@@ -193,6 +200,7 @@ export const PorterParamsSchema = z.object({
   // Min 35 / max 35 enforced loosely (>=5 to allow lighter UIs in v2).
   // Order doesn't matter; classifyPorterForces() groups by `id` prefix.
   statements: z.array(PorterStatementScoreSchema).min(5).max(35),
+  perfilId: z.string().uuid().optional(),
 });
 
 export type PorterParams = z.infer<typeof PorterParamsSchema>;
@@ -258,6 +266,7 @@ export const FinancialParamsSchema = z.object({
   referenceYear: z.string().trim().max(20).optional().default(''),
   observacoes: z.string().trim().max(2000).optional().default(''),
   indicators: FinancialIndicatorsSchema,
+  perfilId: z.string().uuid().optional(),
 });
 
 export type FinancialParams = z.infer<typeof FinancialParamsSchema>;
@@ -324,6 +333,7 @@ export const AbcParamsSchema = z.object({
   // POs and the user expects A/B/C per SKU, not per PO line.
   consolidate: z.boolean().optional().default(true),
   items: z.array(AbcItemSchema).min(5).max(5000),
+  perfilId: z.string().uuid().optional(),
 });
 
 export type AbcParams = z.infer<typeof AbcParamsSchema>;
@@ -370,6 +380,90 @@ export type AbcAnalysis = {
   byClass: Record<AbcClass, AbcClassSummary>;
 };
 
+// ── Sub-projeto 33 — Profile (Perfil da Categoria) ──────────────────────────
+// First step of Strategic Sourcing: characterize the category before any
+// downstream analysis. Output is purely narrative (no deterministic
+// scoring like Kraljic/ABC/Financial). 15 structured fields in 5 blocks.
+// The integration value comes from the per-form "Iniciar de um Perfil"
+// picker which reads these params and pre-populates downstream assistants.
+
+export const ProfileStakeholderSchema = z.object({
+  nome: z.string().trim().min(1).max(100),
+  papel: z.enum(['usuario', 'aprovador', 'operacao']),
+});
+
+export type ProfileStakeholder = z.infer<typeof ProfileStakeholderSchema>;
+
+export const PROFILE_PRIORITY_VALUES = [
+  'custo',
+  'qualidade',
+  'inovacao',
+  'sustentabilidade',
+] as const;
+
+export type ProfilePriority = (typeof PROFILE_PRIORITY_VALUES)[number];
+
+export const ProfileParamsSchema = z.object({
+  // Identificação (R)
+  nomeCategoria: z.string().trim().min(1).max(200),
+  descricao: z.string().trim().min(1).max(2000),
+  subSegmentos: z.array(z.string().trim().min(1).max(120)).min(1).max(20),
+  escopoIncluido: z.string().trim().min(1).max(2000),
+  escopoNaoIncluido: z.string().trim().max(2000).optional().default(''),
+
+  // Volume e mercado (O)
+  spendAnualBRL: z.number().nonnegative().optional(),
+  volumeFisico: z.string().trim().max(120).optional().default(''),
+  numeroFornecedoresAtivos: z.number().int().nonnegative().optional(),
+  sazonalidade: z.string().trim().max(300).optional().default(''),
+
+  // Critérios técnicos
+  requisitosTecnicos: z.string().trim().min(1).max(3000),
+  restricoesRegulatorias: z.string().trim().max(2000).optional().default(''),
+  criteriosAvaliacao: z.array(z.string().trim().min(1).max(200)).min(1).max(10),
+
+  // Stakeholders (R)
+  stakeholders: z.array(ProfileStakeholderSchema).min(1).max(20),
+
+  // Prioridade (R)
+  prioridadeEstrategica: z.enum(PROFILE_PRIORITY_VALUES),
+  observacoes: z.string().trim().max(2000).optional().default(''),
+  // Sub-projeto 33: reserved for a future "Perfil derivado de outro
+  // Perfil" feature. Optional + JSONB — no migration needed.
+  perfilId: z.string().uuid().optional(),
+});
+
+export type ProfileParams = z.infer<typeof ProfileParamsSchema>;
+
+export const ProfileRequestSchema = z.object({
+  templateId: z.string().uuid(),
+  params: ProfileParamsSchema,
+});
+
+export type ProfileRequest = z.infer<typeof ProfileRequestSchema>;
+
+// PartialProfile: shape returned by the multimodal extractor. Every field
+// is optional and stakeholders may be empty (caller revisa antes do submit).
+export const PartialProfileSchema = z.object({
+  nomeCategoria: z.string().trim().max(200).optional(),
+  descricao: z.string().trim().max(2000).optional(),
+  subSegmentos: z.array(z.string().trim().max(120)).max(20).optional(),
+  escopoIncluido: z.string().trim().max(2000).optional(),
+  escopoNaoIncluido: z.string().trim().max(2000).optional(),
+  spendAnualBRL: z.number().nonnegative().optional(),
+  volumeFisico: z.string().trim().max(120).optional(),
+  numeroFornecedoresAtivos: z.number().int().nonnegative().optional(),
+  sazonalidade: z.string().trim().max(300).optional(),
+  requisitosTecnicos: z.string().trim().max(3000).optional(),
+  restricoesRegulatorias: z.string().trim().max(2000).optional(),
+  criteriosAvaliacao: z.array(z.string().trim().max(200)).max(10).optional(),
+  stakeholders: z.array(ProfileStakeholderSchema).max(20).optional(),
+  prioridadeEstrategica: z.enum(PROFILE_PRIORITY_VALUES).optional(),
+  observacoes: z.string().trim().max(2000).optional(),
+});
+
+export type PartialProfile = z.infer<typeof PartialProfileSchema>;
+
 // ── Assistant run row shape (DB serialization) ───────────────────────────
 // `params` is discriminated by `assistant_type`. We type it as the union
 // here and narrow at the call site.
@@ -383,7 +477,8 @@ export type AssistantRunRow = {
     | KraljicParams
     | PorterParams
     | FinancialParams
-    | AbcParams;
+    | AbcParams
+    | ProfileParams;
   output_md: string | null;
   status: ThemeStatusRow;
   error_message: string | null;
