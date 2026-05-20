@@ -30,7 +30,13 @@ FROM node:22-bookworm AS runner
 WORKDIR /app
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
-    PORT=3000
+    PORT=3000 \
+    HOSTNAME=0.0.0.0
+# HOSTNAME=0.0.0.0 is REQUIRED for containers. The Next.js standalone
+# server defaults to binding `localhost` (127.0.0.1 only) — Railway's
+# proxy can't reach that interface from outside the container, which
+# manifests as "Application failed to respond". Binding to all
+# interfaces fixes it. PORT comes from env at runtime (Railway sets it).
 
 # Standalone output: only the modules actually imported are bundled.
 # Static + public files live next to server.js per Next.js convention.
