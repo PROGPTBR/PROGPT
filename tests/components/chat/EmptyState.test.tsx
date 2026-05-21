@@ -26,15 +26,17 @@ function renderState(overrides?: Partial<React.ComponentProps<typeof EmptyState>
 }
 
 describe('EmptyState', () => {
-  it('clicking a suggestion pill calls onChange with the matching query', async () => {
+  it('clicking a suggestion pill calls onChange with the matching starter query', async () => {
     const { onChange } = renderState();
     const user = userEvent.setup();
-    const definir = screen.getByRole('button', { name: /definir/i });
-    await user.click(definir);
-    expect(onChange).toHaveBeenCalledWith('O que é a matriz de Kraljic?');
+    const compras = screen.getByRole('button', { name: /^Compras$/i });
+    await user.click(compras);
+    expect(onChange).toHaveBeenCalledWith(
+      'Como definir a estratégia de compras para uma categoria nova?',
+    );
   });
 
-  it('shows the "Descobrir" pill with the library-overview query (sub-projeto 18)', async () => {
+  it('shows the "Descobrir temas" pill with the library-overview query (sub-projeto 18)', async () => {
     const { onChange } = renderState();
     const card = screen.getByRole('button', { name: /Descobrir/i });
     expect(card).toBeTruthy();
@@ -43,10 +45,19 @@ describe('EmptyState', () => {
     expect(onChange).toHaveBeenCalledWith('Sobre o que você pode me ensinar?');
   });
 
-  it('renders a hero greeting (Bom dia / Boa tarde / Boa noite)', () => {
+  it('renders the action-oriented hero pitch', () => {
     renderState();
     const heading = screen.getByRole('heading', { level: 1 });
-    expect(heading.textContent).toMatch(/^(Bom dia|Boa tarde|Boa noite)/);
+    expect(heading.textContent).toMatch(/IA de Suprimentos.*Qual problema/i);
+  });
+
+  it('exposes all five procurement areas as pills', () => {
+    renderState();
+    for (const area of ['Compras', 'Contratos', 'Fornecedores', 'Estoque', 'Logística']) {
+      expect(
+        screen.getByRole('button', { name: new RegExp(`^${area}$`, 'i') }),
+      ).toBeTruthy();
+    }
   });
 
   it('renders the Perfil da Categoria link', () => {
