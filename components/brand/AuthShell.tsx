@@ -1,5 +1,5 @@
-import Image from 'next/image';
 import Link from 'next/link';
+import { BrandLogo } from './BrandLogo';
 
 // Reusable layout for auth pages (login, signup, forgot, reset).
 // Dark atmospheric chrome with 2B Supply logo + brand cyan accents.
@@ -23,15 +23,8 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
 
       {/* Header */}
       <header className="relative z-10 px-6 md:px-12 py-6">
-        <Link href="/" className="inline-flex items-center gap-2">
-          <Image
-            src="/2bsupply-logo.png"
-            alt="2B Supply — voltar para a página inicial"
-            width={241}
-            height={57}
-            priority
-            className="h-6 md:h-7 w-auto brightness-0 invert"
-          />
+        <Link href="/" className="inline-flex items-center" aria-label="2B Supply — voltar para a página inicial">
+          <BrandLogo size="md" priority />
         </Link>
       </header>
 

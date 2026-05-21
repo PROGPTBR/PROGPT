@@ -1,11 +1,11 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { Plus, Trash2, Sparkles } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import type { StoredSession } from '@/lib/chat-storage';
 import { UserRow } from '@/components/auth/UserRow';
+import { BrandLogo } from '@/components/brand/BrandLogo';
 
 type Props = {
   sessions: StoredSession[];
@@ -36,15 +36,8 @@ export function Sidebar({
   return (
     <aside className="w-72 shrink-0 border-r border-border bg-card/60 dark:bg-black/40 backdrop-blur-md flex flex-col h-full">
       <div className="flex items-center justify-between px-4 py-4 border-b border-border">
-        <Link href="/" className="inline-flex items-center gap-2">
-          <Image
-            src="/2bsupply-logo.png"
-            alt="2B Supply"
-            width={241}
-            height={57}
-            priority
-            className="h-6 w-auto dark:brightness-0 dark:invert"
-          />
+        <Link href="/" className="inline-flex items-center">
+          <BrandLogo size="md" priority />
         </Link>
         <button
           type="button"

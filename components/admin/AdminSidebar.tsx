@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -13,6 +12,7 @@ import {
   FileCode,
   ArrowLeft,
 } from 'lucide-react';
+import { BrandLogo } from '@/components/brand/BrandLogo';
 
 const ITEMS = [
   { href: '/admin/users', label: 'Usuários', Icon: Users },
@@ -29,15 +29,8 @@ export function AdminSidebar() {
   return (
     <aside className="w-56 shrink-0 border-r border-white/5 bg-black/40 backdrop-blur-md flex flex-col h-screen sticky top-0">
       <div className="px-4 py-4 border-b border-white/5">
-        <Link href="/" className="inline-flex items-center gap-2 mb-3">
-          <Image
-            src="/2bsupply-logo.png"
-            alt="2B Supply"
-            width={241}
-            height={57}
-            priority
-            className="h-6 w-auto brightness-0 invert"
-          />
+        <Link href="/" className="inline-flex items-center mb-3">
+          <BrandLogo size="md" priority />
         </Link>
         <div className="text-[10px] font-medium uppercase tracking-wider text-brand">
           Admin

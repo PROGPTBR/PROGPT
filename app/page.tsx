@@ -1,8 +1,8 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect } from 'react';
+import { BrandLogo } from '@/components/brand/BrandLogo';
 import {
   ArrowRight,
   Plus,
@@ -210,15 +210,8 @@ export default function Landing() {
           id="landing-navbar"
           className="fixed top-0 left-0 w-full z-50 transition-all duration-300 backdrop-blur-md bg-black/20 border-b border-white/5 py-4 px-6 md:px-12 flex justify-between items-center"
         >
-          <Link href="/" className="flex items-center gap-2">
-            <Image
-              src="/2bsupply-logo.png"
-              alt="2B Supply"
-              width={241}
-              height={57}
-              priority
-              className="h-6 md:h-7 w-auto brightness-0 invert"
-            />
+          <Link href="/" className="flex items-center">
+            <BrandLogo size="md" priority />
           </Link>
 
           <div className="hidden md:flex space-x-8 items-center text-sm font-medium text-gray-300">
@@ -653,13 +646,9 @@ export default function Landing() {
         {/* ───── Footer ───── */}
         <footer className="py-12 px-6 md:px-12 max-w-7xl mx-auto border-t border-white/5 mt-12 flex flex-col md:flex-row justify-between items-start md:items-center gap-12">
           <div className="max-w-xs">
-            <Image
-              src="/2bsupply-logo.png"
-              alt="2B Supply"
-              width={241}
-              height={57}
-              className="h-7 w-auto brightness-0 invert mb-4"
-            />
+            <div className="mb-4">
+              <BrandLogo size="lg" />
+            </div>
             <p className="text-sm text-gray-500 mb-6">
               ProcurementGPT — parte do ecossistema 2B Supply. Inteligência
               aplicada para cada passo do Strategic Sourcing.

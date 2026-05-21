@@ -1,8 +1,8 @@
-import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { requireUser, NotAuthenticated } from '@/lib/auth';
 import { redirect } from 'next/navigation';
+import { BrandLogo } from '@/components/brand/BrandLogo';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,15 +31,8 @@ export default async function AssistantsLayout({
 
       <header className="relative z-10 border-b border-white/5 backdrop-blur-md bg-black/20 sticky top-0">
         <div className="mx-auto max-w-6xl px-6 py-4 flex items-center justify-between">
-          <Link href="/" className="inline-flex items-center gap-2">
-            <Image
-              src="/2bsupply-logo.png"
-              alt="2B Supply"
-              width={241}
-              height={57}
-              priority
-              className="h-6 w-auto brightness-0 invert"
-            />
+          <Link href="/" className="inline-flex items-center">
+            <BrandLogo size="md" priority />
           </Link>
           <Link
             href="/chat"
