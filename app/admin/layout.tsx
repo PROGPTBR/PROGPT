@@ -17,7 +17,7 @@ export default async function AdminLayout({
     throw err;
   }
   return (
-    <div className="brand-dark flex min-h-screen bg-[#0d0d0d] text-white font-outfit antialiased">
+    <div className="flex min-h-screen bg-background dark:bg-[#0d0d0d] text-foreground dark:text-white font-outfit antialiased">
       <AdminSidebar />
       <main className="flex-1 p-8 overflow-x-auto">{children}</main>
     </div>

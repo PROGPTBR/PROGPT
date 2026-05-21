@@ -37,10 +37,10 @@ function withDefaults(d: Partial<CompanyData>): CompanyData {
 }
 
 const FIELD_INPUT_CLASS =
-  'w-full rounded-lg bg-white/5 border border-white/10 px-4 py-2.5 text-sm text-white placeholder-gray-600 outline-none focus:border-brand focus:bg-white/10 transition-colors';
+  'w-full rounded-lg bg-muted/40 border border-border px-4 py-2.5 text-sm text-foreground placeholder-muted-foreground outline-none focus:border-brand focus:bg-muted/60 transition-colors';
 
 const FIELD_LABEL_CLASS =
-  'block text-xs font-medium text-gray-400 uppercase tracking-wider mb-2';
+  'block text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2';
 
 export function ProfileCompanyForm() {
   const [values, setValues] = useState<CompanyData>(EMPTY);
@@ -92,7 +92,7 @@ export function ProfileCompanyForm() {
 
   if (loading) {
     return (
-      <div className="rounded-2xl border border-white/5 bg-[#111111] p-6 text-xs text-gray-500">
+      <div className="rounded-2xl border border-border bg-card p-6 text-xs text-muted-foreground">
         Carregando…
       </div>
     );
@@ -101,7 +101,7 @@ export function ProfileCompanyForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-5 rounded-2xl border border-white/5 bg-[#111111] p-6"
+      className="space-y-5 rounded-2xl border border-border bg-card p-6"
     >
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
@@ -195,23 +195,23 @@ export function ProfileCompanyForm() {
             className={`${FIELD_INPUT_CLASS} min-h-[100px] resize-none`}
             maxLength={1000}
           />
-          <div className="text-[10px] text-gray-500 text-right mt-1.5">
+          <div className="text-[10px] text-muted-foreground text-right mt-1.5">
             {(values.company_description ?? '').length}/1000
           </div>
         </div>
       </div>
 
-      <p className="text-[11px] text-gray-500 leading-relaxed">
+      <p className="text-[11px] text-muted-foreground leading-relaxed">
         Estes dados aparecem automaticamente nos documentos gerados pelos
         assistentes (apresentação do RFP, banner da planilha de cotação e termos
         contratuais).
       </p>
 
-      <div className="flex justify-end pt-2 border-t border-white/5">
+      <div className="flex justify-end pt-2 border-t border-border">
         <button
           type="submit"
           disabled={saving}
-          className="inline-flex items-center justify-center gap-1.5 bg-brand text-black px-6 h-10 rounded-full text-sm font-medium hover:bg-brand/90 disabled:opacity-60 disabled:cursor-not-allowed active:scale-95 transition-all duration-300 mt-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-[#111111]"
+          className="inline-flex items-center justify-center gap-1.5 bg-brand text-black px-6 h-10 rounded-full text-sm font-medium hover:bg-brand/90 disabled:opacity-60 disabled:cursor-not-allowed active:scale-95 transition-all duration-300 mt-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           <Save className="h-4 w-4" aria-hidden="true" />
           {saving ? 'Salvando…' : 'Salvar dados'}

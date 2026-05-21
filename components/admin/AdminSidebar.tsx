@@ -27,8 +27,8 @@ const ITEMS = [
 export function AdminSidebar() {
   const pathname = usePathname();
   return (
-    <aside className="w-56 shrink-0 border-r border-white/5 bg-black/40 backdrop-blur-md flex flex-col h-screen sticky top-0">
-      <div className="px-4 py-4 border-b border-white/5">
+    <aside className="w-56 shrink-0 border-r border-border bg-card/60 dark:bg-black/40 backdrop-blur-md flex flex-col h-screen sticky top-0">
+      <div className="px-4 py-4 border-b border-border">
         <Link href="/" className="inline-flex items-center mb-3">
           <BrandLogo size="md" priority />
         </Link>
@@ -46,8 +46,8 @@ export function AdminSidebar() {
               href={href}
               className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${
                 active
-                  ? 'bg-brand/10 border border-brand/20 text-white font-medium'
-                  : 'text-gray-400 hover:bg-white/5 hover:text-white border border-transparent'
+                  ? 'bg-brand/10 border border-brand/20 text-foreground font-medium'
+                  : 'text-muted-foreground hover:bg-accent hover:text-foreground border border-transparent'
               }`}
             >
               <Icon className="h-4 w-4" aria-hidden="true" />
@@ -56,10 +56,10 @@ export function AdminSidebar() {
           );
         })}
       </nav>
-      <div className="p-2 border-t border-white/5">
+      <div className="p-2 border-t border-border">
         <Link
           href="/chat"
-          className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-400 hover:bg-white/5 hover:text-white transition-colors"
+          className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
         >
           <ArrowLeft className="h-4 w-4" aria-hidden="true" />
           <span>Voltar ao chat</span>
