@@ -2,8 +2,14 @@
 
 import { type FormEvent } from 'react';
 import Link from 'next/link';
-import { FolderOpen, ArrowRight, Sparkles } from 'lucide-react';
+import { FolderOpen, ArrowRight, Sparkles, Phone } from 'lucide-react';
 import { Composer, type ChatAttachment } from './Composer';
+
+// 2B Supply contact CTA — surfaces in the empty state as a "got value
+// from this? talk to us" handoff. tel: link for click-to-call on mobile;
+// desktop falls back to opening the OS dialer.
+const CONTACT_TEL_HREF = 'tel:+5521999792912';
+const CONTACT_PHONE_DISPLAY = '(21) 99979-2912';
 
 // Suggestion pills (Claude/ChatGPT style) — aligned to the five
 // procurement areas mentioned in the hero pitch. Each pill pre-fills the
@@ -146,6 +152,30 @@ export function EmptyState({
             </button>
           ))}
         </div>
+
+        {/* 2B Supply contact CTA — handoff to a real human when the IA
+            doesn't cover it (or for sales/onboarding). Tel link works
+            on mobile + desktop softphones. */}
+        <a
+          href={CONTACT_TEL_HREF}
+          className="group inline-flex flex-wrap items-center justify-center gap-x-3 gap-y-1 rounded-2xl border border-brand/30 bg-brand/5 hover:bg-brand/10 hover:border-brand/50 px-5 py-3 transition-all duration-300 active:scale-[0.99]"
+        >
+          <span className="text-sm text-muted-foreground">
+            Gostou da IA de Compras?
+          </span>
+          <span className="hidden sm:inline text-muted-foreground/40">·</span>
+          <span className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground">
+            Fale com a <span className="text-brand">2B Supply</span>
+          </span>
+          <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand">
+            <Phone className="h-3.5 w-3.5" aria-hidden="true" />
+            {CONTACT_PHONE_DISPLAY}
+          </span>
+          <ArrowRight
+            className="h-3.5 w-3.5 text-brand group-hover:translate-x-0.5 transition-transform"
+            aria-hidden="true"
+          />
+        </a>
       </div>
     </div>
   );
