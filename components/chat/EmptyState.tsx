@@ -1,20 +1,42 @@
 'use client';
 
-import { useEffect, useState, type FormEvent } from 'react';
+import { type FormEvent } from 'react';
 import Link from 'next/link';
 import { FolderOpen, ArrowRight, Sparkles } from 'lucide-react';
-import { supabaseBrowser } from '@/lib/db/supabase-browser';
 import { Composer, type ChatAttachment } from './Composer';
 
-// Suggestion pills (Claude/ChatGPT style) — small inline buttons that
-// pre-fill the composer when clicked.
+// Suggestion pills (Claude/ChatGPT style) — aligned to the five
+// procurement areas mentioned in the hero pitch. Each pill pre-fills the
+// composer with a concrete starter question so the user goes from
+// landing → typing in one click.
 type Suggestion = { label: string; query: string };
 
 const SUGGESTIONS: Suggestion[] = [
-  { label: 'Definir', query: 'O que é a matriz de Kraljic?' },
-  { label: 'Aplicar', query: 'Como aplicar TCO em SaaS?' },
-  { label: 'Comparar', query: 'Porter vs Kraljic em compras estratégicas' },
-  { label: 'Recomendar', query: 'Estratégia de compras para varejo de alimentos' },
+  {
+    label: 'Compras',
+    query:
+      'Como definir a estratégia de compras para uma categoria nova?',
+  },
+  {
+    label: 'Contratos',
+    query:
+      'Como estruturar um contrato de fornecimento com SLA e penalidades?',
+  },
+  {
+    label: 'Fornecedores',
+    query:
+      'Como avaliar a saúde financeira de um fornecedor antes de fechar?',
+  },
+  {
+    label: 'Estoque',
+    query:
+      'Como calcular estoque mínimo e ponto de pedido via curva ABC?',
+  },
+  {
+    label: 'Logística',
+    query:
+      'Como otimizar custos de inbound em uma rede multi-CD?',
+  },
 ];
 
 const LIBRARY_OVERVIEW_QUERY = 'Sobre o que você pode me ensinar?';
@@ -32,26 +54,6 @@ type Props = {
   profileChip?: React.ReactNode;
 };
 
-function greetingFor(hour: number): string {
-  if (hour >= 5 && hour < 12) return 'Bom dia';
-  if (hour >= 12 && hour < 18) return 'Boa tarde';
-  return 'Boa noite';
-}
-
-function deriveFirstName(displayName: string | null, email: string | null): string | null {
-  if (displayName && displayName.trim().length > 0) {
-    const first = displayName.trim().split(/\s+/)[0]!;
-    return first;
-  }
-  if (email && email.includes('@')) {
-    const local = email.split('@')[0]!;
-    const first = local.split(/[._-]/)[0]!;
-    if (first.length === 0) return null;
-    return first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
-  }
-  return null;
-}
-
 export function EmptyState({
   input,
   onChange,
@@ -60,69 +62,26 @@ export function EmptyState({
   onStop,
   profileChip,
 }: Props) {
-  const [firstName, setFirstName] = useState<string | null>(null);
-  const [greeting, setGreeting] = useState<string>(() =>
-    greetingFor(new Date().getHours()),
-  );
-
-  // Refresh the greeting if the user leaves the tab idle past a time-of-day
-  // boundary. Cheap to compute; runs once a minute.
-  useEffect(() => {
-    const id = setInterval(() => {
-      setGreeting(greetingFor(new Date().getHours()));
-    }, 60_000);
-    return () => clearInterval(id);
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    // Wrapped in try because supabaseBrowser() throws when NEXT_PUBLIC_
-    // env vars are missing (tests / offline). Greeting just falls back
-    // to "Bom dia"/"Boa tarde"/"Boa noite" without a name.
-    let sb: ReturnType<typeof supabaseBrowser>;
-    try {
-      sb = supabaseBrowser();
-    } catch {
-      return;
-    }
-    sb.auth
-      .getUser()
-      .then(async ({ data }) => {
-        if (cancelled || !data.user) return;
-        const email = data.user.email ?? null;
-        const { data: profile } = await sb
-          .from('profiles')
-          .select('display_name')
-          .eq('id', data.user.id)
-          .maybeSingle();
-        if (cancelled) return;
-        const dn =
-          (profile as { display_name?: string } | null)?.display_name ?? null;
-        setFirstName(deriveFirstName(dn, email));
-      })
-      .catch(() => {
-        // Fail-silent — greeting without name is acceptable.
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const heading = firstName ? `${greeting}, ${firstName}` : greeting;
-
   return (
     <div className="flex-1 flex flex-col items-center justify-center px-6 py-8 overflow-y-auto">
       <div className="w-full max-w-2xl flex flex-col items-center gap-8">
-        {/* Hero greeting — serif-flavored serif feeling via tracking; Outfit
-            handles weight nuance. */}
-        <div className="flex items-center gap-3 text-center">
-          <Sparkles
-            className="h-6 w-6 text-brand flex-shrink-0"
-            aria-hidden="true"
-          />
-          <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-foreground">
-            {heading}
-          </h1>
+        {/* Hero pitch — action-oriented; positions ProcurementGPT as a
+            focused supply-chain tool, not a generic chat. */}
+        <div className="flex flex-col items-center gap-3 text-center">
+          <div className="flex items-center gap-3">
+            <Sparkles
+              className="h-6 w-6 text-brand flex-shrink-0"
+              aria-hidden="true"
+            />
+            <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground">
+              Sua IA de Suprimentos está pronta.{' '}
+              <span className="text-brand">Qual problema vamos atacar?</span>
+            </h1>
+          </div>
+          <p className="text-sm md:text-base text-muted-foreground max-w-xl">
+            Compras, contratos, fornecedores, estoque ou logística. Por onde
+            começamos?
+          </p>
         </div>
 
         {/* Composer hero — centered, pill-card */}
@@ -134,7 +93,7 @@ export function EmptyState({
             isLoading={isLoading}
             onStop={onStop}
             variant="hero"
-            placeholder="Como posso ajudar você hoje?"
+            placeholder="Pergunte alguma coisa…"
           />
         </div>
 
@@ -142,7 +101,8 @@ export function EmptyState({
           <div className="w-full flex justify-center">{profileChip}</div>
         )}
 
-        {/* Suggestion pills (Claude/ChatGPT style) */}
+        {/* Suggestion pills — the five areas the hero mentioned, plus a
+            Descobrir pill that surfaces the library overview. */}
         <div className="flex flex-wrap justify-center gap-2">
           <button
             type="button"
