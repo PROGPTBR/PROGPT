@@ -95,11 +95,11 @@ export function ProfileLogoUpload() {
   }
 
   return (
-    <div className="rounded-2xl border border-white/5 bg-[#111111] p-6 space-y-4">
+    <div className="rounded-2xl border border-border bg-card p-6 space-y-4">
       <div className="flex items-start gap-5">
-        <div className="h-24 w-24 rounded-xl border border-white/10 bg-white/5 flex items-center justify-center overflow-hidden flex-shrink-0">
+        <div className="h-24 w-24 rounded-xl border border-border bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
           {loading ? (
-            <span className="text-xs text-gray-500">…</span>
+            <span className="text-xs text-muted-foreground">…</span>
           ) : logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -108,7 +108,7 @@ export function ProfileLogoUpload() {
               className="max-h-full max-w-full object-contain"
             />
           ) : (
-            <div className="flex flex-col items-center text-gray-500 gap-1">
+            <div className="flex flex-col items-center text-muted-foreground gap-1">
               <ImageOff className="h-6 w-6" aria-hidden="true" />
               <span className="text-[10px]">Sem logo</span>
             </div>
@@ -136,7 +136,7 @@ export function ProfileLogoUpload() {
               type="button"
               onClick={handleRemove}
               disabled={busy}
-              className="inline-flex items-center justify-center gap-1.5 rounded-full border border-white/10 bg-white/5 text-gray-300 px-4 h-9 text-xs hover:bg-white/10 hover:text-white active:scale-95 transition-all duration-300 w-fit disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center justify-center gap-1.5 rounded-full border border-border bg-muted/40 text-foreground/80 px-4 h-9 text-xs hover:bg-muted hover:text-foreground active:scale-95 transition-all duration-300 w-fit disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
               Remover
@@ -144,7 +144,7 @@ export function ProfileLogoUpload() {
           )}
         </div>
       </div>
-      <p className="text-[11px] text-gray-500 leading-relaxed">
+      <p className="text-[11px] text-muted-foreground leading-relaxed">
         Formatos: PNG ou JPG. Tamanho ideal: 200×200 px ou superior, fundo
         transparente (PNG) para integração limpa nos documentos.
       </p>

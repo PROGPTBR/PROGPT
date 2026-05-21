@@ -26,7 +26,7 @@ export function ResetPasswordForm() {
         <h1 className="text-2xl font-semibold tracking-tight">
           Link expirado <span className="text-brand">.</span>
         </h1>
-        <p className="text-sm text-gray-400 leading-relaxed">
+        <p className="text-sm text-muted-foreground leading-relaxed">
           Sua sessão de recuperação não está mais ativa.
         </p>
         <Link
@@ -63,14 +63,14 @@ export function ResetPasswordForm() {
         <h1 className="text-2xl font-semibold tracking-tight">
           Redefinir senha <span className="text-brand">.</span>
         </h1>
-        <p className="mt-1.5 text-sm text-gray-400">
+        <p className="mt-1.5 text-sm text-muted-foreground">
           Escolha uma nova senha para sua conta.
         </p>
       </div>
       <div>
         <label
           htmlFor="pwd"
-          className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-2"
+          className="block text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2"
         >
           Nova senha
         </label>
@@ -80,13 +80,13 @@ export function ResetPasswordForm() {
           required
           value={pwd}
           onChange={(e) => setPwd(e.target.value)}
-          className="w-full rounded-lg bg-white/5 border border-white/10 px-4 py-2.5 text-sm text-white placeholder-gray-600 outline-none focus:border-brand focus:bg-white/10 transition-colors"
+          className="w-full rounded-lg bg-muted/40 border border-border px-4 py-2.5 text-sm text-foreground placeholder-muted-foreground outline-none focus:border-brand focus:bg-muted/60 transition-colors"
         />
       </div>
       <div>
         <label
           htmlFor="confirm"
-          className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-2"
+          className="block text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2"
         >
           Confirmar nova senha
         </label>
@@ -96,13 +96,13 @@ export function ResetPasswordForm() {
           required
           value={confirm}
           onChange={(e) => setConfirm(e.target.value)}
-          className="w-full rounded-lg bg-white/5 border border-white/10 px-4 py-2.5 text-sm text-white placeholder-gray-600 outline-none focus:border-brand focus:bg-white/10 transition-colors"
+          className="w-full rounded-lg bg-muted/40 border border-border px-4 py-2.5 text-sm text-foreground placeholder-muted-foreground outline-none focus:border-brand focus:bg-muted/60 transition-colors"
         />
       </div>
       {error ? (
         <div
           role="alert"
-          className="rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm text-red-300"
+          className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300"
         >
           {error}
         </div>
@@ -110,7 +110,7 @@ export function ResetPasswordForm() {
       <button
         type="submit"
         disabled={loading}
-        className="w-full inline-flex items-center justify-center bg-brand text-black h-11 rounded-full text-sm font-medium hover:bg-brand/90 disabled:opacity-60 disabled:cursor-not-allowed active:scale-95 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-[#111111]"
+        className="w-full inline-flex items-center justify-center bg-brand text-black h-11 rounded-full text-sm font-medium hover:bg-brand/90 disabled:opacity-60 disabled:cursor-not-allowed active:scale-95 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
         {loading ? 'Redefinindo…' : 'Redefinir'}
       </button>

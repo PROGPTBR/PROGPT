@@ -14,7 +14,7 @@ export default async function ProfilePage() {
   if (!user) redirect('/login?next=/profile');
 
   return (
-    <div className="relative min-h-screen bg-[#0d0d0d] text-white font-outfit antialiased overflow-x-hidden">
+    <div className="relative min-h-screen bg-background dark:bg-[#0d0d0d] text-foreground dark:text-white font-outfit antialiased overflow-x-hidden">
       {/* Decorative cyan glow */}
       <div
         aria-hidden="true"
@@ -26,14 +26,14 @@ export default async function ProfilePage() {
       />
 
       {/* Header */}
-      <header className="relative z-10 border-b border-white/5 backdrop-blur-md bg-black/20">
+      <header className="relative z-10 border-b border-border bg-card/40 dark:bg-black/20 backdrop-blur-md">
         <div className="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link href="/chat" className="inline-flex items-center">
             <BrandLogo size="md" priority />
           </Link>
           <Link
             href="/chat"
-            className="inline-flex items-center gap-1.5 text-xs text-gray-400 hover:text-white transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
             Voltar para o chat
@@ -47,9 +47,9 @@ export default async function ProfilePage() {
           <h1 className="text-3xl font-semibold tracking-tight">
             Meu perfil <span className="text-brand">.</span>
           </h1>
-          <p className="text-sm text-gray-400 mt-1.5">
+          <p className="text-sm text-muted-foreground mt-1.5">
             Logado como{' '}
-            <span className="font-medium text-white">
+            <span className="font-medium text-foreground">
               {user.email ?? user.id}
             </span>
           </p>
@@ -58,7 +58,7 @@ export default async function ProfilePage() {
         <section className="space-y-3">
           <div>
             <h2 className="text-base font-medium">Logo da empresa</h2>
-            <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+            <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
               Este logo é incluído nos documentos gerados (RFP .docx e planilha
               de cotação .xlsx). PNG ou JPG, até 2 MB.
             </p>
@@ -69,7 +69,7 @@ export default async function ProfilePage() {
         <section className="space-y-3">
           <div>
             <h2 className="text-base font-medium">Dados da empresa</h2>
-            <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+            <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
               Estes campos são incluídos automaticamente nos documentos gerados —
               apresentação do RFP, banner da planilha de cotação e cláusulas de
               termos.
@@ -81,7 +81,7 @@ export default async function ProfilePage() {
         <section className="space-y-3">
           <div>
             <h2 className="text-base font-medium">Minhas categorias</h2>
-            <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+            <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
               Perfis de categoria que você cadastrou. Use no chat (seletor
               acima do campo de mensagem) ou no botão &quot;Iniciar de um
               Perfil&quot; dentro dos assistentes RFP / Kraljic / Porter /

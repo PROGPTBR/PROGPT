@@ -72,9 +72,9 @@ export function SignupForm() {
         <h1 className="text-2xl font-semibold tracking-tight">
           Confira seu email <span className="text-brand">.</span>
         </h1>
-        <p className="text-sm text-gray-400 leading-relaxed">
+        <p className="text-sm text-muted-foreground leading-relaxed">
           Enviamos um link de confirmação para{' '}
-          <span className="font-medium text-white">{email}</span>. Clique no link
+          <span className="font-medium text-foreground">{email}</span>. Clique no link
           para ativar a conta e poder entrar.
         </p>
         <div className="text-sm pt-2">
@@ -95,7 +95,7 @@ export function SignupForm() {
         <h1 className="text-2xl font-semibold tracking-tight">
           Criar conta <span className="text-brand">.</span>
         </h1>
-        <p className="mt-1.5 text-sm text-gray-400">
+        <p className="mt-1.5 text-sm text-muted-foreground">
           Use seu email para começar.
         </p>
       </div>
@@ -103,7 +103,7 @@ export function SignupForm() {
         <div>
           <label
             htmlFor="signup-email"
-            className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-2"
+            className="block text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2"
           >
             Email
           </label>
@@ -113,13 +113,13 @@ export function SignupForm() {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-lg bg-white/5 border border-white/10 px-4 py-2.5 text-sm text-white placeholder-gray-600 outline-none focus:border-brand focus:bg-white/10 transition-colors"
+            className="w-full rounded-lg bg-muted/40 border border-border px-4 py-2.5 text-sm text-foreground placeholder-muted-foreground outline-none focus:border-brand focus:bg-muted/60 transition-colors"
           />
         </div>
         <div>
           <label
             htmlFor="signup-password"
-            className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-2"
+            className="block text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2"
           >
             Senha
           </label>
@@ -130,16 +130,16 @@ export function SignupForm() {
             minLength={MIN_PASSWORD}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-lg bg-white/5 border border-white/10 px-4 py-2.5 text-sm text-white placeholder-gray-600 outline-none focus:border-brand focus:bg-white/10 transition-colors"
+            className="w-full rounded-lg bg-muted/40 border border-border px-4 py-2.5 text-sm text-foreground placeholder-muted-foreground outline-none focus:border-brand focus:bg-muted/60 transition-colors"
           />
-          <p className="mt-2 text-xs text-gray-500">
+          <p className="mt-2 text-xs text-muted-foreground">
             Mínimo {MIN_PASSWORD} caracteres.
           </p>
         </div>
         {errorMessage ? (
           <div
             role="alert"
-            className="rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm text-red-300"
+            className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300"
           >
             {errorMessage}
           </div>
@@ -147,12 +147,12 @@ export function SignupForm() {
         <button
           type="submit"
           disabled={submitting}
-          className="w-full inline-flex items-center justify-center bg-brand text-black h-11 rounded-full text-sm font-medium hover:bg-brand/90 disabled:opacity-60 disabled:cursor-not-allowed active:scale-95 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-[#111111]"
+          className="w-full inline-flex items-center justify-center bg-brand text-black h-11 rounded-full text-sm font-medium hover:bg-brand/90 disabled:opacity-60 disabled:cursor-not-allowed active:scale-95 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           {submitting ? 'Cadastrando…' : 'Cadastrar'}
         </button>
       </form>
-      <div className="text-sm text-center pt-2 border-t border-white/5">
+      <div className="text-sm text-center pt-2 border-t border-border">
         <Link
           href={`/login?next=${encodeURIComponent(next)}`}
           className="text-brand hover:text-brand/80 transition-colors inline-block pt-4"
