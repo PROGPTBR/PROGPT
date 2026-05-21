@@ -1,6 +1,6 @@
 'use client';
 
-import { type FormEvent } from 'react';
+import { type FormEvent, type ReactNode } from 'react';
 import { useChat, type Message as AIMessage } from 'ai/react';
 import { toast } from 'sonner';
 import type { ChatMessage } from '@/lib/rag/types';
@@ -120,46 +120,54 @@ export function ChatSession({
       handleSubmit(e, { body: perfilBody() });
       return;
     }
-    // Attachment present: bypass handleSubmit (which would send only
-    // `input`) and route through append() with the wrapped content. The
-    // textarea is cleared by setInput('').
     e?.preventDefault();
     const wrapped = wrapWithAttachment(input, attachment);
     setInput('');
     void append({ role: 'user', content: wrapped }, { body: perfilBody() });
   };
 
+  const profileChip: ReactNode = onActivePerfilChange ? (
+    <ActiveProfileChip
+      activePerfilId={session.activePerfilId ?? null}
+      onChange={onActivePerfilChange}
+    />
+  ) : null;
+
   return (
     <>
       {messages.length === 0 ? (
-        <EmptyState onPick={(text) => setInput(text)} />
-      ) : (
-        <MessageList
-          messages={messages.map((m) => ({
-            id: m.id,
-            role: m.role as 'user' | 'assistant',
-            content: m.content,
-            annotations: m.annotations,
-          }))}
+        <EmptyState
+          input={input}
+          onChange={setInput}
+          onSubmit={onComposerSubmit}
           isLoading={isLoading}
-          sessionId={session.id}
-          initialRatings={initialRatings}
-          onPickFollowup={onPickFollowup}
+          onStop={stop}
+          profileChip={profileChip}
         />
+      ) : (
+        <>
+          <MessageList
+            messages={messages.map((m) => ({
+              id: m.id,
+              role: m.role as 'user' | 'assistant',
+              content: m.content,
+              annotations: m.annotations,
+            }))}
+            isLoading={isLoading}
+            sessionId={session.id}
+            initialRatings={initialRatings}
+            onPickFollowup={onPickFollowup}
+          />
+          {profileChip}
+          <Composer
+            input={input}
+            onChange={setInput}
+            onSubmit={onComposerSubmit}
+            isLoading={isLoading}
+            onStop={stop}
+          />
+        </>
       )}
-      {onActivePerfilChange && (
-        <ActiveProfileChip
-          activePerfilId={session.activePerfilId ?? null}
-          onChange={onActivePerfilChange}
-        />
-      )}
-      <Composer
-        input={input}
-        onChange={setInput}
-        onSubmit={onComposerSubmit}
-        isLoading={isLoading}
-        onStop={stop}
-      />
     </>
   );
 }
