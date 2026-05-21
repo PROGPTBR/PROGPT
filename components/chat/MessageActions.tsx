@@ -74,7 +74,7 @@ export function MessageActions({ traceId, sessionId, initialRating }: Props) {
   };
 
   return (
-    <div className="mt-3 flex flex-col gap-2 pt-3 border-t border-white/5">
+    <div className="mt-3 flex flex-col gap-2 pt-3 border-t border-border">
       <div className="flex items-center gap-1">
         <button
           type="button"
@@ -85,7 +85,7 @@ export function MessageActions({ traceId, sessionId, initialRating }: Props) {
           className={`inline-flex items-center justify-center w-8 h-8 rounded-full transition-colors ${
             rating === 'up'
               ? 'text-brand bg-brand/10'
-              : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'
+              : 'text-muted-foreground hover:text-foreground hover:bg-accent'
           }`}
         >
           <ThumbsUp
@@ -103,7 +103,7 @@ export function MessageActions({ traceId, sessionId, initialRating }: Props) {
           className={`inline-flex items-center justify-center w-8 h-8 rounded-full transition-colors ${
             rating === 'down'
               ? 'text-brand bg-brand/10'
-              : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'
+              : 'text-muted-foreground hover:text-foreground hover:bg-accent'
           }`}
         >
           <ThumbsDown
@@ -119,7 +119,7 @@ export function MessageActions({ traceId, sessionId, initialRating }: Props) {
             value={comment}
             onChange={(e) => setComment(e.target.value.slice(0, COMMENT_MAX))}
             placeholder="O que faltou? (opcional, até 1000 caracteres)"
-            className="rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-sm text-white placeholder-gray-600 outline-none focus:border-brand focus:bg-white/10 transition-colors"
+            className="rounded-lg bg-muted/40 border border-border px-3 py-2 text-sm text-foreground placeholder-muted-foreground outline-none focus:border-brand focus:bg-muted/60 transition-colors"
             rows={3}
           />
           <div className="flex items-center gap-2">
@@ -137,7 +137,7 @@ export function MessageActions({ traceId, sessionId, initialRating }: Props) {
                 setShowComment(false);
                 setComment('');
               }}
-              className="text-xs text-gray-500 hover:text-white transition-colors"
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
               Cancelar
             </button>

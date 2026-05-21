@@ -16,7 +16,7 @@ export function ChatRoot() {
   useEffect(() => setMounted(true), []);
 
   if (!mounted) {
-    return <div className="h-screen bg-[#0d0d0d]" />;
+    return <div className="h-screen bg-background dark:bg-[#0d0d0d]" />;
   }
 
   return <ChatRootMounted />;
@@ -27,11 +27,11 @@ function ChatRootMounted() {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   if (!sessionsApi.currentId) {
-    return <div className="h-screen bg-[#0d0d0d]" />;
+    return <div className="h-screen bg-background dark:bg-[#0d0d0d]" />;
   }
 
   return (
-    <div className="flex h-screen bg-[#0d0d0d] text-white font-outfit antialiased">
+    <div className="flex h-screen bg-background dark:bg-[#0d0d0d] text-foreground dark:text-white font-outfit antialiased">
       <div className="hidden md:flex">
         <Sidebar
           sessions={sessionsApi.sessions}
@@ -44,7 +44,7 @@ function ChatRootMounted() {
       <Sheet open={drawerOpen} onOpenChange={(open) => setDrawerOpen(open)}>
         <SheetContent
           side="left"
-          className="p-0 w-72 bg-[#0d0d0d] border-white/5"
+          className="p-0 w-72 bg-background dark:bg-[#0d0d0d] border-border dark:border-white/5"
         >
           <Sidebar
             sessions={sessionsApi.sessions}

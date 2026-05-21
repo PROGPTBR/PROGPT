@@ -40,10 +40,10 @@ export function UserRow() {
   }
 
   return (
-    <div className="border-t border-white/5">
+    <div className="border-t border-border">
       <Link
         href="/profile"
-        className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-400 hover:bg-white/5 hover:text-white transition-colors"
+        className="flex items-center gap-2 px-4 py-2.5 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
       >
         <UserCircle className="h-4 w-4" aria-hidden="true" />
         <span>Meu perfil</span>
@@ -51,24 +51,24 @@ export function UserRow() {
       {isAdmin && (
         <Link
           href="/admin"
-          className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-400 hover:bg-white/5 hover:text-white transition-colors"
+          className="flex items-center gap-2 px-4 py-2.5 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
         >
           <Shield className="h-4 w-4" aria-hidden="true" />
           <span>Admin</span>
         </Link>
       )}
-      <div className="flex items-center gap-3 p-4 border-t border-white/5">
+      <div className="flex items-center gap-3 p-4 border-t border-border">
         <div className="h-8 w-8 rounded-full bg-brand text-black flex items-center justify-center text-xs font-semibold shrink-0">
           {initial}
         </div>
         <div className="flex-1 min-w-0">
-          <div className="truncate text-sm text-gray-300">{email}</div>
+          <div className="truncate text-sm text-foreground/80">{email}</div>
         </div>
         <button
           type="button"
           onClick={handleLogout}
           aria-label="Sair"
-          className="text-gray-500 hover:text-red-400 transition-colors"
+          className="text-muted-foreground hover:text-red-500 transition-colors"
           title="Sair"
         >
           <LogOut className="h-4 w-4" aria-hidden="true" />

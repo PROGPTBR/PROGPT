@@ -34,8 +34,8 @@ export function Sidebar({
   onDelete,
 }: Props) {
   return (
-    <aside className="w-72 shrink-0 border-r border-white/5 bg-black/40 backdrop-blur-md flex flex-col h-full">
-      <div className="flex items-center justify-between px-4 py-4 border-b border-white/5">
+    <aside className="w-72 shrink-0 border-r border-border bg-card/60 dark:bg-black/40 backdrop-blur-md flex flex-col h-full">
+      <div className="flex items-center justify-between px-4 py-4 border-b border-border">
         <Link href="/" className="inline-flex items-center gap-2">
           <Image
             src="/2bsupply-logo.png"
@@ -43,7 +43,7 @@ export function Sidebar({
             width={241}
             height={57}
             priority
-            className="h-6 w-auto brightness-0 invert"
+            className="h-6 w-auto dark:brightness-0 dark:invert"
           />
         </Link>
         <button
@@ -58,11 +58,11 @@ export function Sidebar({
       </div>
       <Link
         href="/assistants"
-        className="group flex items-center gap-2 px-4 py-3 text-sm font-medium border-b border-white/5 text-brand hover:bg-brand/5 transition-colors"
+        className="group flex items-center gap-2 px-4 py-3 text-sm font-medium border-b border-border text-brand hover:bg-brand/5 transition-colors"
       >
         <Sparkles className="h-4 w-4" aria-hidden="true" />
         <span>Assistentes</span>
-        <span className="ml-auto text-xs text-gray-500 group-hover:text-brand/80 transition-colors">
+        <span className="ml-auto text-xs text-muted-foreground group-hover:text-brand/80 transition-colors">
           →
         </span>
       </Link>
@@ -76,17 +76,17 @@ export function Sidebar({
                   className={`group flex items-center gap-2 rounded-lg px-3 py-2 cursor-pointer text-sm transition-colors ${
                     active
                       ? 'bg-brand/10 border border-brand/20'
-                      : 'hover:bg-white/5 border border-transparent'
+                      : 'hover:bg-accent border border-transparent'
                   }`}
                   onClick={() => onSwitch(s.id)}
                 >
                   <div className="flex-1 min-w-0">
                     <div
-                      className={`truncate ${active ? 'text-white' : 'text-gray-300'}`}
+                      className={`truncate ${active ? 'text-foreground' : 'text-foreground/80'}`}
                     >
                       {s.title}
                     </div>
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-muted-foreground">
                       {formatRelative(s.updatedAt)}
                     </div>
                   </div>
@@ -97,7 +97,7 @@ export function Sidebar({
                       e.stopPropagation();
                       onDelete(s.id);
                     }}
-                    className="opacity-0 group-hover:opacity-100 text-gray-500 hover:text-red-400 transition-all"
+                    className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-red-500 transition-all"
                   >
                     <Trash2 className="h-4 w-4" aria-hidden="true" />
                   </button>

@@ -1,8 +1,13 @@
 'use client';
 
+import { useEffect, useState, type FormEvent } from 'react';
 import Link from 'next/link';
-import { FolderOpen, ArrowRight } from 'lucide-react';
+import { FolderOpen, ArrowRight, Sparkles } from 'lucide-react';
+import { supabaseBrowser } from '@/lib/db/supabase-browser';
+import { Composer, type ChatAttachment } from './Composer';
 
+// Suggestion pills (Claude/ChatGPT style) — small inline buttons that
+// pre-fill the composer when clicked.
 type Suggestion = { label: string; query: string };
 
 const SUGGESTIONS: Suggestion[] = [
@@ -12,83 +17,167 @@ const SUGGESTIONS: Suggestion[] = [
   { label: 'Recomendar', query: 'Estratégia de compras para varejo de alimentos' },
 ];
 
-// Sub-projeto 18: discoverability suggestion that triggers the
-// `library_overview` classifier intent.
 const LIBRARY_OVERVIEW_QUERY = 'Sobre o que você pode me ensinar?';
 
-export function EmptyState({ onPick }: { onPick: (text: string) => void }) {
+type Props = {
+  // Composer props piped through — we own the single Composer instance
+  // here so the user goes straight from typing → submitting from the hero
+  // input without an extra hop.
+  input: string;
+  onChange: (value: string) => void;
+  onSubmit: (e?: FormEvent, attachment?: ChatAttachment) => void;
+  isLoading: boolean;
+  onStop: () => void;
+  /** Optional ActiveProfileChip slot rendered below the composer. */
+  profileChip?: React.ReactNode;
+};
+
+function greetingFor(hour: number): string {
+  if (hour >= 5 && hour < 12) return 'Bom dia';
+  if (hour >= 12 && hour < 18) return 'Boa tarde';
+  return 'Boa noite';
+}
+
+function deriveFirstName(displayName: string | null, email: string | null): string | null {
+  if (displayName && displayName.trim().length > 0) {
+    const first = displayName.trim().split(/\s+/)[0]!;
+    return first;
+  }
+  if (email && email.includes('@')) {
+    const local = email.split('@')[0]!;
+    const first = local.split(/[._-]/)[0]!;
+    if (first.length === 0) return null;
+    return first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
+  }
+  return null;
+}
+
+export function EmptyState({
+  input,
+  onChange,
+  onSubmit,
+  isLoading,
+  onStop,
+  profileChip,
+}: Props) {
+  const [firstName, setFirstName] = useState<string | null>(null);
+  const [greeting, setGreeting] = useState<string>(() =>
+    greetingFor(new Date().getHours()),
+  );
+
+  // Refresh the greeting if the user leaves the tab idle past a time-of-day
+  // boundary. Cheap to compute; runs once a minute.
+  useEffect(() => {
+    const id = setInterval(() => {
+      setGreeting(greetingFor(new Date().getHours()));
+    }, 60_000);
+    return () => clearInterval(id);
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    // Wrapped in try because supabaseBrowser() throws when NEXT_PUBLIC_
+    // env vars are missing (tests / offline). Greeting just falls back
+    // to "Bom dia"/"Boa tarde"/"Boa noite" without a name.
+    let sb: ReturnType<typeof supabaseBrowser>;
+    try {
+      sb = supabaseBrowser();
+    } catch {
+      return;
+    }
+    sb.auth
+      .getUser()
+      .then(async ({ data }) => {
+        if (cancelled || !data.user) return;
+        const email = data.user.email ?? null;
+        const { data: profile } = await sb
+          .from('profiles')
+          .select('display_name')
+          .eq('id', data.user.id)
+          .maybeSingle();
+        if (cancelled) return;
+        const dn =
+          (profile as { display_name?: string } | null)?.display_name ?? null;
+        setFirstName(deriveFirstName(dn, email));
+      })
+      .catch(() => {
+        // Fail-silent — greeting without name is acceptable.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const heading = firstName ? `${greeting}, ${firstName}` : greeting;
+
   return (
-    <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 gap-10">
-      <div className="text-center">
-        <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">
-          ProcurementGPT <span className="text-brand">.</span>
-        </h1>
-        <p className="mt-3 text-sm text-gray-400 max-w-md">
-          Especialista em teorias de procurement. Pergunte sobre frameworks,
-          aplicações e casos.
-        </p>
-      </div>
-      <div className="w-full max-w-xl flex flex-col gap-3">
-        {/* Sub-projeto 34 follow-up — orientar o usuário a criar um Perfil
-            da Categoria, que ativa respostas direcionadas no chat. */}
-        <Link
-          href="/assistants/profile"
-          className="group flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.06] hover:border-white/20 transition-all duration-300 p-4 active:scale-[0.99]"
-        >
-          <div className="flex items-start gap-3 min-w-0">
-            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-brand/10 border border-brand/30 flex items-center justify-center text-brand">
-              <FolderOpen className="h-4 w-4" aria-hidden="true" />
-            </div>
-            <div className="min-w-0">
-              <div className="text-[10px] font-semibold uppercase tracking-wider text-brand">
-                Personalize
-              </div>
-              <div className="mt-0.5 text-sm text-white font-medium">
-                Crie um Perfil da Categoria
-              </div>
-              <div className="mt-0.5 text-xs text-gray-400 leading-relaxed">
-                Caracterize sua categoria de compra (sub-segmentos,
-                requisitos, prioridade) e use no chat com o seletor acima
-                do campo de mensagem. As respostas passam a usar isso como
-                contexto.
-              </div>
-            </div>
-          </div>
-          <ArrowRight
-            className="flex-shrink-0 h-4 w-4 text-gray-500 group-hover:text-white group-hover:translate-x-0.5 transition-all"
+    <div className="flex-1 flex flex-col items-center justify-center px-6 py-8 overflow-y-auto">
+      <div className="w-full max-w-2xl flex flex-col items-center gap-8">
+        {/* Hero greeting — serif-flavored serif feeling via tracking; Outfit
+            handles weight nuance. */}
+        <div className="flex items-center gap-3 text-center">
+          <Sparkles
+            className="h-6 w-6 text-brand flex-shrink-0"
             aria-hidden="true"
           />
-        </Link>
-        <button
-          type="button"
-          onClick={() => onPick(LIBRARY_OVERVIEW_QUERY)}
-          className="text-left rounded-xl border border-brand/30 bg-brand/5 hover:bg-brand/10 hover:border-brand/50 transition-all duration-300 p-4 active:scale-[0.99]"
-        >
-          <div className="text-[10px] font-semibold uppercase tracking-wider text-brand">
-            Descobrir
-          </div>
-          <div className="mt-1.5 text-sm text-white font-medium">
-            {LIBRARY_OVERVIEW_QUERY}
-          </div>
-          <div className="mt-1 text-xs text-gray-500">
-            Lista os temas que estão na base de conhecimento agora
-          </div>
-        </button>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-foreground">
+            {heading}
+          </h1>
+        </div>
+
+        {/* Composer hero — centered, pill-card */}
+        <div className="w-full">
+          <Composer
+            input={input}
+            onChange={onChange}
+            onSubmit={onSubmit}
+            isLoading={isLoading}
+            onStop={onStop}
+            variant="hero"
+            placeholder="Como posso ajudar você hoje?"
+          />
+        </div>
+
+        {profileChip && (
+          <div className="w-full flex justify-center">{profileChip}</div>
+        )}
+
+        {/* Suggestion pills (Claude/ChatGPT style) */}
+        <div className="flex flex-wrap justify-center gap-2">
+          <button
+            type="button"
+            onClick={() => onChange(LIBRARY_OVERVIEW_QUERY)}
+            className="inline-flex items-center gap-1.5 rounded-full border border-brand/40 bg-brand/5 hover:bg-brand/10 px-3.5 h-9 text-xs font-medium text-brand transition-all duration-300 active:scale-95"
+          >
+            <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+            Descobrir temas
+          </button>
           {SUGGESTIONS.map((s) => (
             <button
               key={s.label}
               type="button"
-              onClick={() => onPick(s.query)}
-              className="text-left rounded-xl border border-white/5 bg-[#141414] hover:bg-[#181818] hover:border-white/10 transition-all duration-300 p-4 active:scale-[0.99]"
+              onClick={() => onChange(s.query)}
+              className="inline-flex items-center rounded-full border border-border bg-card hover:bg-accent px-3.5 h-9 text-xs font-medium text-foreground/80 hover:text-foreground transition-all duration-300 active:scale-95"
             >
-              <div className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">
-                {s.label}
-              </div>
-              <div className="mt-1.5 text-sm text-white">{s.query}</div>
+              {s.label}
             </button>
           ))}
         </div>
+
+        {/* Personalize link — quieter than before, sits below the pills */}
+        <Link
+          href="/assistants/profile"
+          className="group inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <FolderOpen className="h-3.5 w-3.5" aria-hidden="true" />
+          <span>
+            Personalize criando um <span className="text-brand">Perfil da Categoria</span>
+          </span>
+          <ArrowRight
+            className="h-3 w-3 group-hover:translate-x-0.5 transition-transform"
+            aria-hidden="true"
+          />
+        </Link>
       </div>
     </div>
   );
