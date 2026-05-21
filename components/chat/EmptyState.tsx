@@ -82,7 +82,7 @@ export function EmptyState({
             <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground leading-snug">
               Sua IA de Suprimentos está pronta.
               <br />
-              <span className="text-brand">Qual problema vamos atacar?</span>
+              <span className="text-brand">Qual problema vamos resolver?</span>
             </h1>
           </div>
           <p className="text-sm md:text-base text-muted-foreground max-w-xl">
