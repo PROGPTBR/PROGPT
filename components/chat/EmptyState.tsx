@@ -68,13 +68,14 @@ export function EmptyState({
         {/* Hero pitch — action-oriented; positions ProcurementGPT as a
             focused supply-chain tool, not a generic chat. */}
         <div className="flex flex-col items-center gap-3 text-center">
-          <div className="flex items-center gap-3">
+          <div className="flex items-start gap-3">
             <Sparkles
-              className="h-6 w-6 text-brand flex-shrink-0"
+              className="h-6 w-6 text-brand flex-shrink-0 mt-1"
               aria-hidden="true"
             />
-            <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground">
-              Sua IA de Suprimentos está pronta.{' '}
+            <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground leading-snug">
+              Sua IA de Suprimentos está pronta.
+              <br />
               <span className="text-brand">Qual problema vamos atacar?</span>
             </h1>
           </div>

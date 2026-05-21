@@ -1,4 +1,3 @@
-import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { redirect } from 'next/navigation';
@@ -6,6 +5,7 @@ import { getCurrentUser } from '@/lib/auth';
 import { ProfileLogoUpload } from '@/components/profile/ProfileLogoUpload';
 import { ProfileCompanyForm } from '@/components/profile/ProfileCompanyForm';
 import { ProfileCategoriesList } from '@/components/profile/ProfileCategoriesList';
+import { BrandLogo } from '@/components/brand/BrandLogo';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,15 +28,8 @@ export default async function ProfilePage() {
       {/* Header */}
       <header className="relative z-10 border-b border-white/5 backdrop-blur-md bg-black/20">
         <div className="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/chat" className="inline-flex items-center gap-2">
-            <Image
-              src="/2bsupply-logo.png"
-              alt="2B Supply"
-              width={241}
-              height={57}
-              priority
-              className="h-6 w-auto brightness-0 invert"
-            />
+          <Link href="/chat" className="inline-flex items-center">
+            <BrandLogo size="md" priority />
           </Link>
           <Link
             href="/chat"
