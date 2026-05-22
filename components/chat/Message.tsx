@@ -4,6 +4,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { MessageActions } from './MessageActions';
 import { FollowupChips } from './FollowupChips';
+import { SupplierSearchCTA } from './SupplierSearchCTA';
 
 type Props = {
   role: 'user' | 'assistant';
@@ -13,6 +14,7 @@ type Props = {
   sessionId?: string;
   initialRating?: 'up' | 'down';
   followups?: string[];
+  supplierSearchQuery?: string;
   isLast?: boolean;
   onPickFollowup?: (text: string) => void;
 };
@@ -25,6 +27,7 @@ export function Message({
   sessionId,
   initialRating,
   followups,
+  supplierSearchQuery,
   isLast,
   onPickFollowup,
 }: Props) {
@@ -49,6 +52,9 @@ export function Message({
             className="inline-block ml-1 h-2 w-2 rounded-full bg-brand animate-pulse"
             aria-label="Gerando"
           />
+        ) : null}
+        {!isStreaming && supplierSearchQuery ? (
+          <SupplierSearchCTA query={supplierSearchQuery} />
         ) : null}
         {!isStreaming && traceId && sessionId ? (
           <MessageActions

@@ -51,6 +51,48 @@ describe('rag runRag', () => {
     expect(typeof result.debug.classifyMs).toBe('number');
   });
 
+  it('short-circuits everything for supplier_search intent (sub-projeto 21)', async () => {
+    vi.doMock('@/lib/rag/classifier', () => ({
+      classify: vi.fn().mockResolvedValue({
+        theory: null,
+        intent: 'supplier_search',
+        language: 'pt',
+        needsRetrieval: false,
+      }),
+    }));
+    const retrieveSpy = vi.fn();
+    const rerankSpy = vi.fn();
+    vi.doMock('@/lib/rag/retriever', () => ({ retrieve: retrieveSpy }));
+    vi.doMock('@/lib/rag/reranker', () => ({ rerank: rerankSpy }));
+
+    const { runRag } = await import('@/lib/rag');
+    const result = await runRag('preciso de fornecedores de embalagens');
+
+    expect(retrieveSpy).not.toHaveBeenCalled();
+    expect(rerankSpy).not.toHaveBeenCalled();
+    expect(result.classification.intent).toBe('supplier_search');
+    expect(result.sources).toEqual([]);
+    expect(result.chunks).toEqual([]);
+    expect(result.system.toLowerCase()).toMatch(/busca de fornecedores/);
+  });
+
+  it('uses English ack prompt for supplier_search when language is en', async () => {
+    vi.doMock('@/lib/rag/classifier', () => ({
+      classify: vi.fn().mockResolvedValue({
+        theory: null,
+        intent: 'supplier_search',
+        language: 'en',
+        needsRetrieval: false,
+      }),
+    }));
+    vi.doMock('@/lib/rag/retriever', () => ({ retrieve: vi.fn() }));
+    vi.doMock('@/lib/rag/reranker', () => ({ rerank: vi.fn() }));
+
+    const { runRag } = await import('@/lib/rag');
+    const result = await runRag('I need suppliers of industrial chemicals');
+    expect(result.system.toLowerCase()).toMatch(/supplier search/);
+  });
+
   it('short-circuits retrieve and rerank when needsRetrieval is false', async () => {
     vi.doMock('@/lib/rag/classifier', () => ({
       classify: vi.fn().mockResolvedValue({
