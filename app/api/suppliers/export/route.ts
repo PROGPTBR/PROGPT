@@ -42,20 +42,23 @@ export async function POST(req: Request): Promise<Response> {
   }
 
   try {
-    // Export ignora paginação do request — busca até EXPORT_CAP rows.
+    // Export ignora paginação do request — busca até EXPORT_CAP empresas
+    // distintas e achata em linhas (1 por unidade/filial).
     const result = await searchSuppliers({
       ...parsed.data,
       limit: EXPORT_CAP,
       offset: 0,
     });
-    const csv = suppliersToCsv(result.suppliers);
+    const flatUnits = result.groups.flatMap((g) => g.units);
+    const csv = suppliersToCsv(flatUnits);
     void recordApiUsage({
       provider: 'openai',
       operation: 'suppliers-export',
       metadata: {
         cnae: parsed.data.cnae,
         ufs_count: parsed.data.ufs?.length ?? 0,
-        rows: result.suppliers.length,
+        rows: flatUnits.length,
+        groups: result.groups.length,
       },
     });
 
