@@ -50,6 +50,35 @@ export async function runRag(query: string, opts: RunRagOpts = {}): Promise<RagR
   // skip this short-circuit when profileContext is set so the query
   // falls through to the standard retrieval + prompt-builder path,
   // where the <active-profile> block is included in the user message.
+  // supplier_search short-circuits everything. The chat doesn't have
+  // CNPJ data — that lives in the external Receita DB consumed by the
+  // /assistants/suppliers flow. Here we just acknowledge in 1 line and
+  // attach an annotation (in /api/chat) that the frontend reads to
+  // render a CTA card that opens the dedicated assistant pré-preenchido.
+  if (classification.intent === 'supplier_search') {
+    trace?.setTag('intent:supplier_search');
+    const lang = classification.language;
+    const system =
+      lang === 'en'
+        ? 'You are a procurement assistant. Reply in ONE short sentence in English acknowledging that you will open the Supplier Search for the user. Do not invent supplier names, CNPJs, or contact info — those will be loaded by the dedicated tool.'
+        : 'Você é um assistente de procurement. Responda em UMA frase curta em PT-BR reconhecendo que vai abrir a Busca de Fornecedores. NÃO invente nomes de empresas, CNPJs ou contatos — esses dados serão carregados pela ferramenta dedicada.';
+    return {
+      classification,
+      chunks: [],
+      sources: [],
+      system,
+      user: query,
+      debug: {
+        classifyMs,
+        embedMs: 0,
+        vectorMs: 0,
+        ftsMs: 0,
+        rerankMs: 0,
+        totalMs: performance.now() - t0,
+      },
+    };
+  }
+
   if (classification.intent === 'library_overview' && !opts.profileContext) {
     const snapshotSpan = trace?.span('library-snapshot', {});
     const snapshot = await getLibrarySnapshot();

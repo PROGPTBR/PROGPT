@@ -8,15 +8,16 @@ Responda SEMPRE com JSON estrito conforme o schema abaixo. Não adicione texto f
 
 Campos:
 - theory: string com o nome curto da teoria/framework principal mencionada (ex: "kraljic", "porter", "monczka", "tco", "srm"). null se nenhuma teoria específica for citada ou inferível.
-- intent: um de "definition" | "application" | "comparison" | "recommendation" | "smalltalk" | "library_overview".
+- intent: um de "definition" | "application" | "comparison" | "recommendation" | "smalltalk" | "library_overview" | "supplier_search".
   - definition: pede o que é, conceito, definição de algum tema/framework
   - application: pede como aplicar, exemplo prático, caso
   - comparison: compara duas ou mais teorias/frameworks
   - recommendation: pede sugestão de abordagem/teoria/leitura
   - smalltalk: saudação, agradecimento, conversa fiada sem conteúdo de procurement
   - library_overview: usuário pergunta sobre a PRÓPRIA BASE/COBERTURA do sistema — "que temas você cobre", "lista de tópicos", "sobre o que você sabe", "what topics do you cover", "what's in your knowledge base". É META — sobre o sistema, não sobre procurement. NÃO confunda com "definition" (que pergunta sobre UM tema específico). Confunda só se o usuário quer descobrir o que está disponível.
+  - supplier_search: usuário quer ENCONTRAR/LISTAR fornecedores reais no mercado. Detecte com frases como "preciso de fornecedores de X", "quem fabrica Y", "onde encontro empresas que vendem Z", "lista de fornecedores", "indique fornecedores", "find suppliers for", "I need vendors of". É AÇÃO — quer dados de empresas reais (CNPJ, contato), não teoria de procurement. NÃO confunda com "application" (como gerenciar fornecedores em geral) ou "recommendation" (que abordagem teórica usar). Confunda só se o usuário quer BUSCAR fornecedores agora.
 - language: "pt" se a pergunta está em português, "en" se em inglês. Default "pt".
-- needsRetrieval: false APENAS se intent ∈ ("smalltalk", "library_overview"). Senão true.
+- needsRetrieval: false APENAS se intent ∈ ("smalltalk", "library_overview", "supplier_search"). Senão true.
 
 Exemplos:
 - "O que é Kraljic?" → intent=definition, needsRetrieval=true
@@ -24,6 +25,11 @@ Exemplos:
 - "Lista de temas da base" → intent=library_overview, needsRetrieval=false
 - "Sobre o que você pode me ensinar?" → intent=library_overview, needsRetrieval=false
 - "What's in your knowledge base?" → intent=library_overview, needsRetrieval=false
+- "Preciso de fornecedores de embalagens flexíveis" → intent=supplier_search, needsRetrieval=false
+- "Quem fabrica peças de alumínio no Sul?" → intent=supplier_search, needsRetrieval=false
+- "Lista de transportadoras em SP" → intent=supplier_search, needsRetrieval=false
+- "I need suppliers of industrial chemicals" → intent=supplier_search, needsRetrieval=false
+- "Como avaliar fornecedores?" → intent=application, needsRetrieval=true (pergunta METODOLÓGICA, não busca)
 - "oi, tudo bem?" → intent=smalltalk, needsRetrieval=false`;
 
 const ClassificationSchema = z.object({
@@ -35,6 +41,7 @@ const ClassificationSchema = z.object({
     'recommendation',
     'smalltalk',
     'library_overview',
+    'supplier_search',
   ]),
   language: z.enum(['pt', 'en']),
   needsRetrieval: z.boolean(),

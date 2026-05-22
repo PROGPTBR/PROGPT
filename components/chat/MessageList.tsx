@@ -4,7 +4,11 @@ import { useEffect, useRef } from 'react';
 import { Message } from './Message';
 import type { ChatMessage } from '@/lib/rag/types';
 
-type Annotation = { traceId?: string; followups?: string[] };
+type Annotation = {
+  traceId?: string;
+  followups?: string[];
+  supplierSearch?: { query: string };
+};
 
 type UIMessage = ChatMessage & {
   id?: string;
@@ -31,6 +35,14 @@ function pickFollowups(m: UIMessage): string[] | undefined {
   const ann = m.annotations as Annotation[] | undefined;
   const found = ann?.find((a) => Array.isArray(a?.followups));
   return found?.followups;
+}
+
+function pickSupplierSearchQuery(m: UIMessage): string | undefined {
+  const ann = m.annotations as Annotation[] | undefined;
+  const found = ann?.find(
+    (a) => typeof a?.supplierSearch?.query === 'string',
+  );
+  return found?.supplierSearch?.query;
 }
 
 export function MessageList({
@@ -60,6 +72,7 @@ export function MessageList({
           const traceId = pickTraceId(m);
           const initialRating = traceId ? initialRatings?.get(traceId) : undefined;
           const followups = pickFollowups(m);
+          const supplierSearchQuery = pickSupplierSearchQuery(m);
           const isLast = i === lastIdx;
           return (
             <Message
@@ -71,6 +84,7 @@ export function MessageList({
               sessionId={sessionId}
               initialRating={initialRating}
               followups={followups}
+              supplierSearchQuery={supplierSearchQuery}
               isLast={isLast}
               onPickFollowup={onPickFollowup}
             />

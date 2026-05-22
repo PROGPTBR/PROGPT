@@ -147,6 +147,19 @@ export async function POST(req: Request): Promise<Response> {
       traceId: trace.id,
     });
 
+    // When the user's question is a supplier search, attach a CTA
+    // annotation. Frontend renders an inline card after the assistant's
+    // one-line ack that opens /assistants/suppliers pre-filled with the
+    // original user query. Chat itself stays grounded in articles only —
+    // CNPJ data lives in the dedicated assistant.
+    if (rag.classification.intent === 'supplier_search') {
+      const lastUserContent =
+        messages[messages.length - 1]?.content ?? standalone;
+      data.appendMessageAnnotation({
+        supplierSearch: { query: lastUserContent.slice(0, 500) },
+      });
+    }
+
     const generateSpan = trace.span('generate', { systemLen: rag.system.length });
 
     const result = streamText({

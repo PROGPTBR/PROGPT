@@ -4,7 +4,8 @@ export type Intent =
   | 'comparison'
   | 'recommendation'
   | 'smalltalk'
-  | 'library_overview';
+  | 'library_overview'
+  | 'supplier_search';
 
 export type Classification = {
   theory: string | null;
