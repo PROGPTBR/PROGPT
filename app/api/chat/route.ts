@@ -15,6 +15,7 @@ import { getServerSupabase } from '@/lib/db/supabase';
 import type { TraceLevel } from '@/lib/observability/types';
 import { getRunForOwner } from '@/lib/assistants/runs';
 import type { ProfileParams } from '@/lib/assistants/types';
+import { detectAssistantToolCTA } from '@/components/chat/AssistantToolCTA';
 
 export const runtime = 'nodejs';
 
@@ -228,6 +229,17 @@ export async function POST(req: Request): Promise<Response> {
                 );
               }
             });
+        }
+
+        // Detectar referência a uma ferramenta dedicada na resposta do LLM
+        // e anexar annotation pra UI renderizar um CTA card grande no
+        // lugar do link "aqui" pequeno (feedback beta 2026-05-22: link
+        // markdown era pequeno demais no mobile + LLM hallucinava URL).
+        if (!aborted && finishReason === 'stop' && text.length >= 20) {
+          const ctaType = detectAssistantToolCTA(text);
+          if (ctaType) {
+            data.appendMessageAnnotation({ assistantCTA: ctaType });
+          }
         }
 
         const shouldSuggest = !aborted && finishReason === 'stop' && text.length >= 20;
