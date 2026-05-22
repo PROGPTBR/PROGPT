@@ -3,11 +3,13 @@
 import { useEffect, useRef } from 'react';
 import { Message } from './Message';
 import type { ChatMessage } from '@/lib/rag/types';
+import type { AssistantToolType } from './AssistantToolCTA';
 
 type Annotation = {
   traceId?: string;
   followups?: string[];
   supplierSearch?: { query: string };
+  assistantCTA?: AssistantToolType;
 };
 
 type UIMessage = ChatMessage & {
@@ -45,6 +47,12 @@ function pickSupplierSearchQuery(m: UIMessage): string | undefined {
   return found?.supplierSearch?.query;
 }
 
+function pickAssistantCTA(m: UIMessage): AssistantToolType | undefined {
+  const ann = m.annotations as Annotation[] | undefined;
+  const found = ann?.find((a) => typeof a?.assistantCTA === 'string');
+  return found?.assistantCTA;
+}
+
 export function MessageList({
   messages,
   isLoading,
@@ -73,6 +81,7 @@ export function MessageList({
           const initialRating = traceId ? initialRatings?.get(traceId) : undefined;
           const followups = pickFollowups(m);
           const supplierSearchQuery = pickSupplierSearchQuery(m);
+          const assistantCTA = pickAssistantCTA(m);
           const isLast = i === lastIdx;
           return (
             <Message
@@ -85,6 +94,7 @@ export function MessageList({
               initialRating={initialRating}
               followups={followups}
               supplierSearchQuery={supplierSearchQuery}
+              assistantCTA={assistantCTA}
               isLast={isLast}
               onPickFollowup={onPickFollowup}
             />

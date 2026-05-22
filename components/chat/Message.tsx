@@ -5,6 +5,7 @@ import remarkGfm from 'remark-gfm';
 import { MessageActions } from './MessageActions';
 import { FollowupChips } from './FollowupChips';
 import { SupplierSearchCTA } from './SupplierSearchCTA';
+import { AssistantToolCTA, type AssistantToolType } from './AssistantToolCTA';
 
 type Props = {
   role: 'user' | 'assistant';
@@ -15,6 +16,7 @@ type Props = {
   initialRating?: 'up' | 'down';
   followups?: string[];
   supplierSearchQuery?: string;
+  assistantCTA?: AssistantToolType;
   isLast?: boolean;
   onPickFollowup?: (text: string) => void;
 };
@@ -28,6 +30,7 @@ export function Message({
   initialRating,
   followups,
   supplierSearchQuery,
+  assistantCTA,
   isLast,
   onPickFollowup,
 }: Props) {
@@ -55,6 +58,9 @@ export function Message({
         ) : null}
         {!isStreaming && supplierSearchQuery ? (
           <SupplierSearchCTA query={supplierSearchQuery} />
+        ) : null}
+        {!isStreaming && assistantCTA && !supplierSearchQuery ? (
+          <AssistantToolCTA type={assistantCTA} />
         ) : null}
         {!isStreaming && traceId && sessionId ? (
           <MessageActions
