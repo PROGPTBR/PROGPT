@@ -45,7 +45,11 @@ export type ApiOperation =
   | 'assistant-profile-generate'
   | 'assistant-profile-refine'
   | 'assistant-profile-apply'
-  | 'assistant-profile-extract';
+  | 'assistant-profile-extract'
+  | 'suppliers-classify-cnae'
+  | 'suppliers-search'
+  | 'suppliers-export'
+  | 'suppliers-cnae-search';
 
 export type RecordUsageInput = {
   provider: ApiProvider;

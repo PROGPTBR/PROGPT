@@ -7,6 +7,7 @@ import type { StoredSession } from '@/lib/chat-storage';
 
 const toastError = vi.fn();
 vi.mock('sonner', () => ({ toast: { error: (...args: unknown[]) => toastError(...args) } }));
+vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
 const ORIGINAL_FETCH = globalThis.fetch;
 
