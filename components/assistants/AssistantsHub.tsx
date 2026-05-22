@@ -12,6 +12,7 @@ import { PorterForcesPreview } from './previews/PorterForcesPreview';
 import { FinancialScorePreview } from './previews/FinancialScorePreview';
 import { AbcCurvePreview } from './previews/AbcCurvePreview';
 import { ProfileDocPreview } from './previews/ProfileDocPreview';
+import { SuppliersPreview } from './previews/SuppliersPreview';
 
 // Hub layout — Spotlight + Roadmap.
 //
@@ -73,6 +74,20 @@ const SPOTLIGHTS: SpotlightAssistant[] = [
       'Markdown + .docx + chat de refinamento',
     ],
     Preview: PorterForcesPreview,
+  },
+  {
+    step: 3,
+    stepCategory: 'Mercado',
+    href: '/assistants/suppliers',
+    title: 'Busca de Fornecedores',
+    short:
+      'Encontre fornecedores reais por CNAE + região. Descreva em linguagem natural; a IA classifica e busca empresas ativas na Receita.',
+    bullets: [
+      'Classificação automática de CNAE',
+      'Filtro por estado e porte',
+      'Export CSV pra Excel BR',
+    ],
+    Preview: SuppliersPreview,
   },
   {
     step: 4,

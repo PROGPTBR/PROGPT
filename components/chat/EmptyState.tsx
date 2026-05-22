@@ -2,7 +2,8 @@
 
 import { type FormEvent } from 'react';
 import Link from 'next/link';
-import { FolderOpen, ArrowRight, Sparkles, Phone } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { FolderOpen, ArrowRight, Sparkles, Phone, Factory } from 'lucide-react';
 import { Composer, type ChatAttachment } from './Composer';
 
 // 2B Supply contact CTA — surfaces in the empty state as a "got value
@@ -68,6 +69,7 @@ export function EmptyState({
   onStop,
   profileChip,
 }: Props) {
+  const router = useRouter();
   return (
     <div className="flex-1 flex flex-col items-center justify-center px-6 py-8 overflow-y-auto">
       <div className="w-full max-w-2xl flex flex-col items-center gap-8">
@@ -131,7 +133,8 @@ export function EmptyState({
         </div>
 
         {/* Suggestion pills — the five areas the hero mentioned, plus a
-            Descobrir pill that surfaces the library overview. */}
+            Descobrir pill (library overview) and a Buscar fornecedores
+            pill that jumps to the dedicated assistant. */}
         <div className="flex flex-wrap justify-center gap-2">
           <button
             type="button"
@@ -140,6 +143,20 @@ export function EmptyState({
           >
             <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
             Descobrir temas
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              const q = input.trim();
+              const target = q
+                ? `/assistants/suppliers?q=${encodeURIComponent(q)}`
+                : '/assistants/suppliers';
+              router.push(target);
+            }}
+            className="inline-flex items-center gap-1.5 rounded-full border border-brand/40 bg-brand/5 hover:bg-brand/10 px-3.5 h-9 text-xs font-medium text-brand transition-all duration-300 active:scale-95"
+          >
+            <Factory className="h-3.5 w-3.5" aria-hidden="true" />
+            Buscar fornecedores
           </button>
           {SUGGESTIONS.map((s) => (
             <button
