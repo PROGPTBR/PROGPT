@@ -38,11 +38,13 @@ async function main() {
       ufs: cls.states,
       limit: 5,
     });
-    console.log(`  total: ${result.total}`);
-    console.log(`  showing ${result.suppliers.length} of those:`);
-    for (const s of result.suppliers) {
+    console.log(`  total empresas distintas: ${result.total}`);
+    console.log(`  showing ${result.groups.length} groups (top units):`);
+    for (const g of result.groups) {
+      const u = g.units[0]!;
+      const extra = g.units.length > 1 ? ` (+${g.units.length - 1} filiais)` : '';
       console.log(
-        `    ${s.cnpj} | ${s.razao_social} | ${s.uf}/${s.municipio} | ${s.porte ?? '-'}`,
+        `    ${u.razao_social} [base ${g.cnpjBasico}]${extra} | ${u.uf}/${u.municipio} | ${u.porte ?? '-'}`,
       );
     }
   }

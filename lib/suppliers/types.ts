@@ -62,8 +62,18 @@ export const SupplierResultSchema = z.object({
 });
 export type SupplierResult = z.infer<typeof SupplierResultSchema>;
 
+// Sub-projeto 21 follow-up: agrupar por CNPJ base (primeiros 8 dígitos).
+// Empresas com várias filiais batendo no mesmo CNAE+UF apareciam como
+// cards repetidos; agora viram 1 card por empresa com expand pra mostrar
+// filiais individuais.
+export const GroupedSupplierSchema = z.object({
+  cnpjBasico: z.string(),
+  units: z.array(SupplierResultSchema).min(1),
+});
+export type GroupedSupplier = z.infer<typeof GroupedSupplierSchema>;
+
 export const SearchResponseSchema = z.object({
-  suppliers: z.array(SupplierResultSchema),
+  groups: z.array(GroupedSupplierSchema),
   total: z.number().int().min(0),
   cnaeName: z.string().nullable(),
 });

@@ -48,7 +48,7 @@ export async function POST(req: Request): Promise<Response> {
       metadata: {
         cnae: parsed.data.cnae,
         ufs_count: parsed.data.ufs?.length ?? 0,
-        result_count: result.suppliers.length,
+        group_count: result.groups.length,
       },
     });
     return NextResponse.json(result);

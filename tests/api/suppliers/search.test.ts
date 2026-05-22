@@ -71,21 +71,26 @@ describe('POST /api/suppliers/search', () => {
       checkChatRateLimit: vi.fn().mockResolvedValue({ allowed: true }),
     }));
     const searchSuppliers = vi.fn().mockResolvedValue({
-      suppliers: [
+      groups: [
         {
-          cnpj: '12345678000190',
-          razao_social: 'X',
-          nome_fantasia: null,
-          cnae_primario: '2222600',
-          cnaes_secundarios: null,
-          porte: 'ME',
-          capital_social: 1000,
-          faixa_funcionarios: null,
-          uf: 'SP',
-          municipio: 'Sao Paulo',
-          telefone: null,
-          email: null,
-          ultima_atualizacao_rf: null,
+          cnpjBasico: '12345678',
+          units: [
+            {
+              cnpj: '12345678000190',
+              razao_social: 'X',
+              nome_fantasia: null,
+              cnae_primario: '2222600',
+              cnaes_secundarios: null,
+              porte: 'ME',
+              capital_social: 1000,
+              faixa_funcionarios: null,
+              uf: 'SP',
+              municipio: 'Sao Paulo',
+              telefone: null,
+              email: null,
+              ultima_atualizacao_rf: null,
+            },
+          ],
         },
       ],
       total: 1,
@@ -96,7 +101,8 @@ describe('POST /api/suppliers/search', () => {
     const res = await POST(makeReq({ cnae: '2222600', ufs: ['SP'] }));
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body.suppliers).toHaveLength(1);
+    expect(body.groups).toHaveLength(1);
+    expect(body.groups[0].units).toHaveLength(1);
     expect(body.total).toBe(1);
     expect(searchSuppliers).toHaveBeenCalledWith({ cnae: '2222600', ufs: ['SP'] });
   });
