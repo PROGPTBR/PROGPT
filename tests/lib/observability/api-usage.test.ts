@@ -6,6 +6,25 @@ beforeEach(() => {
 });
 
 describe('computeCostUsdCents', () => {
+  it('OpenAI Whisper: bills per minute of audio (tokensIn = seconds)', () => {
+    // 60 seconds of audio = 1 minute = $0.006 = 0.6 cents
+    const cost = computeCostUsdCents({
+      provider: 'openai',
+      operation: 'chat-transcribe',
+      tokensIn: 60,
+    });
+    expect(cost).toBeCloseTo(0.6, 4);
+  });
+
+  it('OpenAI Whisper: 10s clip costs $0.001 = 0.1 cents', () => {
+    const cost = computeCostUsdCents({
+      provider: 'openai',
+      operation: 'chat-transcribe',
+      tokensIn: 10,
+    });
+    expect(cost).toBeCloseTo(0.1, 4);
+  });
+
   it('OpenAI: uncached input at full rate, cached input at half rate, output at output rate', () => {
     // 1M uncached input + 1M cached input + 1M output
     const cost = computeCostUsdCents({
