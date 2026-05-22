@@ -49,7 +49,8 @@ export type ApiOperation =
   | 'suppliers-classify-cnae'
   | 'suppliers-search'
   | 'suppliers-export'
-  | 'suppliers-cnae-search';
+  | 'suppliers-cnae-search'
+  | 'chat-transcribe';
 
 export type RecordUsageInput = {
   provider: ApiProvider;
@@ -83,6 +84,12 @@ const VOYAGE_LARGE_PER_M = 0.18;
 // of how many docs you rerank in it.
 const COHERE_RERANK_PER_CALL = 2.0 / 1000;
 
+// OpenAI Whisper-1: $0.006 per minute of audio. Custo é tracked usando
+// `tokensIn` como SEGUNDOS de áudio (reuso da coluna; metadata indica
+// `duration_secs`). É o único caso em que tokensIn não é tokens — abuso
+// deliberado pra evitar migration de schema só pra essa op.
+const OPENAI_WHISPER_PER_MIN = 0.006;
+
 /**
  * Compute estimated cost in USD cents for a given API usage event. Pure
  * function — easy to unit test. Adjust the rate constants above when
@@ -95,6 +102,14 @@ export function computeCostUsdCents(input: RecordUsageInput): number {
   const calls = input.callCount ?? 1;
 
   if (input.provider === 'openai') {
+    // Whisper bills per audio minute, não por token. tokensIn aqui é
+    // segundos de áudio (ver comentário na rate card).
+    if (input.operation === 'chat-transcribe') {
+      const durationSecs = tIn;
+      const usd = (durationSecs / 60) * OPENAI_WHISPER_PER_MIN;
+      return usd * 100;
+    }
+
     // Cached input is billed at half rate. The cached count is part of
     // tokens_in already (OpenAI reports them separately for visibility),
     // so we split: cached at half, the rest at full.

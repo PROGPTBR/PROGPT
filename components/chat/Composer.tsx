@@ -11,6 +11,7 @@ import {
 } from 'react';
 import { Paperclip, Send, StopCircle, X, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { MicRecorderButton } from './MicRecorderButton';
 
 export type ChatAttachment = {
   kind: 'pdf' | 'docx' | 'xlsx' | 'image';
@@ -177,6 +178,16 @@ export function Composer({
     [submit],
   );
 
+  const handleTranscript = useCallback(
+    (text: string) => {
+      const trimmed = text.trim();
+      if (!trimmed) return;
+      const current = input.trim();
+      onChange(current ? `${current} ${trimmed}` : trimmed);
+    },
+    [input, onChange],
+  );
+
   const hero = variant === 'hero';
 
   // Container styling differs by variant.
@@ -246,16 +257,23 @@ export function Composer({
               className="block w-full resize-none max-h-48 overflow-y-auto bg-transparent px-5 pt-4 pb-2 text-base text-foreground placeholder-muted-foreground outline-none"
             />
             <div className="flex items-center justify-between px-3 pb-3 pt-1">
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploading || isLoading}
-                aria-label="Anexar arquivo"
-                title="Anexar arquivo (PDF, DOCX, XLSX, PNG, JPG)"
-                className="inline-flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-accent w-9 h-9 transition-colors active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                <Paperclip className="h-4 w-4" aria-hidden="true" />
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading || isLoading}
+                  aria-label="Anexar arquivo"
+                  title="Anexar arquivo (PDF, DOCX, XLSX, PNG, JPG)"
+                  className="inline-flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-accent w-9 h-9 transition-colors active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <Paperclip className="h-4 w-4" aria-hidden="true" />
+                </button>
+                <MicRecorderButton
+                  size="sm"
+                  onTranscript={handleTranscript}
+                  disabled={isLoading}
+                />
+              </div>
               {isLoading ? (
                 <button
                   type="button"
@@ -299,6 +317,11 @@ export function Composer({
             >
               <Paperclip className="h-4 w-4" aria-hidden="true" />
             </button>
+            <MicRecorderButton
+              size="lg"
+              onTranscript={handleTranscript}
+              disabled={isLoading}
+            />
             <textarea
               value={input}
               onChange={(e) => onChange(e.target.value)}
