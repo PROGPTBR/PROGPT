@@ -11,7 +11,6 @@ import {
   MessageCircle,
   PieChart,
   Send,
-  Target,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { MicRecorderButton } from '@/components/chat/MicRecorderButton';
