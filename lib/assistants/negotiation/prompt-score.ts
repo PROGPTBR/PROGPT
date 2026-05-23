@@ -1,3 +1,4 @@
+import { zodResponseFormat } from 'openai/helpers/zod';
 import { getOpenAI, getOpenAIModel } from '@/lib/llm/openai';
 import { recordApiUsage } from '@/lib/observability/api-usage';
 import {
@@ -75,27 +76,35 @@ ${transcriptText}
 # Tarefa
 Avalie o desempenho do COMPRADOR (role 'user') e retorne o JSON.`;
 
-    const res = await ai.chat.completions.create(
+    const completion = await ai.chat.completions.parse(
       {
         model,
         messages: [
           { role: 'system', content: SCORE_SYSTEM },
           { role: 'user', content: userMsg },
         ],
-        response_format: { type: 'json_object' },
-        max_completion_tokens: 2_000,
+        response_format: zodResponseFormat(
+          NegotiationScoreSchema,
+          'negotiation_score',
+        ),
+        max_completion_tokens: 4_000,
       },
       { signal: controller.signal },
     );
-    const text = res.choices[0]?.message?.content ?? '';
-    const parsed = NegotiationScoreSchema.parse(JSON.parse(text));
+    const parsed = completion.choices[0]?.message?.parsed;
+    if (!parsed) {
+      const refusal = completion.choices[0]?.message?.refusal;
+      throw new Error(
+        `Score returned no parsed content${refusal ? `; refusal: ${refusal}` : ''}`,
+      );
+    }
     void recordApiUsage({
       provider: 'openai',
       operation: 'assistant-negotiation-score',
       model,
-      tokensIn: res.usage?.prompt_tokens ?? 0,
-      tokensOut: res.usage?.completion_tokens ?? 0,
-      tokensCached: res.usage?.prompt_tokens_details?.cached_tokens ?? 0,
+      tokensIn: completion.usage?.prompt_tokens ?? 0,
+      tokensOut: completion.usage?.completion_tokens ?? 0,
+      tokensCached: completion.usage?.prompt_tokens_details?.cached_tokens ?? 0,
       metadata: {
         turn_count: input.transcript.length,
         overall: parsed.overall,
