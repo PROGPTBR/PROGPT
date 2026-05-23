@@ -69,9 +69,10 @@ O usuário tem acesso a ferramentas de geração além deste chat. Quando a perg
 - **/assistants/abc** — Curva ABC do spend (Pareto 80/95%), plano por classe A/B/C, gráfico.
 - **/assistants/financial** — Score 0-100 da saúde financeira do fornecedor (12 indicadores, 4 pilares).
 - **/assistants/profile** — Perfil da Categoria (15 campos) usado como contexto pelos outros assistentes.
+- **/assistants/negotiation** — Construtor de Estratégia de Negociação + Simulador de chat onde a IA personifica o fornecedor. Output: estratégia rica (postura, Kraljic, SWOT, SMART, intel de mercado) + opcionalmente sessão de treino com score 0-100 ao final.
 
 Regras OBRIGATÓRIAS do link:
-1. Use **EXATAMENTE** um dos caminhos acima — **/assistants/rfp**, **/assistants/kraljic**, **/assistants/porter**, **/assistants/abc**, **/assistants/financial**, **/assistants/profile**. NUNCA invente variantes ("/assistants/rfq", "/assistants/cotacao", "/rfp", "/rfq.html", querystrings, etc.) — qualquer variante quebra o botão.
+1. Use **EXATAMENTE** um dos caminhos acima — **/assistants/rfp**, **/assistants/kraljic**, **/assistants/porter**, **/assistants/abc**, **/assistants/financial**, **/assistants/profile**, **/assistants/negotiation**. NUNCA invente variantes ("/assistants/rfq", "/assistants/cotacao", "/rfp", "/rfq.html", "/assistants/deal-sim", querystrings, etc.) — qualquer variante quebra o botão.
 2. Escreva o caminho literal em texto, **sem markdown link "aqui"** e sem inventar URL completa. Exemplo BOM: "Para criar uma RFP, use a ferramenta dedicada em /assistants/rfp — ela gera um draft em .docx + planilha de cotação."
 3. Mencione APENAS UM caminho por resposta. Se a pergunta cabe em duas, escolha a mais central.
 
@@ -83,6 +84,7 @@ Quando redirecionar (sinais na pergunta do usuário):
 - "curva ABC", "Pareto do spend" → /assistants/abc.
 - "saúde financeira do fornecedor", "análise de balanço" → /assistants/financial.
 - "definir uma categoria", "preencher perfil" → /assistants/profile.
+- "preparar negociação", "estratégia de negociação", "simular negociação", "treinar negociação", "preparar reunião com fornecedor", "BATNA", "ZOPA", "anchoring" → /assistants/negotiation.
 
 Se a pergunta é puramente teórica ("o que é Kraljic?", "como funciona um RFP?"), responda normalmente no chat — a ferramenta não substitui o ensino teórico.
 
@@ -90,7 +92,7 @@ Se a pergunta é puramente teórica ("o que é Kraljic?", "como funciona um RFP?
 
 Se o contexto da base de conhecimento não cobre a pergunta — ou se vier vazio — diga isso explicitamente em uma frase ("Não tenho fonte sobre isso na minha base"). Você pode comentar princípios gerais bem estabelecidos da disciplina depois disso, mas marcando que é princípio geral, não recorte de um material específico. Você pode fazer uma pergunta de esclarecimento se isso ajudar a localizar uma teoria que o usuário mencionou.
 
-**Importante**: a regra acima sobre ferramentas dedicadas tem prioridade sobre esta. Antes de cair no "não tenho fonte", verifique se a pergunta cabe em uma das ferramentas (/assistants/rfp, /assistants/kraljic, /assistants/porter, /assistants/abc, /assistants/financial, /assistants/profile) e redirecione.`;
+**Importante**: a regra acima sobre ferramentas dedicadas tem prioridade sobre esta. Antes de cair no "não tenho fonte", verifique se a pergunta cabe em uma das ferramentas (/assistants/rfp, /assistants/kraljic, /assistants/porter, /assistants/abc, /assistants/financial, /assistants/profile, /assistants/negotiation) e redirecione.`;
 
 const USER_HEADER_PT = '## Pergunta do usuário';
 const USER_HEADER_EN = '## User question';

@@ -12,6 +12,8 @@ import type {
   PorterParams,
   FinancialParams,
   AbcParams,
+  NegotiationStrategyParams,
+  NegotiationTranscriptTurn,
 } from '@/lib/assistants/types';
 import { classifyAbc } from '@/lib/assistants/abc';
 import { renderAbcChartPng } from '@/lib/assistants/abc-chart';
@@ -76,6 +78,10 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
     } catch (err) {
       console.warn('[docx] abc chart render failed:', err);
     }
+  } else if (run.assistant_type === 'negotiation') {
+    const np = run.params as NegotiationStrategyParams;
+    titleSafe = `Estratégia de Negociação - ${np.supplierName}`.slice(0, 120);
+    categoryForCover = np.category;
   } else {
     const rfpParams = run.params as RfpParams;
     const scope = rfpParams.scope ?? 'RFP';
@@ -83,7 +89,35 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
     categoryForCover = rfpParams.category;
   }
 
-  const buf = await mdToDocxBuffer(run.output_md, titleSafe, {
+  // Para negociação: append do transcript no final do output_md (se existir).
+  // Mantém output_md no DB intocado — só concatena pra renderização.
+  let bodyMd = run.output_md;
+  if (run.assistant_type === 'negotiation' && run.transcript) {
+    const transcript = run.transcript as NegotiationTranscriptTurn[];
+    if (transcript.length > 0) {
+      const np = run.params as NegotiationStrategyParams;
+      const transcriptLines: string[] = [
+        '',
+        '---',
+        '',
+        '## Transcript da Simulação',
+        '',
+        `Conversação registrada entre o comprador (você) e a IA personificando ${np.supplierName}.`,
+        '',
+      ];
+      for (let i = 0; i < transcript.length; i++) {
+        const t = transcript[i]!;
+        const speaker = t.role === 'user' ? 'Comprador' : np.supplierName;
+        transcriptLines.push(`**[${i + 1}] ${speaker}:**`);
+        transcriptLines.push('');
+        transcriptLines.push(t.content);
+        transcriptLines.push('');
+      }
+      bodyMd = bodyMd + '\n' + transcriptLines.join('\n');
+    }
+  }
+
+  const buf = await mdToDocxBuffer(bodyMd, titleSafe, {
     logo: logo ?? undefined,
     cover: {
       title: titleSafe,

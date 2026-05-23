@@ -50,7 +50,12 @@ export type ApiOperation =
   | 'suppliers-search'
   | 'suppliers-export'
   | 'suppliers-cnae-search'
-  | 'chat-transcribe';
+  | 'chat-transcribe'
+  | 'assistant-negotiation-strategy'
+  | 'assistant-negotiation-example'
+  | 'assistant-negotiation-opener'
+  | 'assistant-negotiation-turn'
+  | 'assistant-negotiation-score';
 
 export type RecordUsageInput = {
   provider: ApiProvider;
