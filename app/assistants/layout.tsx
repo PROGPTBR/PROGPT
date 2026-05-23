@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, History } from 'lucide-react';
 import { requireUser, NotAuthenticated } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { BrandLogo } from '@/components/brand/BrandLogo';
@@ -35,13 +35,22 @@ export default async function AssistantsLayout({
           <Link href="/" className="inline-flex items-center">
             <BrandLogo size="md" priority />
           </Link>
-          <Link
-            href="/chat"
-            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
-            Voltar ao chat
-          </Link>
+          <div className="inline-flex items-center gap-4">
+            <Link
+              href="/assistants/history"
+              className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <History className="h-3.5 w-3.5" aria-hidden="true" />
+              Histórico
+            </Link>
+            <Link
+              href="/chat"
+              className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
+              Voltar ao chat
+            </Link>
+          </div>
         </div>
       </header>
 
