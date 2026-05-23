@@ -7,6 +7,7 @@ import { PastPorterView } from '@/components/assistants/PastPorterView';
 import { PastFinancialView } from '@/components/assistants/PastFinancialView';
 import { PastAbcView } from '@/components/assistants/PastAbcView';
 import { PastProfileView } from '@/components/assistants/PastProfileView';
+import { PastNegotiationView } from '@/components/assistants/PastNegotiationView';
 import type {
   RfpParams,
   KraljicParams,
@@ -14,6 +15,10 @@ import type {
   FinancialParams,
   AbcParams,
   ProfileParams,
+  NegotiationStrategyParams,
+  NegotiationStrategyResult,
+  NegotiationTranscriptTurn,
+  NegotiationScore,
 } from '@/lib/assistants/types';
 
 export const dynamic = 'force-dynamic';
@@ -39,6 +44,20 @@ export default async function AssistantRunDetailPage({
           gere novamente.
         </p>
       </div>
+    );
+  }
+
+  if (run.assistant_type === 'negotiation') {
+    return (
+      <PastNegotiationView
+        runId={run.id}
+        params={run.params as NegotiationStrategyParams}
+        strategy={(run.strategy ?? null) as NegotiationStrategyResult | null}
+        transcript={
+          (run.transcript ?? null) as NegotiationTranscriptTurn[] | null
+        }
+        score={(run.score ?? null) as NegotiationScore | null}
+      />
     );
   }
 
