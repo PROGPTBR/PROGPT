@@ -21,13 +21,16 @@ import {
   type NegotiationStrategyResult,
 } from '@/lib/assistants/types';
 
-type Msg = { role: 'user' | 'assistant'; content: string };
+export type Msg = { role: 'user' | 'assistant'; content: string };
 
 type Props = {
   runId: string;
   params: NegotiationStrategyParams;
   strategy: NegotiationStrategyResult | null;
-  initialOpener: string;
+  /** Opener gerado pelo /setup. Ignorado quando `initialMessages` é passado. */
+  initialOpener?: string;
+  /** Quando presente, hidrata o chat com histórico salvo (modo "Continuar"). */
+  initialMessages?: Msg[];
   onViewStrategy: () => void;
   onClose: () => void;
   isClosing: boolean;
@@ -38,13 +41,16 @@ export function NegotiationChat({
   params,
   strategy,
   initialOpener,
+  initialMessages,
   onViewStrategy,
   onClose,
   isClosing,
 }: Props) {
-  const [messages, setMessages] = useState<Msg[]>(() => [
-    { role: 'assistant', content: initialOpener },
-  ]);
+  const [messages, setMessages] = useState<Msg[]>(() => {
+    if (initialMessages && initialMessages.length > 0) return initialMessages;
+    if (initialOpener) return [{ role: 'assistant', content: initialOpener }];
+    return [];
+  });
   const [input, setInput] = useState('');
   const [streaming, setStreaming] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import {
@@ -10,6 +10,9 @@ import {
   ExternalLink,
   AlertCircle,
   Loader2,
+  Search,
+  Trash2,
+  X,
 } from 'lucide-react';
 
 // Sub-projeto 26 — Histórico de RFPs por usuário.
@@ -77,20 +80,49 @@ function fmtDate(iso: string): string {
 
 const PAGE_SIZE = 25;
 
+const TYPE_LABELS: Record<AssistantTypeLocal | 'all', string> = {
+  all: 'Todos',
+  rfp: 'RFP',
+  kraljic: 'Kraljic',
+  porter: 'Porter',
+  financial: 'Financeiro',
+  abc: 'ABC',
+  profile: 'Perfil',
+  negotiation: 'Negociação',
+};
+
+const TYPE_ORDER: Array<AssistantTypeLocal | 'all'> = [
+  'all',
+  'negotiation',
+  'rfp',
+  'kraljic',
+  'porter',
+  'abc',
+  'financial',
+  'profile',
+];
+
 export function RfpHistoryList() {
   const [runs, setRuns] = useState<RunSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [typeFilter, setTypeFilter] = useState<AssistantTypeLocal | 'all'>('all');
+  const [query, setQuery] = useState('');
 
   const fetchPage = useCallback(
-    async (cursor: string | null): Promise<{
+    async (
+      cursor: string | null,
+      type: AssistantTypeLocal | 'all',
+    ): Promise<{
       runs: RunSummary[];
       nextCursor: string | null;
     }> => {
       const qs = new URLSearchParams({ limit: String(PAGE_SIZE) });
       if (cursor) qs.set('cursor', cursor);
+      if (type !== 'all') qs.set('type', type);
       const res = await fetch(`/api/assistants/runs?${qs.toString()}`, {
         cache: 'no-store',
       });
@@ -106,7 +138,7 @@ export function RfpHistoryList() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await fetchPage(null);
+      const data = await fetchPage(null, typeFilter);
       setRuns(data.runs);
       setNextCursor(data.nextCursor);
     } catch (err) {
@@ -114,13 +146,13 @@ export function RfpHistoryList() {
     } finally {
       setLoading(false);
     }
-  }, [fetchPage]);
+  }, [fetchPage, typeFilter]);
 
   const loadMore = useCallback(async () => {
     if (!nextCursor || loadingMore) return;
     setLoadingMore(true);
     try {
-      const data = await fetchPage(nextCursor);
+      const data = await fetchPage(nextCursor, typeFilter);
       setRuns((prev) => [...prev, ...data.runs]);
       setNextCursor(data.nextCursor);
     } catch (err) {
@@ -128,11 +160,63 @@ export function RfpHistoryList() {
     } finally {
       setLoadingMore(false);
     }
-  }, [fetchPage, nextCursor, loadingMore]);
+  }, [fetchPage, nextCursor, loadingMore, typeFilter]);
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  async function handleDelete(runId: string, scope: string) {
+    if (
+      !window.confirm(
+        `Apagar este histórico?\n\n"${scope}"\n\nEsta ação não pode ser desfeita.`,
+      )
+    ) {
+      return;
+    }
+    setDeletingId(runId);
+    try {
+      const res = await fetch(`/api/assistants/runs/${runId}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok && res.status !== 204) {
+        throw new Error(`status ${res.status}`);
+      }
+      setRuns((prev) => prev.filter((r) => r.id !== runId));
+      toast.success('Histórico apagado.');
+    } catch (err) {
+      toast.error('Falha ao apagar', { description: String(err) });
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
+  // Busca client-side sobre a página atual (servidor já filtra por tipo).
+  const filteredRuns = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return runs;
+    return runs.filter((r) => {
+      const haystack = [
+        r.params.scope,
+        r.params.category,
+        r.params.client,
+        r.params.portfolioName,
+        r.params.categoria,
+        r.params.segmento,
+        r.params.supplierName,
+        r.params.cnpj,
+        r.params.referenceYear,
+        r.params.analysisName,
+        r.params.analysisPeriod,
+        r.params.nomeCategoria,
+        ...(r.params.subSegmentos ?? []),
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      return haystack.includes(q);
+    });
+  }, [runs, query]);
 
   async function downloadBlob(
     runId: string,
@@ -185,10 +269,10 @@ export function RfpHistoryList() {
           <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">
             Meus assistentes <span className="text-brand">.</span>
           </h1>
-          <p className="text-sm text-gray-400 mt-2">
+          <p className="text-sm text-muted-foreground mt-2">
             {loading
               ? 'Carregando…'
-              : `${runs.length} análise${runs.length === 1 ? '' : 's'} salva${runs.length === 1 ? '' : 's'}`}
+              : `${filteredRuns.length} ${filteredRuns.length === 1 ? 'análise mostrada' : 'análises mostradas'}${query || typeFilter !== 'all' ? ` (de ${runs.length} carregadas)` : ''}`}
           </p>
         </div>
         <button
@@ -196,7 +280,7 @@ export function RfpHistoryList() {
           onClick={load}
           disabled={loading}
           title="Atualizar"
-          className="inline-flex items-center justify-center rounded-full border border-white/10 bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white w-9 h-9 transition-all duration-300 active:scale-95 disabled:opacity-50"
+          className="inline-flex items-center justify-center rounded-full border border-border bg-card hover:bg-accent text-foreground w-9 h-9 transition-all duration-300 active:scale-95 disabled:opacity-50"
         >
           <RefreshCw
             className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`}
@@ -205,8 +289,52 @@ export function RfpHistoryList() {
         </button>
       </div>
 
+      {/* Filtros: tipo + busca textual */}
+      <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-card p-3">
+        <div className="flex flex-wrap gap-1">
+          {TYPE_ORDER.map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => setTypeFilter(t)}
+              className={`rounded-md px-2.5 h-8 text-xs font-medium transition-all duration-150 active:scale-95 ${
+                typeFilter === t
+                  ? 'bg-brand/10 border border-brand/30 text-brand'
+                  : 'bg-background border border-border text-foreground/70 hover:bg-accent'
+              }`}
+            >
+              {TYPE_LABELS[t]}
+            </button>
+          ))}
+        </div>
+        <div className="h-5 w-px bg-border" />
+        <div className="relative flex-1 min-w-[180px]">
+          <Search
+            className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground"
+            aria-hidden="true"
+          />
+          <input
+            type="text"
+            placeholder="Buscar por nome, categoria, cliente…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="w-full rounded-md bg-background border border-border pl-8 pr-7 h-8 text-xs text-foreground placeholder-muted-foreground outline-none focus:border-brand transition-colors"
+          />
+          {query && (
+            <button
+              type="button"
+              onClick={() => setQuery('')}
+              aria-label="Limpar busca"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-3 w-3" aria-hidden="true" />
+            </button>
+          )}
+        </div>
+      </div>
+
       {!loading && runs.length === 0 && (
-        <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-12 text-center text-sm text-gray-500">
+        <div className="rounded-2xl border border-dashed border-border bg-card/40 p-12 text-center text-sm text-muted-foreground">
           <p>Você ainda não criou nenhuma análise.</p>
           <Link
             href="/assistants"
@@ -217,9 +345,15 @@ export function RfpHistoryList() {
         </div>
       )}
 
-      {runs.length > 0 && (
+      {!loading && runs.length > 0 && filteredRuns.length === 0 && (
+        <div className="rounded-2xl border border-dashed border-border bg-card/40 p-12 text-center text-sm text-muted-foreground">
+          <p>Nenhum resultado bate com esse filtro / busca.</p>
+        </div>
+      )}
+
+      {filteredRuns.length > 0 && (
         <ul className="space-y-2">
-          {runs.map((r) => {
+          {filteredRuns.map((r) => {
             const isKraljic = r.assistant_type === 'kraljic';
             const isPorter = r.assistant_type === 'porter';
             const isFinancial = r.assistant_type === 'financial';
@@ -262,17 +396,17 @@ export function RfpHistoryList() {
             return (
               <li
                 key={r.id}
-                className="rounded-xl border border-white/5 bg-[#141414] hover:bg-[#181818] hover:border-white/10 transition-all duration-300 p-4"
+                className="rounded-xl border border-border bg-card hover:bg-accent/30 hover:border-brand/30 transition-all duration-300 p-4"
               >
                 <div className="flex items-start justify-between gap-4 flex-wrap">
                   <div className="flex-1 min-w-[260px] space-y-1.5">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-[10px] uppercase rounded-full px-2 py-0.5 bg-brand/10 border border-brand/20 text-brand font-medium tracking-wider">
-                        {r.assistant_type}
+                        {TYPE_LABELS[r.assistant_type] ?? r.assistant_type}
                       </span>
-                      <span className="text-xs text-gray-500">{category}</span>
-                      <span className="text-xs text-gray-600">·</span>
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-muted-foreground">{category}</span>
+                      <span className="text-xs text-muted-foreground/60">·</span>
+                      <span className="text-xs text-muted-foreground">
                         {fmtDate(r.created_at)}
                       </span>
                       {r.status === 'running' && (
@@ -294,16 +428,16 @@ export function RfpHistoryList() {
                         </span>
                       )}
                     </div>
-                    <div className="text-sm font-medium text-white line-clamp-2">
+                    <div className="text-sm font-medium text-foreground line-clamp-2">
                       {scope}
                     </div>
                     {client && (
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-muted-foreground">
                         Comprador: {client}
                       </div>
                     )}
                     {r.status === 'error' && r.error_message && (
-                      <div className="text-xs text-red-400 mt-1.5 line-clamp-2">
+                      <div className="text-xs text-red-500 mt-1.5 line-clamp-2">
                         {r.error_message}
                       </div>
                     )}
@@ -312,7 +446,7 @@ export function RfpHistoryList() {
                   <div className="flex items-center gap-2 flex-wrap">
                     <Link
                       href={`/assistants/runs/${r.id}`}
-                      className="inline-flex items-center gap-1.5 text-xs rounded-full border border-white/10 bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white px-3 h-8 transition-all duration-300 active:scale-95"
+                      className="inline-flex items-center gap-1.5 text-xs rounded-full border border-border bg-card hover:bg-accent text-foreground px-3 h-8 transition-all duration-300 active:scale-95"
                     >
                       <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
                       Abrir
@@ -325,7 +459,7 @@ export function RfpHistoryList() {
                           downloadBlob(r.id, r.assistant_type, 'xlsx')
                         }
                         title="Planilha"
-                        className="inline-flex items-center justify-center rounded-full border border-white/10 bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white w-8 h-8 transition-all duration-300 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="inline-flex items-center justify-center rounded-full border border-border bg-card hover:bg-accent text-foreground w-8 h-8 transition-all duration-300 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
                       >
                         <FileSpreadsheet
                           className="h-3.5 w-3.5"
@@ -344,6 +478,22 @@ export function RfpHistoryList() {
                     >
                       <FileText className="h-3.5 w-3.5" aria-hidden="true" />
                     </button>
+                    <button
+                      type="button"
+                      disabled={deletingId === r.id}
+                      onClick={() => handleDelete(r.id, scope)}
+                      title="Apagar"
+                      className="inline-flex items-center justify-center rounded-full border border-border bg-card hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-500 text-muted-foreground w-8 h-8 transition-all duration-300 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      {deletingId === r.id ? (
+                        <Loader2
+                          className="h-3.5 w-3.5 animate-spin"
+                          aria-hidden="true"
+                        />
+                      ) : (
+                        <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                      )}
+                    </button>
                   </div>
                 </div>
               </li>
@@ -358,7 +508,7 @@ export function RfpHistoryList() {
             type="button"
             onClick={loadMore}
             disabled={loadingMore}
-            className="inline-flex items-center gap-1.5 text-sm rounded-full border border-white/10 bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white px-5 h-9 transition-all duration-300 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-1.5 text-sm rounded-full border border-border bg-card hover:bg-accent text-foreground px-5 h-9 transition-all duration-300 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loadingMore ? (
               <>
