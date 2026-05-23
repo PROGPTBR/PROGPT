@@ -6,6 +6,7 @@ import { createRun, updateRunStrategy, failRun } from '@/lib/assistants/runs';
 import { NegotiationStrategyRequestSchema } from '@/lib/assistants/types';
 import { generateStrategy } from '@/lib/assistants/negotiation/prompt-strategy';
 import { strategyToMarkdown } from '@/lib/assistants/negotiation/strategy-md';
+import { withUser } from '@/lib/observability/user-context';
 
 export const runtime = 'nodejs';
 export const maxDuration = 90; // estratégia leva 30-60s no gpt-4o-mini
@@ -21,6 +22,10 @@ export async function POST(req: Request): Promise<Response> {
     throw err;
   }
 
+  return withUser(user.id, () => strategyBody(req, user));
+}
+
+async function strategyBody(req: Request, user: { id: string }): Promise<Response> {
   const rl = await checkChatRateLimit();
   if (!rl.allowed) {
     return NextResponse.json(

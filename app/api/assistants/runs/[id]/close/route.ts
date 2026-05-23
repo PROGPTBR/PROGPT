@@ -9,6 +9,7 @@ import {
   type NegotiationTranscriptTurn,
 } from '@/lib/assistants/types';
 import { generateScore } from '@/lib/assistants/negotiation/prompt-score';
+import { withUser } from '@/lib/observability/user-context';
 
 export const runtime = 'nodejs';
 export const maxDuration = 90;
@@ -32,6 +33,13 @@ export async function POST(
     throw err;
   }
 
+  return withUser(user.id, () => closeBody(user, routeParams));
+}
+
+async function closeBody(
+  user: { id: string },
+  routeParams: { id: string },
+): Promise<Response> {
   const rl = await checkChatRateLimit();
   if (!rl.allowed) {
     return NextResponse.json(

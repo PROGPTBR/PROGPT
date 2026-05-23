@@ -4,6 +4,7 @@ import { getCurrentUser } from '@/lib/auth';
 import { checkChatRateLimit } from '@/lib/rate-limit';
 import { getOpenAI } from '@/lib/llm/openai';
 import { recordApiUsage } from '@/lib/observability/api-usage';
+import { withUser } from '@/lib/observability/user-context';
 
 export const runtime = 'nodejs';
 
@@ -31,6 +32,10 @@ export async function POST(req: Request): Promise<Response> {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
 
+  return withUser(user.id, () => transcribeBody(req));
+}
+
+async function transcribeBody(req: Request): Promise<Response> {
   const rl = await checkChatRateLimit();
   if (!rl.allowed) {
     return NextResponse.json(

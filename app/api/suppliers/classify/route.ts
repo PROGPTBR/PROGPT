@@ -3,12 +3,14 @@ import { NotAuthenticated, requireUser } from '@/lib/auth';
 import { checkChatRateLimit } from '@/lib/rate-limit';
 import { classifyCnae } from '@/lib/suppliers/cnae-classifier';
 import { ClassifyRequestSchema } from '@/lib/suppliers/types';
+import { withUser } from '@/lib/observability/user-context';
 
 export const runtime = 'nodejs';
 
 export async function POST(req: Request): Promise<Response> {
+  let user;
   try {
-    await requireUser();
+    user = await requireUser();
   } catch (err) {
     if (err instanceof NotAuthenticated) {
       return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
@@ -16,6 +18,10 @@ export async function POST(req: Request): Promise<Response> {
     throw err;
   }
 
+  return withUser(user.id, () => classifyBody(req));
+}
+
+async function classifyBody(req: Request): Promise<Response> {
   const limit = await checkChatRateLimit();
   if (!limit.allowed) {
     return NextResponse.json(

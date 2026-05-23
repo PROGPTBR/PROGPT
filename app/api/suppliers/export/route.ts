@@ -5,12 +5,14 @@ import { searchSuppliers } from '@/lib/suppliers/search';
 import { suppliersToCsv } from '@/lib/suppliers/csv-export';
 import { EXPORT_CAP, SearchRequestSchema } from '@/lib/suppliers/types';
 import { recordApiUsage } from '@/lib/observability/api-usage';
+import { withUser } from '@/lib/observability/user-context';
 
 export const runtime = 'nodejs';
 
 export async function POST(req: Request): Promise<Response> {
+  let user;
   try {
-    await requireUser();
+    user = await requireUser();
   } catch (err) {
     if (err instanceof NotAuthenticated) {
       return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
@@ -18,6 +20,10 @@ export async function POST(req: Request): Promise<Response> {
     throw err;
   }
 
+  return withUser(user.id, () => exportBody(req));
+}
+
+async function exportBody(req: Request): Promise<Response> {
   const limit = await checkChatRateLimit();
   if (!limit.allowed) {
     return NextResponse.json(

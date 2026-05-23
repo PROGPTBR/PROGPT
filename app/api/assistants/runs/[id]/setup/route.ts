@@ -8,6 +8,7 @@ import {
   type NegotiationStrategyResult,
 } from '@/lib/assistants/types';
 import { generateOpener } from '@/lib/assistants/negotiation/prompt-opener';
+import { withUser } from '@/lib/observability/user-context';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -35,6 +36,14 @@ export async function POST(
     throw err;
   }
 
+  return withUser(user.id, () => setupBody(req, user, routeParams));
+}
+
+async function setupBody(
+  req: Request,
+  user: { id: string },
+  routeParams: { id: string },
+): Promise<Response> {
   const rl = await checkChatRateLimit();
   if (!rl.allowed) {
     return NextResponse.json(

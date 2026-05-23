@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { RefreshCw } from 'lucide-react';
+import { ChevronDown, ChevronRight, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
@@ -29,6 +29,26 @@ type ApiResponse = {
   };
 };
 
+type UserRow = {
+  userId: string | null;
+  userEmail: string | null;
+  callCount: number;
+  tokensIn: number;
+  tokensOut: number;
+  tokensCached: number;
+  costUsdCents: number;
+  byOperation: Array<{
+    operation: string;
+    callCount: number;
+    costUsdCents: number;
+  }>;
+};
+
+type ByUserResponse = {
+  rangeDays: number;
+  users: UserRow[];
+};
+
 const RANGES = [
   { value: 1, label: 'Hoje' },
   { value: 7, label: '7 dias' },
@@ -48,15 +68,31 @@ const fmtNum = (n: number) => new Intl.NumberFormat('pt-BR').format(n);
 export function CostsDashboard() {
   const [range, setRange] = useState<1 | 7 | 30 | 90>(30);
   const [data, setData] = useState<ApiResponse | null>(null);
+  const [byUser, setByUser] = useState<ByUserResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
 
   const fetchCosts = useCallback(async (r: number) => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/costs?range=${r}`);
-      if (!res.ok) throw new Error(`status ${res.status}`);
-      const body = (await res.json()) as ApiResponse;
+      const [resAll, resUser] = await Promise.all([
+        fetch(`/api/admin/costs?range=${r}`),
+        fetch(`/api/admin/costs/by-user?range=${r}`),
+      ]);
+      if (!resAll.ok) throw new Error(`status ${resAll.status}`);
+      const body = (await resAll.json()) as ApiResponse;
       setData(body);
+      if (resUser.ok) {
+        const ub = (await resUser.json()) as ByUserResponse;
+        setByUser(ub);
+      } else {
+        // Não-fatal — main dashboard ainda mostra; só registra warning.
+        console.warn(
+          '[CostsDashboard] by-user fetch failed:',
+          resUser.status,
+        );
+        setByUser(null);
+      }
     } catch (err) {
       toast.error('Falha ao carregar custos', { description: String(err) });
     } finally {
@@ -233,6 +269,109 @@ export function CostsDashboard() {
               </TableBody>
             </Table>
           </Section>
+
+          {byUser && (
+            <Section title="Por usuário">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead></TableHead>
+                    <TableHead>Usuário</TableHead>
+                    <TableHead className="text-right">Custo</TableHead>
+                    <TableHead className="text-right">Chamadas</TableHead>
+                    <TableHead className="text-right">Tokens in</TableHead>
+                    <TableHead className="text-right">Tokens out</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {byUser.users.map((u) => {
+                    const id = u.userId ?? '__null__';
+                    const expanded = expandedUserId === id;
+                    const label =
+                      u.userEmail ??
+                      (u.userId
+                        ? u.userId.slice(0, 8) + '…'
+                        : '(sem usuário — pré-feature)');
+                    return (
+                      <>
+                        <TableRow
+                          key={id}
+                          onClick={() =>
+                            setExpandedUserId(expanded ? null : id)
+                          }
+                          className="cursor-pointer"
+                        >
+                          <TableCell className="w-6 p-1">
+                            {expanded ? (
+                              <ChevronDown className="h-3.5 w-3.5" />
+                            ) : (
+                              <ChevronRight className="h-3.5 w-3.5" />
+                            )}
+                          </TableCell>
+                          <TableCell className="font-medium">{label}</TableCell>
+                          <TableCell className="text-right tabular-nums">
+                            {fmtUsd(u.costUsdCents)}
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums">
+                            {fmtNum(u.callCount)}
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums">
+                            {fmtNum(u.tokensIn)}
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums">
+                            {fmtNum(u.tokensOut)}
+                          </TableCell>
+                        </TableRow>
+                        {expanded && (
+                          <TableRow
+                            key={`${id}-detail`}
+                            className="bg-muted/30"
+                          >
+                            <TableCell colSpan={6} className="py-2">
+                              <div className="space-y-1">
+                                <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold">
+                                  Breakdown por operação
+                                </div>
+                                <table className="w-full text-xs">
+                                  <thead>
+                                    <tr className="text-muted-foreground">
+                                      <th className="text-left font-normal pb-1">Operação</th>
+                                      <th className="text-right font-normal pb-1">Custo</th>
+                                      <th className="text-right font-normal pb-1">Chamadas</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {u.byOperation.map((op) => (
+                                      <tr key={op.operation}>
+                                        <td className="py-0.5">{op.operation}</td>
+                                        <td className="text-right tabular-nums">
+                                          {fmtUsd(op.costUsdCents)}
+                                        </td>
+                                        <td className="text-right tabular-nums">
+                                          {fmtNum(op.callCount)}
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </>
+                    );
+                  })}
+                  {byUser.users.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center text-sm text-muted-foreground">
+                        Sem dados no período
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </Section>
+          )}
 
           <Section title="Por dia">
             <div className="space-y-1">

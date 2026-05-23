@@ -4,12 +4,14 @@ import { checkChatRateLimit } from '@/lib/rate-limit';
 import { searchSuppliers } from '@/lib/suppliers/search';
 import { SearchRequestSchema } from '@/lib/suppliers/types';
 import { recordApiUsage } from '@/lib/observability/api-usage';
+import { withUser } from '@/lib/observability/user-context';
 
 export const runtime = 'nodejs';
 
 export async function POST(req: Request): Promise<Response> {
+  let user;
   try {
-    await requireUser();
+    user = await requireUser();
   } catch (err) {
     if (err instanceof NotAuthenticated) {
       return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
@@ -17,6 +19,10 @@ export async function POST(req: Request): Promise<Response> {
     throw err;
   }
 
+  return withUser(user.id, () => searchBody(req));
+}
+
+async function searchBody(req: Request): Promise<Response> {
   const limit = await checkChatRateLimit();
   if (!limit.allowed) {
     return NextResponse.json(
