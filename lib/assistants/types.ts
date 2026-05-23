@@ -15,7 +15,8 @@ export type AssistantType =
   | 'porter'
   | 'financial'
   | 'abc'
-  | 'profile';
+  | 'profile'
+  | 'negotiation';
 
 export const ASSISTANT_TYPES = [
   'rfp',
@@ -24,6 +25,7 @@ export const ASSISTANT_TYPES = [
   'financial',
   'abc',
   'profile',
+  'negotiation',
 ] as const;
 
 export type ThemeStatusRow = 'running' | 'done' | 'error';
@@ -464,6 +466,245 @@ export const PartialProfileSchema = z.object({
 
 export type PartialProfile = z.infer<typeof PartialProfileSchema>;
 
+// ── Sub-projeto 22 — Negotiation (Strategic Sourcing Step 6) ─────────────
+//
+// Dois modos em UM run:
+//   1. Strategy Builder (form one-shot): gera JSON estruturado com postura,
+//      Kraljic, SWOT, Metas SMART, Inteligência de Mercado, Sumário.
+//   2. Text Simulator (chat multi-turno): LLM personifica o fornecedor com
+//      a estratégia carregada como contexto. Encerra com transcript + score.
+//
+// O run vive por todo o ciclo: strategy é gerada → opcionalmente o user
+// inicia simulação → transcript cresce turno-a-turno → score é gerado ao
+// encerrar. Tudo no mesmo `assistant_runs` row.
+
+const PORTER_LEVEL = z.enum(['low', 'med', 'high']);
+export type PorterLevel = z.infer<typeof PORTER_LEVEL>;
+
+// Posição de mercado do fornecedor — dropdown da Tela 1 do Deal Sim.
+export const SUPPLIER_MARKET_POSITION = [
+  'lider',
+  'desafiante',
+  'seguidor',
+  'nicho',
+  'novato',
+] as const;
+export type SupplierMarketPosition =
+  (typeof SUPPLIER_MARKET_POSITION)[number];
+
+export const SUPPLIER_MARKET_POSITION_LABELS: Record<
+  SupplierMarketPosition,
+  string
+> = {
+  lider: 'Líder de mercado',
+  desafiante: 'Desafiante',
+  seguidor: 'Seguidor',
+  nicho: 'Player de nicho',
+  novato: 'Novato / startup',
+};
+
+// Objetivo estratégico — dropdown OBJETIVOS E RELACIONAMENTO.
+export const NEGOTIATION_OBJECTIVE = [
+  'reducao-custos',
+  'redução-risco',
+  'aumento-qualidade',
+  'parceria-longo-prazo',
+  'diversificacao',
+  'sustentabilidade',
+  'inovacao',
+] as const;
+export type NegotiationObjective = (typeof NEGOTIATION_OBJECTIVE)[number];
+
+export const NEGOTIATION_OBJECTIVE_LABELS: Record<
+  NegotiationObjective,
+  string
+> = {
+  'reducao-custos': 'Redução de custos',
+  'redução-risco': 'Redução de risco',
+  'aumento-qualidade': 'Aumento de qualidade',
+  'parceria-longo-prazo': 'Parceria de longo prazo',
+  diversificacao: 'Diversificação',
+  sustentabilidade: 'Sustentabilidade',
+  inovacao: 'Inovação',
+};
+
+// Kraljic dropdown — reaproveita os labels do KraljicQuadrant.
+export const KRALJIC_QUADRANT_VALUES: KraljicQuadrant[] = [
+  'estrategico',
+  'alavancavel',
+  'gargalo',
+  'nao-critico',
+];
+
+// Strategy Builder params (form input — Tela 1-2 do Deal Sim).
+export const NegotiationStrategyParamsSchema = z.object({
+  // Identificação
+  supplierName: z.string().trim().min(1).max(200),
+  category: z.string().trim().min(1).max(200),
+  supplierWebsite: z.string().trim().max(300).optional().default(''),
+
+  // Contexto comercial
+  annualSpend: z.string().trim().max(120).optional().default(''), // free-text "R$ 4,5MM", "R$ 100k", etc.
+  supplierShare: z.string().trim().max(60).optional().default(''), // "70%", "30-40%"
+  marketPosition: z.enum(SUPPLIER_MARKET_POSITION).optional(),
+  kraljicQuadrant: z
+    .enum(['estrategico', 'alavancavel', 'gargalo', 'nao-critico'])
+    .optional(),
+
+  // ZOPA & Parâmetros Financeiros (free-text — formatos brasileiros variados)
+  currentPrice: z.string().trim().max(120).optional().default(''),
+  supplierDesiredPrice: z.string().trim().max(120).optional().default(''),
+  targetPrice: z.string().trim().max(120).optional().default(''),
+  walkawayPrice: z.string().trim().max(120).optional().default(''),
+
+  // Objetivos e relacionamento
+  strategicObjective: z.enum(NEGOTIATION_OBJECTIVE).optional(),
+  contractStatus: z.string().trim().max(2000).optional().default(''),
+  priceScenario: z.string().trim().max(2000).optional().default(''),
+
+  // Link opcional a um Perfil (sub-projeto 33).
+  perfilId: z.string().uuid().optional(),
+});
+
+export type NegotiationStrategyParams = z.infer<
+  typeof NegotiationStrategyParamsSchema
+>;
+
+// Output do Strategy Builder — JSON renderizado como cards visuais.
+// Mantemos texto longo em strings; arrays de bullets são string[].
+export const NegotiationStrategyResultSchema = z.object({
+  // Banner principal (Tela 3 — "Colaborativa-Assertiva.")
+  posture: z.object({
+    label: z.string().trim().min(1).max(120), // ex: "Colaborativa-Assertiva"
+    paragraph: z.string().trim().min(1).max(3000), // bloco em itálico do banner
+  }),
+  // Cards de poder de barganha (3 níveis)
+  bargainingPower: z.object({
+    buyer: PORTER_LEVEL,
+    supplier: PORTER_LEVEL,
+  }),
+  // Card quadrante Kraljic (label + explicação narrativa)
+  kraljic: z.object({
+    quadrant: z.enum([
+      'estrategico',
+      'alavancavel',
+      'gargalo',
+      'nao-critico',
+    ]),
+    label: z.string().trim().min(1).max(120),
+    explanation: z.string().trim().min(1).max(2000),
+  }),
+  // Inteligência de Mercado (Tela 4 — 5 cards)
+  marketIntel: z.object({
+    news: z.string().trim().max(2000),
+    financials: z.string().trim().max(2000),
+    innovations: z.string().trim().max(2000),
+    risks: z.string().trim().max(2000),
+    sustainability: z.string().trim().max(2000),
+  }),
+  // Sumário Executivo (Tela 5)
+  executiveSummary: z.string().trim().min(1).max(5000),
+  // SWOT (4 cards de bullets)
+  swot: z.object({
+    strengths: z.array(z.string().trim().min(1).max(300)).max(8),
+    weaknesses: z.array(z.string().trim().min(1).max(300)).max(8),
+    opportunities: z.array(z.string().trim().min(1).max(300)).max(8),
+    threats: z.array(z.string().trim().min(1).max(300)).max(8),
+  }),
+  // Metas SMART da Missão
+  smartGoals: z.object({
+    specific: z.string().trim().min(1).max(1000),
+    measurable: z.string().trim().min(1).max(1000),
+    achievable: z.string().trim().min(1).max(1000),
+    relevant: z.string().trim().min(1).max(1000),
+    temporal: z.string().trim().min(1).max(1000),
+  }),
+});
+
+export type NegotiationStrategyResult = z.infer<
+  typeof NegotiationStrategyResultSchema
+>;
+
+// Request body do POST /api/assistants/negotiation/strategy
+export const NegotiationStrategyRequestSchema = z.object({
+  params: NegotiationStrategyParamsSchema,
+});
+export type NegotiationStrategyRequest = z.infer<
+  typeof NegotiationStrategyRequestSchema
+>;
+
+// Setup da simulação (Tela 6 — depende de strategy já gerada).
+export const NEGOTIATION_PERSONA_PROFILE = [
+  'agressivo',
+  'colaborativo',
+  'pragmatico',
+  'rigido',
+  'relacional',
+] as const;
+export type NegotiationPersonaProfile =
+  (typeof NEGOTIATION_PERSONA_PROFILE)[number];
+
+export const NEGOTIATION_PERSONA_PROFILE_LABELS: Record<
+  NegotiationPersonaProfile,
+  string
+> = {
+  agressivo: 'Agressivo — pressiona, ancora alto, raramente cede',
+  colaborativo: 'Colaborativo — busca ganha-ganha, mas firme em interesses',
+  pragmatico: 'Pragmático — orientado a fechar, troca rapidamente',
+  rigido: 'Rígido — fixo no script, fala-padrão, evita exceções',
+  relacional: 'Relacional — joga longo prazo, sensível à confiança',
+};
+
+export const NegotiationSimulatorSetupSchema = z.object({
+  personaProfile: z.enum(NEGOTIATION_PERSONA_PROFILE),
+  supplierObjectives: z.string().trim().min(1).max(2000),
+  supplierWalkaway: z.string().trim().min(1).max(2000),
+});
+export type NegotiationSimulatorSetup = z.infer<
+  typeof NegotiationSimulatorSetupSchema
+>;
+
+// Turno no chat. Stateless por turno; client mantém histórico.
+export const NegotiationTurnRequestSchema = z.object({
+  messages: z
+    .array(
+      z.object({
+        role: z.enum(['user', 'assistant']),
+        content: z.string().min(1).max(8000),
+      }),
+    )
+    .min(1)
+    .max(100),
+});
+export type NegotiationTurnRequest = z.infer<
+  typeof NegotiationTurnRequestSchema
+>;
+
+// Score do simulator (gerado em /close).
+export const NegotiationScoreSchema = z.object({
+  overall: z.number().int().min(0).max(100),
+  dimensions: z.object({
+    anchoring: z.number().int().min(0).max(100),
+    concessions: z.number().int().min(0).max(100),
+    batna: z.number().int().min(0).max(100),
+    closing: z.number().int().min(0).max(100),
+  }),
+  strengths: z.array(z.string().trim().min(1).max(400)).max(8),
+  weaknesses: z.array(z.string().trim().min(1).max(400)).max(8),
+  recommendations: z.array(z.string().trim().min(1).max(400)).max(8),
+});
+export type NegotiationScore = z.infer<typeof NegotiationScoreSchema>;
+
+// Transcript JSONB serialization.
+export const NegotiationTranscriptTurnSchema = z.object({
+  role: z.enum(['user', 'assistant']),
+  content: z.string().min(1).max(8000),
+  ts: z.string().datetime().optional(),
+});
+export type NegotiationTranscriptTurn = z.infer<
+  typeof NegotiationTranscriptTurnSchema
+>;
+
 // ── Assistant run row shape (DB serialization) ───────────────────────────
 // `params` is discriminated by `assistant_type`. We type it as the union
 // here and narrow at the call site.
@@ -478,11 +719,16 @@ export type AssistantRunRow = {
     | PorterParams
     | FinancialParams
     | AbcParams
-    | ProfileParams;
+    | ProfileParams
+    | NegotiationStrategyParams;
   output_md: string | null;
   status: ThemeStatusRow;
   error_message: string | null;
   trace_id: string | null;
   created_at: string;
   finished_at: string | null;
+  // Sub-projeto 22 — negociação. Populated quando assistant_type='negotiation'.
+  strategy?: NegotiationStrategyResult | null;
+  transcript?: NegotiationTranscriptTurn[] | null;
+  score?: NegotiationScore | null;
 };

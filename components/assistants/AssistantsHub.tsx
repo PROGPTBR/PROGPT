@@ -13,6 +13,7 @@ import { FinancialScorePreview } from './previews/FinancialScorePreview';
 import { AbcCurvePreview } from './previews/AbcCurvePreview';
 import { ProfileDocPreview } from './previews/ProfileDocPreview';
 import { SuppliersPreview } from './previews/SuppliersPreview';
+import { NegotiationPreview } from './previews/NegotiationPreview';
 
 // Hub layout — Spotlight + Roadmap.
 //
@@ -118,6 +119,20 @@ const SPOTLIGHTS: SpotlightAssistant[] = [
     Preview: RfpDocumentPreview,
   },
   {
+    step: 6,
+    stepCategory: 'Negociação',
+    href: '/assistants/negotiation',
+    title: 'Simulador de Negociação',
+    short:
+      'Construtor de estratégia (postura, Kraljic, SWOT, SMART, intel de mercado) + simulador de chat onde a IA personifica o fornecedor.',
+    bullets: [
+      'Form com ZOPA, perfil do fornecedor, objetivo',
+      'Estratégia em cards visuais + chat treino',
+      'Score 0-100 com 4 dimensões ao encerrar',
+    ],
+    Preview: NegotiationPreview,
+  },
+  {
     step: 7,
     stepCategory: 'Contrato',
     href: '/assistants/financial',
@@ -147,7 +162,7 @@ const STEPS: RoadmapStep[] = [
   { n: 3, shortLabel: 'Mercado', fullName: 'Visão do Mercado Fornecedor', available: true, href: '/assistants/porter' },
   { n: 4, shortLabel: 'Estratégia', fullName: 'Estratégia de Sourcing', available: true, href: '/assistants/kraljic' },
   { n: 5, shortLabel: 'Engajamento', fullName: 'Engajamento dos Fornecedores', available: true, href: '/assistants/rfp' },
-  { n: 6, shortLabel: 'Negociação', fullName: 'Negociação', available: false },
+  { n: 6, shortLabel: 'Negociação', fullName: 'Negociação', available: true, href: '/assistants/negotiation' },
   { n: 7, shortLabel: 'Contrato', fullName: 'Implementação do Contrato', available: true, href: '/assistants/financial' },
   { n: 8, shortLabel: 'Controle', fullName: 'Controle e Melhoria Contínua', available: false },
 ];

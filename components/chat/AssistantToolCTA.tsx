@@ -7,6 +7,7 @@ import {
   Briefcase,
   FileText,
   Layers,
+  MessageCircle,
   TrendingUp,
   UserCircle2,
 } from 'lucide-react';
@@ -26,7 +27,8 @@ export type AssistantToolType =
   | 'porter'
   | 'abc'
   | 'financial'
-  | 'profile';
+  | 'profile'
+  | 'negotiation';
 
 type Meta = {
   title: string;
@@ -64,6 +66,11 @@ const META: Record<AssistantToolType, Meta> = {
     title: 'Abrir Perfil da Categoria',
     blurb: 'Caracterize uma categoria de compra antes de partir pra análise',
     Icon: UserCircle2,
+  },
+  negotiation: {
+    title: 'Abrir Simulador de Negociação',
+    blurb: 'Construtor de estratégia + chat onde a IA personifica o fornecedor; score 0-100 no fim',
+    Icon: MessageCircle,
   },
 };
 
@@ -103,6 +110,7 @@ const VALID_TYPES = new Set<AssistantToolType>([
   'abc',
   'financial',
   'profile',
+  'negotiation',
 ]);
 
 // Server-callable detector. Procura o PRIMEIRO `/assistants/<type>`

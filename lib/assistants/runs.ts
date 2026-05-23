@@ -8,6 +8,10 @@ import type {
   FinancialParams,
   AbcParams,
   ProfileParams,
+  NegotiationStrategyParams,
+  NegotiationStrategyResult,
+  NegotiationScore,
+  NegotiationTranscriptTurn,
 } from './types';
 
 // Service-role CRUD for assistant_runs. The API route owns the lifecycle:
@@ -25,7 +29,8 @@ export async function createRun(input: {
     | PorterParams
     | FinancialParams
     | AbcParams
-    | ProfileParams;
+    | ProfileParams
+    | NegotiationStrategyParams;
   traceId: string | null;
 }): Promise<AssistantRunRow | null> {
   const sb = getServerSupabase();
@@ -138,6 +143,74 @@ export async function listRunsForOwner(
     ? (trimmed[trimmed.length - 1]?.created_at ?? null)
     : null;
   return { runs: trimmed, nextCursor };
+}
+
+// ── Sub-projeto 22 — Negotiation helpers ─────────────────────────────────
+
+// Grava o resultado do Strategy Builder. `strategy` é JSONB; status fica
+// 'done' (a estratégia é o artefato principal — o simulator é opcional).
+// `output_md` é também populado pra suporte ao download do .docx
+// "Visualizar Estratégia Completa" (renderiza o JSON em markdown legível).
+export async function updateRunStrategy(
+  id: string,
+  strategy: NegotiationStrategyResult,
+  outputMd: string,
+): Promise<boolean> {
+  const sb = getServerSupabase();
+  const { error } = await sb
+    .from('assistant_runs')
+    .update({
+      strategy,
+      output_md: outputMd,
+      status: 'done',
+      finished_at: new Date().toISOString(),
+    })
+    .eq('id', id);
+  if (error) {
+    console.warn('[assistants/runs] updateRunStrategy failed:', error.message);
+    return false;
+  }
+  return true;
+}
+
+// Atualiza transcript inteiro (cliente envia histórico completo a cada
+// turno, então persistimos snapshot completo — simples e correto).
+export async function updateRunTranscript(
+  id: string,
+  transcript: NegotiationTranscriptTurn[],
+): Promise<boolean> {
+  const sb = getServerSupabase();
+  const { error } = await sb
+    .from('assistant_runs')
+    .update({ transcript })
+    .eq('id', id);
+  if (error) {
+    console.warn(
+      '[assistants/runs] updateRunTranscript failed:',
+      error.message,
+    );
+    return false;
+  }
+  return true;
+}
+
+// Grava score ao encerrar a simulação. Não muda status (já é 'done' da
+// strategy); só adiciona o score JSONB. Se quiser reabrir e continuar
+// negociando, o score é simplesmente sobrescrito da próxima vez.
+export async function updateRunScore(
+  id: string,
+  score: NegotiationScore,
+): Promise<boolean> {
+  const sb = getServerSupabase();
+  const { error } = await sb
+    .from('assistant_runs')
+    .update({ score })
+    .eq('id', id);
+  if (error) {
+    console.warn('[assistants/runs] updateRunScore failed:', error.message);
+    return false;
+  }
+  return true;
 }
 
 // Owner-scoped lookup. Used by the docx download endpoint to verify the
