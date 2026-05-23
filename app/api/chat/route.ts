@@ -8,6 +8,7 @@ import { suggestFollowups } from '@/lib/rag/followups';
 import type { ChatMessage, ProfileSnapshot } from '@/lib/rag/types';
 import { startTrace, flushAsync } from '@/lib/observability/langfuse';
 import { recordApiUsage } from '@/lib/observability/api-usage';
+import { withUser } from '@/lib/observability/user-context';
 import { getCurrentUser } from '@/lib/auth';
 import { checkChatRateLimit } from '@/lib/rate-limit';
 import { summarizeChatTitle } from '@/lib/chat-title';
@@ -107,6 +108,10 @@ export async function POST(req: Request): Promise<Response> {
     }
   }
 
+  // withUser propaga user.id via AsyncLocalStorage pra todo `recordApiUsage`
+  // chamado em cascata (voyage embed, classifier, condenser, followups,
+  // chat-generate) sem precisar passar userId em cada call site.
+  return withUser(user.id, async () => {
   const trace = await startTrace({
     name: 'chat.turn',
     userId: user.id,
@@ -310,4 +315,5 @@ export async function POST(req: Request): Promise<Response> {
     await flushAsync();
     return Response.json({ error: 'chat failed' }, { status: 500 });
   }
+  });
 }

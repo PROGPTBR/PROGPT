@@ -8,6 +8,7 @@ import { retrieve } from '@/lib/rag/retriever';
 import { rerank } from '@/lib/rag/reranker';
 import { startTrace, flushAsync } from '@/lib/observability/langfuse';
 import { recordApiUsage } from '@/lib/observability/api-usage';
+import { withUser } from '@/lib/observability/user-context';
 import type { ApiOperation } from '@/lib/observability/api-usage';
 import { getTemplate } from '@/lib/assistants/templates';
 import {
@@ -127,6 +128,10 @@ export function buildAssistantHandler<
         { status: 429, headers: { 'Retry-After': String(rl.retryAfterSecs) } },
       );
     }
+
+    // withUser propaga user.id pra todo recordApiUsage feito downstream
+    // (retrieve→voyage embed, rerank→cohere, streamText→chat-generate).
+    return withUser(user.id, async () => {
 
     const env = process.env.APP_ENV ?? 'production';
     const trace = await startTrace({
@@ -285,5 +290,6 @@ export function buildAssistantHandler<
       await flushAsync();
       return Response.json({ error: errorTag }, { status: 500 });
     }
+    });
   };
 }

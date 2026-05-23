@@ -8,6 +8,7 @@ import { retrieve } from '@/lib/rag/retriever';
 import { rerank } from '@/lib/rag/reranker';
 import { startTrace, flushAsync } from '@/lib/observability/langfuse';
 import { recordApiUsage } from '@/lib/observability/api-usage';
+import { withUser } from '@/lib/observability/user-context';
 import { getRunForOwner } from '@/lib/assistants/runs';
 import { buildRefineSystemForType } from '@/lib/assistants/refine';
 import type {
@@ -52,6 +53,14 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   const user = await getCurrentUser();
   if (!user) return Response.json({ error: 'unauthorized' }, { status: 401 });
 
+  return withUser(user.id, () => refineBody(parsed, user, params));
+}
+
+async function refineBody(
+  parsed: z.infer<typeof BodySchema>,
+  user: { id: string },
+  params: { id: string },
+): Promise<Response> {
   const run = await getRunForOwner(params.id, user.id);
   if (!run) return new Response('Not Found', { status: 404 });
   if (run.status !== 'done' || !run.output_md) {

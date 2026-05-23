@@ -15,6 +15,7 @@ import {
 import { buildPersonaSystem } from '@/lib/assistants/negotiation/prompt-persona';
 import { recordApiUsage } from '@/lib/observability/api-usage';
 import { startTrace, flushAsync } from '@/lib/observability/langfuse';
+import { withUser } from '@/lib/observability/user-context';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -36,6 +37,14 @@ export async function POST(
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
 
+  return withUser(user.id, () => negotiateBody(req, user, routeParams));
+}
+
+async function negotiateBody(
+  req: Request,
+  user: { id: string },
+  routeParams: { id: string },
+): Promise<Response> {
   const rl = await checkChatRateLimit();
   if (!rl.allowed) {
     return NextResponse.json(

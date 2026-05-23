@@ -1,4 +1,5 @@
 import { getServerSupabase } from '@/lib/db/supabase';
+import { currentUserId } from '@/lib/observability/user-context';
 
 // Sub-projeto 19 — API cost tracking.
 //
@@ -66,6 +67,13 @@ export type RecordUsageInput = {
   tokensCached?: number;
   callCount?: number;
   metadata?: Record<string, unknown>;
+  /**
+   * UUID do usuário responsável pela chamada. Opcional: quando ausente,
+   * `recordApiUsage` resolve via `currentUserId()` (AsyncLocalStorage
+   * setado por `withUser()` no entry da route). Chamadas em background
+   * jobs sem user context gravam `null`.
+   */
+  userId?: string | null;
 };
 
 // ── Rate cards (USD per 1M tokens unless noted) ─────────────────────────────
@@ -143,6 +151,8 @@ export async function recordApiUsage(input: RecordUsageInput): Promise<void> {
   try {
     const sb = getServerSupabase();
     const cost = computeCostUsdCents(input);
+    const userId =
+      input.userId !== undefined ? input.userId : currentUserId();
     const { error } = await sb.from('api_usage_events').insert({
       provider: input.provider,
       operation: input.operation,
@@ -153,6 +163,7 @@ export async function recordApiUsage(input: RecordUsageInput): Promise<void> {
       call_count: input.callCount ?? 1,
       cost_usd_cents: cost,
       metadata: input.metadata ?? {},
+      user_id: userId,
     });
     if (error) {
       console.warn('[api-usage] insert failed:', error.message);
