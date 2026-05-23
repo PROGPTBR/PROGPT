@@ -25,7 +25,8 @@ type AssistantTypeLocal =
   | 'porter'
   | 'financial'
   | 'abc'
-  | 'profile';
+  | 'profile'
+  | 'negotiation';
 
 type RunSummary = {
   id: string;
@@ -149,9 +150,11 @@ export function RfpHistoryList() {
               ? 'abc'
               : assistantType === 'profile'
                 ? 'perfil'
-                : kind === 'docx'
-                  ? 'rfp'
-                  : 'cotacao';
+                : assistantType === 'negotiation'
+                  ? 'negociacao'
+                  : kind === 'docx'
+                    ? 'rfp'
+                    : 'cotacao';
     const filename = `${prefix}-${runId.slice(0, 8)}.${kind}`;
     const errLabel =
       kind === 'docx' ? 'Falha ao baixar .docx' : 'Falha ao baixar planilha';
@@ -222,6 +225,7 @@ export function RfpHistoryList() {
             const isFinancial = r.assistant_type === 'financial';
             const isAbc = r.assistant_type === 'abc';
             const isProfile = r.assistant_type === 'profile';
+            const isNegotiation = r.assistant_type === 'negotiation';
             const scope = isKraljic
               ? (r.params.portfolioName ?? '(portfólio sem nome)')
               : isPorter
@@ -232,7 +236,9 @@ export function RfpHistoryList() {
                     ? (r.params.analysisName ?? '(análise sem nome)')
                     : isProfile
                       ? (r.params.nomeCategoria ?? '(categoria sem nome)')
-                      : (r.params.scope ?? '(sem escopo)');
+                      : isNegotiation
+                        ? (r.params.supplierName ?? '(fornecedor sem nome)')
+                        : (r.params.scope ?? '(sem escopo)');
             const category = isKraljic
               ? `${r.params.items?.length ?? 0} item(ns)`
               : isPorter
@@ -243,14 +249,16 @@ export function RfpHistoryList() {
                     ? `${r.params.items?.length ?? 0} item(ns)`
                     : isProfile
                       ? `${r.params.subSegmentos?.length ?? 0} sub-segmento(s)`
-                      : (r.params.category ?? '—');
+                      : isNegotiation
+                        ? (r.params.category ?? 'Estratégia de negociação')
+                        : (r.params.category ?? '—');
             const client =
-              isKraljic || isPorter || isFinancial || isAbc || isProfile
+              isKraljic || isPorter || isFinancial || isAbc || isProfile || isNegotiation
                 ? ''
                 : (r.params.client ?? '');
             const isDone = r.status === 'done';
-            // Porter, Financial and Profile don't produce a .xlsx.
-            const showXlsx = !isPorter && !isFinancial && !isProfile;
+            // Porter, Financial, Profile and Negotiation don't produce a .xlsx.
+            const showXlsx = !isPorter && !isFinancial && !isProfile && !isNegotiation;
             return (
               <li
                 key={r.id}
