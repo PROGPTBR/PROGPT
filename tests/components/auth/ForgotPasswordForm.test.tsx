@@ -7,35 +7,69 @@ beforeEach(() => {
   vi.resetModules();
 });
 
-afterEach(() => cleanup());
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+});
 
-function mockBrowser() {
-  const resetPasswordForEmail = vi.fn().mockResolvedValue({ error: null });
-  vi.doMock('@/lib/db/supabase-browser', () => ({
-    supabaseBrowser: () => ({ auth: { resetPasswordForEmail } }),
+function setup(status = 200, body: Record<string, unknown> = { ok: true }) {
+  const fetchSpy = vi.fn().mockResolvedValue({
+    ok: status < 400,
+    status,
+    json: async () => body,
+  });
+  vi.stubGlobal('fetch', fetchSpy);
+  vi.doMock('@/components/auth/TurnstileWidget', () => ({
+    TurnstileWidget: ({ onVerify }: { onVerify: (t: string) => void }) => {
+      setTimeout(() => onVerify('test-token'), 0);
+      return null;
+    },
   }));
-  return { resetPasswordForEmail };
+  return fetchSpy;
+}
+
+async function fill(email: string) {
+  const user = userEvent.setup();
+  await user.type(screen.getByLabelText(/email/i), email);
+  await new Promise((r) => setTimeout(r, 5));
+  await user.click(screen.getByRole('button', { name: /enviar link/i }));
 }
 
 describe('ForgotPasswordForm', () => {
-  it('submit calls resetPasswordForEmail with the email', async () => {
-    const { resetPasswordForEmail } = mockBrowser();
-    const { ForgotPasswordForm } = await import('@/components/auth/ForgotPasswordForm');
+  it('POSTs /api/auth/reset-request with email + captchaToken', async () => {
+    const fetchSpy = setup();
+    const { ForgotPasswordForm } = await import(
+      '@/components/auth/ForgotPasswordForm'
+    );
     render(<ForgotPasswordForm />);
-    const user = userEvent.setup();
-    await user.type(screen.getByLabelText(/email/i), 'a@b.com');
-    await user.click(screen.getByRole('button', { name: /enviar link/i }));
-    expect(resetPasswordForEmail).toHaveBeenCalledTimes(1);
-    expect(resetPasswordForEmail.mock.calls[0]?.[0]).toBe('a@b.com');
+    await fill('a@b.com');
+    expect(fetchSpy).toHaveBeenCalledWith(
+      '/api/auth/reset-request',
+      expect.objectContaining({ method: 'POST' }),
+    );
+    const reqBody = JSON.parse(
+      (fetchSpy.mock.calls[0]?.[1] as RequestInit).body as string,
+    );
+    expect(reqBody).toEqual({ email: 'a@b.com', captchaToken: 'test-token' });
   });
 
-  it('shows success state after submit', async () => {
-    mockBrowser();
-    const { ForgotPasswordForm } = await import('@/components/auth/ForgotPasswordForm');
+  it('shows success state after 200', async () => {
+    setup();
+    const { ForgotPasswordForm } = await import(
+      '@/components/auth/ForgotPasswordForm'
+    );
     render(<ForgotPasswordForm />);
-    const user = userEvent.setup();
-    await user.type(screen.getByLabelText(/email/i), 'a@b.com');
-    await user.click(screen.getByRole('button', { name: /enviar link/i }));
+    await fill('a@b.com');
     expect(await screen.findByText(/verifique seu email/i)).toBeTruthy();
+  });
+
+  it('shows captcha error on 403', async () => {
+    setup(403, { error: 'captcha_invalid' });
+    const { ForgotPasswordForm } = await import(
+      '@/components/auth/ForgotPasswordForm'
+    );
+    render(<ForgotPasswordForm />);
+    await fill('a@b.com');
+    expect(await screen.findByText(/anti-bot falhou/i)).toBeTruthy();
   });
 });

@@ -3,23 +3,25 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { supabaseBrowser } from '@/lib/db/supabase-browser';
+import { TurnstileWidget } from './TurnstileWidget';
 
 const MIN_PASSWORD = 6;
 
-function friendlyError(error: { message?: string; code?: string } | null): string | null {
-  if (!error) return null;
-  const msg = (error.message ?? '').toLowerCase();
-  if (msg.includes('already registered') || msg.includes('user already')) {
-    return 'Já existe uma conta com este email. Use Entrar.';
+function friendlyError(code: string): string {
+  switch (code) {
+    case 'user_already_exists':
+      return 'Já existe uma conta com este email. Use Entrar.';
+    case 'password_weak':
+      return `A senha precisa ter pelo menos ${MIN_PASSWORD} caracteres.`;
+    case 'captcha_invalid':
+      return 'Verificação anti-bot falhou. Tente novamente.';
+    case 'rate_limited':
+      return 'Muitas tentativas. Aguarde um minuto e tente de novo.';
+    case 'invalid_body':
+      return 'Email ou senha inválidos.';
+    default:
+      return 'Algo deu errado. Tente novamente.';
   }
-  if (msg.includes('password') && (msg.includes('short') || msg.includes('weak'))) {
-    return `A senha precisa ter pelo menos ${MIN_PASSWORD} caracteres.`;
-  }
-  if (msg.includes('rate limit') || error.code === 'over_email_send_rate_limit') {
-    return 'Muitas tentativas. Espere um minuto e tente novamente.';
-  }
-  return 'Algo deu errado. Tente novamente.';
 }
 
 type SignupState =
@@ -34,6 +36,7 @@ export function SignupForm() {
   const next = params.get('next') ?? '/chat';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [state, setState] = useState<SignupState>({ kind: 'idle' });
 
   async function onSubmit(e: React.FormEvent) {
@@ -45,25 +48,31 @@ export function SignupForm() {
       });
       return;
     }
+    if (!captchaToken) {
+      setState({
+        kind: 'error',
+        message: 'Aguarde a verificação anti-bot terminar de carregar.',
+      });
+      return;
+    }
     setState({ kind: 'submitting' });
-    const sb = supabaseBrowser();
-    const { data, error } = await sb.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
-      },
+    const res = await fetch('/api/auth/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, captchaToken, next }),
     });
-    if (error) {
-      setState({ kind: 'error', message: friendlyError(error) ?? 'Erro desconhecido' });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({ error: 'unknown' }));
+      setState({ kind: 'error', message: friendlyError(body.error ?? 'unknown') });
       return;
     }
-    if (data.session) {
-      router.push(next);
-      router.refresh();
+    const body = await res.json();
+    if (body.checkEmail) {
+      setState({ kind: 'check-email' });
       return;
     }
-    setState({ kind: 'check-email' });
+    router.push(next);
+    router.refresh();
   }
 
   if (state.kind === 'check-email') {
@@ -136,6 +145,7 @@ export function SignupForm() {
             Mínimo {MIN_PASSWORD} caracteres.
           </p>
         </div>
+        <TurnstileWidget onVerify={setCaptchaToken} />
         {errorMessage ? (
           <div
             role="alert"
@@ -146,7 +156,7 @@ export function SignupForm() {
         ) : null}
         <button
           type="submit"
-          disabled={submitting}
+          disabled={submitting || !captchaToken}
           className="w-full inline-flex items-center justify-center bg-brand text-black h-11 rounded-full text-sm font-medium hover:bg-brand/90 disabled:opacity-60 disabled:cursor-not-allowed active:scale-95 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           {submitting ? 'Cadastrando…' : 'Cadastrar'}
