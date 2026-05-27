@@ -2,21 +2,38 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { supabaseBrowser } from '@/lib/db/supabase-browser';
+import { TurnstileWidget } from './TurnstileWidget';
 
 export function ForgotPasswordForm() {
   const [email, setEmail] = useState('');
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!captchaToken) {
+      setErrorMessage('Aguarde a verificação anti-bot terminar de carregar.');
+      return;
+    }
     setLoading(true);
-    const sb = supabaseBrowser();
-    await sb.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
+    setErrorMessage(null);
+    const res = await fetch('/api/auth/reset-request', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, captchaToken }),
     });
     setLoading(false);
+    if (res.status === 403) {
+      setErrorMessage('Verificação anti-bot falhou. Tente novamente.');
+      return;
+    }
+    if (res.status === 429) {
+      setErrorMessage('Muitas tentativas. Aguarde um minuto.');
+      return;
+    }
+    // 200 mesmo pra email inexistente (anti-enumeration).
     setDone(true);
   }
 
@@ -68,9 +85,18 @@ export function ForgotPasswordForm() {
           className="w-full rounded-lg bg-muted/40 border border-border px-4 py-2.5 text-sm text-foreground placeholder-muted-foreground outline-none focus:border-brand focus:bg-muted/60 transition-colors"
         />
       </div>
+      <TurnstileWidget onVerify={setCaptchaToken} />
+      {errorMessage ? (
+        <div
+          role="alert"
+          className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300"
+        >
+          {errorMessage}
+        </div>
+      ) : null}
       <button
         type="submit"
-        disabled={loading}
+        disabled={loading || !captchaToken}
         className="w-full inline-flex items-center justify-center bg-brand text-black h-11 rounded-full text-sm font-medium hover:bg-brand/90 disabled:opacity-60 disabled:cursor-not-allowed active:scale-95 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
         {loading ? 'Enviando…' : 'Enviar link'}
