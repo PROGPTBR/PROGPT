@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { FolderOpen, ArrowRight, Sparkles, Phone, Factory } from 'lucide-react';
 import { Composer, type ChatAttachment } from './Composer';
+import { AssistantLauncher } from './AssistantLauncher';
 
 // 2B Supply contact CTA — surfaces in the empty state as a "got value
 // from this? talk to us" handoff. tel: link for click-to-call on mobile;
@@ -130,6 +131,16 @@ export function EmptyState({
               aria-hidden="true"
             />
           </Link>
+        </div>
+
+        {/* Assistant launcher — destaque dos 8 assistentes (feedback de
+            usuário). Fica acima dos chat-starters porque a maior parte
+            do valor da plataforma está nos assistentes. */}
+        <div className="w-full">
+          <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2 text-center">
+            Vá direto pro assistente
+          </div>
+          <AssistantLauncher variant="hero" />
         </div>
 
         {/* Suggestion pills — the five areas the hero mentioned, plus a

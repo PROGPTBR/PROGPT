@@ -9,6 +9,7 @@ import { EmptyState } from './EmptyState';
 import { MessageList } from './MessageList';
 import { Composer, type ChatAttachment } from './Composer';
 import { ActiveProfileChip } from './ActiveProfileChip';
+import { AssistantLauncher } from './AssistantLauncher';
 
 type Props = {
   session: StoredSession;
@@ -159,6 +160,7 @@ export function ChatSession({
             onPickFollowup={onPickFollowup}
           />
           {profileChip}
+          <AssistantLauncher variant="compact" />
           <Composer
             input={input}
             onChange={setInput}
