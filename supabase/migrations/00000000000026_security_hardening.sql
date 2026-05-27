@@ -28,7 +28,7 @@ grant select on profiles_with_email to service_role;
 -- B. Function search_path mutable (3 funções)
 -- ────────────────────────────────────────────────────────────────────────────
 
-alter function admin_top_queries(int) set search_path = public, pg_temp;
+alter function admin_top_queries(int, int) set search_path = public, pg_temp;
 alter function admin_api_usage_by_user(int) set search_path = public, pg_temp;
 alter function admin_api_usage_daily(int) set search_path = public, pg_temp;
 
