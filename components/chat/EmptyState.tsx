@@ -2,8 +2,7 @@
 
 import { type FormEvent } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { FolderOpen, ArrowRight, Sparkles, Phone, Factory } from 'lucide-react';
+import { FolderOpen, ArrowRight, Sparkles, Phone } from 'lucide-react';
 import { Composer, type ChatAttachment } from './Composer';
 import { AssistantLauncher } from './AssistantLauncher';
 
@@ -12,42 +11,6 @@ import { AssistantLauncher } from './AssistantLauncher';
 // desktop falls back to opening the OS dialer.
 const CONTACT_TEL_HREF = 'tel:+5521999792912';
 const CONTACT_PHONE_DISPLAY = '(21) 99979-2912';
-
-// Suggestion pills (Claude/ChatGPT style) — aligned to the five
-// procurement areas mentioned in the hero pitch. Each pill pre-fills the
-// composer with a concrete starter question so the user goes from
-// landing → typing in one click.
-type Suggestion = { label: string; query: string };
-
-const SUGGESTIONS: Suggestion[] = [
-  {
-    label: 'Compras',
-    query:
-      'Como definir a estratégia de compras para uma categoria nova?',
-  },
-  {
-    label: 'Contratos',
-    query:
-      'Como estruturar um contrato de fornecimento com SLA e penalidades?',
-  },
-  {
-    label: 'Fornecedores',
-    query:
-      'Como avaliar a saúde financeira de um fornecedor antes de fechar?',
-  },
-  {
-    label: 'Estoque',
-    query:
-      'Como calcular estoque mínimo e ponto de pedido via curva ABC?',
-  },
-  {
-    label: 'Logística',
-    query:
-      'Como otimizar custos de inbound em uma rede multi-CD?',
-  },
-];
-
-const LIBRARY_OVERVIEW_QUERY = 'Sobre o que você pode me ensinar?';
 
 type Props = {
   // Composer props piped through — we own the single Composer instance
@@ -70,7 +33,6 @@ export function EmptyState({
   onStop,
   profileChip,
 }: Props) {
-  const router = useRouter();
   return (
     <div className="flex-1 flex flex-col items-center justify-center px-6 py-8 overflow-y-auto">
       <div className="w-full max-w-2xl flex flex-col items-center gap-8">
@@ -141,44 +103,6 @@ export function EmptyState({
             Vá direto pro assistente
           </div>
           <AssistantLauncher variant="hero" />
-        </div>
-
-        {/* Suggestion pills — the five areas the hero mentioned, plus a
-            Descobrir pill (library overview) and a Buscar fornecedores
-            pill that jumps to the dedicated assistant. */}
-        <div className="flex flex-wrap justify-center gap-2">
-          <button
-            type="button"
-            onClick={() => onChange(LIBRARY_OVERVIEW_QUERY)}
-            className="inline-flex items-center gap-1.5 rounded-full border border-brand/40 bg-brand/5 hover:bg-brand/10 px-3.5 h-9 text-xs font-medium text-brand transition-all duration-300 active:scale-95"
-          >
-            <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
-            Descobrir temas
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              const q = input.trim();
-              const target = q
-                ? `/assistants/suppliers?q=${encodeURIComponent(q)}`
-                : '/assistants/suppliers';
-              router.push(target);
-            }}
-            className="inline-flex items-center gap-1.5 rounded-full border border-brand/40 bg-brand/5 hover:bg-brand/10 px-3.5 h-9 text-xs font-medium text-brand transition-all duration-300 active:scale-95"
-          >
-            <Factory className="h-3.5 w-3.5" aria-hidden="true" />
-            Buscar fornecedores
-          </button>
-          {SUGGESTIONS.map((s) => (
-            <button
-              key={s.label}
-              type="button"
-              onClick={() => onChange(s.query)}
-              className="inline-flex items-center rounded-full border border-border bg-card hover:bg-accent px-3.5 h-9 text-xs font-medium text-foreground/80 hover:text-foreground transition-all duration-300 active:scale-95"
-            >
-              {s.label}
-            </button>
-          ))}
         </div>
 
         {/* 2B Supply contact CTA — handoff to a real human when the IA
