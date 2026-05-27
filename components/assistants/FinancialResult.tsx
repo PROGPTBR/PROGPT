@@ -6,6 +6,7 @@ import remarkGfm from 'remark-gfm';
 import { toast } from 'sonner';
 import { Download, RotateCcw, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { SendEmailButton } from './SendEmailButton';
 
 type Props = {
   markdown: string;
@@ -84,6 +85,11 @@ export function FinancialResult({
             <Copy className="h-3.5 w-3.5 mr-1" />
             Copiar
           </Button>
+          <SendEmailButton
+            subject={`Análise Financeira — ${supplierName.slice(0, 60)}`}
+            body={markdown}
+            disabled={generating}
+          />
           <Button
             size="sm"
             onClick={handleDownloadDocx}

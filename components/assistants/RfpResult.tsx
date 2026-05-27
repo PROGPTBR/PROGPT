@@ -6,6 +6,7 @@ import remarkGfm from 'remark-gfm';
 import { toast } from 'sonner';
 import { Download, RotateCcw, Copy, FileSpreadsheet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { SendEmailButton } from './SendEmailButton';
 
 type Props = {
   markdown: string;
@@ -99,6 +100,11 @@ export function RfpResult({ markdown, runId, scope, generating, onReset }: Props
             <Copy className="h-3.5 w-3.5 mr-1" />
             Copiar
           </Button>
+          <SendEmailButton
+            subject={`RFP — ${scope.slice(0, 60)}`}
+            body={markdown}
+            disabled={generating}
+          />
           <Button
             variant="outline"
             size="sm"
