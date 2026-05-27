@@ -24,6 +24,8 @@ import type {
   PorterLevel,
 } from '@/lib/assistants/types';
 import { KRALJIC_QUADRANT_LABELS } from '@/lib/assistants/types';
+import { strategyToMarkdown } from '@/lib/assistants/negotiation/strategy-md';
+import { SendEmailButton } from './SendEmailButton';
 
 type Props = {
   params: NegotiationStrategyParams;
@@ -273,6 +275,10 @@ export function NegotiationStrategyResult({
           </div>
         </div>
         <div className="flex flex-wrap gap-2 justify-end">
+          <SendEmailButton
+            subject={`Estratégia de Negociação — ${params.supplierName}`}
+            body={strategyToMarkdown(params, result)}
+          />
           <button
             type="button"
             onClick={onDownload}

@@ -24,6 +24,7 @@ import { NegotiationStrategyResult as NegotiationStrategyResultView } from './Ne
 import { NegotiationChat, type Msg } from './NegotiationChat';
 import { NegotiationScoreView } from './NegotiationScoreView';
 import { NegotiationSimulatorSetupView } from './NegotiationSimulatorSetup';
+import { SendEmailButton } from './SendEmailButton';
 
 // Sub-projeto 22 (follow-up²) — visualização + retomar/reiniciar de um
 // run salvo de /assistants/negotiation.
@@ -209,6 +210,17 @@ export function PastNegotiationView({
           Voltar ao histórico
         </Link>
         <div className="flex flex-wrap gap-2">
+          <SendEmailButton
+            subject={`Transcript de Negociação — ${params.supplierName}`}
+            body={transcript
+              .map(
+                (t) =>
+                  `${t.role === 'user' ? 'Você' : 'Fornecedor'}:\n${t.content}`,
+              )
+              .join('\n\n')}
+            disabled={transcript.length === 0}
+            plain
+          />
           <button
             type="button"
             onClick={handleDownload}
