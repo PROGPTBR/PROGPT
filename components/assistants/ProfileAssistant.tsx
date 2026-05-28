@@ -6,6 +6,7 @@ import { ProfileForm, type ProfileFormValues } from './ProfileForm';
 import { ProfileResult } from './ProfileResult';
 import { RfpChatPanel } from './RfpChatPanel';
 import { AssistantEntryChoice } from './AssistantEntryChoice';
+import { handlePaywallResponse } from '@/lib/billing/handle-paywall';
 
 // Sub-projeto 33 — Profile (Perfil da Categoria) assistant.
 //
@@ -35,6 +36,10 @@ export function ProfileAssistant() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ templateId, params }),
       });
+      if (handlePaywallResponse(res, 'profile')) {
+        setPhase('form');
+        return;
+      }
       if (!res.ok || !res.body) {
         const data = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(data.error ?? `status ${res.status}`);

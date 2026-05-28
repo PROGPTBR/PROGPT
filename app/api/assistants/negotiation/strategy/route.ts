@@ -7,6 +7,7 @@ import { NegotiationStrategyRequestSchema } from '@/lib/assistants/types';
 import { generateStrategy } from '@/lib/assistants/negotiation/prompt-strategy';
 import { strategyToMarkdown } from '@/lib/assistants/negotiation/strategy-md';
 import { withUser } from '@/lib/observability/user-context';
+import { canUseAssistant } from '@/lib/billing/quota';
 
 export const runtime = 'nodejs';
 export const maxDuration = 90; // estratégia leva 30-60s no gpt-4o-mini
@@ -26,6 +27,14 @@ export async function POST(req: Request): Promise<Response> {
 }
 
 async function strategyBody(req: Request, user: { id: string }): Promise<Response> {
+  // Paywall: sub-projeto 27. Free tier = 1 execução lifetime de cada tipo.
+  if (!(await canUseAssistant(user.id, 'negotiation'))) {
+    return NextResponse.json(
+      { error: 'paywall', plan: 'free', assistant_type: 'negotiation' },
+      { status: 402 },
+    );
+  }
+
   const rl = await checkChatRateLimit();
   if (!rl.allowed) {
     return NextResponse.json(

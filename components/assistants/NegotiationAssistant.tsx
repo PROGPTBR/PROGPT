@@ -14,6 +14,7 @@ import { NegotiationStrategyResult as NegotiationStrategyResultView } from './Ne
 import { NegotiationSimulatorSetupView } from './NegotiationSimulatorSetup';
 import { NegotiationChat } from './NegotiationChat';
 import { NegotiationScoreView } from './NegotiationScoreView';
+import { handlePaywallResponse } from '@/lib/billing/handle-paywall';
 
 // State machine do assistente de negociação.
 // form → generating → strategy → setup → starting → chat → closing → score
@@ -74,6 +75,10 @@ export function NegotiationAssistant() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ params }),
       });
+      if (handlePaywallResponse(res, 'negotiation')) {
+        setPhase({ kind: 'form' });
+        return;
+      }
       if (res.status === 429) {
         const data = (await res.json().catch(() => ({}))) as {
           retry_after_secs?: number;

@@ -6,6 +6,7 @@ import { PorterForm, type PorterFormValues } from './PorterForm';
 import { PorterResult } from './PorterResult';
 import { RfpChatPanel } from './RfpChatPanel';
 import { AssistantEntryChoice } from './AssistantEntryChoice';
+import { handlePaywallResponse } from '@/lib/billing/handle-paywall';
 
 // Sub-projeto 29 — Assistente das 5 Forças de Porter.
 //
@@ -51,6 +52,10 @@ export function PorterAssistant() {
           },
         }),
       });
+      if (handlePaywallResponse(res, 'porter')) {
+        setPhase('form');
+        return;
+      }
       if (!res.ok || !res.body) {
         const data = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(data.error ?? `status ${res.status}`);

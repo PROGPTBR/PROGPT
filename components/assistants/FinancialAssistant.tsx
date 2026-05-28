@@ -6,6 +6,7 @@ import { FinancialForm, type FinancialFormValues } from './FinancialForm';
 import { FinancialResult } from './FinancialResult';
 import { RfpChatPanel } from './RfpChatPanel';
 import { AssistantEntryChoice } from './AssistantEntryChoice';
+import { handlePaywallResponse } from '@/lib/billing/handle-paywall';
 
 type Phase = 'choice' | 'form' | 'generating' | 'done';
 
@@ -39,6 +40,10 @@ export function FinancialAssistant() {
           },
         }),
       });
+      if (handlePaywallResponse(res, 'financial')) {
+        setPhase('form');
+        return;
+      }
       if (!res.ok || !res.body) {
         const data = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(data.error ?? `status ${res.status}`);

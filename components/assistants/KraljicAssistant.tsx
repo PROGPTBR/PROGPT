@@ -6,6 +6,7 @@ import { KraljicForm, type KraljicFormValues } from './KraljicForm';
 import { KraljicResult } from './KraljicResult';
 import { RfpChatPanel } from './RfpChatPanel';
 import { AssistantEntryChoice } from './AssistantEntryChoice';
+import { handlePaywallResponse } from '@/lib/billing/handle-paywall';
 
 type Phase = 'choice' | 'form' | 'generating' | 'done';
 
@@ -58,6 +59,10 @@ export function KraljicAssistant() {
           },
         }),
       });
+      if (handlePaywallResponse(res, 'kraljic')) {
+        setPhase('form');
+        return;
+      }
       if (!res.ok || !res.body) {
         const data = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(data.error ?? `status ${res.status}`);
