@@ -3,6 +3,8 @@ import { requireUser, NotAuthenticated } from '@/lib/auth';
 import { getServerSupabase } from '@/lib/db/supabase';
 import { getSubscription } from '@/lib/billing/subscription';
 import { cancelAsaasSubscription, AsaasError } from '@/lib/billing/asaas';
+import { sendEmail } from '@/lib/email/client';
+import { buildSubscriptionCancelledEmail } from '@/lib/email/templates';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -56,6 +58,23 @@ export async function POST() {
   if (error) {
     console.error('[billing/cancel] update failed:', error.message);
     return NextResponse.json({ error: 'persist_failed' }, { status: 500 });
+  }
+
+  // Sub-projeto 30 — email de confirmação de cancelamento.
+  // Fire-and-forget; idempotency key inclui user.id+timestamp pra
+  // permitir email se user reativar e cancelar de novo no mesmo dia.
+  if (user.email && sub.current_period_end) {
+    const accessUntil = new Date(sub.current_period_end).toLocaleDateString('pt-BR');
+    const tpl = buildSubscriptionCancelledEmail({
+      email: user.email,
+      accessUntil,
+    });
+    void sendEmail({
+      to: user.email,
+      subject: tpl.subject,
+      html: tpl.html,
+      idempotencyKey: `cancel:${user.id}:${Date.now()}`,
+    });
   }
 
   return NextResponse.json({

@@ -38,7 +38,22 @@ function mockSupabase(stubs: Stubs = {}) {
     return {};
   };
   vi.doMock('@/lib/db/supabase', () => ({
-    getServerSupabase: () => ({ from: vi.fn().mockImplementation(builder) }),
+    getServerSupabase: () => ({
+      from: vi.fn().mockImplementation(builder),
+      auth: {
+        admin: {
+          getUserById: vi.fn().mockResolvedValue({
+            data: { user: { id: 'u1', email: 'user@example.com' } },
+            error: null,
+          }),
+        },
+      },
+    }),
+  }));
+  // Email send é fire-and-forget — silenciar pra teste limpo
+  vi.doMock('@/lib/email/client', () => ({
+    sendEmail: vi.fn().mockResolvedValue({ ok: true, id: 'msg' }),
+    getAppUrl: () => 'http://localhost',
   }));
   return { subUpdate, eventUpdate };
 }

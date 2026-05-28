@@ -1,5 +1,10 @@
 import { NextResponse } from 'next/server';
 import { getServerSupabase } from '@/lib/db/supabase';
+import { sendEmail } from '@/lib/email/client';
+import {
+  buildPaymentConfirmedEmail,
+  buildPaymentOverdueEmail,
+} from '@/lib/email/templates';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -171,6 +176,43 @@ export async function POST(req: Request) {
     }
   }
 
+  // Sub-projeto 30 — email transacional fire-and-forget.
+  // Idempotency via Resend `idempotencyKey: event.id` (Asaas garante
+  // unique). Subscription cancellation NÃO emite email pelo webhook —
+  // /api/billing/cancel já mandou na hora do click. Webhook
+  // SUBSCRIPTION_DELETED só persiste status final.
+  if (PAID_EVENTS.includes(event.event)) {
+    const userEmail = await fetchUserEmail(sub.user_id as string);
+    if (userEmail && update.current_period_end) {
+      const nextDue = new Date(update.current_period_end as string).toLocaleDateString('pt-BR');
+      const tpl = buildPaymentConfirmedEmail({
+        email: userEmail,
+        amountBrl: typeof event.payment?.value === 'number' ? event.payment.value : 99,
+        nextDueDate: nextDue,
+      });
+      void sendEmail({
+        to: userEmail,
+        subject: tpl.subject,
+        html: tpl.html,
+        idempotencyKey: `paid:${event.id}`,
+      });
+    }
+  } else if (PAST_DUE_EVENTS.includes(event.event)) {
+    const userEmail = await fetchUserEmail(sub.user_id as string);
+    if (userEmail) {
+      const accessUntil = sub.current_period_end
+        ? new Date(sub.current_period_end as string).toLocaleDateString('pt-BR')
+        : 'breve';
+      const tpl = buildPaymentOverdueEmail({ email: userEmail, accessUntil });
+      void sendEmail({
+        to: userEmail,
+        subject: tpl.subject,
+        html: tpl.html,
+        idempotencyKey: `overdue:${event.id}`,
+      });
+    }
+  }
+
   // Marca processado
   await svc
     .from('billing_webhook_events')
@@ -178,4 +220,15 @@ export async function POST(req: Request) {
     .eq('asaas_event_id', event.id);
 
   return NextResponse.json({ ok: true });
+}
+
+// Helper: busca email do user via auth.users (service-role).
+async function fetchUserEmail(userId: string): Promise<string | null> {
+  const svc = getServerSupabase();
+  const { data, error } = await svc.auth.admin.getUserById(userId);
+  if (error) {
+    console.warn('[billing/webhook] fetchUserEmail failed:', error.message);
+    return null;
+  }
+  return data.user?.email ?? null;
 }
