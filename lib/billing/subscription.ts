@@ -64,10 +64,23 @@ export async function getActiveSubscription(
 /**
  * Test rápido de Pro. Usado em /api/assistants/* paywall checks.
  *
+ * Admins bypassam billing (sub-projeto 27.1) — não precisam de
+ * subscription pra usar tudo. Útil pra QA/team interno + protege contra
+ * o cenário "admin sem cartão fica trancado fora do produto que ele tá
+ * dev/operando".
+ *
  * Não cacheia ainda (v1.1 pode adicionar request-scoped cache via
- * AsyncLocalStorage), mas a query é index-only (user_id é unique).
+ * AsyncLocalStorage), mas as queries são index-only.
  */
 export async function isPro(userId: string): Promise<boolean> {
+  const sb = getServerSupabase();
+  const { data: profile } = await sb
+    .from('profiles')
+    .select('role')
+    .eq('id', userId)
+    .maybeSingle();
+  if ((profile as { role?: string } | null)?.role === 'admin') return true;
+
   const sub = await getActiveSubscription(userId);
   return sub !== null;
 }
