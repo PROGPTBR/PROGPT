@@ -684,6 +684,30 @@ export default function Landing() {
             >
               Entrar
             </Link>
+            <Link
+              href="/pricing"
+              className="text-sm text-gray-500 hover:text-white transition-colors"
+            >
+              Planos
+            </Link>
+            <Link
+              href="/termos"
+              className="text-sm text-gray-500 hover:text-white transition-colors"
+            >
+              Termos
+            </Link>
+            <Link
+              href="/privacidade"
+              className="text-sm text-gray-500 hover:text-white transition-colors"
+            >
+              Privacidade
+            </Link>
+            <Link
+              href="/cookies"
+              className="text-sm text-gray-500 hover:text-white transition-colors"
+            >
+              Cookies
+            </Link>
           </div>
         </footer>
       </div>

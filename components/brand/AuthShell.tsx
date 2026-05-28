@@ -39,16 +39,31 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
       </main>
 
       {/* Footer */}
-      <footer className="relative z-10 px-6 py-4 text-xs text-muted-foreground text-center">
-        ProcurementGPT · parte do ecossistema{' '}
-        <a
-          href="https://2bsupply.com.br/en/"
-          target="_blank"
-          rel="noreferrer noopener"
-          className="hover:text-brand transition-colors"
-        >
-          2B Supply
-        </a>
+      <footer className="relative z-10 px-6 py-4 text-xs text-muted-foreground text-center space-y-2">
+        <div>
+          ProcurementGPT · parte do ecossistema{' '}
+          <a
+            href="https://2bsupply.com.br/en/"
+            target="_blank"
+            rel="noreferrer noopener"
+            className="hover:text-brand transition-colors"
+          >
+            2B Supply
+          </a>
+        </div>
+        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[10px]">
+          <Link href="/termos" className="hover:text-foreground transition-colors">
+            Termos
+          </Link>
+          <span aria-hidden>·</span>
+          <Link href="/privacidade" className="hover:text-foreground transition-colors">
+            Privacidade
+          </Link>
+          <span aria-hidden>·</span>
+          <Link href="/cookies" className="hover:text-foreground transition-colors">
+            Cookies
+          </Link>
+        </div>
       </footer>
     </div>
   );

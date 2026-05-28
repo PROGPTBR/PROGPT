@@ -47,6 +47,8 @@ async function fillAndSubmit(email: string, password: string) {
   const user = userEvent.setup();
   await user.type(screen.getByLabelText(/email/i), email);
   await user.type(screen.getByLabelText(/senha/i), password);
+  // Sub-projeto 28 — checkbox de aceite obrigatório
+  await user.click(screen.getByRole('checkbox', { name: /li e aceito/i }));
   // Espera o Turnstile emitir token (setTimeout 0)
   await new Promise((r) => setTimeout(r, 5));
   await user.click(screen.getByRole('button', { name: /cadastrar/i }));
@@ -70,6 +72,7 @@ describe('SignupForm', () => {
       email: 'novo@user.com',
       password: 'pw1234',
       captchaToken: 'test-token',
+      acceptedTerms: true,
     });
   });
 
@@ -112,10 +115,27 @@ describe('SignupForm', () => {
     const pwField = screen.getByLabelText(/senha/i) as HTMLInputElement;
     pwField.removeAttribute('minLength');
     await user.type(pwField, 'pw123');
+    // Terms checkbox precisa estar marcado pra habilitar o botão e
+    // chegarmos no gate JS-side de password length.
+    await user.click(screen.getByRole('checkbox', { name: /li e aceito/i }));
     await new Promise((r) => setTimeout(r, 5));
     await user.click(screen.getByRole('button', { name: /cadastrar/i }));
     expect(fetchSpy).not.toHaveBeenCalled();
     expect(await screen.findByText(/pelo menos 6 caracteres/i)).toBeTruthy();
+  });
+
+  it('blocks submission when terms checkbox is NOT checked', async () => {
+    const { fetchSpy } = setup({});
+    const { SignupForm } = await import('@/components/auth/SignupForm');
+    render(<SignupForm />);
+    const user = userEvent.setup();
+    await user.type(screen.getByLabelText(/email/i), 'a@b.com');
+    await user.type(screen.getByLabelText(/senha/i), 'pw1234');
+    await new Promise((r) => setTimeout(r, 5));
+    const button = screen.getByRole('button', { name: /cadastrar/i }) as HTMLButtonElement;
+    expect(button.disabled).toBe(true);
+    await user.click(button);
+    expect(fetchSpy).not.toHaveBeenCalled();
   });
 
   it('renders a link back to /login that preserves the next= param', async () => {
