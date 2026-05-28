@@ -121,7 +121,7 @@ export async function POST(req: Request) {
       value: PRO_PRICE,
       cycle: 'MONTHLY',
       billingType: 'UNDEFINED', // user escolhe no checkout
-      description: 'ProcurementGPT Pro · R$ 99/mês',
+      description: 'PROGPT Pro · R$ 99/mês',
       nextDueDate: nextDueDate(),
       callback: {
         successUrl: `${originFrom(req)}/account/billing?success=1`,

@@ -445,7 +445,7 @@ export async function mdToDocxBuffer(
   const coverPage = buildCoverPage(cover, opts.logo);
 
   const doc = new Document({
-    creator: 'ProcurementGPT',
+    creator: 'PROGPT',
     title,
     sections: [
       {

@@ -15,8 +15,9 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: 'ProcurementGPT',
-  description: 'Especialista em teorias de procurement.',
+  title: 'PROGPT · IA de procurement pra gestores brasileiros',
+  description:
+    'A IA de Strategic Sourcing da 2B Supply: chat especialista + 7 assistentes (RFP, Kraljic, Porter, Negociação, ABC, Financeiro, Perfil) que entregam .docx e .xlsx prontos. Free pra sempre · Pro R$ 99/mês.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

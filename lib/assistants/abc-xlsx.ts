@@ -18,7 +18,7 @@ export async function buildAbcXlsxBuffer(
   opts: AbcXlsxOpts = {},
 ): Promise<Buffer> {
   const wb = new ExcelJS.Workbook();
-  wb.creator = 'ProcurementGPT';
+  wb.creator = 'PROGPT';
   wb.created = new Date();
 
   buildResumoSheet(wb, params, analysis, opts.logo);

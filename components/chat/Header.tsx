@@ -4,9 +4,8 @@ import { useEffect, useState } from 'react';
 import { Menu, MessageSquareText, Moon, Sun, Monitor } from 'lucide-react';
 import { useTheme } from 'next-themes';
 
-// TODO: replace with company-owned address once branding is decided.
 const FEEDBACK_MAILTO =
-  'mailto:rgoalves@gmail.com?subject=ProcurementGPT%20feedback';
+  'mailto:comercial@2bsupply.com.br?subject=PROGPT%20feedback';
 
 type Props = {
   onOpenSidebar?: () => void;
@@ -53,7 +52,7 @@ export function Header({ onOpenSidebar }: Props) {
           </button>
         ) : null}
         <span className="text-sm font-semibold md:hidden text-foreground">
-          ProcurementGPT
+          PROGPT
         </span>
       </div>
       <div className="flex items-center gap-1">

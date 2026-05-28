@@ -28,7 +28,7 @@ const NAV_LINKS = [
   { href: '#sobre', label: 'Sobre' },
   { href: '#assistentes', label: 'Assistentes' },
   { href: '#como-funciona', label: 'Como funciona' },
-  { href: '#beneficios', label: 'Benefícios' },
+  { href: '/pricing', label: 'Planos' },
   { href: '#faq', label: 'FAQ' },
 ];
 
@@ -42,9 +42,9 @@ const FEATURE_CARDS = [
     alt: 'Biblioteca em espiral repleta de livros — base de conhecimento curada',
   },
   {
-    title: 'Assistentes que executam',
+    title: '7 assistentes que executam',
     blurb:
-      'RFP, matriz de Kraljic e mais seis em breve — cada um mapeado a um dos 8 passos do Strategic Sourcing. Entregam o artefato pronto, não só uma explicação.',
+      'Perfil de Categoria, ABC, Porter, Busca de Fornecedores, Kraljic, RFP, Negociação, Análise Financeira — cada passo do Strategic Sourcing com um assistente próprio que entrega o artefato pronto em .docx/.xlsx.',
     image:
       'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=800&h=600&q=80&auto=format&fit=crop',
     alt: 'Documentos financeiros e calculadora — artefatos prontos para usar',
@@ -131,12 +131,13 @@ const BENEFITS = [
 ];
 
 const FAQS = [
-  'O que é o ProcurementGPT?',
-  'Qual a diferença em relação a um ChatGPT genérico?',
+  'O que é o PROGPT?',
+  'Qual a diferença em relação ao ChatGPT genérico?',
   'A base de conhecimento é da minha empresa ou compartilhada?',
-  'Como funciona o assistente de Kraljic?',
+  'Quanto custa? Tem plano gratuito?',
+  'Como funcionam os 7 assistentes (RFP, Kraljic, Negociação…)?',
   'Posso baixar os artefatos em Word ou Excel?',
-  'Como solicito acesso?',
+  'Como cancelo a assinatura?',
 ];
 
 export default function Landing() {
@@ -310,7 +311,7 @@ export default function Landing() {
                 className="w-1.5 h-1.5 rounded-full bg-brand"
               />
               <span className="text-sm text-gray-400 font-medium">
-                ProcurementGPT · ecossistema 2B Supply
+                PROGPT · uma plataforma 2B Supply
               </span>
             </div>
             <h2 className="text-4xl md:text-5xl font-medium tracking-tight max-w-4xl">
@@ -502,59 +503,63 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* ───── Como acessar (substitui pricing — invite-only) ───── */}
-        <section className="py-24 px-6 md:px-12 max-w-7xl mx-auto border-t border-white/5">
+        {/* ───── Planos ───── */}
+        <section id="planos" className="py-24 px-6 md:px-12 max-w-7xl mx-auto border-t border-white/5">
           <div className="mb-12 reveal">
             <div className="flex items-center gap-2 mb-4">
               <div aria-hidden="true" className="w-1.5 h-1.5 rounded-full bg-brand" />
-              <span className="text-sm text-gray-400 font-medium">Acesso</span>
+              <span className="text-sm text-gray-400 font-medium">Planos</span>
             </div>
             <h2 className="text-4xl md:text-5xl font-medium tracking-tight max-w-3xl">
-              <span className="text-white">Por convite,</span>{' '}
-              <span className="text-gray-500">via 2B Supply.</span>
+              <span className="text-white">Comece grátis,</span>{' '}
+              <span className="text-gray-500">faça upgrade quando precisar.</span>
             </h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 reveal">
-            <div className="bg-[#111111] border border-white/5 rounded-2xl p-8">
-              <div className="inline-flex items-center gap-2 mb-4 text-brand text-xs font-medium uppercase tracking-wider">
-                <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
-                Já tem acesso
-              </div>
-              <h3 className="text-xl font-medium text-white mb-3">
-                Entre com sua conta
-              </h3>
-              <p className="text-gray-400 text-sm mb-8 leading-relaxed">
-                Login via email/senha ou Google. Sua biblioteca e histórico ficam
-                isolados por organização.
-              </p>
+            {/* Free */}
+            <div className="bg-[#111111] border border-white/5 rounded-2xl p-8 flex flex-col">
+              <div className="text-xs uppercase tracking-wider text-gray-400 mb-2">Free</div>
+              <div className="text-4xl font-medium text-white mb-1">R$ 0</div>
+              <div className="text-xs text-gray-500 mb-6">grátis pra sempre</div>
+              <ul className="space-y-2 text-sm text-gray-300 mb-8 flex-1">
+                <li className="flex gap-2"><span className="text-brand">✓</span> Chat especialista ilimitado</li>
+                <li className="flex gap-2"><span className="text-brand">✓</span> 1 execução grátis de cada assistente (lifetime)</li>
+                <li className="flex gap-2"><span className="text-brand">✓</span> Suporte pela comunidade</li>
+              </ul>
               <Link
-                href="/login"
-                className="inline-flex w-full items-center justify-center gap-2 bg-brand text-black py-2.5 rounded-full text-sm font-medium hover:bg-brand/90 active:scale-95 transition-all duration-300"
+                href="/signup"
+                className="inline-flex w-full items-center justify-center gap-2 bg-white/5 border border-white/10 text-white py-2.5 rounded-full text-sm font-medium hover:bg-white/10 active:scale-95 transition-all duration-300"
               >
-                Entrar
+                Criar conta grátis
                 <ArrowRight className="w-4 h-4" aria-hidden="true" />
               </Link>
             </div>
 
-            <div className="bg-[#1a1a1a] border border-white/10 rounded-2xl p-8">
-              <div className="inline-flex items-center gap-2 mb-4 text-gray-400 text-xs font-medium uppercase tracking-wider">
-                Quer experimentar
+            {/* Pro */}
+            <div className="relative bg-[#1a1a1a] border-2 border-brand rounded-2xl p-8 flex flex-col">
+              <div className="absolute -top-3 left-8 bg-brand text-black text-[10px] uppercase tracking-wider font-semibold px-3 py-1 rounded-full">
+                Recomendado
               </div>
-              <h3 className="text-xl font-medium text-white mb-3">
-                Solicite acesso
-              </h3>
-              <p className="text-gray-400 text-sm mb-8 leading-relaxed">
-                Beta fechado. Mande um email com o nome da sua empresa e o caso
-                de uso prioritário — você entra na fila do próximo ciclo de
-                convites.
-              </p>
-              <a
-                href="mailto:rgoalves@gmail.com?subject=Quero%20acesso%20ao%20ProcurementGPT"
-                className="inline-flex w-full items-center justify-center bg-white/5 border border-white/10 text-white py-2.5 rounded-full text-sm font-medium hover:bg-white/10 active:scale-95 transition-all duration-300"
+              <div className="text-xs uppercase tracking-wider text-brand mb-2">Pro</div>
+              <div className="flex items-baseline gap-1 mb-1">
+                <div className="text-4xl font-medium text-white">R$ 99</div>
+                <div className="text-sm text-gray-400">/mês</div>
+              </div>
+              <div className="text-xs text-gray-500 mb-6">cancele quando quiser</div>
+              <ul className="space-y-2 text-sm text-gray-300 mb-8 flex-1">
+                <li className="flex gap-2"><span className="text-brand">✓</span> Tudo do Free</li>
+                <li className="flex gap-2"><span className="text-brand">✓</span> 7 assistentes ilimitados (RFP, Kraljic, Negociação, etc.)</li>
+                <li className="flex gap-2"><span className="text-brand">✓</span> Geração ilimitada de .docx e .xlsx</li>
+                <li className="flex gap-2"><span className="text-brand">✓</span> Suporte por email</li>
+              </ul>
+              <Link
+                href="/pricing"
+                className="inline-flex w-full items-center justify-center gap-2 bg-brand text-black py-2.5 rounded-full text-sm font-medium hover:bg-brand/90 active:scale-95 transition-all duration-300"
               >
-                Falar com o time
-              </a>
+                Ver detalhes do Pro
+                <ArrowRight className="w-4 h-4" aria-hidden="true" />
+              </Link>
             </div>
           </div>
         </section>
@@ -644,70 +649,81 @@ export default function Landing() {
         </section>
 
         {/* ───── Footer ───── */}
-        <footer className="py-12 px-6 md:px-12 max-w-7xl mx-auto border-t border-white/5 mt-12 flex flex-col md:flex-row justify-between items-start md:items-center gap-12">
-          <div className="max-w-xs">
-            <div className="mb-4">
-              <BrandLogo size="lg" />
+        <footer className="py-12 px-6 md:px-12 max-w-7xl mx-auto border-t border-white/5 mt-12">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-10">
+            <div className="max-w-xs">
+              <div className="mb-4">
+                <BrandLogo size="lg" />
+              </div>
+              <p className="text-sm text-gray-500 leading-relaxed">
+                PROGPT — plataforma 2B Supply. Inteligência aplicada para cada
+                passo do Strategic Sourcing.
+              </p>
             </div>
-            <p className="text-sm text-gray-500 mb-6">
-              ProcurementGPT — parte do ecossistema 2B Supply. Inteligência
-              aplicada para cada passo do Strategic Sourcing.
-            </p>
-            <div className="text-xs text-gray-600">
-              <a
-                href="https://2bsupply.com.br/en/"
-                target="_blank"
-                rel="noreferrer noopener"
-                className="text-gray-400 hover:text-brand transition-colors"
-              >
-                2bsupply.com.br ↗
-              </a>
+
+            <div className="space-y-3">
+              <span className="text-sm font-medium text-white block">Navegação</span>
+              <div className="flex flex-col gap-2">
+                {NAV_LINKS.map((link) => (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    className="text-sm text-gray-500 hover:text-white transition-colors"
+                  >
+                    {link.label}
+                  </a>
+                ))}
+                <Link
+                  href="/login"
+                  className="text-sm text-gray-500 hover:text-white transition-colors"
+                >
+                  Entrar
+                </Link>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <span className="text-sm font-medium text-white block">Contato</span>
+              <div className="text-sm text-gray-500 leading-relaxed space-y-1">
+                <div>2B Supply</div>
+                <div>CNPJ 36.335.299/0001-82</div>
+                <a
+                  href="tel:+5521999792912"
+                  className="block hover:text-white transition-colors"
+                >
+                  +55 (21) 99979-2912
+                </a>
+                <a
+                  href="mailto:comercial@2bsupply.com.br"
+                  className="block hover:text-white transition-colors"
+                >
+                  comercial@2bsupply.com.br
+                </a>
+                <a
+                  href="https://2bsupply.com.br/en/"
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  className="inline-block hover:text-brand transition-colors mt-1 text-xs"
+                >
+                  2bsupply.com.br ↗
+                </a>
+              </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-x-16 gap-y-3">
-            <span className="text-sm font-medium text-white mb-2 col-span-2">
-              Navegação
-            </span>
-            {NAV_LINKS.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                className="text-sm text-gray-500 hover:text-white transition-colors"
-              >
-                {link.label}
-              </a>
-            ))}
-            <Link
-              href="/login"
-              className="text-sm text-gray-500 hover:text-white transition-colors"
-            >
-              Entrar
-            </Link>
-            <Link
-              href="/pricing"
-              className="text-sm text-gray-500 hover:text-white transition-colors"
-            >
-              Planos
-            </Link>
-            <Link
-              href="/termos"
-              className="text-sm text-gray-500 hover:text-white transition-colors"
-            >
-              Termos
-            </Link>
-            <Link
-              href="/privacidade"
-              className="text-sm text-gray-500 hover:text-white transition-colors"
-            >
-              Privacidade
-            </Link>
-            <Link
-              href="/cookies"
-              className="text-sm text-gray-500 hover:text-white transition-colors"
-            >
-              Cookies
-            </Link>
+          <div className="pt-6 border-t border-white/5 flex flex-wrap items-center justify-between gap-4 text-xs text-gray-600">
+            <div>© 2026 2B Supply · Todos os direitos reservados</div>
+            <div className="flex flex-wrap gap-x-4 gap-y-1">
+              <Link href="/termos" className="hover:text-white transition-colors">
+                Termos de Uso
+              </Link>
+              <Link href="/privacidade" className="hover:text-white transition-colors">
+                Privacidade
+              </Link>
+              <Link href="/cookies" className="hover:text-white transition-colors">
+                Cookies
+              </Link>
+            </div>
           </div>
         </footer>
       </div>
