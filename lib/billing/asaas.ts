@@ -68,7 +68,7 @@ async function asaasFetch<T>(
       access_token: apiKey,
       'Content-Type': 'application/json',
       // Asaas pede user-agent customizado por boas práticas
-      'User-Agent': 'ProcurementGPT/1.0',
+      'User-Agent': 'PROGPT/1.0',
     },
     body: body ? JSON.stringify(body) : undefined,
     signal: AbortSignal.timeout(15000),

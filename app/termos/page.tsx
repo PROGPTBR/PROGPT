@@ -1,6 +1,11 @@
 import type { Metadata } from 'next';
 import { LegalDocument } from '@/components/legal/LegalDocument';
-import { PRODUCT_NAME, LEGAL_CONTACT_EMAIL } from '@/lib/legal/constants';
+import {
+  PRODUCT_NAME,
+  COMPANY_NAME,
+  COMPANY_CNPJ,
+  LEGAL_CONTACT_EMAIL,
+} from '@/lib/legal/constants';
 
 export const metadata: Metadata = {
   title: `Termos de Uso · ${PRODUCT_NAME}`,
@@ -211,7 +216,7 @@ Dúvidas sobre estes Termos? Escreva para **${LEGAL_CONTACT_EMAIL}**.
 
 ---
 
-**[CNPJ A CADASTRAR]** · ${PRODUCT_NAME} · Empresa em constituição
+${COMPANY_NAME} · CNPJ ${COMPANY_CNPJ} · Produto ${PRODUCT_NAME}
 `;
 
 export default function TermosPage() {

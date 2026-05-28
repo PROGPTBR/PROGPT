@@ -47,7 +47,7 @@ export async function buildKraljicXlsxBuffer(
   opts: { logo?: XlsxLogo; chartPng?: Buffer } = {},
 ): Promise<Buffer> {
   const wb = new ExcelJS.Workbook();
-  wb.creator = 'ProcurementGPT';
+  wb.creator = 'PROGPT';
   wb.created = new Date();
 
   const totalSpend = classified.reduce((a, it) => a + it.spendMM, 0);

@@ -41,7 +41,7 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
       {/* Footer */}
       <footer className="relative z-10 px-6 py-4 text-xs text-muted-foreground text-center space-y-2">
         <div>
-          ProcurementGPT · parte do ecossistema{' '}
+          PROGPT · uma plataforma{' '}
           <a
             href="https://2bsupply.com.br/en/"
             target="_blank"

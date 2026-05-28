@@ -1,6 +1,11 @@
 import type { Metadata } from 'next';
 import { LegalDocument } from '@/components/legal/LegalDocument';
-import { PRODUCT_NAME, LEGAL_CONTACT_EMAIL } from '@/lib/legal/constants';
+import {
+  PRODUCT_NAME,
+  COMPANY_NAME,
+  COMPANY_CNPJ,
+  LEGAL_CONTACT_EMAIL,
+} from '@/lib/legal/constants';
 
 export const metadata: Metadata = {
   title: `Política de Privacidade · ${PRODUCT_NAME}`,
@@ -18,10 +23,11 @@ Ao usar a Plataforma, você concorda com as práticas descritas aqui.
 
 ## 1. Controlador dos Dados
 
-O controlador dos seus dados pessoais é **[CNPJ A CADASTRAR]**, empresa
-em constituição responsável pelo ${PRODUCT_NAME}.
+O controlador dos seus dados pessoais é a **${COMPANY_NAME}** (CNPJ
+${COMPANY_CNPJ}), responsável pelo ${PRODUCT_NAME}.
 
-Encarregado de Proteção de Dados (DPO): ${LEGAL_CONTACT_EMAIL}
+Encarregado de Proteção de Dados (DPO) e canal de contato:
+**${LEGAL_CONTACT_EMAIL}**
 
 ## 2. Quais Dados Coletamos
 

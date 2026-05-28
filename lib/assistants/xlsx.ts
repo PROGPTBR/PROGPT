@@ -50,7 +50,7 @@ export async function buildCotacaoXlsxBuffer(
   opts: { logo?: XlsxLogo } = {},
 ): Promise<Buffer> {
   const wb = new ExcelJS.Workbook();
-  wb.creator = 'ProcurementGPT';
+  wb.creator = 'PROGPT';
   wb.created = new Date();
   const ws = wb.addWorksheet('Cotação', {
     pageSetup: { paperSize: 9, orientation: 'landscape' },

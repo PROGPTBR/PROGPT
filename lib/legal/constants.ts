@@ -1,22 +1,28 @@
-// Sub-projeto 28 — versionamento dos documentos legais.
+// Sub-projeto 28 + 29 — fonte única da verdade pra branding + contato
+// legal/comercial do produto.
 //
 // Bump CURRENT_LEGAL_VERSION sempre que houver mudança material em
 // /termos, /privacidade ou /cookies. Quando bumpar, considerar:
 //   - Banner pedindo re-aceite no próximo login (compara
 //     profiles.terms_version vs CURRENT_LEGAL_VERSION)
-//   - Email transacional notificando mudança (quando email transacional
-//     for implementado — sub-projeto futuro)
+//   - Email transacional notificando mudança (sub-projeto futuro)
 
-export const CURRENT_LEGAL_VERSION = 'v1-2026-05-28';
+export const CURRENT_LEGAL_VERSION = 'v2-2026-05-28';
 
 // Última atualização dos documentos legais. Mostrado no header dos 3
 // docs. Deve bater com a data no CURRENT_LEGAL_VERSION pra rastreamento.
 export const LEGAL_LAST_UPDATED = '28 de maio de 2026';
 
-// Contato pra exercício de direitos LGPD (titular dos dados) e suporte
-// legal. TODO: trocar pra dpo@<dominio-final> quando branding fechar.
-export const LEGAL_CONTACT_EMAIL = 'rgoalves@gmail.com';
+// Nome do produto exibido nas UIs e nos docs legais. Trocado pra PROGPT
+// no sub-projeto 29 (branding oficial 2B Supply).
+export const PRODUCT_NAME = 'PROGPT';
 
-// Nome do produto exibido nos docs. Mantém alinhado com branding TBD
-// (sub-projeto futuro pode trocar).
-export const PRODUCT_NAME = 'ProcurementGPT';
+// Empresa responsável legal pelo produto.
+export const COMPANY_NAME = '2B Supply';
+export const COMPANY_CNPJ = '36.335.299/0001-82';
+
+// Contato comercial + DPO (LGPD). Único canal pra suporte, dúvidas
+// sobre termos, exercício de direitos LGPD, e contestações.
+export const LEGAL_CONTACT_EMAIL = 'comercial@2bsupply.com.br';
+export const LEGAL_CONTACT_PHONE = '+55 (21) 99979-2912';
+export const LEGAL_CONTACT_PHONE_TEL = '+5521999792912';
