@@ -19,6 +19,10 @@ function setupMocks({
         rateOk ? { allowed: true } : { allowed: false, retryAfterSecs: 30 },
       ),
   }));
+  // Sub-projeto 27 paywall: dynamic import inside handler.ts
+  vi.doMock('@/lib/billing/quota', () => ({
+    canUseAssistant: vi.fn().mockResolvedValue(true),
+  }));
   vi.doMock('@/lib/observability/langfuse', () => ({
     startTrace: vi.fn().mockResolvedValue({
       id: 't-1',

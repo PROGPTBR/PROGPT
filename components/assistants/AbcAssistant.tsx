@@ -6,6 +6,7 @@ import { AbcForm, type AbcFormValues } from './AbcForm';
 import { AbcResult } from './AbcResult';
 import { RfpChatPanel } from './RfpChatPanel';
 import { AssistantEntryChoice } from './AssistantEntryChoice';
+import { handlePaywallResponse } from '@/lib/billing/handle-paywall';
 
 // Sub-projeto 31 — Assistente de Análise ABC (Curva de Pareto).
 //
@@ -47,6 +48,10 @@ export function AbcAssistant() {
           },
         }),
       });
+      if (handlePaywallResponse(res, 'abc')) {
+        setPhase('form');
+        return;
+      }
       if (!res.ok || !res.body) {
         const data = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(data.error ?? `status ${res.status}`);

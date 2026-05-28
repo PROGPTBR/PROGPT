@@ -121,6 +121,15 @@ export function buildAssistantHandler<
     const user = await getCurrentUser();
     if (!user) return Response.json({ error: 'unauthorized' }, { status: 401 });
 
+    // Paywall: sub-projeto 27. Free tier = 1 execução lifetime por assistant_type.
+    const { canUseAssistant } = await import('@/lib/billing/quota');
+    if (!(await canUseAssistant(user.id, config.type))) {
+      return Response.json(
+        { error: 'paywall', plan: 'free', assistant_type: config.type },
+        { status: 402 },
+      );
+    }
+
     const rl = await checkChatRateLimit();
     if (!rl.allowed) {
       return Response.json(

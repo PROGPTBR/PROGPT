@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { LogOut, Shield, Trash2, UserCircle } from 'lucide-react';
+import { CreditCard, LogOut, Shield, Trash2, UserCircle } from 'lucide-react';
 import { supabaseBrowser } from '@/lib/db/supabase-browser';
 
 export function UserRow() {
@@ -57,6 +57,13 @@ export function UserRow() {
           <span>Admin</span>
         </Link>
       )}
+      <Link
+        href="/account/billing"
+        className="flex items-center gap-2 px-4 py-2.5 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+      >
+        <CreditCard className="h-4 w-4" aria-hidden="true" />
+        <span>Assinatura</span>
+      </Link>
       <Link
         href="/account/delete"
         className="flex items-center gap-2 px-4 py-2.5 text-sm text-muted-foreground hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400 transition-colors"
