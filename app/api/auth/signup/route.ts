@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { getServerSupabase } from '@/lib/db/supabase';
 import { verifyTurnstileToken, getClientIp, hashIp } from '@/lib/captcha';
 import { checkAnonRateLimit } from '@/lib/rate-limit';
+import { CURRENT_LEGAL_VERSION } from '@/lib/legal/constants';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -27,6 +28,9 @@ const Body = z.object({
   password: z.string().min(6),
   captchaToken: z.string().min(1).nullable().optional(),
   next: z.string().optional(),
+  // Sub-projeto 28 — aceite explícito dos Termos + Privacidade.
+  // Server exige true; client garante checkbox marcado antes do POST.
+  acceptedTerms: z.literal(true),
 });
 
 function originFrom(req: Request): string {
@@ -76,6 +80,26 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'password_weak' }, { status: 400 });
     }
     return NextResponse.json({ error: 'signup_failed' }, { status: 500 });
+  }
+
+  // Sub-projeto 28 — persiste aceite explícito de Termos + Privacidade.
+  // Trigger handle_new_user (migration 0003) já criou a row em profiles;
+  // basta UPDATE com timestamp + version. Fire-and-forget pra não
+  // bloquear o response — se falhar, log + continua (re-aceite pode ser
+  // requerido em login posterior se necessário).
+  if (data.user?.id) {
+    void sb
+      .from('profiles')
+      .update({
+        terms_accepted_at: new Date().toISOString(),
+        terms_version: CURRENT_LEGAL_VERSION,
+      })
+      .eq('id', data.user.id)
+      .then(({ error: updErr }) => {
+        if (updErr) {
+          console.warn('[signup] terms_accepted_at persist failed:', updErr.message);
+        }
+      });
   }
 
   // data.session !== null → email-confirm desligado no project; user já tá

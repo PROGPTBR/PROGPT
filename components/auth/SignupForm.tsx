@@ -37,6 +37,7 @@ export function SignupForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [state, setState] = useState<SignupState>({ kind: 'idle' });
 
   async function onSubmit(e: React.FormEvent) {
@@ -45,6 +46,14 @@ export function SignupForm() {
       setState({
         kind: 'error',
         message: `A senha precisa ter pelo menos ${MIN_PASSWORD} caracteres.`,
+      });
+      return;
+    }
+    if (!acceptedTerms) {
+      setState({
+        kind: 'error',
+        message:
+          'Você precisa aceitar os Termos de Uso e a Política de Privacidade.',
       });
       return;
     }
@@ -59,7 +68,13 @@ export function SignupForm() {
     const res = await fetch('/api/auth/signup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, captchaToken, next }),
+      body: JSON.stringify({
+        email,
+        password,
+        captchaToken,
+        next,
+        acceptedTerms: true,
+      }),
     });
     if (!res.ok) {
       const body = await res.json().catch(() => ({ error: 'unknown' }));
@@ -145,6 +160,33 @@ export function SignupForm() {
             Mínimo {MIN_PASSWORD} caracteres.
           </p>
         </div>
+        <label className="flex items-start gap-2 text-xs text-muted-foreground cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={acceptedTerms}
+            onChange={(e) => setAcceptedTerms(e.target.checked)}
+            className="mt-0.5 h-4 w-4 rounded border-border accent-brand cursor-pointer"
+          />
+          <span>
+            Li e aceito os{' '}
+            <Link
+              href="/termos"
+              target="_blank"
+              className="text-brand hover:text-brand/80 underline underline-offset-2"
+            >
+              Termos de Uso
+            </Link>{' '}
+            e a{' '}
+            <Link
+              href="/privacidade"
+              target="_blank"
+              className="text-brand hover:text-brand/80 underline underline-offset-2"
+            >
+              Política de Privacidade
+            </Link>
+            .
+          </span>
+        </label>
         <TurnstileWidget onVerify={setCaptchaToken} />
         {errorMessage ? (
           <div
@@ -156,7 +198,7 @@ export function SignupForm() {
         ) : null}
         <button
           type="submit"
-          disabled={submitting || !captchaToken}
+          disabled={submitting || !captchaToken || !acceptedTerms}
           className="w-full inline-flex items-center justify-center bg-brand text-black h-11 rounded-full text-sm font-medium hover:bg-brand/90 disabled:opacity-60 disabled:cursor-not-allowed active:scale-95 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           {submitting ? 'Cadastrando…' : 'Cadastrar'}
