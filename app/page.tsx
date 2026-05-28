@@ -6,7 +6,6 @@ import { BrandLogo } from '@/components/brand/BrandLogo';
 import {
   ArrowRight,
   Plus,
-  Sparkles,
   Zap,
   Eye,
   ShieldCheck,

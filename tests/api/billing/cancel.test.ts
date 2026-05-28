@@ -40,6 +40,10 @@ function mockDeps(opts: {
   vi.doMock('@/lib/db/supabase', () => ({
     getServerSupabase: () => ({ from: () => ({ update: subUpdate }) }),
   }));
+  vi.doMock('@/lib/email/client', () => ({
+    sendEmail: vi.fn().mockResolvedValue({ ok: true, id: 'msg' }),
+    getAppUrl: () => 'http://localhost',
+  }));
   return { subUpdate };
 }
 
