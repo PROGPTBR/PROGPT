@@ -62,4 +62,18 @@ describe('scoreSuppliers', () => {
     expect(DEFAULT_SCORECARD_CRITERIA).toHaveLength(6);
     expect(DEFAULT_SCORECARD_CRITERIA.reduce((a, c) => a + c.weight, 0)).toBe(100);
   });
+  it('band boundaries are inclusive at the thresholds (exactly 70 and 40)', () => {
+    const out = scoreSuppliers(
+      params({
+        suppliers: [
+          { name: 'at70', segment: '', scores: { qualidade: 7, preco: 7 } }, // 70 → estrategico
+          { name: 'at40', segment: '', scores: { qualidade: 4, preco: 4 } }, // 40 → desenvolvimento
+          { name: 'below40', segment: '', scores: { qualidade: 3, preco: 4 } }, // 35 → saida
+        ],
+      }),
+    );
+    expect(out.find((s) => s.name === 'at70')!.band).toBe('estrategico');
+    expect(out.find((s) => s.name === 'at40')!.band).toBe('desenvolvimento');
+    expect(out.find((s) => s.name === 'below40')!.band).toBe('saida');
+  });
 });
