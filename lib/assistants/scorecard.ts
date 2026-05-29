@@ -117,6 +117,7 @@ ${tableRows}`;
       scope: params.scorecardName,
       category: 'Scorecard de fornecedores',
       deadline: '',
+      // sem eixo de spend no scorecard — {{budget}} fica em branco de propósito
       budget: '',
       criteria: [],
       notes: params.notes ?? '',
