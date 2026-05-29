@@ -36,7 +36,7 @@ segurança. Recomendação: não abrir o paywall pro público até fechar os �
 | 6 | **Turn-leak no assistente de negociação** | decisão de produto | Investigado (2026-05-29): adicionar `canUseAssistant` nos turnos é **errado** — bloquearia o free de usar o simulador na própria run a que tem direito (count já é 1). Endpoints já têm auth + rate limit + owner check. Risco residual = muitos turnos numa run free ao longo do tempo; remédio correto = **cap de turnos por run free** (qual número?), não paywall. Aguarda decisão. |
 | 7 | **Supabase no free tier → sem backup automático** | infra | Aceitar pagante num DB sem PITR é risco. Subir pro plano Pro ($25/mês) antes do primeiro signup pagante. |
 | 8 | **Sem analytics de produto / funil de conversão** | — | Zero PostHog/GA. Launch sem visibilidade de signup→ativação→pago — exatamente o dado pra melhorar conversão. |
-| 9 | **Cnae-search sem rate limit** | `app/api/suppliers/cnae-search/route.ts` | GET sem `checkChatRateLimit`. Busca local (custo baixo), mas vetor de abuso. Adicionar rate limit + cap de tamanho de query. (Confirmar — auditoria operacional apontou, validar antes de fixar.) |
+| 9 | **Cnae-search sem rate limit** | ✅ PR #88 | Agora tem `checkChatRateLimit` (429 + retry) espelhando `/suppliers/search` + cap de 100 chars na query. |
 
 ---
 
