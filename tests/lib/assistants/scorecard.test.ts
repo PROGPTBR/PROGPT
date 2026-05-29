@@ -1,8 +1,8 @@
 // tests/lib/assistants/scorecard.test.ts
 import { describe, expect, it } from 'vitest';
-import { scoreSuppliers } from '@/lib/assistants/scorecard';
+import { scoreSuppliers, buildScorecardPrompt, SCORECARD_SYSTEM_PROMPT } from '@/lib/assistants/scorecard';
 import { DEFAULT_SCORECARD_CRITERIA, SCORECARD_DEFAULT_THRESHOLDS } from '@/lib/assistants/types';
-import type { ScorecardParams } from '@/lib/assistants/types';
+import type { ScorecardParams, TemplateRow } from '@/lib/assistants/types';
 
 function params(overrides: Partial<ScorecardParams> = {}): ScorecardParams {
   return {
@@ -75,5 +75,21 @@ describe('scoreSuppliers', () => {
     expect(out.find((s) => s.name === 'at70')!.band).toBe('estrategico');
     expect(out.find((s) => s.name === 'at40')!.band).toBe('desenvolvimento');
     expect(out.find((s) => s.name === 'below40')!.band).toBe('saida');
+  });
+});
+
+const tpl: TemplateRow = {
+  id: 't', assistant_type: 'scorecard', name: 'Padrão', description: null,
+  body_md: '# Head\n\nTail.', created_by: null, created_at: '', updated_at: '',
+};
+
+describe('buildScorecardPrompt', () => {
+  it('passes classification as INPUT (ranking + band per supplier) and keeps system byte-stable', () => {
+    const classified = scoreSuppliers(params());
+    const { system, user } = buildScorecardPrompt(params(), classified, tpl, [], null);
+    expect(system).toBe(SCORECARD_SYSTEM_PROMPT);
+    expect(user).toContain('Forn A');
+    expect(user).toContain('Estratégico');
+    expect(user).toMatch(/classifica|ranking/i);
   });
 });
