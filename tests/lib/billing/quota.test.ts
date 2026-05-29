@@ -54,6 +54,33 @@ describe('canUseAssistant', () => {
   });
 });
 
+describe('canTakeNegotiationTurn', () => {
+  function mockIsPro(isPro: boolean) {
+    vi.doMock('@/lib/billing/subscription', () => ({
+      isPro: vi.fn().mockResolvedValue(isPro),
+    }));
+  }
+
+  it('free user allowed at exactly the cap (30 turns)', async () => {
+    mockIsPro(false);
+    const { canTakeNegotiationTurn, FREE_NEGOTIATION_TURN_CAP } = await import('@/lib/billing/quota');
+    expect(FREE_NEGOTIATION_TURN_CAP).toBe(30);
+    expect(await canTakeNegotiationTurn('u1', 30)).toBe(true);
+  });
+
+  it('free user blocked past the cap (31 turns)', async () => {
+    mockIsPro(false);
+    const { canTakeNegotiationTurn } = await import('@/lib/billing/quota');
+    expect(await canTakeNegotiationTurn('u1', 31)).toBe(false);
+  });
+
+  it('Pro user unlimited (past the cap still allowed)', async () => {
+    mockIsPro(true);
+    const { canTakeNegotiationTurn } = await import('@/lib/billing/quota');
+    expect(await canTakeNegotiationTurn('u1', 500)).toBe(true);
+  });
+});
+
 describe('getAssistantQuotaUsed fail-closed', () => {
   it('returns max-int when DB query errors (deny by default)', async () => {
     vi.doMock('@/lib/billing/subscription', () => ({ isPro: vi.fn().mockResolvedValue(false) }));

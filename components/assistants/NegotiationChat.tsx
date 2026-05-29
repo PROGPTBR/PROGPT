@@ -13,6 +13,7 @@ import {
   Send,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { handlePaywallResponse } from '@/lib/billing/handle-paywall';
 import { MicRecorderButton } from '@/components/chat/MicRecorderButton';
 import {
   KRALJIC_QUADRANT_LABELS,
@@ -85,6 +86,12 @@ export function NegotiationChat({
           `Limite atingido. Tente em ${data.retry_after_secs ?? 60}s.`,
         );
         setMessages(next); // rollback do placeholder
+        return;
+      }
+      // Cap de turnos free atingido → toast "Ver planos". Remove o turno
+      // rejeitado (free não consegue retomar; precisa do Pro).
+      if (handlePaywallResponse(res, 'negotiation')) {
+        setMessages(messages);
         return;
       }
       if (!res.ok || !res.body) {
