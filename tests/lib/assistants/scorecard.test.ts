@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { scoreSuppliers, buildScorecardPrompt, SCORECARD_SYSTEM_PROMPT } from '@/lib/assistants/scorecard';
 import { DEFAULT_SCORECARD_CRITERIA, SCORECARD_DEFAULT_THRESHOLDS } from '@/lib/assistants/types';
 import type { ScorecardParams, TemplateRow } from '@/lib/assistants/types';
+import { renderScorecardChartPng } from '@/lib/assistants/scorecard-chart';
 
 function params(overrides: Partial<ScorecardParams> = {}): ScorecardParams {
   return {
@@ -82,6 +83,19 @@ const tpl: TemplateRow = {
   id: 't', assistant_type: 'scorecard', name: 'Padrão', description: null,
   body_md: '# Head\n\nTail.', created_by: null, created_at: '', updated_at: '',
 };
+
+describe('renderScorecardChartPng', () => {
+  it('returns a PNG buffer', async () => {
+    const buf = await renderScorecardChartPng(scoreSuppliers(params()));
+    expect(Buffer.isBuffer(buf)).toBe(true);
+    expect(buf.subarray(0, 4).toString('hex')).toBe('89504e47'); // PNG magic
+  });
+  it('handles a single supplier without throwing', async () => {
+    const out = scoreSuppliers(params({ suppliers: [{ name: 'Solo', segment: '', scores: { qualidade: 8, preco: 6 } }] }));
+    const buf = await renderScorecardChartPng(out);
+    expect(Buffer.isBuffer(buf)).toBe(true);
+  });
+});
 
 describe('buildScorecardPrompt', () => {
   it('passes classification as INPUT (ranking + band per supplier) and keeps system byte-stable', () => {
