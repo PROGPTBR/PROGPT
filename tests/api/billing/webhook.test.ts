@@ -164,4 +164,39 @@ describe('POST /api/billing/webhook/asaas', () => {
       expect.objectContaining({ status: 'cancelled' }),
     );
   });
+
+  it('flags an unrecognized event as unhandled (no silent drop) and warns', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const { subUpdate } = mockSupabase({
+      subLoad: { id: 's1', asaas_subscription_id: 'sub_x' },
+    });
+    const res = await POST_with({
+      id: 'evt_1',
+      event: 'PAYMENT_CHARGEBACK_REQUESTED', // real Asaas event we don't map
+      payment: { id: 'pay', subscription: 'sub_x' },
+    });
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.unhandled).toBe('PAYMENT_CHARGEBACK_REQUESTED');
+    // must NOT touch subscription state for an event we don't understand
+    expect(subUpdate).not.toHaveBeenCalled();
+    // must be visible in logs (and Sentry once wired)
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it('stays quiet for a known benign event (PAYMENT_CREATED)', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    mockSupabase({ subLoad: { id: 's1', asaas_subscription_id: 'sub_x' } });
+    const res = await POST_with({
+      id: 'evt_1',
+      event: 'PAYMENT_CREATED',
+      payment: { id: 'pay', subscription: 'sub_x' },
+    });
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.unhandled).toBeUndefined();
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
 });
