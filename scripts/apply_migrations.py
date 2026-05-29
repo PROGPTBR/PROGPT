@@ -3,24 +3,19 @@
 Idempotent-ish: each migration uses CREATE ... IF NOT EXISTS where possible, but
 this script is intended for a fresh project (verified empty `public` schema).
 """
-import os, sys, glob, urllib.parse
-from dotenv import load_dotenv
+import os, sys, glob
 
-load_dotenv('.env.local')
-
-import psycopg
-
-url = os.environ['NEXT_PUBLIC_SUPABASE_URL']
-ref = url.replace('https://', '').split('.')[0]
-pw = urllib.parse.quote(os.environ['SUPABASE_DB_PASSWORD'], safe='')
-dsn = f'postgresql://postgres:{pw}@db.{ref}.supabase.co:5432/postgres?sslmode=require'
+# Import sibling helper independentemente do cwd (rodado como `python
+# scripts/apply_migrations.py`). connect() tenta direto (IPv6) → pooler (IPv4).
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from db_connect import connect
 
 files = sorted(glob.glob('supabase/migrations/*.sql'))
 if not files:
     print('no migrations found', file=sys.stderr)
     sys.exit(1)
 
-with psycopg.connect(dsn, autocommit=True) as conn:
+with connect() as conn:
     for path in files:
         name = os.path.basename(path)
         with open(path, 'r', encoding='utf-8') as f:
