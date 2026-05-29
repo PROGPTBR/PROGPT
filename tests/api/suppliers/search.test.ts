@@ -119,8 +119,26 @@ describe('GET /api/suppliers/cnae-search', () => {
     expect(res.status).toBe(401);
   });
 
+  it('returns 429 when rate limited', async () => {
+    mockAuth({ id: 'u1' });
+    vi.doMock('@/lib/rate-limit', () => ({
+      checkChatRateLimit: vi.fn().mockResolvedValue({ allowed: false, retryAfterSecs: 30 }),
+    }));
+    const searchCnaesByText = vi.fn();
+    vi.doMock('@/lib/suppliers/cnae-lookup', () => ({ searchCnaesByText }));
+    const { GET } = await import('@/app/api/suppliers/cnae-search/route');
+    const res = await GET(
+      new Request('http://localhost/api/suppliers/cnae-search?q=embalagens'),
+    );
+    expect(res.status).toBe(429);
+    expect(searchCnaesByText).not.toHaveBeenCalled();
+  });
+
   it('returns empty results when query is too short', async () => {
     mockAuth({ id: 'u1' });
+    vi.doMock('@/lib/rate-limit', () => ({
+      checkChatRateLimit: vi.fn().mockResolvedValue({ allowed: true }),
+    }));
     const searchCnaesByText = vi.fn();
     vi.doMock('@/lib/suppliers/cnae-lookup', () => ({ searchCnaesByText }));
     const { GET } = await import('@/app/api/suppliers/cnae-search/route');
@@ -135,6 +153,9 @@ describe('GET /api/suppliers/cnae-search', () => {
 
   it('forwards autocomplete results on happy path', async () => {
     mockAuth({ id: 'u1' });
+    vi.doMock('@/lib/rate-limit', () => ({
+      checkChatRateLimit: vi.fn().mockResolvedValue({ allowed: true }),
+    }));
     const results = [{ code: '2222600', name: 'Fabricação...', divisao: null, grupo: null }];
     vi.doMock('@/lib/suppliers/cnae-lookup', () => ({
       searchCnaesByText: vi.fn().mockResolvedValue(results),
