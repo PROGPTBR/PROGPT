@@ -33,9 +33,9 @@ segurança. Recomendação: não abrir o paywall pro público até fechar os �
 | # | Item | Evidência | Direção |
 |---|------|-----------|---------|
 | 5 | **Webhook Asaas dropava evento desconhecido em silêncio** | ✅ PR #86 | Evento fora dos buckets handled + fora da lista de benignos agora vira `console.warn` + campo `unhandled` (visível no Railway / Sentry quando ligado). Restante (cron varrendo `processed_at IS NULL` > 1h pra alertar 500s persistentes) fica pra quando houver alerting de verdade (Sentry, #3). |
-| 6 | **Turn-leak no assistente de negociação** | decisão de produto | Investigado (2026-05-29): adicionar `canUseAssistant` nos turnos é **errado** — bloquearia o free de usar o simulador na própria run a que tem direito (count já é 1). Endpoints já têm auth + rate limit + owner check. Risco residual = muitos turnos numa run free ao longo do tempo; remédio correto = **cap de turnos por run free** (qual número?), não paywall. Aguarda decisão. |
+| 6 | **Turn-leak no assistente de negociação** | ✅ PR #92 | Cap de 30 turnos por run free (`canTakeNegotiationTurn`); Pro ilimitado. 402 `turn_cap` antes da geração + toast "Ver planos" no cliente. Não usou `canUseAssistant` (quebraria a run free). |
 | 7 | **Supabase no free tier → sem backup automático** | ✅ feito 2026-05-29 | Plano Pro ativo → backup diário automático (retenção 7d). PITR (ponto-a-ponto) é add-on opcional, não-bloqueador pro launch. |
-| 8 | **Sem analytics de produto / funil de conversão** | — | Zero PostHog/GA. Launch sem visibilidade de signup→ativação→pago — exatamente o dado pra melhorar conversão. |
+| 8 | **Sem analytics de produto / funil de conversão** | ✅ código pronto (PR #pendente) | Dashboard interno `/admin/funnel` (sem vendor externo, sem LGPD nova): funil signup→ativação→pago + uso por assistente, via SQL function `admin_funnel_metrics()` (migration 0030). **Falta aplicar a migration 0030 na prod DB** (`scripts/apply_migration_0030.py`) — bloqueado no classificador de auto-aprovação; precisa do seu OK. |
 | 9 | **Cnae-search sem rate limit** | ✅ PR #88 | Agora tem `checkChatRateLimit` (429 + retry) espelhando `/suppliers/search` + cap de 100 chars na query. |
 
 ---

@@ -10,6 +10,7 @@ import {
   Tag,
   DollarSign,
   FileCode,
+  TrendingUp,
   ArrowLeft,
 } from 'lucide-react';
 import { BrandLogo } from '@/components/brand/BrandLogo';
@@ -21,6 +22,7 @@ const ITEMS = [
   { href: '/admin/templates', label: 'Templates', Icon: FileCode },
   { href: '/admin/ingest', label: 'Ingestão', Icon: Upload },
   { href: '/admin/feedback', label: 'Feedback', Icon: MessageSquare },
+  { href: '/admin/funnel', label: 'Funil', Icon: TrendingUp },
   { href: '/admin/costs', label: 'Custos', Icon: DollarSign },
 ];
 
