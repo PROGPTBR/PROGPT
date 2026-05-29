@@ -53,6 +53,19 @@ function getConfig() {
   const apiKey = process.env.ASAAS_API_KEY;
   const apiUrl = process.env.ASAAS_API_URL ?? 'https://sandbox.asaas.com/api/v3';
   if (!apiKey) throw new Error('ASAAS_API_KEY env var missing');
+  // Em produção nunca cair no sandbox silenciosamente: se ASAAS_API_URL
+  // estiver ausente ou apontando pro sandbox, pagamentos reais iriam pro
+  // ambiente de teste e não gerariam receita (falha invisível). Fail-fast.
+  if (process.env.APP_ENV === 'production') {
+    if (!process.env.ASAAS_API_URL) {
+      throw new Error('ASAAS_API_URL env var missing in production (recusando o sandbox default)');
+    }
+    if (apiUrl.includes('sandbox')) {
+      throw new Error(
+        `ASAAS_API_URL aponta pro sandbox em produção (${apiUrl}) — pagamentos reais não seriam cobrados`,
+      );
+    }
+  }
   return { apiKey, apiUrl };
 }
 

@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { requireUser, NotAuthenticated } from '@/lib/auth';
 import { supabaseServer } from '@/lib/db/supabase-server';
 import { getServerSupabase } from '@/lib/db/supabase';
+import { getSubscription } from '@/lib/billing/subscription';
+import { cancelAsaasSubscription, AsaasError } from '@/lib/billing/asaas';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -15,6 +17,10 @@ export const dynamic = 'force-dynamic';
 // 1. requireUser → 401 se não logado
 // 2. body { confirmation: 'EXCLUIR' } (defesa em profundidade — UI também
 //    valida, mas o server não pode confiar no client)
+// 2b. cancelar subscription no Asaas ANTES de deletar — senão o cartão
+//     continua sendo cobrado numa conta que não existe mais (chargeback +
+//     violação LGPD). Se o cancel falhar com erro real (não-404), aborta
+//     o delete: melhor adiar a exclusão do que deixar o cartão cobrando.
 // 3. auth.admin.deleteUser(user.id) — cascateia via FK:
 //    - profiles (CASCADE)
 //    - sessions (CASCADE)
@@ -52,6 +58,26 @@ export async function POST(req: Request) {
   }
   if (parsed.confirmation !== CONFIRMATION_PHRASE) {
     return NextResponse.json({ error: 'confirmation_mismatch' }, { status: 400 });
+  }
+
+  // Cancela cobrança recorrente no Asaas antes da exclusão destrutiva.
+  const sub = await getSubscription(user.id);
+  if (
+    sub?.asaas_subscription_id &&
+    sub.status !== 'cancelled' &&
+    sub.status !== 'expired'
+  ) {
+    try {
+      await cancelAsaasSubscription(sub.asaas_subscription_id);
+    } catch (err) {
+      console.error('[account-delete] Asaas cancel failed:', err);
+      if (!(err instanceof AsaasError && err.status === 404)) {
+        // Erro real do provedor — não deleta, senão a conta some mas o
+        // cartão continua sendo cobrado. User pode tentar de novo.
+        return NextResponse.json({ error: 'billing_provider_error' }, { status: 502 });
+      }
+      // 404 → Asaas já não tem a subscription; segue com o delete.
+    }
   }
 
   const svc = getServerSupabase();

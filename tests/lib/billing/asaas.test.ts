@@ -8,6 +8,63 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.restoreAllMocks();
+  delete process.env.APP_ENV;
+});
+
+describe('production ASAAS_API_URL guard', () => {
+  it('throws when APP_ENV=production and ASAAS_API_URL points to sandbox', async () => {
+    process.env.APP_ENV = 'production';
+    process.env.ASAAS_API_URL = 'https://sandbox.asaas.com/api/v3';
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('{}', { status: 200 }));
+    const { createAsaasCustomer } = await import('@/lib/billing/asaas');
+    await expect(
+      createAsaasCustomer({ name: 'X', email: 'x@y.com', cpfCnpj: '12345678909' }),
+    ).rejects.toThrow(/sandbox/i);
+  });
+
+  it('throws when APP_ENV=production and ASAAS_API_URL is unset', async () => {
+    process.env.APP_ENV = 'production';
+    delete process.env.ASAAS_API_URL;
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('{}', { status: 200 }));
+    const { createAsaasCustomer } = await import('@/lib/billing/asaas');
+    await expect(
+      createAsaasCustomer({ name: 'X', email: 'x@y.com', cpfCnpj: '12345678909' }),
+    ).rejects.toThrow(/ASAAS_API_URL/);
+  });
+
+  it('allows the production host when APP_ENV=production', async () => {
+    process.env.APP_ENV = 'production';
+    process.env.ASAAS_API_URL = 'https://www.asaas.com/api/v3';
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(
+        new Response(JSON.stringify({ id: 'cus_1', name: 'X', email: 'x@y.com', cpfCnpj: '1' }), {
+          status: 200,
+        }),
+      );
+    const { createAsaasCustomer } = await import('@/lib/billing/asaas');
+    await expect(
+      createAsaasCustomer({ name: 'X', email: 'x@y.com', cpfCnpj: '12345678909' }),
+    ).resolves.toMatchObject({ id: 'cus_1' });
+    expect(fetchSpy).toHaveBeenCalledWith(
+      'https://www.asaas.com/api/v3/customers',
+      expect.anything(),
+    );
+  });
+
+  it('still allows sandbox when APP_ENV is not production (dev/ci)', async () => {
+    process.env.APP_ENV = 'local';
+    process.env.ASAAS_API_URL = 'https://sandbox.asaas.com/api/v3';
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify({ id: 'cus_1', name: 'X', email: 'x@y.com', cpfCnpj: '1' }), {
+        status: 200,
+      }),
+    );
+    const { createAsaasCustomer } = await import('@/lib/billing/asaas');
+    await expect(
+      createAsaasCustomer({ name: 'X', email: 'x@y.com', cpfCnpj: '12345678909' }),
+    ).resolves.toMatchObject({ id: 'cus_1' });
+  });
 });
 
 describe('createAsaasCustomer', () => {
