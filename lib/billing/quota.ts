@@ -12,6 +12,14 @@ import type { AssistantType } from '@/lib/assistants/types';
 
 export const FREE_LIFETIME_QUOTA = 1;
 
+// Cap de turnos do simulador de negociação por execução no free tier.
+// O simulador é multi-turno dentro de UMA run (que o free já tem direito a
+// criar). Sem cap, um free poderia rodar turnos LLM indefinidamente nessa
+// run. 30 turnos = sessão de prática completa. Pro = ilimitado.
+// NOTA: o rate limit (60 turnos/h por usuário) é o backstop duro contra
+// abuso; este cap é o limite de produto pra um free bem-comportado.
+export const FREE_NEGOTIATION_TURN_CAP = 30;
+
 /**
  * Quantas execuções o user já fez de um dado assistant_type.
  * Inclui runs com status='running'|'done'|'failed' (todas contam — não
@@ -48,4 +56,19 @@ export async function canUseAssistant(
   if (await isPro(userId)) return true;
   const used = await getAssistantQuotaUsed(userId, type);
   return used < FREE_LIFETIME_QUOTA;
+}
+
+/**
+ * True se o user pode tomar mais um turno no simulador de negociação.
+ *   - turnos até o cap (inclusive): sempre liberado
+ *   - acima do cap: só Pro
+ * `userTurns` é a contagem de turnos do usuário INCLUINDO o que está
+ * sendo submetido (ex.: 31 = tentando o 31º turno).
+ */
+export async function canTakeNegotiationTurn(
+  userId: string,
+  userTurns: number,
+): Promise<boolean> {
+  if (userTurns <= FREE_NEGOTIATION_TURN_CAP) return true;
+  return isPro(userId);
 }
