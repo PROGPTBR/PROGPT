@@ -49,6 +49,28 @@ const CANCEL_EVENTS = [
   'SUBSCRIPTION_DELETED',
 ];
 
+// Eventos informativos do Asaas que NÃO mudam o estado da nossa
+// subscription — ignoramos de propósito, sem ruído de log. Qualquer
+// evento fora desta lista E fora dos buckets acima é "unhandled": logamos
+// um warn (vira sinal no Railway / Sentry) pra não dropar em silêncio um
+// evento que talvez devesse mexer no estado (ex.: chargeback novo).
+const KNOWN_IGNORED_EVENTS = new Set([
+  'PAYMENT_CREATED',
+  'PAYMENT_UPDATED',
+  'PAYMENT_AWAITING_RISK_ANALYSIS',
+  'PAYMENT_APPROVED_BY_RISK_ANALYSIS',
+  'PAYMENT_REPROVED_BY_RISK_ANALYSIS',
+  'PAYMENT_BANK_SLIP_VIEWED',
+  'PAYMENT_CHECKOUT_VIEWED',
+  'PAYMENT_ANTICIPATED',
+  'PAYMENT_DUNNING_RECEIVED',
+  'PAYMENT_DUNNING_REQUESTED',
+  'SUBSCRIPTION_CREATED',
+  'SUBSCRIPTION_UPDATED',
+]);
+
+const HANDLED_EVENTS = new Set([...PAID_EVENTS, ...PAST_DUE_EVENTS, ...CANCEL_EVENTS]);
+
 function mapBillingType(t: string | undefined): 'credit_card' | 'pix' | 'boleto' | null {
   switch (t) {
     case 'CREDIT_CARD':
@@ -160,8 +182,18 @@ export async function POST(req: Request) {
   } else if (CANCEL_EVENTS.includes(event.event)) {
     update.status = 'cancelled';
     update.cancelled_at = new Date().toISOString();
-  } else {
-    // Eventos não-mutadores (PAYMENT_CREATED, etc.). Só marca processado.
+  }
+
+  // Evento que não cai em nenhum bucket conhecido nem na lista de
+  // ignorados benignos — logar pra ficar visível (no silent drop).
+  const unhandledEvent =
+    !HANDLED_EVENTS.has(event.event) && !KNOWN_IGNORED_EVENTS.has(event.event)
+      ? event.event
+      : null;
+  if (unhandledEvent) {
+    console.warn(
+      `[billing/webhook] evento Asaas não tratado: ${unhandledEvent} (event_id=${event.id}, sub=${asaasSubId}) — verificar se deveria mudar estado`,
+    );
   }
 
   if (Object.keys(update).length > 1) {
@@ -219,7 +251,7 @@ export async function POST(req: Request) {
     .update({ processed_at: new Date().toISOString() })
     .eq('asaas_event_id', event.id);
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json(unhandledEvent ? { ok: true, unhandled: unhandledEvent } : { ok: true });
 }
 
 // Helper: busca email do user via auth.users (service-role).
