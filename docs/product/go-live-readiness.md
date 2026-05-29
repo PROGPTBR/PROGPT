@@ -34,7 +34,7 @@ segurança. Recomendação: não abrir o paywall pro público até fechar os �
 |---|------|-----------|---------|
 | 5 | **Webhook Asaas dropava evento desconhecido em silêncio** | ✅ PR #86 | Evento fora dos buckets handled + fora da lista de benignos agora vira `console.warn` + campo `unhandled` (visível no Railway / Sentry quando ligado). Restante (cron varrendo `processed_at IS NULL` > 1h pra alertar 500s persistentes) fica pra quando houver alerting de verdade (Sentry, #3). |
 | 6 | **Turn-leak no assistente de negociação** | decisão de produto | Investigado (2026-05-29): adicionar `canUseAssistant` nos turnos é **errado** — bloquearia o free de usar o simulador na própria run a que tem direito (count já é 1). Endpoints já têm auth + rate limit + owner check. Risco residual = muitos turnos numa run free ao longo do tempo; remédio correto = **cap de turnos por run free** (qual número?), não paywall. Aguarda decisão. |
-| 7 | **Supabase no free tier → sem backup automático** | infra | Aceitar pagante num DB sem PITR é risco. Subir pro plano Pro ($25/mês) antes do primeiro signup pagante. |
+| 7 | **Supabase no free tier → sem backup automático** | ✅ feito 2026-05-29 | Plano Pro ativo → backup diário automático (retenção 7d). PITR (ponto-a-ponto) é add-on opcional, não-bloqueador pro launch. |
 | 8 | **Sem analytics de produto / funil de conversão** | — | Zero PostHog/GA. Launch sem visibilidade de signup→ativação→pago — exatamente o dado pra melhorar conversão. |
 | 9 | **Cnae-search sem rate limit** | ✅ PR #88 | Agora tem `checkChatRateLimit` (429 + retry) espelhando `/suppliers/search` + cap de 100 chars na query. |
 
@@ -62,7 +62,7 @@ segurança. Recomendação: não abrir o paywall pro público até fechar os �
 | Resend (`RESEND_API_KEY`, `EMAIL_FROM`) | Conta + domínio verificado | resend.com |
 | Turnstile (`NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`) | Conta Cloudflare → Turnstile | cloudflare.com |
 | Sentry (DSN) | Conta + decisão de abordagem (#3) | sentry.io |
-| Supabase Pro | Upgrade de plano (#7) | dashboard Supabase |
+| ~~Supabase Pro~~ | ✅ feito — Pro ativo, backup diário ligado | dashboard Supabase |
 | Asaas prod (`ASAAS_API_URL`=www, API key prod, webhook token) | Conta prod + registrar webhook | asaas.com |
 
 ---
