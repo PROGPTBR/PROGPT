@@ -56,7 +56,10 @@ export type ApiOperation =
   | 'assistant-negotiation-example'
   | 'assistant-negotiation-opener'
   | 'assistant-negotiation-turn'
-  | 'assistant-negotiation-score';
+  | 'assistant-negotiation-score'
+  | 'assistant-scorecard-generate'
+  | 'assistant-scorecard-refine'
+  | 'assistant-scorecard-apply';
 
 export type RecordUsageInput = {
   provider: ApiProvider;
