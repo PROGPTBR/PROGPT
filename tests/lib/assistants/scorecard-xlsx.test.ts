@@ -30,4 +30,19 @@ describe('buildScorecardXlsxBuffer', () => {
     await wb.xlsx.load(buf as unknown as ArrayBuffer);
     expect(wb.getWorksheet('Gráfico')).toBeTruthy();
   });
+
+  it('Scorecard header spans Fornecedor + N criteria + Score + Rank + Faixa', async () => {
+    const buf = await buildScorecardXlsxBuffer(p, scoreSuppliers(p));
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(buf as unknown as ArrayBuffer);
+    const ws = wb.getWorksheet('Scorecard')!;
+    let headerVals: unknown[] = [];
+    ws.eachRow((row) => {
+      if (row.getCell(1).value === 'Fornecedor') {
+        headerVals = (row.values as unknown[]).slice(1);
+      }
+    });
+    expect(headerVals).toHaveLength(p.criteria.length + 4);
+    expect(headerVals[headerVals.length - 1]).toBe('Faixa');
+  });
 });

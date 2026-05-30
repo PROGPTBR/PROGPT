@@ -58,7 +58,7 @@ export async function buildScorecardXlsxBuffer(
   // Optional title row with scorecard name
   if (params.scorecardName) {
     const titleRow = scorecard.addRow([params.scorecardName]);
-    const totalCols = 3 + params.criteria.length; // name + criteria + score + rank + band
+    const totalCols = 4 + params.criteria.length; // Fornecedor + N critérios + Score + Rank + Faixa
     scorecard.mergeCells(1, 1, 1, totalCols);
     titleRow.getCell(1).font = { bold: true, size: 14 };
     titleRow.getCell(1).alignment = { vertical: 'middle', horizontal: 'left' };
