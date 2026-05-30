@@ -23,15 +23,15 @@ Colunas: Fornecedor | Score Total (0–100) | Qualidade | Entrega | Custo | Rela
 
 ## Análise por Faixa
 
-### Estratégico (Score ≥ 75)
+### Estratégico (faixa superior)
 
 [Fornecedores que ultrapassam o limiar de parceiro estratégico. Para o conjunto: pontos fortes comuns, dimensões que ainda poderiam evoluir para nível de excelência, frequência de QBR recomendada, critérios para manutenção na faixa. Citar fornecedores específicos que caem aqui.]
 
-### Desenvolvimento (Score 50–74)
+### Desenvolvimento (faixa intermediária)
 
 [Fornecedores com potencial de melhora — base para programas de desenvolvimento de fornecedores (SDP). Para o conjunto: principais gaps por dimensão, prazo-alvo para reavaliação, mecanismo de acompanhamento (relatório mensal, visita técnica, plano corretivo formal). Citar fornecedores específicos.]
 
-### Saída (Score < 50)
+### Saída (faixa inferior)
 
 [Fornecedores abaixo do limiar de continuidade. Para o conjunto: indicar criticidade de substituição, spend total em risco, dependência exclusiva vs. fonte alternativa disponível, prazo de transição recomendado. Citar fornecedores específicos e alertar se algum é único fornecedor qualificado (gargalo).]
 
@@ -75,11 +75,11 @@ Este scorecard foi gerado com base em avaliação multidimensional de fornecedor
 
 **Faixas de classificação:**
 
-| Faixa | Score | Estratégia canônica |
+| Faixa | Score (limiar padrão) | Estratégia canônica |
 |---|---|---|
-| Estratégico | ≥ 75 | Parceria ativa — QBR trimestral, co-desenvolvimento, contrato plurianual |
-| Desenvolvimento | 50–74 | SDP — plano de melhoria formalizado, reavaliação em 90 dias |
-| Saída | < 50 | Gestão de risco — substituição programada ou plano corretivo urgente |
+| Estratégico | ≥ 70 | Parceria ativa — QBR trimestral, co-desenvolvimento, contrato plurianual |
+| Desenvolvimento | 40–69 | SDP — plano de melhoria formalizado, reavaliação em 90 dias |
+| Saída | < 40 | Gestão de risco — substituição programada ou plano corretivo urgente |
 
 > Os pesos e limiares acima são defaults; o assistente adapta conforme informações fornecidas pelo usuário na etapa de configuração.
 
