@@ -47,4 +47,39 @@ describe('parseScorecardXlsx', () => {
     expect(suppliers).toHaveLength(1);
     expect(suppliers[0]!.name).toBe('Real');
   });
+
+  it('de-duplicates criteria whose labels slug to the same id', async () => {
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet('Scorecard');
+    ws.addRow(['Fornecedor', 'Preço', 'Preco']); // both slug to "preco"
+    ws.addRow(['A', 8, 3]);
+    const b = Buffer.from((await wb.xlsx.writeBuffer()) as ArrayBuffer);
+    const { criteria, suppliers, warnings } = await parseScorecardXlsx(b);
+    expect(criteria).toHaveLength(2);
+    expect(new Set(criteria.map((c) => c.id)).size).toBe(2); // distinct ids
+    expect(suppliers[0]!.scores[criteria[0]!.id]).toBe(8);
+    expect(suppliers[0]!.scores[criteria[1]!.id]).toBe(3); // both preserved
+    expect(warnings.some((w) => /identificador|renomeado/i.test(w))).toBe(true);
+  });
+
+  it('single criterion gets weight 100', async () => {
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet('Scorecard');
+    ws.addRow(['Fornecedor', 'Qualidade']);
+    ws.addRow(['A', 7]);
+    const b = Buffer.from((await wb.xlsx.writeBuffer()) as ArrayBuffer);
+    const { criteria } = await parseScorecardXlsx(b);
+    expect(criteria).toHaveLength(1);
+    expect(criteria[0]!.weight).toBe(100);
+  });
+
+  it('preserves detected criteria when there are no supplier rows', async () => {
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet('Scorecard');
+    ws.addRow(['Fornecedor', 'Qualidade', 'Preço']);
+    const b = Buffer.from((await wb.xlsx.writeBuffer()) as ArrayBuffer);
+    const { criteria, suppliers } = await parseScorecardXlsx(b);
+    expect(suppliers).toHaveLength(0);
+    expect(criteria).toHaveLength(2);
+  });
 });

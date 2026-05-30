@@ -77,9 +77,9 @@ export async function parseScorecardXlsx(
   // ── Row 1: header row ────────────────────────────────────────────────────
   const headerRow = ws.getRow(1);
 
-  // Determine last column by scanning header cells (skip col 1 = supplier column).
-  // We look at the worksheet's actual column count to avoid going too far.
-  const lastCol = ws.columnCount || 1;
+  // Fix 2: actualColumnCount is more reliable for buffer-loaded sheets —
+  // avoids phantom styled columns (overcount) and undercount from sparse sheets.
+  const lastCol = ws.actualColumnCount || ws.columnCount || 1;
 
   // Build criteria from cols 2..lastCol
   const criteria: ScorecardCriterion[] = [];
@@ -92,6 +92,22 @@ export async function parseScorecardXlsx(
   if (criteria.length === 0) {
     warnings.push('Nenhum critério encontrado (planilha tem apenas 1 coluna)');
     return { criteria: [], suppliers: [], warnings };
+  }
+
+  // Fix 1: De-duplicate slugged ids — two labels that slug to the same string
+  // (e.g. "Preço" and "Preco") would otherwise cause silent score overwrites and
+  // double-counted weights. Suffix collisions with -2, -3, … before reading data.
+  const seen = new Map<string, number>();
+  for (const c of criteria) {
+    const n = (seen.get(c.id) ?? 0) + 1;
+    seen.set(c.id, n);
+    if (n > 1) {
+      const newId = `${c.id}-${n}`;
+      warnings.push(
+        `Critérios com nomes que geram o mesmo identificador — "${c.label}" renomeado para id "${newId}".`,
+      );
+      c.id = newId;
+    }
   }
 
   // ── Equal-weight distribution; last criterion absorbs remainder ──────────
@@ -114,6 +130,7 @@ export async function parseScorecardXlsx(
     for (let i = 0; i < criteria.length; i++) {
       const col = i + 2;
       const criterion = criteria[i]!;
+      // Células não-numéricas ou vazias viram 0 = "não avaliado".
       const raw = coerceNumber(row.getCell(col).value, 0);
       const clamped = clamp(raw);
       if (raw < 0 || raw > 10) {
@@ -124,12 +141,15 @@ export async function parseScorecardXlsx(
       scores[criterion.id] = clamped;
     }
 
+    // `segment` é definido pelo scorecard de avaliação, não vem da planilha.
     suppliers.push({ name, segment: '', scores });
   }
 
   if (suppliers.length === 0) {
     warnings.push('Nenhum fornecedor encontrado (sem linhas de dados)');
-    return { criteria: [], suppliers: [], warnings };
+    // Fix 3: return the parsed criteria so the UI can display detected columns
+    // even when there are no data rows (the no-CRITERIA guard above still returns []).
+    return { criteria, suppliers: [], warnings };
   }
 
   return { criteria, suppliers, warnings };
