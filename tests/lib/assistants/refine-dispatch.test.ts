@@ -220,4 +220,17 @@ describe('buildRefineSystemForType', () => {
     expect(PROFILE_REFINE_SYSTEM_PROMPT).toMatch(/[Rr]equisitos técnicos/);
     expect(PROFILE_REFINE_SYSTEM_PROMPT).toMatch(/[Rr]estrições regulatórias/);
   });
+
+  it('routes scorecard to a scorecard-specific refine system', () => {
+    const params = {
+      scorecardName: 'Aço plano', period: '', notes: '',
+      thresholds: { strategic: 70, development: 40 },
+      criteria: [{ id: 'q', label: 'Qualidade', weight: 100 }],
+      suppliers: [{ name: 'Forn A', segment: '', scores: { q: 8 } }],
+    };
+    const sys = buildRefineSystemForType('scorecard', '# Relatório\n\nTexto', params as never, []);
+    expect(typeof sys).toBe('string');
+    expect(sys).toContain('Aço plano');
+    expect(sys.toLowerCase()).toContain('scorecard');
+  });
 });
