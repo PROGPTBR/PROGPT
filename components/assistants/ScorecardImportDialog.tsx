@@ -72,9 +72,16 @@ export function ScorecardImportDialog({ open, onClose, onImported }: Props) {
           </button>
         </div>
         <p className="text-xs text-muted-foreground">
-          Aceita planilhas .xlsx com colunas de critérios (id, label, weight) e fornecedores
-          (name, segment, scores). Baixe o template em{' '}
-          <strong>/templates/scorecard-template.xlsx</strong> para o formato esperado.
+          Planilha .xlsx: primeira coluna <strong>Fornecedor</strong>, demais colunas = um
+          critério cada (nota 0–10 por célula). Pesos são distribuídos igualmente na importação.{' '}
+          <a
+            href="/templates/scorecard-template.xlsx"
+            download="scorecard-template.xlsx"
+            className="underline hover:text-foreground"
+          >
+            Baixe o modelo
+          </a>{' '}
+          para o formato exato.
         </p>
 
         <label className="flex items-center justify-center gap-2 text-sm cursor-pointer rounded-md border border-dashed border-input bg-background px-4 py-6 hover:bg-accent disabled:opacity-50">

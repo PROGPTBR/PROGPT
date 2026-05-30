@@ -11,11 +11,9 @@ from db_connect import connect  # direct→pooler(IPv4) fallback
 ADMIN_USER_ID = '5efba61c-6b36-49d1-b443-b235b003ad54'  # rgoalves@gmail.com
 TEMPLATE_NAME = 'Scorecard Padrão'
 TEMPLATE_DESCRIPTION = (
-    'Template padrão para avaliação multidimensional de fornecedores (Supplier Scorecard). '
-    'Segue a metodologia Monczka/CIPS com 4 dimensões ponderadas (Qualidade 30%, '
-    'Entrega 25%, Custo 25%, Relacionamento 20%) e 3 faixas de classificação '
-    '(Estratégico ≥75 / Desenvolvimento 50-74 / Saída <50). '
-    'Inclui resumo executivo + ranking geral + análise por faixa + plano de ação por fornecedor.'
+    'Avalia e ranqueia fornecedores por critérios ponderados (0–100), classificando em '
+    'Estratégico / Desenvolvimento / Saída conforme limiares configuráveis (padrão 70 e 40). '
+    'Inclui resumo executivo, ranking geral, análise por faixa e plano de ação por fornecedor.'
 )
 BODY_PATH = os.path.join(
     os.path.dirname(os.path.abspath(__file__)),

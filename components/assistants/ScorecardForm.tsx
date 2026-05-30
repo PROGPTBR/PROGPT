@@ -219,6 +219,7 @@ export function ScorecardForm({ onSubmit }: { onSubmit: (v: ScorecardFormValues)
     validCriteria.length >= 1 &&
     validSuppliers.length >= 1 &&
     totalWeight > 0 &&
+    validCriteria.every((c) => Number(c.weight) > 0) &&
     thresholdsValid;
 
   // ── Submit ────────────────────────────────────────────────────────────────
