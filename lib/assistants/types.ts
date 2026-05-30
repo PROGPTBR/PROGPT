@@ -784,6 +784,10 @@ export const ScorecardParamsSchema = z
   .refine(
     (p) => p.suppliers.every((s) => p.criteria.every((c) => typeof s.scores[c.id] === 'number')),
     { message: 'every supplier must have a score for every criterion' },
+  )
+  .refine(
+    (p) => new Set(p.criteria.map((c) => c.id)).size === p.criteria.length,
+    { message: 'criterion ids must be unique' },
   );
 export type ScorecardParams = z.infer<typeof ScorecardParamsSchema>;
 

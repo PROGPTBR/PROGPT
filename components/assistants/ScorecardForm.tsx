@@ -226,16 +226,21 @@ export function ScorecardForm({ onSubmit }: { onSubmit: (v: ScorecardFormValues)
 
     // Resolve criterion ids: if label changed from original, keep stored id.
     // For newly added criteria (id starts with 'criterio-'), derive from label.
-    const finalCriteria: ScorecardCriterion[] = validCriteria.map((c) => ({
-      id: c.id.startsWith('criterio-') ? labelToId(c.label) : c.id,
-      label: c.label.trim(),
-      weight: Number(c.weight) || 0,
-    }));
+    // De-dup: if a computed id collides with one already assigned, append -2, -3, …
+    const assignedIds = new Set<string>();
+    const idMap: Record<string, string> = {}; // editing id → unique final id
 
-    // Remap supplier scores to final criterion ids
-    const idMap: Record<string, string> = {};
-    validCriteria.forEach((c, i) => {
-      idMap[c.id] = finalCriteria[i]!.id;
+    const finalCriteria: ScorecardCriterion[] = validCriteria.map((c) => {
+      const base = c.id.startsWith('criterio-') ? labelToId(c.label) : c.id;
+      let finalId = base;
+      let suffix = 2;
+      while (assignedIds.has(finalId)) {
+        finalId = `${base}-${suffix}`;
+        suffix++;
+      }
+      assignedIds.add(finalId);
+      idMap[c.id] = finalId;
+      return { id: finalId, label: c.label.trim(), weight: Number(c.weight) || 0 };
     });
 
     const finalSuppliers: ScorecardSupplier[] = validSuppliers.map((s) => {

@@ -1,7 +1,7 @@
 // tests/lib/assistants/scorecard.test.ts
 import { describe, expect, it } from 'vitest';
 import { scoreSuppliers, buildScorecardPrompt, SCORECARD_SYSTEM_PROMPT } from '@/lib/assistants/scorecard';
-import { DEFAULT_SCORECARD_CRITERIA, SCORECARD_DEFAULT_THRESHOLDS } from '@/lib/assistants/types';
+import { DEFAULT_SCORECARD_CRITERIA, SCORECARD_DEFAULT_THRESHOLDS, ScorecardParamsSchema } from '@/lib/assistants/types';
 import type { ScorecardParams, TemplateRow } from '@/lib/assistants/types';
 import { renderScorecardChartPng } from '@/lib/assistants/scorecard-chart';
 
@@ -105,5 +105,30 @@ describe('buildScorecardPrompt', () => {
     expect(user).toContain('Forn A');
     expect(user).toContain('Estratégico');
     expect(user).toMatch(/classifica|ranking/i);
+  });
+});
+
+describe('ScorecardParamsSchema uniqueness', () => {
+  it('rejects duplicate criterion ids', () => {
+    const r = ScorecardParamsSchema.safeParse({
+      scorecardName: 'X',
+      criteria: [
+        { id: 'preco', label: 'Preço', weight: 50 },
+        { id: 'preco', label: 'Preco', weight: 50 },
+      ],
+      suppliers: [{ name: 'A', segment: '', scores: { preco: 8 } }],
+    });
+    expect(r.success).toBe(false);
+  });
+  it('accepts unique criterion ids', () => {
+    const r = ScorecardParamsSchema.safeParse({
+      scorecardName: 'X',
+      criteria: [
+        { id: 'preco', label: 'Preço', weight: 50 },
+        { id: 'preco-2', label: 'Preco', weight: 50 },
+      ],
+      suppliers: [{ name: 'A', segment: '', scores: { preco: 8, 'preco-2': 6 } }],
+    });
+    expect(r.success).toBe(true);
   });
 });
