@@ -232,5 +232,8 @@ describe('buildRefineSystemForType', () => {
     expect(typeof sys).toBe('string');
     expect(sys).toContain('Aço plano');
     expect(sys.toLowerCase()).toContain('scorecard');
+    // band terminology must match SCORECARD_BAND_LABELS (Saída, never Crítico)
+    expect(sys).toContain('Saída');
+    expect(sys).not.toContain('Crítico');
   });
 });
