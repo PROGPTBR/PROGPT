@@ -18,6 +18,7 @@ import type {
   FinancialParams,
   AbcParams,
   ProfileParams,
+  ScorecardParams,
   AssistantType,
 } from '@/lib/assistants/types';
 import type { ApiOperation } from '@/lib/observability/api-usage';
@@ -108,7 +109,8 @@ async function refineBody(
       | PorterParams
       | FinancialParams
       | AbcParams
-      | ProfileParams,
+      | ProfileParams
+      | ScorecardParams,
     chunks,
   );
 
