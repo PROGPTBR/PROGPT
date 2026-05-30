@@ -31,6 +31,7 @@ type CriterionDraft = {
 };
 
 type SupplierDraft = {
+  id: string; // stable UI-only key; never sent to server
   name: string;
   segment: string;
   scores: Record<string, string>; // criterionId → string (number input value)
@@ -55,12 +56,12 @@ function makeEmptyCriteria(): CriterionDraft[] {
   }));
 }
 
-function makeEmptySupplier(criteria: CriterionDraft[]): SupplierDraft {
+function makeEmptySupplier(criteria: CriterionDraft[], i = 0): SupplierDraft {
   const scores: Record<string, string> = {};
   for (const c of criteria) {
     scores[c.id] = '5';
   }
-  return { name: '', segment: '', scores };
+  return { id: `fornecedor-${Date.now()}-${i}`, name: '', segment: '', scores };
 }
 
 export function ScorecardForm({ onSubmit }: { onSubmit: (v: ScorecardFormValues) => void }) {
@@ -76,8 +77,8 @@ export function ScorecardForm({ onSubmit }: { onSubmit: (v: ScorecardFormValues)
   );
   const [criteria, setCriteria] = useState<CriterionDraft[]>(makeEmptyCriteria);
   const [suppliers, setSuppliers] = useState<SupplierDraft[]>(() => [
-    makeEmptySupplier(makeEmptyCriteria()),
-    makeEmptySupplier(makeEmptyCriteria()),
+    makeEmptySupplier(makeEmptyCriteria(), 0),
+    makeEmptySupplier(makeEmptyCriteria(), 1),
   ]);
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loadingTemplates, setLoadingTemplates] = useState(true);
@@ -184,12 +185,13 @@ export function ScorecardForm({ onSubmit }: { onSubmit: (v: ScorecardFormValues)
       label: c.label,
       weight: String(c.weight),
     }));
-    const newSuppliers: SupplierDraft[] = result.suppliers.map((s) => {
+    const importTs = Date.now();
+    const newSuppliers: SupplierDraft[] = result.suppliers.map((s, i) => {
       const scores: Record<string, string> = {};
       for (const c of newCriteria) {
         scores[c.id] = String(s.scores[c.id] ?? 5);
       }
-      return { name: s.name, segment: s.segment ?? '', scores };
+      return { id: `fornecedor-${importTs}-${i}`, name: s.name, segment: s.segment ?? '', scores };
     });
     setCriteria(newCriteria);
     setSuppliers(newSuppliers);
@@ -216,6 +218,7 @@ export function ScorecardForm({ onSubmit }: { onSubmit: (v: ScorecardFormValues)
     scorecardName.trim().length > 0 &&
     validCriteria.length >= 1 &&
     validSuppliers.length >= 1 &&
+    totalWeight > 0 &&
     thresholdsValid;
 
   // ── Submit ────────────────────────────────────────────────────────────────
@@ -484,7 +487,7 @@ export function ScorecardForm({ onSubmit }: { onSubmit: (v: ScorecardFormValues)
             </thead>
             <tbody>
               {suppliers.map((s, si) => (
-                <tr key={si} className="border-t border-border">
+                <tr key={s.id} className="border-t border-border">
                   <td className="p-1">
                     <input
                       value={s.name}
