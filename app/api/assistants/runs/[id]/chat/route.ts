@@ -18,6 +18,7 @@ import type {
   FinancialParams,
   AbcParams,
   ProfileParams,
+  ScorecardParams,
   AssistantType,
 } from '@/lib/assistants/types';
 import type { ApiOperation } from '@/lib/observability/api-usage';
@@ -108,7 +109,8 @@ async function refineBody(
       | PorterParams
       | FinancialParams
       | AbcParams
-      | ProfileParams,
+      | ProfileParams
+      | ScorecardParams,
     chunks,
   );
 
@@ -119,6 +121,7 @@ async function refineBody(
       financial: 'assistant-financial-refine',
       abc: 'assistant-abc-refine',
       profile: 'assistant-profile-refine',
+      scorecard: 'assistant-scorecard-refine',
       rfp: 'assistant-rfp-refine',
     } as Record<AssistantType, ApiOperation>
   )[run.assistant_type];

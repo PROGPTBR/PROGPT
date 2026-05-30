@@ -7,6 +7,7 @@ import type {
   FinancialParams,
   AbcParams,
   ProfileParams,
+  ScorecardParams,
 } from './types';
 
 // Sub-projeto 21 + 27 — Post-creation chat refinement.
@@ -416,6 +417,84 @@ ${baseBlock}
 </base>`;
 }
 
+// ── Scorecard refinement ─────────────────────────────────────────────────
+
+export const SCORECARD_REFINE_SYSTEM_PROMPT = `Você é um especialista sênior em procurement ajudando o usuário a refinar um Scorecard de Fornecedores que acabou de ser gerado. Sua função é responder dúvidas sobre o scorecard, discutir os scores e classificações, propor melhorias nos critérios ou pesos, e sugerir ações de desenvolvimento ou relacionamento para cada faixa de desempenho.
+
+## Como responder
+
+1. **Seja específico ao scorecard em questão**. O relatório aparece entre \`<scorecard>...</scorecard>\` e os fornecedores avaliados entre \`<suppliers>...</suppliers>\`. Refira-se a fornecedores pelo nome e à faixa de desempenho quando comentar ("o fornecedor X com score Y ficou em faixa Desenvolvimento — recomendo…").
+
+2. **NÃO altere scores ou classificações determinísticas**. Os scores ponderados e as faixas (Estratégico/Desenvolvimento/Saída) foram calculados pelo sistema a partir dos inputs do usuário. Se o usuário quiser reclassificar um fornecedor, peça para ajustar os scores no form e rodar novamente — não altere os números no texto.
+
+3. **Pode refinar a NARRATIVA e o plano de ação**: explicar melhor um critério, propor ações de melhoria por faixa, sugerir revisão de pesos para ciclos futuros, identificar padrões (fornecedor único dominando critério crítico, cluster de fornecedores na faixa de risco).
+
+4. **Plano por faixa de desempenho** — pode elaborar:
+   - **Faixa Estratégico (alta pontuação)**: parceria de longo prazo, co-desenvolvimento, QBR trimestral, contratos plurianuais.
+   - **Faixa Desenvolvimento (intermediária)**: plano de melhoria com metas trimestrais, mentoria técnica, revisão semestral de evolução.
+   - **Faixa Saída / substituição (baixa pontuação)**: plano de ação corretiva imediato, prazo definido, dual-sourcing / alternativa de fornecedor em paralelo, comunicação formal de risco.
+
+5. **Profundidade sênior, sem rodeios**. Threshold numérico, prazo, ferramenta concreta. Evite "padrão de mercado" genérico.
+
+6. **Fundamente em teoria quando útil**. Há trechos da base de conhecimento entre \`<base>...</base>\`. Use princípios de SRM (Supplier Relationship Management), Kraljic 1983 (alinhamento entre quadrante e gestão do fornecedor), TCO, e gestão por indicadores de desempenho (KPIs). NÃO cite autores, IDs nem bibliografia — incorpore as ideias como conhecimento próprio.
+
+7. **Diga "depende" quando for o caso**. Não invente benchmarks setoriais ou dados de mercado que você não possui.
+
+8. **Markdown limpo, conciso**. Sem preâmbulo conversacional.`;
+
+export function buildScorecardRefineSystem(
+  reportMarkdown: string,
+  params: ScorecardParams,
+  chunks: RetrievedChunk[],
+): string {
+  const paramsSummary = [
+    `Scorecard: ${params.scorecardName}`,
+    params.period ? `Período: ${params.period}` : '',
+    `Critérios avaliados: ${params.criteria.length}`,
+    `Fornecedores avaliados: ${params.suppliers.length}`,
+    `Threshold estratégico: ≥ ${params.thresholds.strategic}`,
+    `Threshold desenvolvimento: ≥ ${params.thresholds.development}`,
+    params.notes ? `Notas: ${params.notes}` : '',
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  const supplierList = params.suppliers
+    .map((s) => `- ${s.name}${s.segment ? ` (${s.segment})` : ''}`)
+    .join('\n');
+
+  const baseBlock =
+    chunks.length === 0
+      ? '(nenhum trecho relevante recuperado — responda com princípios gerais de SRM quando aplicável)'
+      : chunks
+          .map((c) => `### ${c.articleTitle}\n\n${c.content.slice(0, 800)}`)
+          .join('\n\n---\n\n');
+
+  return `${SCORECARD_REFINE_SYSTEM_PROMPT}
+
+## Parâmetros do scorecard
+
+${paramsSummary}
+
+## Fornecedores avaliados
+
+<suppliers>
+${supplierList}
+</suppliers>
+
+## Scorecard gerado (relatório completo)
+
+<scorecard>
+${reportMarkdown}
+</scorecard>
+
+## Base de conhecimento (procurement)
+
+<base>
+${baseBlock}
+</base>`;
+}
+
 // ── Dispatcher ───────────────────────────────────────────────────────────
 
 export function buildRefineSystemForType(
@@ -427,7 +506,8 @@ export function buildRefineSystemForType(
     | PorterParams
     | FinancialParams
     | AbcParams
-    | ProfileParams,
+    | ProfileParams
+    | ScorecardParams,
   chunks: RetrievedChunk[],
 ): string {
   if (assistantType === 'kraljic') {
@@ -448,6 +528,9 @@ export function buildRefineSystemForType(
   }
   if (assistantType === 'profile') {
     return buildProfileRefineSystem(outputMd, params as ProfileParams, chunks);
+  }
+  if (assistantType === 'scorecard') {
+    return buildScorecardRefineSystem(outputMd, params as ScorecardParams, chunks);
   }
   return buildRfpRefineSystem(outputMd, params as RfpParams, chunks);
 }

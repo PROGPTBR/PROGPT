@@ -16,7 +16,8 @@ export type AssistantType =
   | 'financial'
   | 'abc'
   | 'profile'
-  | 'negotiation';
+  | 'negotiation'
+  | 'scorecard';
 
 export const ASSISTANT_TYPES = [
   'rfp',
@@ -26,6 +27,7 @@ export const ASSISTANT_TYPES = [
   'abc',
   'profile',
   'negotiation',
+  'scorecard',
 ] as const;
 
 export type ThemeStatusRow = 'running' | 'done' | 'error';
@@ -731,4 +733,72 @@ export type AssistantRunRow = {
   strategy?: NegotiationStrategyResult | null;
   transcript?: NegotiationTranscriptTurn[] | null;
   score?: NegotiationScore | null;
+};
+
+// ── Supplier Scorecard (Strategic Sourcing step 8) ───────────────────────
+export type ScorecardBand = 'estrategico' | 'desenvolvimento' | 'saida';
+
+export const SCORECARD_BAND_LABELS: Record<ScorecardBand, string> = {
+  estrategico: 'Estratégico',
+  desenvolvimento: 'Desenvolvimento',
+  saida: 'Saída / substituição',
+};
+
+export const SCORECARD_DEFAULT_THRESHOLDS = { strategic: 70, development: 40 } as const;
+
+export const DEFAULT_SCORECARD_CRITERIA = [
+  { id: 'qualidade', label: 'Qualidade', weight: 25 },
+  { id: 'prazo', label: 'Prazo de entrega', weight: 20 },
+  { id: 'preco', label: 'Preço/competitividade', weight: 20 },
+  { id: 'atendimento', label: 'Atendimento/relacionamento', weight: 15 },
+  { id: 'inovacao', label: 'Inovação', weight: 10 },
+  { id: 'esg', label: 'ESG/sustentabilidade', weight: 10 },
+] as const;
+
+export const ScorecardCriterionSchema = z.object({
+  id: z.string().trim().min(1).max(60),
+  label: z.string().trim().min(1).max(80),
+  weight: z.number().min(0.01).max(100),
+});
+export type ScorecardCriterion = z.infer<typeof ScorecardCriterionSchema>;
+
+export const ScorecardSupplierSchema = z.object({
+  name: z.string().trim().min(1).max(120),
+  segment: z.string().trim().max(120).optional().default(''),
+  scores: z.record(z.string(), z.number().min(0).max(10)),
+});
+export type ScorecardSupplier = z.infer<typeof ScorecardSupplierSchema>;
+
+export const ScorecardParamsSchema = z
+  .object({
+    scorecardName: z.string().trim().min(1).max(200),
+    period: z.string().trim().max(120).optional().default(''),
+    notes: z.string().trim().max(2000).optional().default(''),
+    criteria: z.array(ScorecardCriterionSchema).min(1).max(15),
+    suppliers: z.array(ScorecardSupplierSchema).min(1).max(100),
+    thresholds: z
+      .object({ strategic: z.number().min(1).max(100), development: z.number().min(0).max(99) })
+      .default(SCORECARD_DEFAULT_THRESHOLDS)
+      .refine((t) => t.strategic > t.development, { message: 'strategic must be > development' }),
+  })
+  .refine(
+    (p) => p.suppliers.every((s) => p.criteria.every((c) => typeof s.scores[c.id] === 'number')),
+    { message: 'every supplier must have a score for every criterion' },
+  )
+  .refine(
+    (p) => new Set(p.criteria.map((c) => c.id)).size === p.criteria.length,
+    { message: 'criterion ids must be unique' },
+  );
+export type ScorecardParams = z.infer<typeof ScorecardParamsSchema>;
+
+export const ScorecardRequestSchema = z.object({
+  templateId: z.string().uuid(),
+  params: ScorecardParamsSchema,
+});
+export type ScorecardRequest = z.infer<typeof ScorecardRequestSchema>;
+
+export type ClassifiedSupplier = ScorecardSupplier & {
+  weightedScore: number; // 0–100
+  rank: number; // 1 = best
+  band: ScorecardBand;
 };

@@ -8,11 +8,15 @@ import { renderKraljicChartPng } from '@/lib/assistants/kraljic-chart';
 import { buildAbcXlsxBuffer } from '@/lib/assistants/abc-xlsx';
 import { classifyAbc } from '@/lib/assistants/abc';
 import { renderAbcChartPng } from '@/lib/assistants/abc-chart';
+import { buildScorecardXlsxBuffer } from '@/lib/assistants/scorecard-xlsx';
+import { scoreSuppliers } from '@/lib/assistants/scorecard';
+import { renderScorecardChartPng } from '@/lib/assistants/scorecard-chart';
 import { getUserLogoBuffer } from '@/lib/db/user-logos';
 import type {
   RfpParams,
   KraljicParams,
   AbcParams,
+  ScorecardParams,
 } from '@/lib/assistants/types';
 
 export const runtime = 'nodejs';
@@ -63,6 +67,20 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
       chartPng,
     } as Parameters<typeof buildAbcXlsxBuffer>[2]);
     filename = `abc-${run.id.slice(0, 8)}.xlsx`;
+  } else if (run.assistant_type === 'scorecard') {
+    const sp = run.params as unknown as ScorecardParams;
+    const classified = scoreSuppliers(sp);
+    let chartPng: Buffer | undefined;
+    try {
+      chartPng = await renderScorecardChartPng(classified, sp.thresholds);
+    } catch (err) {
+      console.warn('[xlsx] scorecard chart render failed:', err);
+    }
+    buf = await buildScorecardXlsxBuffer(sp, classified, {
+      logo: logo ?? undefined,
+      chartPng,
+    });
+    filename = `scorecard-${run.id.slice(0, 8)}.xlsx`;
   } else {
     buf = await buildCotacaoXlsxBuffer(run.params as RfpParams, {
       logo: logo ?? undefined,

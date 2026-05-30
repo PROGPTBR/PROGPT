@@ -14,6 +14,7 @@ import { AbcCurvePreview } from './previews/AbcCurvePreview';
 import { ProfileDocPreview } from './previews/ProfileDocPreview';
 import { SuppliersPreview } from './previews/SuppliersPreview';
 import { NegotiationPreview } from './previews/NegotiationPreview';
+import { ScorecardPreview } from './previews/ScorecardPreview';
 
 // Hub layout — Spotlight + Roadmap.
 //
@@ -146,6 +147,20 @@ const SPOTLIGHTS: SpotlightAssistant[] = [
     ],
     Preview: FinancialScorePreview,
   },
+  {
+    step: 8,
+    stepCategory: 'Gestão de fornecedores',
+    href: '/assistants/scorecard',
+    title: 'Supplier Scorecard',
+    short:
+      'Avalia e ranqueia fornecedores por critérios ponderados, com plano de ação por faixa.',
+    bullets: [
+      'Critérios editáveis com pesos',
+      'Ranking + faixas (Estratégico/Desenvolvimento/Saída)',
+      '.docx + .xlsx multi-sheet',
+    ],
+    Preview: ScorecardPreview,
+  },
 ];
 
 type RoadmapStep = {
@@ -164,7 +179,7 @@ const STEPS: RoadmapStep[] = [
   { n: 5, shortLabel: 'Engajamento', fullName: 'Engajamento dos Fornecedores', available: true, href: '/assistants/rfp' },
   { n: 6, shortLabel: 'Negociação', fullName: 'Negociação', available: true, href: '/assistants/negotiation' },
   { n: 7, shortLabel: 'Contrato', fullName: 'Implementação do Contrato', available: true, href: '/assistants/financial' },
-  { n: 8, shortLabel: 'Controle', fullName: 'Controle e Melhoria Contínua', available: false },
+  { n: 8, shortLabel: 'Controle', fullName: 'Controle e Melhoria Contínua', available: true, href: '/assistants/scorecard' },
 ];
 
 const ACTIVE_COUNT = STEPS.filter((s) => s.available).length;

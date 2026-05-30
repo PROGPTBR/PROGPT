@@ -5,7 +5,9 @@ import { classifyItems } from '@/lib/assistants/kraljic';
 import { renderKraljicChartPng } from '@/lib/assistants/kraljic-chart';
 import { classifyAbc } from '@/lib/assistants/abc';
 import { renderAbcChartPng } from '@/lib/assistants/abc-chart';
-import type { KraljicParams, AbcParams } from '@/lib/assistants/types';
+import { scoreSuppliers } from '@/lib/assistants/scorecard';
+import { renderScorecardChartPng } from '@/lib/assistants/scorecard-chart';
+import type { KraljicParams, AbcParams, ScorecardParams } from '@/lib/assistants/types';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -38,6 +40,9 @@ export async function GET(
       const ap = run.params as AbcParams;
       const analysis = classifyAbc(ap);
       buf = await renderAbcChartPng(analysis);
+    } else if (run.assistant_type === 'scorecard') {
+      const sp = run.params as unknown as ScorecardParams;
+      buf = await renderScorecardChartPng(scoreSuppliers(sp), sp.thresholds);
     } else {
       return new NextResponse('Not Found', { status: 404 });
     }
