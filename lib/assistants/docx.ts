@@ -319,6 +319,7 @@ export async function mdToDocxBuffer(
     cover?: DocxCoverData;
     kraljicChartPng?: Buffer;
     abcChartPng?: Buffer;
+    scorecardChartPng?: Buffer;
   } = {},
 ): Promise<Buffer> {
   // Strip the literal logo-placeholder line — handled by the cover page.
@@ -413,6 +414,28 @@ export async function mdToDocxBuffer(
           }),
         );
         (body as { __abcInserted?: boolean }).__abcInserted = true;
+      }
+      // Scorecard: insert the chart image right after the first heading that
+      // mentions "scorecard" or "fornecedor" (case-insensitive). Same one-shot guard.
+      if (
+        opts.scorecardChartPng &&
+        /scorecard|fornecedor/i.test(h2[1]!.trim()) &&
+        !(body as { __scorecardInserted?: boolean }).__scorecardInserted
+      ) {
+        body.push(
+          new Paragraph({
+            alignment: AlignmentType.CENTER,
+            children: [
+              new ImageRun({
+                data: opts.scorecardChartPng,
+                transformation: { width: 580, height: 360 },
+                type: 'png',
+              }),
+            ],
+            spacing: { after: 200 },
+          }),
+        );
+        (body as { __scorecardInserted?: boolean }).__scorecardInserted = true;
       }
       continue;
     }

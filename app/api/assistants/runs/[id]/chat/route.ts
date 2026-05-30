@@ -119,6 +119,7 @@ async function refineBody(
       financial: 'assistant-financial-refine',
       abc: 'assistant-abc-refine',
       profile: 'assistant-profile-refine',
+      scorecard: 'assistant-scorecard-refine',
       rfp: 'assistant-rfp-refine',
     } as Record<AssistantType, ApiOperation>
   )[run.assistant_type];

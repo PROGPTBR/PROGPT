@@ -12,6 +12,7 @@ import {
   splitAssembledOutput,
   ASSEMBLY_BOUNDARY,
 } from '@/lib/assistants/template-assembly';
+import { SCORECARD_SYSTEM_PROMPT } from '@/lib/assistants/scorecard';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -177,7 +178,9 @@ Reescreva o RFP acima incorporando a sugestão. Apenas o markdown atualizado, na
                 ? ABC_SYSTEM_PROMPT
                 : run.assistant_type === 'profile'
                   ? PROFILE_SYSTEM_PROMPT
-                  : RFP_SYSTEM_PROMPT,
+                  : run.assistant_type === 'scorecard'
+                    ? SCORECARD_SYSTEM_PROMPT
+                    : RFP_SYSTEM_PROMPT,
       messages: [{ role: 'user', content: userPrompt }],
     });
 
@@ -204,7 +207,9 @@ Reescreva o RFP acima incorporando a sugestão. Apenas o markdown atualizado, na
                 ? 'assistant-abc-apply'
                 : run.assistant_type === 'profile'
                   ? 'assistant-profile-apply'
-                  : 'assistant-rfp-apply',
+                  : run.assistant_type === 'scorecard'
+                    ? 'assistant-scorecard-apply'
+                    : 'assistant-rfp-apply',
       model: process.env.OPENAI_MODEL ?? 'gpt-4o-mini',
       tokensIn: result.usage.promptTokens,
       tokensOut: result.usage.completionTokens,

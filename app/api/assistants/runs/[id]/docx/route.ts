@@ -14,9 +14,12 @@ import type {
   AbcParams,
   NegotiationStrategyParams,
   NegotiationTranscriptTurn,
+  ScorecardParams,
 } from '@/lib/assistants/types';
 import { classifyAbc } from '@/lib/assistants/abc';
 import { renderAbcChartPng } from '@/lib/assistants/abc-chart';
+import { scoreSuppliers } from '@/lib/assistants/scorecard';
+import { renderScorecardChartPng } from '@/lib/assistants/scorecard-chart';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -45,6 +48,7 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
   let categoryForCover: string | null | undefined;
   let kraljicChartPng: Buffer | undefined;
   let abcChartPng: Buffer | undefined;
+  let scorecardChartPng: Buffer | undefined;
 
   if (run.assistant_type === 'kraljic') {
     const kp = run.params as KraljicParams;
@@ -77,6 +81,15 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
       abcChartPng = await renderAbcChartPng(analysis);
     } catch (err) {
       console.warn('[docx] abc chart render failed:', err);
+    }
+  } else if (run.assistant_type === 'scorecard') {
+    const sp = run.params as unknown as ScorecardParams;
+    titleSafe = `Scorecard de Fornecedores - ${sp.scorecardName}`.slice(0, 120);
+    categoryForCover = 'Scorecard de fornecedores';
+    try {
+      scorecardChartPng = await renderScorecardChartPng(scoreSuppliers(sp), sp.thresholds);
+    } catch (err) {
+      console.warn('[docx] scorecard chart render failed:', err);
     }
   } else if (run.assistant_type === 'negotiation') {
     const np = run.params as NegotiationStrategyParams;
@@ -126,6 +139,7 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
     },
     kraljicChartPng,
     abcChartPng,
+    scorecardChartPng,
   });
 
   // Filename derived from run id (no PII), browser saves it as a .docx.
