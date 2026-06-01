@@ -294,13 +294,14 @@ APP_URL=                       # sub-projeto 30 — URL pública usada em links 
 - `npm run db:migrate` — aplicar migrations Supabase via CLI (ou aplicar manualmente via psycopg/dashboard)
 - `npm run rag:query "<pergunta>"` — CLI ad-hoc de retrieval
 - `npm run rag:eval` — eval offline 25 pares (recall@5, MRR, latência); exit 1 se recall@5 < 0.85; escreve `scripts/eval/results.json`
+- `npm run eval:gen` — eval de QUALIDADE DE GERAÇÃO (LLM-as-judge, NÃO é gate de CI). Roda o pipeline real (runRag → gera com o modelo sob teste → juiz pontua contra rubrica do sub-projeto 15 + casos do bug de recusa/pedir-input). `--model <id>` pra A/B um modelo candidato, `--judge <id>` (default gpt-4o, deve diferir do modelo testado), `--limit N`. Escreve `scripts/eval/gen-results.json`. Golden em `scripts/eval/gen-golden.json` (12 casos). Baseline gpt-4o-mini: ~67% pass, overall 3.92/5
 - `python scripts/ingest.py --path ./artigos/` — ingerir artigos
 - `python scripts/ingest.py --file <arquivo>` — ingerir 1 arquivo
 - `python scripts/ingest.py --dry-run --path ./artigos/` — preview sem DB
 - `scripts/.venv/Scripts/pytest.exe scripts/tests/` — testes Python
 
 ## O que evitar
-- Setar `OPENAI_MODEL_<TIER>` pra um modelo não-mini (ex. `gpt-4o`) **sem antes** atualizar a rate card em `lib/observability/api-usage.ts` — `computeCostUsdCents` é hardcoded nas tarifas do `gpt-4o-mini` e **ignora a string do modelo**, então `/admin/costs` subcontaria o gasto silenciosamente. O tiering é no-op até um env ser setado; quando setar um modelo mais caro, adicione um branch de tarifa por modelo ANTES. Idem: o eval automatizado é só de retrieval (recall@5) — um flip do tier `generation` precisa de um eval de qualidade de geração pra ser validado (não existe hoje).
+- Setar `OPENAI_MODEL_<TIER>` pra um modelo não-mini (ex. `gpt-4o`) **sem antes** atualizar a rate card em `lib/observability/api-usage.ts` — `computeCostUsdCents` é hardcoded nas tarifas do `gpt-4o-mini` e **ignora a string do modelo**, então `/admin/costs` subcontaria o gasto silenciosamente. O tiering é no-op até um env ser setado; quando setar um modelo mais caro, adicione um branch de tarifa por modelo (`OPENAI_RATES`) ANTES. Pra validar a qualidade de um flip do tier `generation`, rode `npm run eval:gen --model <candidato>` e compare com o baseline (gpt-4o-mini ~3.92/5) — o gate de CI `recall@5` é só retrieval e NÃO pega regressão de geração.
 - Anotar um call-site de roteamento (classify/condense/followups/title) como `getOpenAIModel('generation')` — são JSON curto/alto volume e o `condense` roda no caminho crítico do 1º-token do chat (<3s). Roteamento usa o default `'routing'` (sem arg). Capacidade extra ali é desperdício de custo E latência.
 - Chunking fixo por N tokens (use semantic chunking — sub-projeto 2 já entrega híbrido)
 - Apenas busca vetorial (sempre híbrida + reranker)

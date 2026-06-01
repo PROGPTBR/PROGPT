@@ -1,0 +1,135 @@
+[
+  {
+    "id": "kraljic-definition",
+    "question": "O que é a Matriz de Kraljic e como ela classifica os itens de compra?",
+    "language": "pt",
+    "intent": "definition",
+    "dimensions": ["framework_coverage", "authorship", "structure"],
+    "mustChecks": [
+      "menciona os 4 quadrantes (alavancagem, estratégico, gargalo, não-crítico)",
+      "cita Kraljic e o ano 1983",
+      "usa tabela ou bullets estruturados, não prosa corrida"
+    ]
+  },
+  {
+    "id": "porter-definition",
+    "question": "Explique as 5 Forças de Porter aplicadas à análise de um mercado fornecedor.",
+    "language": "pt",
+    "intent": "definition",
+    "dimensions": ["framework_coverage", "authorship", "structure"],
+    "mustChecks": [
+      "lista as 5 forças (rivalidade, novos entrantes, substitutos, poder de fornecedores, poder de compradores)",
+      "cita Porter e o ano 1979"
+    ]
+  },
+  {
+    "id": "monczka-sourcing-process",
+    "question": "Quais são as etapas do processo de strategic sourcing?",
+    "language": "pt",
+    "intent": "definition",
+    "dimensions": ["framework_coverage", "structure"],
+    "mustChecks": [
+      "lista as 7 etapas do ciclo de strategic sourcing",
+      "usa lista numerada ou estruturada"
+    ]
+  },
+  {
+    "id": "tco-application",
+    "question": "Como usar TCO para comparar dois fornecedores que têm preços de aquisição parecidos?",
+    "language": "pt",
+    "intent": "application",
+    "dimensions": ["practical_depth", "authorship"],
+    "mustChecks": [
+      "vai além do preço de aquisição (inclui custos diretos/indiretos/risco/qualidade ao longo do ciclo de vida)",
+      "dá um exemplo ou critério concreto, não só teoria"
+    ]
+  },
+  {
+    "id": "spend-reduction-application",
+    "question": "Como eu reduzo o spend numa categoria de MRO sem perder nível de serviço?",
+    "language": "pt",
+    "intent": "application",
+    "dimensions": ["practical_depth", "structure"],
+    "mustChecks": [
+      "menciona um critério ou threshold mensurável",
+      "menciona uma ferramenta ou técnica concreta (curva ABC, Pareto, e-procurement, leilão reverso, consolidação)"
+    ]
+  },
+  {
+    "id": "supplier-risk-application",
+    "question": "Como avaliar o risco de fornecimento de um fornecedor crítico antes de fechar contrato?",
+    "language": "pt",
+    "intent": "application",
+    "dimensions": ["practical_depth", "instruction_following"],
+    "mustChecks": [
+      "propõe indicadores ou método concretos de avaliação de risco",
+      "não inventa fontes, autores ou frameworks inexistentes"
+    ]
+  },
+  {
+    "id": "kraljic-vs-cox-comparison",
+    "question": "Qual a diferença entre a Matriz de Kraljic e o modelo de Power Regimes de Cox?",
+    "language": "pt",
+    "intent": "comparison",
+    "dimensions": ["framework_coverage", "authorship"],
+    "mustChecks": [
+      "explica os dois modelos, não só um",
+      "cita Cox e o ano 1996"
+    ]
+  },
+  {
+    "id": "missing-input-proposal",
+    "question": "Com base neste plano estratégico (cole abaixo), monte: minuta formal da proposta, e-mail de envio, pontos de negociação, resumo executivo, tabela comparativa de ganhos, e riscos envolvidos. A comunicação deve ser profissional, objetiva, firme, sem tom agressivo, orientada a fechamento.",
+    "language": "pt",
+    "intent": "application",
+    "dimensions": ["instruction_following"],
+    "mustChecks": [
+      "PEDE ao usuário que cole o plano estratégico em vez de recusar",
+      "NÃO abre com 'Não tenho fonte sobre isso' seguido de uma resposta genérica completa"
+    ],
+    "notes": "O usuário colou um TEMPLATE com o placeholder '(cole abaixo)' mas NÃO colou o plano em si. A resposta ideal pede o material que falta, de forma curta e específica. Recusar OU responder no genérico é falha."
+  },
+  {
+    "id": "artifact-redirect-rfp",
+    "question": "Preciso montar uma RFP para a compra de 200 notebooks corporativos. Me gera o documento pronto pra eu baixar.",
+    "language": "pt",
+    "intent": "application",
+    "dimensions": ["instruction_following"],
+    "mustChecks": [
+      "redireciona para a ferramenta dedicada citando o caminho exato /assistants/rfp",
+      "não tenta produzir o documento inteiro só no texto do chat"
+    ]
+  },
+  {
+    "id": "artifact-redirect-kraljic",
+    "question": "Quero classificar minhas 50 categorias de compra numa matriz de Kraljic e baixar o resultado.",
+    "language": "pt",
+    "intent": "application",
+    "dimensions": ["instruction_following"],
+    "mustChecks": [
+      "redireciona para a ferramenta dedicada citando o caminho exato /assistants/kraljic"
+    ]
+  },
+  {
+    "id": "out-of-domain-no-source",
+    "question": "Qual é a melhor estratégia de marketing digital para aumentar as vendas de um e-commerce de moda?",
+    "language": "pt",
+    "intent": "recommendation",
+    "dimensions": ["instruction_following"],
+    "mustChecks": [
+      "reconhece que o tema está fora do escopo de procurement / não tem fonte na base",
+      "NÃO inventa teoria de procurement forçada nem finge expertise em marketing"
+    ]
+  },
+  {
+    "id": "direct-vs-indirect-en",
+    "question": "What is the difference between direct and indirect procurement? Give concrete examples of each.",
+    "language": "en",
+    "intent": "definition",
+    "dimensions": ["practical_depth", "structure"],
+    "mustChecks": [
+      "responde em inglês",
+      "dá exemplos concretos de compras diretas e indiretas"
+    ]
+  }
+]

@@ -84,13 +84,41 @@ export type RecordUsageInput = {
 // were inserted. To bump a rate, add a new branch keyed by date; do NOT
 // rewrite historical events.
 
-// OpenAI gpt-4o-mini (default model — getOpenAIModel())
-// As of 2026-05: $0.15 input / $0.075 cached input / $0.60 output per 1M tok.
-const OPENAI_GPT4O_MINI = {
-  inputPerM: 0.15,
-  cachedInputPerM: 0.075,
-  outputPerM: 0.6,
+// OpenAI chat/responses rate cards (USD per 1M tokens). Frozen at write time.
+// As of 2026-05. ADD A NEW MODEL'S RATE HERE (with date) BEFORE setting it in
+// any OPENAI_MODEL_* env — otherwise cost is estimated at the conservative
+// fallback below, not the true rate.
+type OpenAiRate = { inputPerM: number; cachedInputPerM: number; outputPerM: number };
+
+// gpt-4o-mini: $0.15 input / $0.075 cached / $0.60 output
+const RATE_GPT4O_MINI: OpenAiRate = { inputPerM: 0.15, cachedInputPerM: 0.075, outputPerM: 0.6 };
+// gpt-4o: $2.50 input / $1.25 cached / $10 output (~16x mini)
+const RATE_GPT4O: OpenAiRate = { inputPerM: 2.5, cachedInputPerM: 1.25, outputPerM: 10 };
+
+const OPENAI_RATES: Record<string, OpenAiRate> = {
+  'gpt-4o-mini': RATE_GPT4O_MINI,
+  'gpt-4o': RATE_GPT4O,
 };
+
+// Most expensive known rate — conservative fallback for an unlisted model so
+// /admin/costs over- (never under-) bills until its rate is added above.
+const RATE_FALLBACK: OpenAiRate = Object.values(OPENAI_RATES).reduce(
+  (a, b) => (b.outputPerM > a.outputPerM ? b : a),
+  RATE_GPT4O_MINI,
+);
+
+// Resolve a rate by model string. Prefix-aware so versioned ids
+// ('gpt-4o-mini-2024-07-18', 'gpt-4o-2024-11-20') match. Order matters:
+// 'gpt-4o-mini' is a prefix-superset of 'gpt-4o', so check mini FIRST.
+//  - empty/missing model => historical mini default (untracked legacy rows)
+//  - unknown non-empty model => RATE_FALLBACK (most expensive known)
+function openAiRate(model: string | undefined): OpenAiRate {
+  const m = (model ?? '').trim();
+  if (m === '') return RATE_GPT4O_MINI;
+  if (m.startsWith('gpt-4o-mini')) return RATE_GPT4O_MINI;
+  if (m.startsWith('gpt-4o')) return RATE_GPT4O;
+  return OPENAI_RATES[m] ?? RATE_FALLBACK;
+}
 
 // Voyage voyage-3-large: $0.18 per 1M tokens.
 const VOYAGE_LARGE_PER_M = 0.18;
@@ -126,14 +154,16 @@ export function computeCostUsdCents(input: RecordUsageInput): number {
       return usd * 100;
     }
 
+    // Rate depends on the model (tiering may set gpt-4o on some call-sites).
+    const rate = openAiRate(input.model);
     // Cached input is billed at half rate. The cached count is part of
     // tokens_in already (OpenAI reports them separately for visibility),
     // so we split: cached at half, the rest at full.
     const uncachedIn = Math.max(0, tIn - tCached);
     const usd =
-      (uncachedIn / 1_000_000) * OPENAI_GPT4O_MINI.inputPerM +
-      (tCached / 1_000_000) * OPENAI_GPT4O_MINI.cachedInputPerM +
-      (tOut / 1_000_000) * OPENAI_GPT4O_MINI.outputPerM;
+      (uncachedIn / 1_000_000) * rate.inputPerM +
+      (tCached / 1_000_000) * rate.cachedInputPerM +
+      (tOut / 1_000_000) * rate.outputPerM;
     return usd * 100;
   }
 

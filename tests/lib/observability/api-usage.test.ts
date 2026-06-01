@@ -104,6 +104,84 @@ describe('computeCostUsdCents', () => {
   });
 });
 
+// ── per-model rate cards (model tiering caveat #1) ───────────────────────────
+// computeCostUsdCents used to be hardcoded to gpt-4o-mini rates and ignored the
+// model string — so a tier flipped to gpt-4o would silently UNDER-count on
+// /admin/costs. Now the rate is resolved per model (prefix-aware), unknown
+// non-empty models fall back to the most expensive known rate (over- not
+// under-count), and an empty/missing model keeps the historical mini default.
+describe('computeCostUsdCents — per-model OpenAI rate cards', () => {
+  it('gpt-4o billed at 4o rates (~16x mini)', () => {
+    const cost = computeCostUsdCents({
+      provider: 'openai',
+      operation: 'chat-generate',
+      model: 'gpt-4o',
+      tokensIn: 1_000_000,
+      tokensOut: 1_000_000,
+    });
+    // 1M*$2.50 + 1M*$10 = $12.50 = 1250 cents
+    expect(cost).toBeCloseTo(1250, 4);
+  });
+
+  it('gpt-4o cached input billed at half rate', () => {
+    const cost = computeCostUsdCents({
+      provider: 'openai',
+      operation: 'chat-generate',
+      model: 'gpt-4o',
+      tokensIn: 1_000_000,
+      tokensCached: 1_000_000,
+    });
+    // all 1M input cached → 1M*$1.25 = $1.25 = 125 cents
+    expect(cost).toBeCloseTo(125, 4);
+  });
+
+  it('versioned gpt-4o-mini-* string matches mini by prefix (not 4o)', () => {
+    const cost = computeCostUsdCents({
+      provider: 'openai',
+      operation: 'classify',
+      model: 'gpt-4o-mini-2024-07-18',
+      tokensIn: 1_000_000,
+    });
+    expect(cost).toBeCloseTo(15, 4); // 1M*$0.15 = 15 cents (mini)
+  });
+
+  it('versioned gpt-4o-* string matches 4o by prefix', () => {
+    const cost = computeCostUsdCents({
+      provider: 'openai',
+      operation: 'chat-generate',
+      model: 'gpt-4o-2024-11-20',
+      tokensIn: 1_000_000,
+    });
+    expect(cost).toBeCloseTo(250, 4); // 1M*$2.50
+  });
+
+  it('unknown non-empty model falls back to the most expensive known rate (never under-counts)', () => {
+    const known4o = computeCostUsdCents({
+      provider: 'openai',
+      operation: 'chat-generate',
+      model: 'gpt-4o',
+      tokensIn: 1_000_000,
+    });
+    const unknown = computeCostUsdCents({
+      provider: 'openai',
+      operation: 'chat-generate',
+      model: 'some-future-model-x',
+      tokensIn: 1_000_000,
+    });
+    expect(unknown).toBeCloseTo(known4o, 4);
+    expect(unknown).toBeGreaterThan(15); // strictly above the mini rate
+  });
+
+  it('missing/empty model keeps the historical mini default (back-compat)', () => {
+    const cost = computeCostUsdCents({
+      provider: 'openai',
+      operation: 'chat-generate',
+      tokensIn: 1_000_000,
+    });
+    expect(cost).toBeCloseTo(15, 4); // mini
+  });
+});
+
 describe('recordApiUsage', () => {
   it('inserts a row with computed cost', async () => {
     const insert = vi.fn().mockResolvedValue({ error: null });

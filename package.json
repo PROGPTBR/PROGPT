@@ -15,7 +15,8 @@
     "format": "prettier --write .",
     "articles:reclassify": "tsx scripts/reclassify.ts",
     "rag:query": "tsx scripts/rag-query.ts",
-    "rag:eval": "tsx scripts/eval/run.ts"
+    "rag:eval": "tsx scripts/eval/run.ts",
+    "eval:gen": "tsx scripts/eval/gen-run.ts"
   },
   "dependencies": {
     "@ai-sdk/google": "^1.2.22",

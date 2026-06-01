@@ -54,3 +54,4 @@ supabase/.temp
 .dev-srv.log
 chat.tmp
 scripts/eval/results.json
+scripts/eval/gen-results.json
