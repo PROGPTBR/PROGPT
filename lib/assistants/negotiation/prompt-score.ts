@@ -55,7 +55,7 @@ export async function generateScore(input: {
   transcript: NegotiationTranscriptTurn[];
 }): Promise<NegotiationScore> {
   const ai = getOpenAI();
-  const model = getOpenAIModel();
+  const model = getOpenAIModel('generation');
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
 

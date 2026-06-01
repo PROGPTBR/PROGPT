@@ -1,5 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
-import { withRateLimitRetry } from '@/lib/llm/openai';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { getOpenAIModel, withRateLimitRetry } from '@/lib/llm/openai';
 
 function rateLimitErr(retrySecs = 1.5) {
   const e = new Error(
@@ -84,5 +84,71 @@ describe('withRateLimitRetry', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+// ── model tiering ──────────────────────────────────────────────────────────
+// getOpenAIModel(tier) reads a per-tier env with a chained fallback
+// (OPENAI_MODEL_<TIER> -> OPENAI_MODEL -> gpt-4o-mini) so a single global flip
+// no longer hits all ~30 call-sites. Default tier is the CHEAP 'routing' so a
+// non-annotated call-site can never inherit the expensive model by accident.
+
+const TIER_KEYS = [
+  'OPENAI_MODEL',
+  'OPENAI_MODEL_GENERATION',
+  'OPENAI_MODEL_ROUTING',
+  'OPENAI_MODEL_MULTIMODAL',
+] as const;
+
+describe('getOpenAIModel tiering', () => {
+  const saved: Record<string, string | undefined> = {};
+
+  beforeEach(() => {
+    for (const k of TIER_KEYS) {
+      saved[k] = process.env[k];
+      delete process.env[k];
+    }
+  });
+
+  afterEach(() => {
+    for (const k of TIER_KEYS) {
+      if (saved[k] === undefined) delete process.env[k];
+      else process.env[k] = saved[k];
+    }
+  });
+
+  it('defaults every tier to gpt-4o-mini when no env is set', () => {
+    expect(getOpenAIModel()).toBe('gpt-4o-mini');
+    expect(getOpenAIModel('generation')).toBe('gpt-4o-mini');
+    expect(getOpenAIModel('routing')).toBe('gpt-4o-mini');
+    expect(getOpenAIModel('multimodal')).toBe('gpt-4o-mini');
+  });
+
+  it('no-arg call resolves to the cheap routing tier (never the expensive model by accident)', () => {
+    process.env.OPENAI_MODEL_GENERATION = 'gpt-4o';
+    // a non-annotated site (no arg) must NOT pick up the generation override
+    expect(getOpenAIModel()).toBe('gpt-4o-mini');
+    expect(getOpenAIModel('generation')).toBe('gpt-4o');
+  });
+
+  it('falls back to OPENAI_MODEL for every tier when no tier env is set (back-compat)', () => {
+    process.env.OPENAI_MODEL = 'gpt-4.1';
+    expect(getOpenAIModel('generation')).toBe('gpt-4.1');
+    expect(getOpenAIModel('routing')).toBe('gpt-4.1');
+    expect(getOpenAIModel('multimodal')).toBe('gpt-4.1');
+  });
+
+  it('tier-specific env overrides OPENAI_MODEL only for that tier', () => {
+    process.env.OPENAI_MODEL = 'gpt-4o-mini';
+    process.env.OPENAI_MODEL_MULTIMODAL = 'gpt-4o';
+    expect(getOpenAIModel('multimodal')).toBe('gpt-4o');
+    expect(getOpenAIModel('generation')).toBe('gpt-4o-mini');
+    expect(getOpenAIModel('routing')).toBe('gpt-4o-mini');
+  });
+
+  it('treats an empty-string env as unset (falls through the chain)', () => {
+    process.env.OPENAI_MODEL_GENERATION = '';
+    process.env.OPENAI_MODEL = 'gpt-4.1';
+    expect(getOpenAIModel('generation')).toBe('gpt-4.1');
   });
 });

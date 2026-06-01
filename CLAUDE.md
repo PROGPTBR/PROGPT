@@ -154,7 +154,7 @@ Roadmap completo em `docs/product/beta-readiness.md`. Roadmap B2B (Milestone 3+)
     supabase-browser.ts                 (cookie-aware client client; LITERAL process.env.NEXT_PUBLIC_*)
     supabase-server.ts                  (cookie-aware server client via next/headers)
   /llm
-    openai.ts                           (getOpenAI singleton + getOpenAIModel + pingOpenAI; the only LLM wrapper since 2026-05-08)
+    openai.ts                           (getOpenAI singleton + getOpenAIModel(tier) + pingOpenAI; the only LLM wrapper since 2026-05-08. Model tiering: getOpenAIModel('generation'|'routing'|'multimodal'), default 'routing', fallback OPENAI_MODEL_<TIER> -> OPENAI_MODEL -> gpt-4o-mini)
     voyage.ts                           (embed com inputType opcional)
     cohere.ts                           (rerank wrapper)
   /observability
@@ -260,6 +260,9 @@ para o usuário ler como uma explicação fluente.
 ```
 OPENAI_API_KEY=
 OPENAI_MODEL=gpt-4o-mini   # default em código se vazio
+OPENAI_MODEL_GENERATION=   # opcional — override do tier de geração (chat + assistant generate/refine + extractors + negotiation). Vazio => cai em OPENAI_MODEL
+OPENAI_MODEL_MULTIMODAL=   # opcional — override do tier de parsing PDF na ingestão (multimodal-parse). Vazio => cai em OPENAI_MODEL
+OPENAI_MODEL_ROUTING=      # opcional — override do tier de roteamento (classify/condense/followups/title). Vazio => cai em OPENAI_MODEL. Manter barato (gpt-4o-mini)
 VOYAGE_API_KEY=
 VOYAGE_MODEL=voyage-3-large
 COHERE_API_KEY=
@@ -297,6 +300,8 @@ APP_URL=                       # sub-projeto 30 — URL pública usada em links 
 - `scripts/.venv/Scripts/pytest.exe scripts/tests/` — testes Python
 
 ## O que evitar
+- Setar `OPENAI_MODEL_<TIER>` pra um modelo não-mini (ex. `gpt-4o`) **sem antes** atualizar a rate card em `lib/observability/api-usage.ts` — `computeCostUsdCents` é hardcoded nas tarifas do `gpt-4o-mini` e **ignora a string do modelo**, então `/admin/costs` subcontaria o gasto silenciosamente. O tiering é no-op até um env ser setado; quando setar um modelo mais caro, adicione um branch de tarifa por modelo ANTES. Idem: o eval automatizado é só de retrieval (recall@5) — um flip do tier `generation` precisa de um eval de qualidade de geração pra ser validado (não existe hoje).
+- Anotar um call-site de roteamento (classify/condense/followups/title) como `getOpenAIModel('generation')` — são JSON curto/alto volume e o `condense` roda no caminho crítico do 1º-token do chat (<3s). Roteamento usa o default `'routing'` (sem arg). Capacidade extra ali é desperdício de custo E latência.
 - Chunking fixo por N tokens (use semantic chunking — sub-projeto 2 já entrega híbrido)
 - Apenas busca vetorial (sempre híbrida + reranker)
 - Mostrar `[1]`, `[2]`, IDs, ou referências bibliográficas para o usuário (decisão 2026-05-02)

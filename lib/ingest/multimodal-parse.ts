@@ -193,7 +193,7 @@ async function callOpenAI(
   signal: AbortSignal,
 ): Promise<string> {
   const ai = getOpenAI();
-  const model = getOpenAIModel();
+  const model = getOpenAIModel('multimodal');
   return withRateLimitRetry(
     async () => {
       const res = await ai.responses.create(

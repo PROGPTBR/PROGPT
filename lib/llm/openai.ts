@@ -12,8 +12,37 @@ export function getOpenAI(): OpenAI {
   return instance;
 }
 
-export function getOpenAIModel(): string {
-  return process.env.OPENAI_MODEL ?? 'gpt-4o-mini';
+export type ModelTier = 'generation' | 'routing' | 'multimodal';
+
+const TIER_ENV: Record<ModelTier, string> = {
+  generation: 'OPENAI_MODEL_GENERATION',
+  routing: 'OPENAI_MODEL_ROUTING',
+  multimodal: 'OPENAI_MODEL_MULTIMODAL',
+};
+
+/**
+ * Resolve the OpenAI model id for a given call-site tier.
+ *
+ * Chained fallback: `OPENAI_MODEL_<TIER>` -> `OPENAI_MODEL` -> `'gpt-4o-mini'`.
+ * Empty-string envs are treated as unset (`||`, not `??`) so a blank
+ * Railway/CI var falls through the chain instead of resolving to `''`.
+ *
+ * The default tier is `'routing'` — the cheapest tier — so a call-site that
+ * forgets to annotate never silently inherits an expensive generation model.
+ * With all three `OPENAI_MODEL_*` envs empty, every tier resolves identically
+ * to the previous single-model behavior (`OPENAI_MODEL ?? gpt-4o-mini`), so
+ * this refactor is a no-op until an operator sets a tier env.
+ *
+ * Tiers:
+ * - `generation`  — user-facing answers/artifacts (chat, assistant generate/refine,
+ *   extractors, negotiation). Quality-sensitive; worth a stronger model.
+ * - `multimodal`  — PDF table/figure extraction on ingest. Errors contaminate
+ *   retrieval permanently; admin-driven batch, latency-insensitive.
+ * - `routing`     — short-JSON internal tasks (classify, condense, followups,
+ *   title). High volume, low sensitivity; keep cheap.
+ */
+export function getOpenAIModel(tier: ModelTier = 'routing'): string {
+  return process.env[TIER_ENV[tier]] || process.env.OPENAI_MODEL || 'gpt-4o-mini';
 }
 
 /**

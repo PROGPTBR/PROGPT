@@ -94,7 +94,7 @@ export async function generateStrategy(
   params: NegotiationStrategyParams,
 ): Promise<NegotiationStrategyResult> {
   const ai = getOpenAI();
-  const model = getOpenAIModel();
+  const model = getOpenAIModel('generation');
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
