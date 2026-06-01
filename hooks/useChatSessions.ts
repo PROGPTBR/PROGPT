@@ -27,6 +27,13 @@ export type UseChatSessions = {
    */
   setTitleLocal?: (id: string, title: string) => void;
   /**
+   * Persist a user-edited title for a session (pencil rename in the sidebar).
+   * Writes `sessions.title` to the DB and updates local state. Trims the
+   * input; a blank title is a no-op. Does not bump `updated_at`, so renaming
+   * never reorders the sidebar list.
+   */
+  renameSession?: (id: string, title: string) => void;
+  /**
    * Sub-projeto 34 — set the active Perfil for the current session.
    * Client-only state until the next chat turn (the /api/chat onFinish
    * persists `active_perfil_id` in the DB). null = clear (sem categoria).

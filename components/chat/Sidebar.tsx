@@ -1,7 +1,8 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
-import { Plus, Trash2, Sparkles } from 'lucide-react';
+import { Plus, Trash2, Sparkles, Pencil } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import type { StoredSession } from '@/lib/chat-storage';
 import { UserRow } from '@/components/auth/UserRow';
@@ -13,6 +14,8 @@ type Props = {
   onSwitch: (id: string) => void;
   onNew: () => void;
   onDelete: (id: string) => void;
+  /** When provided, each conversation shows a pencil for inline renaming. */
+  onRename?: (id: string, title: string) => void;
 };
 
 function formatRelative(ts: number): string {
@@ -32,7 +35,30 @@ export function Sidebar({
   onSwitch,
   onNew,
   onDelete,
+  onRename,
 }: Props) {
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [draft, setDraft] = useState('');
+
+  function startEdit(s: StoredSession, e: React.MouseEvent) {
+    e.stopPropagation();
+    setEditingId(s.id);
+    setDraft(s.title);
+  }
+
+  function commitEdit(id: string) {
+    if (editingId !== id) return; // guard against double-commit (Enter then blur)
+    const clean = draft.trim();
+    if (clean) onRename?.(id, clean);
+    setEditingId(null);
+    setDraft('');
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setDraft('');
+  }
+
   return (
     <aside className="w-72 shrink-0 border-r border-border bg-card/60 dark:bg-black/40 backdrop-blur-md flex flex-col h-full">
       <div className="flex items-center justify-between px-4 py-4 border-b border-border">
@@ -63,6 +89,7 @@ export function Sidebar({
         <ul className="p-2 space-y-0.5">
           {sessions.map((s) => {
             const active = s.id === currentId;
+            const editing = editingId === s.id;
             return (
               <li key={s.id}>
                 <div
@@ -71,29 +98,70 @@ export function Sidebar({
                       ? 'bg-brand/10 border border-brand/20'
                       : 'hover:bg-accent border border-transparent'
                   }`}
-                  onClick={() => onSwitch(s.id)}
+                  onClick={() => {
+                    if (!editing) onSwitch(s.id);
+                  }}
                 >
                   <div className="flex-1 min-w-0">
-                    <div
-                      className={`truncate ${active ? 'text-foreground' : 'text-foreground/80'}`}
-                    >
-                      {s.title}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {formatRelative(s.updatedAt)}
-                    </div>
+                    {editing ? (
+                      <input
+                        autoFocus
+                        value={draft}
+                        maxLength={80}
+                        aria-label="Novo nome da conversa"
+                        onChange={(e) => setDraft(e.target.value)}
+                        onClick={(e) => e.stopPropagation()}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            commitEdit(s.id);
+                          } else if (e.key === 'Escape') {
+                            e.preventDefault();
+                            cancelEdit();
+                          }
+                        }}
+                        onBlur={() => commitEdit(s.id)}
+                        className="w-full bg-background border border-brand/40 rounded px-1.5 py-0.5 text-sm text-foreground outline-none focus:border-brand"
+                      />
+                    ) : (
+                      <>
+                        <div
+                          className={`truncate ${active ? 'text-foreground' : 'text-foreground/80'}`}
+                        >
+                          {s.title}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {formatRelative(s.updatedAt)}
+                        </div>
+                      </>
+                    )}
                   </div>
-                  <button
-                    type="button"
-                    aria-label={`Apagar conversa ${s.title}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDelete(s.id);
-                    }}
-                    className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-red-500 transition-all"
-                  >
-                    <Trash2 className="h-4 w-4" aria-hidden="true" />
-                  </button>
+                  {!editing && (
+                    <div className="flex items-center gap-1">
+                      {onRename && (
+                        <button
+                          type="button"
+                          aria-label={`Renomear conversa ${s.title}`}
+                          title="Renomear"
+                          onClick={(e) => startEdit(s, e)}
+                          className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-brand transition-all"
+                        >
+                          <Pencil className="h-4 w-4" aria-hidden="true" />
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        aria-label={`Apagar conversa ${s.title}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDelete(s.id);
+                        }}
+                        className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-red-500 transition-all"
+                      >
+                        <Trash2 className="h-4 w-4" aria-hidden="true" />
+                      </button>
+                    </div>
+                  )}
                 </div>
               </li>
             );
