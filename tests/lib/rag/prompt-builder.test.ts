@@ -230,6 +230,46 @@ describe('rag prompt-builder', () => {
     expect(SYSTEM_PROMPT).toMatch(/puramente te[óo]rica|teórica/i);
     expect(SYSTEM_PROMPT).toMatch(/não substitui o ensino te[óo]rico|responda normalmente no chat/i);
   });
+
+  // ── missing-referenced-input + refusal reframing ─────────────────────────
+  // User pasted an instruction template containing "(cole abaixo)" WITHOUT the
+  // actual strategic plan. The chat opened with "Não tenho fonte" AND then
+  // answered generically — inconsistent. Two fixes: (1) ask for the missing
+  // input instead of refusing/generizing, (2) stop the refuse-then-answer
+  // contradiction.
+
+  it('instructs the model to ask for referenced content the user did not paste', async () => {
+    const { SYSTEM_PROMPT } = await import('@/lib/rag/prompt-builder');
+    // Names placeholder cues so the model recognizes a dangling reference
+    expect(SYSTEM_PROMPT).toMatch(/cole abaixo/i);
+    expect(SYSTEM_PROMPT).toMatch(/segue abaixo|conforme o documento|anexo/i);
+    // Mandated action is to ASK for the material, not refuse/genericize
+    expect(SYSTEM_PROMPT).toMatch(/pe[çc]a.*material|pe[çc]a.*colar|cole aqui/i);
+  });
+
+  it('refusal rule forbids the refuse-then-answer contradiction', async () => {
+    const { SYSTEM_PROMPT } = await import('@/lib/rag/prompt-builder');
+    // Either refuse OR help — not both in the same breath
+    expect(SYSTEM_PROMPT).toMatch(/ou você recusa, ou você ajuda|não os dois/i);
+    // When it can help via general principles, it should just answer (soft signal)
+    expect(SYSTEM_PROMPT).toMatch(
+      /orienta[çc][ãa]o geral|princípio.*consolidado|em termos gerais/i,
+    );
+  });
+
+  it('missing-input ask has priority over the no-source refusal', async () => {
+    const { SYSTEM_PROMPT } = await import('@/lib/rag/prompt-builder');
+    const idxMissing = SYSTEM_PROMPT.indexOf('referencia um material que não está');
+    const idxRefusal = SYSTEM_PROMPT.indexOf('Quando não há fonte na base');
+    expect(idxMissing).toBeGreaterThan(-1);
+    expect(idxRefusal).toBeGreaterThan(-1);
+    expect(idxMissing).toBeLessThan(idxRefusal);
+  });
+
+  it('still keeps the hard "no source" phrase available for genuinely out-of-domain asks', async () => {
+    const { SYSTEM_PROMPT } = await import('@/lib/rag/prompt-builder');
+    expect(SYSTEM_PROMPT.toLowerCase()).toMatch(/não\s+(tenho|tem)\s+fonte/);
+  });
 });
 
 // ── library_overview branch (sub-projeto 18) ─────────────────────────────
