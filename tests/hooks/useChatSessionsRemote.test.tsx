@@ -187,6 +187,42 @@ describe('useChatSessionsRemote', () => {
     expect(m.updateCalls.length).toBe(beforeUpdates);
   });
 
+  it('renameSession writes the trimmed title to DB and updates local state', async () => {
+    const rows: Row[] = [
+      { id: 'a', title: 'Nova conversa', messages: [], updated_at: '2026-05-02T10:00:00Z' },
+      { id: 'b', title: 'two', messages: [], updated_at: '2026-05-02T09:00:00Z' },
+    ];
+    const m = mockBrowser({ initialRows: rows });
+    const { useChatSessionsRemote } = await import('@/hooks/useChatSessionsRemote');
+    const { result } = renderHook(() => useChatSessionsRemote());
+    await waitFor(() => expect(result.current.sessions).toHaveLength(2));
+    await act(async () => {
+      await result.current.renameSession!('a', '  Estratégia de TI  ');
+    });
+    expect(result.current.sessions.find((s) => s.id === 'a')!.title).toBe(
+      'Estratégia de TI',
+    );
+    expect(
+      m.updateCalls.some((c) => c.id === 'a' && c.title === 'Estratégia de TI'),
+    ).toBe(true);
+  });
+
+  it('renameSession ignores a blank/whitespace title (no DB write, keeps old title)', async () => {
+    const rows: Row[] = [
+      { id: 'a', title: 'keep', messages: [], updated_at: '2026-05-02T10:00:00Z' },
+    ];
+    const m = mockBrowser({ initialRows: rows });
+    const { useChatSessionsRemote } = await import('@/hooks/useChatSessionsRemote');
+    const { result } = renderHook(() => useChatSessionsRemote());
+    await waitFor(() => expect(result.current.sessions).toHaveLength(1));
+    const before = m.updateCalls.length;
+    await act(async () => {
+      await result.current.renameSession!('a', '   ');
+    });
+    expect(result.current.current.title).toBe('keep');
+    expect(m.updateCalls.length).toBe(before);
+  });
+
   it('deleteSession removes the row from DB and from local state; switches current if deleted was current', async () => {
     const rows: Row[] = [
       { id: 'a', title: 'one', messages: [], updated_at: '2026-05-02T10:00:00Z' },

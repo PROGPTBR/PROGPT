@@ -180,6 +180,20 @@ export function useChatSessionsRemote(): UseChatSessions {
     [currentId],
   );
 
+  const renameSession = useCallback(async (id: string, title: string) => {
+    const clean = title.trim();
+    if (!clean) return;
+    // Optimistic local update; no updated_at bump so the list doesn't reorder.
+    setSessions((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, title: clean } : s)),
+    );
+    const sb = supabaseBrowser();
+    const { error } = await sb.from('sessions').update({ title: clean }).eq('id', id);
+    if (error) {
+      console.warn('[useChatSessionsRemote] rename failed:', error);
+    }
+  }, []);
+
   const setTitleLocal = useCallback((id: string, title: string) => {
     if (!title) return;
     setSessions((prev) =>
@@ -214,6 +228,7 @@ export function useChatSessionsRemote(): UseChatSessions {
       deleteSession: deleteSession as unknown as (id: string) => void,
       updateMessages: updateMessages as unknown as (messages: ChatMessage[]) => void,
       setTitleLocal,
+      renameSession: renameSession as unknown as (id: string, title: string) => void,
       setActivePerfil,
     };
   }
@@ -230,6 +245,7 @@ export function useChatSessionsRemote(): UseChatSessions {
     deleteSession: deleteSession as unknown as (id: string) => void,
     updateMessages: updateMessages as unknown as (messages: ChatMessage[]) => void,
     setTitleLocal,
+    renameSession: renameSession as unknown as (id: string, title: string) => void,
     setActivePerfil,
   };
 }

@@ -39,6 +39,7 @@ function ChatRootMounted() {
           onSwitch={sessionsApi.switchTo}
           onNew={sessionsApi.createNew}
           onDelete={sessionsApi.deleteSession}
+          onRename={sessionsApi.renameSession}
         />
       </div>
       <Sheet open={drawerOpen} onOpenChange={(open) => setDrawerOpen(open)}>
@@ -58,6 +59,7 @@ function ChatRootMounted() {
               setDrawerOpen(false);
             }}
             onDelete={sessionsApi.deleteSession}
+            onRename={sessionsApi.renameSession}
           />
         </SheetContent>
       </Sheet>
