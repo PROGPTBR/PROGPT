@@ -1,5 +1,6 @@
 import { streamText } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
+import { getOpenAIModel } from '@/lib/llm/openai';
 import { z } from 'zod';
 import { requireEnv } from '@/lib/env';
 import { getCurrentUser } from '@/lib/auth';
@@ -131,7 +132,7 @@ async function refineBody(
 
   try {
     const result = streamText({
-      model: openai(process.env.OPENAI_MODEL ?? 'gpt-4o-mini'),
+      model: openai(getOpenAIModel('generation')),
       system,
       messages: parsed.messages,
       onFinish: async ({ text, usage, finishReason, providerMetadata }) => {
@@ -149,7 +150,7 @@ async function refineBody(
         void recordApiUsage({
           provider: 'openai',
           operation: refineOp,
-          model: process.env.OPENAI_MODEL ?? 'gpt-4o-mini',
+          model: getOpenAIModel('generation'),
           tokensIn: usage.promptTokens,
           tokensOut: usage.completionTokens,
           tokensCached: cachedPromptTokens,

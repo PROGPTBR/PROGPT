@@ -99,7 +99,7 @@ export async function extractProfileFromUpload(
   }
 
   const ai = getOpenAI();
-  const model = getOpenAIModel();
+  const model = getOpenAIModel('generation');
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), EXTRACT_TIMEOUT_MS);
 

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { generateObject } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
+import { getOpenAIModel } from '@/lib/llm/openai';
 import { z } from 'zod';
 import { requireEnv } from '@/lib/env';
 import { getCurrentUser } from '@/lib/auth';
@@ -91,7 +92,7 @@ export async function POST(req: Request) {
 
   try {
     const result = await generateObject({
-      model: openai(process.env.OPENAI_MODEL ?? 'gpt-4o-mini'),
+      model: openai(getOpenAIModel('generation')),
       system: SYSTEM_PROMPT,
       schema: SuggestionSchema,
       messages: [
@@ -109,7 +110,7 @@ export async function POST(req: Request) {
     void recordApiUsage({
       provider: 'openai',
       operation: 'assistant-kraljic-suggest',
-      model: process.env.OPENAI_MODEL ?? 'gpt-4o-mini',
+      model: getOpenAIModel('generation'),
       tokensIn: result.usage.promptTokens,
       tokensOut: result.usage.completionTokens,
       tokensCached: cachedPromptTokens,

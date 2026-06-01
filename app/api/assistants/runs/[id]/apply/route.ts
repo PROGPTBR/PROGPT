@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { generateText } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
+import { getOpenAIModel } from '@/lib/llm/openai';
 import { z } from 'zod';
 import { requireEnv } from '@/lib/env';
 import { getCurrentUser } from '@/lib/auth';
@@ -166,7 +167,7 @@ Reescreva o RFP acima incorporando a sugestão. Apenas o markdown atualizado, na
 
   try {
     const result = await generateText({
-      model: openai(process.env.OPENAI_MODEL ?? 'gpt-4o-mini'),
+      model: openai(getOpenAIModel('generation')),
       system:
         run.assistant_type === 'kraljic'
           ? KRALJIC_SYSTEM_PROMPT
@@ -210,7 +211,7 @@ Reescreva o RFP acima incorporando a sugestão. Apenas o markdown atualizado, na
                   : run.assistant_type === 'scorecard'
                     ? 'assistant-scorecard-apply'
                     : 'assistant-rfp-apply',
-      model: process.env.OPENAI_MODEL ?? 'gpt-4o-mini',
+      model: getOpenAIModel('generation'),
       tokensIn: result.usage.promptTokens,
       tokensOut: result.usage.completionTokens,
       tokensCached: cachedPromptTokens,

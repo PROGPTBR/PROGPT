@@ -42,7 +42,7 @@ export async function describeImageWithVision({
   filename,
 }: DescribeImageInput): Promise<string | null> {
   const ai = getOpenAI();
-  const model = getOpenAIModel();
+  const model = getOpenAIModel('generation');
   const dataUrl = `data:${mime};base64,${buf.toString('base64')}`;
 
   const controller = new AbortController();

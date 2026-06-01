@@ -1,5 +1,6 @@
 import { streamText } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
+import { getOpenAIModel } from '@/lib/llm/openai';
 import { NextResponse } from 'next/server';
 import { requireEnv } from '@/lib/env';
 import { getCurrentUser } from '@/lib/auth';
@@ -124,7 +125,7 @@ async function negotiateBody(
   });
 
   const openai = createOpenAI({ apiKey: requireEnv('OPENAI_API_KEY') });
-  const model = process.env.OPENAI_MODEL ?? 'gpt-4o-mini';
+  const model = getOpenAIModel('generation');
   const generateSpan = trace.span('generate-turn', {
     turn: parsed.data.messages.length,
   });

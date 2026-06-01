@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { streamText, StreamData } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
+import { getOpenAIModel } from '@/lib/llm/openai';
 import { requireEnv } from '@/lib/env';
 import { runRag } from '@/lib/rag';
 import { condenseQuery } from '@/lib/rag/condenser';
@@ -169,7 +170,7 @@ export async function POST(req: Request): Promise<Response> {
     const generateSpan = trace.span('generate', { systemLen: rag.system.length });
 
     const result = streamText({
-      model: openai(process.env.OPENAI_MODEL ?? 'gpt-4o-mini'),
+      model: openai(getOpenAIModel('generation')),
       system: rag.system,
       messages: llmMessages,
       onFinish: async ({ text, usage, finishReason, providerMetadata }) => {
@@ -200,7 +201,7 @@ export async function POST(req: Request): Promise<Response> {
         void recordApiUsage({
           provider: 'openai',
           operation: 'chat-generate',
-          model: process.env.OPENAI_MODEL ?? 'gpt-4o-mini',
+          model: getOpenAIModel('generation'),
           tokensIn: usage.promptTokens,
           tokensOut: usage.completionTokens,
           tokensCached: cachedPromptTokens,

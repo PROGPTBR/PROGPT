@@ -21,7 +21,7 @@ export async function generateOpener(input: {
   setup: NegotiationSimulatorSetup;
 }): Promise<string> {
   const ai = getOpenAI();
-  const model = getOpenAIModel();
+  const model = getOpenAIModel('generation');
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
