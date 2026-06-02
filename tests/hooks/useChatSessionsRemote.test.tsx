@@ -143,9 +143,11 @@ describe('useChatSessionsRemote', () => {
     expect(result.current.current.title).toBe('O que é Kraljic?');
     expect(m.updateCalls.length).toBe(1);
     expect(m.updateCalls[0]!.id).toBe('a');
-    // Server owns the title — client does NOT write it. The DB column
-    // gets updated only when /api/chat onFinish completes the summary.
-    expect(m.updateCalls[0]!.title).toBeUndefined();
+    // The provisional title (first question) IS now persisted while the DB
+    // title is still the default — so a reloaded conversation never stays
+    // "Nova conversa" even if the server-side summary fails. The LLM summary
+    // upgrades it later via setTitleLocal.
+    expect(m.updateCalls[0]!.title).toBe('O que é Kraljic?');
     expect(m.updateCalls[0]!.messages).toEqual(msgs);
   });
 
@@ -172,19 +174,23 @@ describe('useChatSessionsRemote', () => {
     expect(m.updateCalls[0]!.title).toBeUndefined();
   });
 
-  it('setTitleLocal updates the in-memory sessions list without writing to DB', async () => {
+  it('setTitleLocal updates the list AND persists the title to DB (survives reload)', async () => {
     const initial: Row = { id: 'a', title: 'Nova conversa', messages: [], updated_at: '2026-05-02T10:00:00Z' };
     const m = mockBrowser({ initialRows: [initial] });
     const { useChatSessionsRemote } = await import('@/hooks/useChatSessionsRemote');
     const { result } = renderHook(() => useChatSessionsRemote());
     await waitFor(() => expect(result.current.sessions).toHaveLength(1));
-    const beforeUpdates = m.updateCalls.length;
     act(() => {
       result.current.setTitleLocal?.('a', 'Estratégia para TI');
     });
     expect(result.current.current.title).toBe('Estratégia para TI');
-    // No DB roundtrip — server already persisted the title in /api/chat.
-    expect(m.updateCalls.length).toBe(beforeUpdates);
+    // Now persisted to the DB so the LLM summary survives reload even when the
+    // server-side title write fails.
+    await waitFor(() => {
+      expect(
+        m.updateCalls.some((c) => c.id === 'a' && c.title === 'Estratégia para TI'),
+      ).toBe(true);
+    });
   });
 
   it('renameSession writes the trimmed title to DB and updates local state', async () => {

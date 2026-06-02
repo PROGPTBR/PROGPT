@@ -143,22 +143,22 @@ export function useChatSessionsRemote(): UseChatSessions {
   const updateMessages = useCallback(
     async (messages: ChatMessage[]) => {
       const updatedAt = Date.now();
-      // Provisional client-side title — used immediately so the sidebar
-      // entry shows something while the LLM-generated summary streams in
-      // via the chat annotation. The DB write deliberately omits `title`
-      // so it doesn't clobber a server-written summary that may have
-      // landed during the same turn.
+      // Provisional title = a primeira pergunta do usuário (truncada). Mostra
+      // algo já e — crucial — é PERSISTIDO no DB quando o título ainda é o
+      // default, pra a conversa nunca ficar "Nova conversa" após reload mesmo
+      // que o resumo do servidor falhe. Guard pelo título atual evita clobber
+      // de um resumo/rename já existente.
       const provisional = deriveTitle(messages);
+      const currentTitle =
+        sessions.find((s) => s.id === currentId)?.title ?? 'Nova conversa';
+      const persistProvisional =
+        currentTitle === 'Nova conversa' && provisional !== 'Nova conversa';
       setSessions((prev) =>
         prev.map((s) =>
           s.id === currentId
             ? {
                 ...s,
                 messages,
-                // Only overwrite if the existing title is the default
-                // "Nova conversa" — otherwise the user already has a
-                // summary and we shouldn't replace it with the truncated
-                // first message.
                 title: s.title === 'Nova conversa' ? provisional : s.title,
                 updatedAt,
               }
@@ -166,18 +166,17 @@ export function useChatSessionsRemote(): UseChatSessions {
         ),
       );
       const sb = supabaseBrowser();
-      const { error } = await sb
-        .from('sessions')
-        .update({
-          messages,
-          updated_at: new Date(updatedAt).toISOString(),
-        })
-        .eq('id', currentId);
+      const payload: Record<string, unknown> = {
+        messages,
+        updated_at: new Date(updatedAt).toISOString(),
+      };
+      if (persistProvisional) payload.title = provisional;
+      const { error } = await sb.from('sessions').update(payload).eq('id', currentId);
       if (error) {
         console.warn('[useChatSessionsRemote] update failed:', error);
       }
     },
-    [currentId],
+    [currentId, sessions],
   );
 
   const renameSession = useCallback(async (id: string, title: string) => {
@@ -199,6 +198,18 @@ export function useChatSessionsRemote(): UseChatSessions {
     setSessions((prev) =>
       prev.map((s) => (s.id === id ? { ...s, title } : s)),
     );
+    // Persiste o resumo do título no DB também (não confia só no persist do
+    // servidor, que pode falhar) — sobrevive a reload e faz upgrade do
+    // provisório.
+    void supabaseBrowser()
+      .from('sessions')
+      .update({ title })
+      .eq('id', id)
+      .then(({ error }) => {
+        if (error) {
+          console.warn('[useChatSessionsRemote] setTitleLocal persist failed:', error.message);
+        }
+      });
   }, []);
 
   // Sub-projeto 34 — client-only state for the active Perfil. The actual

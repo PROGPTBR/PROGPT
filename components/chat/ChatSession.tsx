@@ -1,6 +1,6 @@
 'use client';
 
-import { type FormEvent, type ReactNode } from 'react';
+import { useEffect, useRef, type FormEvent, type ReactNode } from 'react';
 import { useChat, type Message as AIMessage } from 'ai/react';
 import { toast } from 'sonner';
 import type { ChatMessage } from '@/lib/rag/types';
@@ -97,12 +97,27 @@ export function ChatSession({
       toast.error('Tivemos um problema. Tente enviar novamente.');
     },
     onFinish: (assistant) => {
-      const next = toChatMessages([...messages, assistant]);
-      onMessagesChange(next);
+      // Apenas o título aqui — a persistência das mensagens é feita no effect
+      // abaixo (lê o `messages` mais recente). Antes, `onMessagesChange` usava
+      // o `messages` capturado pelo closure do onFinish, que ficava VAZIO numa
+      // sessão nova → a pergunta do usuário era descartada (só o assistant era
+      // salvo) e o título ficava "Nova conversa".
       const title = pickSessionTitle(assistant);
       if (title && onTitleChange) onTitleChange(title);
     },
   });
+
+  // Persiste as mensagens quando um turno termina (isLoading: true → false).
+  // Lê o `messages` atual do hook (não o closure stale), então o par
+  // [usuário, assistente] é salvo corretamente, inclusive na 1ª troca.
+  const wasLoading = useRef(false);
+  useEffect(() => {
+    if (wasLoading.current && !isLoading && messages.length > 0) {
+      onMessagesChange(toChatMessages(messages));
+    }
+    wasLoading.current = isLoading;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading, messages]);
 
   const perfilBody = () => ({
     perfilId: session.activePerfilId ?? null,
