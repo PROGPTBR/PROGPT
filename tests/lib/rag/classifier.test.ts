@@ -175,6 +175,29 @@ describe('rag classifier', () => {
     expect(callBody.temperature).toBe(0);
   });
 
+  it('system prompt teaches it that tax/regulation questions need retrieval (not smalltalk)', async () => {
+    const { create } = mockOpenAI({
+      text: JSON.stringify({
+        theory: null,
+        intent: 'definition',
+        language: 'pt',
+        needsRetrieval: true,
+      }),
+    });
+    const { classify } = await import('@/lib/rag/classifier');
+    await classify('quais os impactos da reforma tributária?');
+    const callBody = create.mock.calls[0]?.[0] as {
+      messages: Array<{ role: string; content: string }>;
+    };
+    const sys = callBody.messages.find((m) => m.role === 'system')?.content ?? '';
+    // tax/regulation are explicitly in scope
+    expect(sys).toMatch(/reforma tribut/i);
+    // a substantive question must never be smalltalk
+    expect(sys).toMatch(/NUNCA[ ]+(é )?smalltalk/i);
+    // bias toward retrieval to avoid wrongful refusals
+    expect(sys).toMatch(/recusa indevida|regra de ouro/i);
+  });
+
   it('accepts theory as null and intent as application', async () => {
     mockOpenAI({
       text: JSON.stringify({

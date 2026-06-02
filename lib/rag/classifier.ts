@@ -3,17 +3,18 @@ import { getOpenAI, getOpenAIModel } from '@/lib/llm/openai';
 import { recordApiUsage } from '@/lib/observability/api-usage';
 import { SAFE_DEFAULT_CLASSIFICATION, type Classification } from './types';
 
-const SYSTEM_PROMPT = `Você classifica perguntas de usuários sobre teorias de procurement (compras corporativas).
+const SYSTEM_PROMPT = `Você classifica perguntas de usuários sobre procurement / compras corporativas — frameworks (Kraljic, Porter…), práticas, fornecedores, custos e contratos, E TAMBÉM tributação, regulação e mercado que afetam compras no Brasil (Reforma Tributária CBS/IBS, ICMS/PIS/Cofins, Nova Lei de Licitações 14.133, etc.).
 Responda SEMPRE com JSON estrito conforme o schema abaixo. Não adicione texto fora do JSON.
+Regra de ouro: pular o retrieval numa pergunta real causa recusa indevida ("não tenho fonte"). Então, na dúvida entre conversa fiada e uma pergunta de conteúdo, escolha definition/application (needsRetrieval=true).
 
 Campos:
 - theory: string com o nome curto da teoria/framework principal mencionada (ex: "kraljic", "porter", "monczka", "tco", "srm"). null se nenhuma teoria específica for citada ou inferível.
 - intent: um de "definition" | "application" | "comparison" | "recommendation" | "smalltalk" | "library_overview" | "supplier_search".
-  - definition: pede o que é, conceito, definição de algum tema/framework
-  - application: pede como aplicar, exemplo prático, caso
-  - comparison: compara duas ou mais teorias/frameworks
+  - definition: pede o que é / conceito / definição / IMPACTOS / efeitos de QUALQUER tema ligado a procurement — framework, prática, tributo, regulação, mercado, custo. Ex: "quais os impactos da reforma tributária?" é definition.
+  - application: pede como aplicar, como fazer, exemplo prático, caso, ou o efeito prático de algo num setor
+  - comparison: compara duas ou mais teorias/frameworks/abordagens
   - recommendation: pede sugestão de abordagem/teoria/leitura
-  - smalltalk: saudação, agradecimento, conversa fiada sem conteúdo de procurement
+  - smalltalk: APENAS saudação, agradecimento ou conversa SEM nenhuma pergunta de conteúdo (ex: "oi", "bom dia", "obrigado"). Uma pergunta substantiva NUNCA é smalltalk — mesmo que o tema (tributos, regulação, mercado, um setor específico) não seja um framework clássico, use definition ou application, NUNCA smalltalk.
   - library_overview: usuário pergunta sobre a PRÓPRIA BASE/COBERTURA do sistema — "que temas você cobre", "lista de tópicos", "sobre o que você sabe", "what topics do you cover", "what's in your knowledge base". É META — sobre o sistema, não sobre procurement. NÃO confunda com "definition" (que pergunta sobre UM tema específico). Confunda só se o usuário quer descobrir o que está disponível.
   - supplier_search: usuário quer ENCONTRAR/LISTAR fornecedores reais no mercado. Detecte com frases como "preciso de fornecedores de X", "quem fabrica Y", "onde encontro empresas que vendem Z", "lista de fornecedores", "indique fornecedores", "find suppliers for", "I need vendors of". É AÇÃO — quer dados de empresas reais (CNPJ, contato), não teoria de procurement. NÃO confunda com "application" (como gerenciar fornecedores em geral) ou "recommendation" (que abordagem teórica usar). Confunda só se o usuário quer BUSCAR fornecedores agora.
 - language: "pt" se a pergunta está em português, "en" se em inglês. Default "pt".
@@ -21,6 +22,9 @@ Campos:
 
 Exemplos:
 - "O que é Kraljic?" → intent=definition, needsRetrieval=true
+- "Quais os impactos da nova reforma tributária?" → intent=definition, needsRetrieval=true
+- "impacto tributário na indústria química" → intent=application, needsRetrieval=true
+- "como a reforma tributária muda a formação de preço?" → intent=application, needsRetrieval=true
 - "Quais temas você cobre?" → intent=library_overview, needsRetrieval=false
 - "Lista de temas da base" → intent=library_overview, needsRetrieval=false
 - "Sobre o que você pode me ensinar?" → intent=library_overview, needsRetrieval=false
