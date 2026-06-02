@@ -9,6 +9,10 @@ import type {
   SearchResponse,
   UF,
 } from '@/lib/suppliers/types';
+import {
+  useSupplierSearches,
+  type SavedSupplierSearch,
+} from '@/hooks/useSupplierSearches';
 import { SuppliersForm } from './SuppliersForm';
 import { SuppliersConfirm } from './SuppliersConfirm';
 import { SuppliersResults } from './SuppliersResults';
@@ -19,7 +23,8 @@ type Phase =
   | { kind: 'confirming'; classify: ClassifyResponse }
   | {
       kind: 'searching';
-      classify: ClassifyResponse;
+      // optional: a re-run from a saved search has no classify object
+      classify?: ClassifyResponse;
       cnae: string;
       cnaeName: string;
       ufs: UF[];
@@ -32,11 +37,18 @@ type Phase =
       ufs: UF[];
     };
 
+function searchLabel(cnaeName: string, cnae: string, ufs: UF[]): string {
+  const head = cnaeName.trim().length > 0 ? cnaeName.trim() : `CNAE ${cnae}`;
+  return ufs.length > 0 ? `${head} — ${ufs.join(', ')}` : `${head} — Nacional`;
+}
+
 export function SuppliersAssistant() {
   const params = useSearchParams();
   const initialQuery = params.get('q') ?? '';
   const [phase, setPhase] = useState<Phase>({ kind: 'form' });
   const [isExporting, setIsExporting] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const { searches, saveSearch, deleteSearch } = useSupplierSearches();
 
   // Auto-submit if landing with ?q=...
   useEffect(() => {
@@ -46,7 +58,33 @@ export function SuppliersAssistant() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Shared search call. Toasts on rate-limit/error and returns null; caller
+  // decides which phase to fall back to.
+  async function doSearch(cnae: string, ufs: UF[]): Promise<SearchResponse | null> {
+    try {
+      const res = await fetch('/api/suppliers/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cnae, ufs: ufs.length > 0 ? ufs : undefined, limit: 50 }),
+      });
+      if (res.status === 429) {
+        const data = (await res.json().catch(() => ({}))) as { retry_after_secs?: number };
+        toast.error(`Limite atingido. Tente em ${data.retry_after_secs ?? 60}s.`);
+        return null;
+      }
+      if (!res.ok) {
+        toast.error('Erro ao buscar. Tente de novo.');
+        return null;
+      }
+      return (await res.json()) as SearchResponse;
+    } catch (err) {
+      toast.error(`Erro: ${err instanceof Error ? err.message : String(err)}`);
+      return null;
+    }
+  }
+
   async function handleClassify(query: string) {
+    setSaved(false);
     setPhase({ kind: 'classifying' });
     try {
       const res = await fetch('/api/suppliers/classify', {
@@ -55,9 +93,7 @@ export function SuppliersAssistant() {
         body: JSON.stringify({ query }),
       });
       if (res.status === 429) {
-        const data = (await res.json().catch(() => ({}))) as {
-          retry_after_secs?: number;
-        };
+        const data = (await res.json().catch(() => ({}))) as { retry_after_secs?: number };
         toast.error(
           `Limite de buscas atingido. Tente novamente em ${data.retry_after_secs ?? 60}s.`,
         );
@@ -78,58 +114,57 @@ export function SuppliersAssistant() {
     }
   }
 
-  async function handleSearch(params: {
-    cnae: string;
-    cnaeName: string;
-    ufs: UF[];
-  }) {
-    const classify =
-      phase.kind === 'confirming' ? phase.classify : null;
-    if (!classify) return;
+  async function handleSearch(args: { cnae: string; cnaeName: string; ufs: UF[] }) {
+    const classify = phase.kind === 'confirming' ? phase.classify : undefined;
+    setSaved(false);
+    setPhase({ kind: 'searching', classify, cnae: args.cnae, cnaeName: args.cnaeName, ufs: args.ufs });
+    const response = await doSearch(args.cnae, args.ufs);
+    if (!response) {
+      setPhase(classify ? { kind: 'confirming', classify } : { kind: 'form' });
+      return;
+    }
     setPhase({
-      kind: 'searching',
-      classify,
-      cnae: params.cnae,
-      cnaeName: params.cnaeName,
-      ufs: params.ufs,
+      kind: 'done',
+      response,
+      cnae: args.cnae,
+      cnaeName: response.cnaeName ?? args.cnaeName,
+      ufs: args.ufs,
     });
-    try {
-      const res = await fetch('/api/suppliers/search', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          cnae: params.cnae,
-          ufs: params.ufs.length > 0 ? params.ufs : undefined,
-          limit: 50,
-        }),
-      });
-      if (res.status === 429) {
-        const data = (await res.json().catch(() => ({}))) as {
-          retry_after_secs?: number;
-        };
-        toast.error(
-          `Limite atingido. Tente em ${data.retry_after_secs ?? 60}s.`,
-        );
-        setPhase({ kind: 'confirming', classify });
-        return;
-      }
-      if (!res.ok) {
-        toast.error('Erro ao buscar. Tente de novo.');
-        setPhase({ kind: 'confirming', classify });
-        return;
-      }
-      const response = (await res.json()) as SearchResponse;
-      setPhase({
-        kind: 'done',
-        response,
-        cnae: params.cnae,
-        cnaeName: response.cnaeName ?? params.cnaeName,
-        ufs: params.ufs,
-      });
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      toast.error(`Erro: ${msg}`);
-      setPhase({ kind: 'confirming', classify });
+  }
+
+  // Re-run a saved search directly (skip classify + confirm).
+  async function handleRunSaved(s: SavedSupplierSearch) {
+    const cnaeName = s.cnaeName ?? '';
+    setSaved(true); // it's already in "Buscas recentes"
+    setPhase({ kind: 'searching', cnae: s.cnae, cnaeName, ufs: s.ufs });
+    const response = await doSearch(s.cnae, s.ufs);
+    if (!response) {
+      setPhase({ kind: 'form' });
+      return;
+    }
+    setPhase({
+      kind: 'done',
+      response,
+      cnae: s.cnae,
+      cnaeName: response.cnaeName ?? cnaeName,
+      ufs: s.ufs,
+    });
+  }
+
+  async function handleSaveSearch() {
+    if (phase.kind !== 'done') return;
+    const label = searchLabel(phase.cnaeName, phase.cnae, phase.ufs);
+    const result = await saveSearch({
+      label,
+      cnae: phase.cnae,
+      cnaeName: phase.cnaeName || null,
+      ufs: phase.ufs,
+    });
+    if (result) {
+      setSaved(true);
+      toast.success('Busca salva — aparece em "Buscas recentes"');
+    } else {
+      toast.error('Não consegui salvar a busca.');
     }
   }
 
@@ -206,6 +241,8 @@ export function SuppliersAssistant() {
         onBack={() => setPhase({ kind: 'form' })}
         onExport={handleExport}
         isExporting={isExporting}
+        onSave={handleSaveSearch}
+        saved={saved}
       />
     );
   }
@@ -215,6 +252,9 @@ export function SuppliersAssistant() {
       initialQuery={initialQuery}
       onSubmit={handleClassify}
       isLoading={false}
+      savedSearches={searches}
+      onRunSaved={handleRunSaved}
+      onDeleteSaved={(id) => void deleteSearch(id)}
     />
   );
 }

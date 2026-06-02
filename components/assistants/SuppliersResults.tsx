@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { ArrowLeft, Download, Filter, Inbox } from 'lucide-react';
+import { ArrowLeft, Bookmark, BookmarkCheck, Download, Filter, Inbox } from 'lucide-react';
 import type { GroupedSupplier, SearchResponse, UF } from '@/lib/suppliers/types';
 import { SuppliersResultCard } from './SuppliersResultCard';
 
@@ -12,6 +12,8 @@ type Props = {
   onBack: () => void;
   onExport: () => void;
   isExporting: boolean;
+  onSave?: () => void;
+  saved?: boolean;
 };
 
 type SizeFilter = 'all' | 'small_plus' | 'medium_plus';
@@ -43,6 +45,8 @@ export function SuppliersResults({
   onBack,
   onExport,
   isExporting,
+  onSave,
+  saved,
 }: Props) {
   const [sizeFilter, setSizeFilter] = useState<SizeFilter>('all');
   const [contactOnly, setContactOnly] = useState(false);
@@ -87,15 +91,33 @@ export function SuppliersResults({
             </p>
           </div>
           {response.groups.length > 0 && (
-            <button
-              type="button"
-              onClick={onExport}
-              disabled={isExporting}
-              className="inline-flex items-center gap-2 rounded-full border border-brand/30 bg-brand/5 hover:bg-brand/10 hover:border-brand/50 text-brand px-5 h-10 text-sm font-medium transition-all duration-300 active:scale-95 disabled:opacity-50"
-            >
-              <Download className="h-3.5 w-3.5" aria-hidden="true" />
-              {isExporting ? 'Gerando…' : 'Exportar CSV'}
-            </button>
+            <div className="flex items-center gap-2">
+              {onSave && (
+                <button
+                  type="button"
+                  onClick={onSave}
+                  disabled={saved}
+                  title={saved ? 'Busca salva' : 'Salvar esta busca em "Buscas recentes"'}
+                  className="inline-flex items-center gap-2 rounded-full border border-border bg-card hover:bg-accent hover:border-brand/30 text-foreground px-5 h-10 text-sm font-medium transition-all duration-300 active:scale-95 disabled:opacity-60"
+                >
+                  {saved ? (
+                    <BookmarkCheck className="h-3.5 w-3.5 text-brand" aria-hidden="true" />
+                  ) : (
+                    <Bookmark className="h-3.5 w-3.5" aria-hidden="true" />
+                  )}
+                  {saved ? 'Busca salva' : 'Salvar busca'}
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={onExport}
+                disabled={isExporting}
+                className="inline-flex items-center gap-2 rounded-full border border-brand/30 bg-brand/5 hover:bg-brand/10 hover:border-brand/50 text-brand px-5 h-10 text-sm font-medium transition-all duration-300 active:scale-95 disabled:opacity-50"
+              >
+                <Download className="h-3.5 w-3.5" aria-hidden="true" />
+                {isExporting ? 'Gerando…' : 'Exportar CSV'}
+              </button>
+            </div>
           )}
         </div>
       </div>

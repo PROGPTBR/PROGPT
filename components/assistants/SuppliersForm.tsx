@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
-import { Search, Sparkles } from 'lucide-react';
+import { Search, Sparkles, X, History } from 'lucide-react';
+import type { SavedSupplierSearch } from '@/hooks/useSupplierSearches';
 
 const EXAMPLES = [
   'Quero fornecedores de embalagens flexíveis no Nordeste',
@@ -15,9 +16,19 @@ type Props = {
   initialQuery?: string;
   onSubmit: (query: string) => void;
   isLoading: boolean;
+  savedSearches?: SavedSupplierSearch[];
+  onRunSaved?: (s: SavedSupplierSearch) => void;
+  onDeleteSaved?: (id: string) => void;
 };
 
-export function SuppliersForm({ initialQuery, onSubmit, isLoading }: Props) {
+export function SuppliersForm({
+  initialQuery,
+  onSubmit,
+  isLoading,
+  savedSearches,
+  onRunSaved,
+  onDeleteSaved,
+}: Props) {
   const [query, setQuery] = useState(initialQuery ?? '');
 
   function handleSubmit(e: FormEvent) {
@@ -70,6 +81,41 @@ export function SuppliersForm({ initialQuery, onSubmit, isLoading }: Props) {
           </button>
         </div>
       </form>
+
+      {savedSearches && savedSearches.length > 0 && (
+        <div className="space-y-2">
+          <div className="inline-flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            <History className="h-3 w-3" aria-hidden="true" />
+            Buscas recentes
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {savedSearches.map((s) => (
+              <div
+                key={s.id}
+                className="inline-flex items-center overflow-hidden rounded-full border border-brand/30 bg-brand/5"
+              >
+                <button
+                  type="button"
+                  onClick={() => onRunSaved?.(s)}
+                  disabled={isLoading}
+                  title="Rodar esta busca de novo"
+                  className="h-8 px-3.5 text-xs font-medium text-brand hover:bg-brand/10 transition-colors active:scale-95 disabled:opacity-50"
+                >
+                  {s.label}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onDeleteSaved?.(s.id)}
+                  aria-label={`Remover busca ${s.label}`}
+                  className="h-8 px-2 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 transition-colors"
+                >
+                  <X className="h-3 w-3" aria-hidden="true" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="space-y-2">
         <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
