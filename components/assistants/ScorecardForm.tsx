@@ -6,6 +6,7 @@ import { Upload, Send, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScorecardImportDialog } from './ScorecardImportDialog';
+import { SCORECARD_EXAMPLES } from '@/lib/assistants/examples';
 import {
   DEFAULT_SCORECARD_CRITERIA,
   SCORECARD_DEFAULT_THRESHOLDS,
@@ -197,6 +198,33 @@ export function ScorecardForm({ onSubmit }: { onSubmit: (v: ScorecardFormValues)
     setSuppliers(newSuppliers);
   }
 
+  function loadExample() {
+    const ex = SCORECARD_EXAMPLES[0];
+    if (!ex) return;
+    const p = ex.params;
+    const newCriteria: CriterionDraft[] = p.criteria.map((c) => ({
+      id: c.id,
+      label: c.label,
+      weight: String(c.weight),
+    }));
+    const ts = Date.now();
+    const newSuppliers: SupplierDraft[] = p.suppliers.map((s, i) => {
+      const scores: Record<string, string> = {};
+      for (const c of newCriteria) {
+        scores[c.id] = String(s.scores[c.id] ?? 5);
+      }
+      return { id: `fornecedor-${ts}-${i}`, name: s.name, segment: s.segment ?? '', scores };
+    });
+    setCriteria(newCriteria);
+    setSuppliers(newSuppliers);
+    setScorecardName(p.scorecardName);
+    setPeriod(p.period ?? '');
+    setNotes(p.notes ?? '');
+    setStrategicThreshold(String(p.thresholds.strategic));
+    setDevelopmentThreshold(String(p.thresholds.development));
+    toast.success('Exemplo carregado — ajuste e gere o scorecard');
+  }
+
   // ── Validation ────────────────────────────────────────────────────────────
 
   const validCriteria = criteria.filter((c) => c.label.trim().length > 0);
@@ -376,10 +404,15 @@ export function ScorecardForm({ onSubmit }: { onSubmit: (v: ScorecardFormValues)
               )
             </span>
           </label>
-          <Button type="button" size="sm" onClick={addCriterion}>
-            <Plus className="h-3.5 w-3.5 mr-1" />
-            Adicionar critério
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button type="button" variant="outline" size="sm" onClick={loadExample}>
+              Carregar exemplo
+            </Button>
+            <Button type="button" size="sm" onClick={addCriterion}>
+              <Plus className="h-3.5 w-3.5 mr-1" />
+              Adicionar critério
+            </Button>
+          </div>
         </div>
 
         <div className="rounded-md border border-border overflow-x-auto">

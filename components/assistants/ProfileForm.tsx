@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { Upload, Loader2, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PROFILE_EXAMPLES } from '@/lib/assistants/examples';
 import type {
   PartialProfile,
   ProfileParams,
@@ -114,6 +115,13 @@ export function ProfileForm({
       setStakeholders(p.stakeholders);
     if (p.prioridadeEstrategica) setPrioridadeEstrategica(p.prioridadeEstrategica);
     if (p.observacoes) setObservacoes(p.observacoes);
+  }
+
+  function loadExample() {
+    const ex = PROFILE_EXAMPLES[0];
+    if (!ex) return;
+    applyExtracted(ex.params);
+    toast.success('Exemplo carregado — ajuste e gere o perfil');
   }
 
   async function handleExtract(file: File) {
@@ -633,9 +641,14 @@ export function ProfileForm({
         <p className="text-[11px] text-muted-foreground">
           Requisitos técnicos e restrições regulatórias são preservados literalmente no documento gerado (campos audit-críticos).
         </p>
-        <Button type="submit" disabled={!valid()}>
-          Gerar Perfil
-        </Button>
+        <div className="flex gap-2">
+          <Button type="button" variant="outline" size="sm" onClick={loadExample}>
+            Carregar exemplo
+          </Button>
+          <Button type="submit" disabled={!valid()}>
+            Gerar Perfil
+          </Button>
+        </div>
       </div>
     </form>
   );

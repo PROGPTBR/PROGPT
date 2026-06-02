@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { UseProfilePicker } from './UseProfilePicker';
+import { RFP_EXAMPLES } from '@/lib/assistants/examples';
 import type { ProfileParams } from '@/lib/assistants/types';
 
 // Form values match RfpRequestSchema in lib/assistants/types.ts.
@@ -109,6 +110,23 @@ export function RfpForm({ onSubmit }: { onSubmit: (v: RfpFormValues) => void }) 
     }));
   }
 
+  function loadExample() {
+    const ex = RFP_EXAMPLES[0];
+    if (!ex) return;
+    const p = ex.params;
+    setValues((v) => ({
+      ...v,
+      client: p.client,
+      scope: p.scope,
+      category: p.category,
+      deadline: p.deadline,
+      budget: p.budget,
+      criteria: [...p.criteria],
+      notes: p.notes ?? '',
+    }));
+    toast.success('Exemplo carregado — ajuste e gere');
+  }
+
   function toggleCriterion(c: string) {
     setValues((v) => ({
       ...v,
@@ -134,7 +152,10 @@ export function RfpForm({ onSubmit }: { onSubmit: (v: RfpFormValues) => void }) 
         if (valid) onSubmit(values);
       }}
     >
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
+        <Button type="button" variant="outline" size="sm" onClick={loadExample}>
+          Carregar exemplo
+        </Button>
         <UseProfilePicker onProfileSelected={handleProfileSelected} />
       </div>
       <div>
