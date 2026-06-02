@@ -149,6 +149,21 @@ describe('Message — assistant tool CTA derived from content', () => {
     expect(any).toBeFalsy();
   });
 
+  it('renders the scorecard card when the content mentions /assistants/scorecard', () => {
+    render(
+      <Message
+        role="assistant"
+        isStreaming={false}
+        content="Para isso, use a ferramenta dedicada em /assistants/scorecard."
+      />,
+    );
+    const card = screen
+      .getAllByRole('link')
+      .find((a) => a.getAttribute('href') === '/assistants/scorecard');
+    expect(card).toBeTruthy();
+    expect(card!.textContent).toMatch(/Scorecard/i);
+  });
+
   it('honors an explicit backend annotation even when content has no path', () => {
     render(
       <Message

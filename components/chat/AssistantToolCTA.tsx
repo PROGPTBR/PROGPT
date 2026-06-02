@@ -8,6 +8,7 @@ import {
   FileText,
   Layers,
   MessageCircle,
+  Star,
   TrendingUp,
   UserCircle2,
 } from 'lucide-react';
@@ -27,6 +28,7 @@ export type AssistantToolType =
   | 'porter'
   | 'abc'
   | 'financial'
+  | 'scorecard'
   | 'profile'
   | 'negotiation';
 
@@ -66,6 +68,12 @@ const META: Record<AssistantToolType, Meta> = {
     blurb:
       'Score 0–100 de saúde financeira a partir de 12 indicadores (liquidez, endividamento, margem, rentabilidade).',
     Icon: Briefcase,
+  },
+  scorecard: {
+    title: 'Supplier Scorecard',
+    blurb:
+      'Pontua e ranqueia seus fornecedores por critérios ponderados (0–100), classifica em estratégico / desenvolvimento / saída e gera ranking + planilha.',
+    Icon: Star,
   },
   profile: {
     title: 'Perfil da Categoria',
@@ -126,6 +134,7 @@ const VALID_TYPES = new Set<AssistantToolType>([
   'porter',
   'abc',
   'financial',
+  'scorecard',
   'profile',
   'negotiation',
 ]);
@@ -145,7 +154,7 @@ export function detectAssistantToolCTA(text: string): AssistantToolType | null {
 // Tipos cujo caminho cru removemos do texto exibido (o card assume o CTA).
 // Inclui `suppliers` (caminho válido) pra não deixar o path feio na frase.
 const STRIP_TYPES =
-  'rfp|kraljic|porter|abc|financial|profile|negotiation|suppliers';
+  'rfp|kraljic|porter|abc|financial|scorecard|profile|negotiation|suppliers';
 // "...em /assistants/rfp" → remove a preposição + o caminho, deixando a frase
 // natural ("use a ferramenta dedicada — ela gera...").
 const STRIP_PREP_RE = new RegExp(

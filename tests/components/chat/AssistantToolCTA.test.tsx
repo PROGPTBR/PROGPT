@@ -20,11 +20,13 @@ describe('detectAssistantToolCTA', () => {
     ).toBe('kraljic');
   });
 
-  it('returns porter/abc/financial/profile', () => {
+  it('returns porter/abc/financial/scorecard/profile/negotiation', () => {
     expect(detectAssistantToolCTA('vá pra /assistants/porter')).toBe('porter');
     expect(detectAssistantToolCTA('use /assistants/abc')).toBe('abc');
     expect(detectAssistantToolCTA('/assistants/financial é a tool')).toBe('financial');
+    expect(detectAssistantToolCTA('use /assistants/scorecard')).toBe('scorecard');
     expect(detectAssistantToolCTA('/assistants/profile')).toBe('profile');
+    expect(detectAssistantToolCTA('/assistants/negotiation')).toBe('negotiation');
   });
 
   it('returns null for suppliers (handled by supplier_search intent CTA)', () => {
@@ -79,6 +81,12 @@ describe('stripAssistantPaths', () => {
   it('strips suppliers too (so the raw path never shows in the text)', () => {
     expect(stripAssistantPaths('busque em /assistants/suppliers hoje')).toBe(
       'busque hoje',
+    );
+  });
+
+  it('strips the scorecard path', () => {
+    expect(stripAssistantPaths('monte em /assistants/scorecard hoje')).toBe(
+      'monte hoje',
     );
   });
 
