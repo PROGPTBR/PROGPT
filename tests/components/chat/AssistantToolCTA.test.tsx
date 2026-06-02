@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   detectAssistantToolCTA,
-  linkifyAssistantPaths,
+  stripAssistantPaths,
 } from '@/components/chat/AssistantToolCTA';
 
 describe('detectAssistantToolCTA', () => {
@@ -57,43 +57,39 @@ describe('detectAssistantToolCTA', () => {
   });
 });
 
-describe('linkifyAssistantPaths', () => {
-  it('turns a bare canonical path into a markdown link', () => {
-    expect(linkifyAssistantPaths('use a ferramenta em /assistants/rfp agora')).toBe(
-      'use a ferramenta em [/assistants/rfp](/assistants/rfp) agora',
+describe('stripAssistantPaths', () => {
+  it('removes "em /assistants/<type>" leaving natural text (the card carries the CTA)', () => {
+    expect(
+      stripAssistantPaths('use a ferramenta dedicada em /assistants/rfp — ela gera'),
+    ).toBe('use a ferramenta dedicada — ela gera');
+  });
+
+  it('removes a bare path and tidies the extra space', () => {
+    expect(stripAssistantPaths('acesse /assistants/kraljic e siga')).toBe(
+      'acesse e siga',
     );
   });
 
-  it('linkifies suppliers too (valid route, unlike the card)', () => {
-    expect(linkifyAssistantPaths('busque em /assistants/suppliers')).toBe(
-      'busque em [/assistants/suppliers](/assistants/suppliers)',
+  it('removes the path before a period without leaving a gap', () => {
+    expect(stripAssistantPaths('use a ferramenta em /assistants/rfp.')).toBe(
+      'use a ferramenta.',
     );
   });
 
-  it('does not double-link an existing markdown link', () => {
-    const s = '[abrir](/assistants/rfp)';
-    expect(linkifyAssistantPaths(s)).toBe(s);
-  });
-
-  it('ignores a path inside inline code', () => {
-    const s = '`/assistants/rfp`';
-    expect(linkifyAssistantPaths(s)).toBe(s);
+  it('strips suppliers too (so the raw path never shows in the text)', () => {
+    expect(stripAssistantPaths('busque em /assistants/suppliers hoje')).toBe(
+      'busque hoje',
+    );
   });
 
   it('leaves unknown/invalid paths untouched', () => {
-    expect(linkifyAssistantPaths('/assistants/foobar')).toBe('/assistants/foobar');
-    expect(linkifyAssistantPaths('/assistants/rfq')).toBe('/assistants/rfq');
-  });
-
-  it('handles multiple distinct occurrences', () => {
-    expect(
-      linkifyAssistantPaths('veja /assistants/rfp e /assistants/kraljic'),
-    ).toBe(
-      'veja [/assistants/rfp](/assistants/rfp) e [/assistants/kraljic](/assistants/kraljic)',
+    expect(stripAssistantPaths('/assistants/foobar fica')).toBe(
+      '/assistants/foobar fica',
     );
+    expect(stripAssistantPaths('/assistants/rfq fica')).toBe('/assistants/rfq fica');
   });
 
   it('returns the input unchanged when there is no path', () => {
-    expect(linkifyAssistantPaths('sem ferramenta aqui')).toBe('sem ferramenta aqui');
+    expect(stripAssistantPaths('sem ferramenta aqui')).toBe('sem ferramenta aqui');
   });
 });

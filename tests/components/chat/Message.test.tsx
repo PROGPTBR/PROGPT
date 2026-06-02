@@ -104,19 +104,23 @@ describe('Message — assistant tool CTA derived from content', () => {
     expect(card!.textContent).toMatch(/RFP|Cota/i);
   });
 
-  it('also makes the inline path itself a clickable link in the markdown', () => {
+  it('strips the raw /assistants path from the rendered text (no ugly path inline)', () => {
     const { container } = render(
       <Message
         role="assistant"
         isStreaming={false}
-        content="abra em /assistants/kraljic para a matriz"
+        content="abra a ferramenta em /assistants/kraljic para a matriz"
       />,
     );
-    // an <a> inside the prose body (the linkified inline mention)
-    const inline = container.querySelector(
-      '.prose a[href="/assistants/kraljic"]',
-    );
-    expect(inline).toBeTruthy();
+    const prose = container.querySelector('.prose');
+    // the raw path is gone from the body...
+    expect(prose?.textContent).not.toMatch(/\/assistants\/kraljic/);
+    expect(prose?.textContent).toMatch(/abra a ferramenta para a matriz/);
+    // ...but the card (with the link) is present
+    const card = screen
+      .getAllByRole('link')
+      .find((a) => a.getAttribute('href') === '/assistants/kraljic');
+    expect(card).toBeTruthy();
   });
 
   it('does NOT render the big card while streaming (the inline link may still appear, the card must not)', () => {

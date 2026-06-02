@@ -12,14 +12,14 @@ import {
   UserCircle2,
 } from 'lucide-react';
 
-// CTA card que aparece embaixo de uma resposta do chat quando o LLM
-// recomenda usar uma das ferramentas dedicadas. Substitui o link
-// "aqui" enterrado no markdown (que ficava pequeno demais pra clicar
-// no mobile e sujeito a hallucination de URL pelo LLM).
+// Card visual + amigável que aparece embaixo de uma resposta do chat quando o
+// LLM recomenda usar uma das ferramentas dedicadas. Substitui o caminho cru
+// "/assistants/rfp" no texto (que ficava feio e não-clicável) por um convite
+// claro: ícone + nome do assistente + o que ele faz + ação "Abrir".
 //
-// Quem detecta o tipo é o backend (/api/chat onFinish faz regex em
-// /assistants/<type> no text final) e anexa annotation. Aqui só
-// renderiza, com label/icon/href estável por tipo.
+// A detecção do tipo é feita a partir do PRÓPRIO conteúdo da resposta
+// (detectAssistantToolCTA) — robusto a reload e independente de annotation —
+// e o caminho cru é removido do texto exibido via stripAssistantPaths.
 
 export type AssistantToolType =
   | 'rfp'
@@ -38,38 +38,45 @@ type Meta = {
 
 const META: Record<AssistantToolType, Meta> = {
   rfp: {
-    title: 'Abrir RFP / Cotação',
-    blurb: 'Form pré-curado + draft em .docx e planilha .xlsx com colunas fiscais BR',
+    title: 'Assistente de RFP / Cotação',
+    blurb:
+      'Você dá o escopo e os critérios; ele monta o documento da RFP em .docx + planilha de cotação (.xlsx) com as colunas fiscais BR, pronto pra enviar.',
     Icon: FileText,
   },
   kraljic: {
-    title: 'Abrir Matriz de Kraljic',
-    blurb: 'Classifica até 200 categorias + plano de ação + bubble chart',
+    title: 'Matriz de Kraljic',
+    blurb:
+      'Classifica suas categorias em estratégico, alavancagem, gargalo e não-crítico — com plano de ação por quadrante e bubble chart.',
     Icon: Layers,
   },
   porter: {
-    title: 'Abrir Análise de Porter',
-    blurb: '5 Forças com intensidade e recomendações por categoria',
+    title: 'Análise das 5 Forças de Porter',
+    blurb:
+      'Avalia a atratividade do mercado fornecedor por categoria: intensidade de cada força + recomendações práticas.',
     Icon: TrendingUp,
   },
   abc: {
-    title: 'Abrir Análise ABC',
-    blurb: 'Curva de Pareto + plano por classe A/B/C',
+    title: 'Curva ABC do Spend',
+    blurb:
+      'Aplica Pareto (80/95%) ao seu gasto e entrega plano de ação por classe A/B/C, com gráfico.',
     Icon: BarChart3,
   },
   financial: {
-    title: 'Abrir Análise Financeira',
-    blurb: 'Score 0–100 da saúde do fornecedor por 12 indicadores',
+    title: 'Análise Financeira do Fornecedor',
+    blurb:
+      'Score 0–100 de saúde financeira a partir de 12 indicadores (liquidez, endividamento, margem, rentabilidade).',
     Icon: Briefcase,
   },
   profile: {
-    title: 'Abrir Perfil da Categoria',
-    blurb: 'Caracterize uma categoria de compra antes de partir pra análise',
+    title: 'Perfil da Categoria',
+    blurb:
+      'Caracteriza uma categoria de compra (15 campos) para servir de contexto aos outros assistentes.',
     Icon: UserCircle2,
   },
   negotiation: {
-    title: 'Abrir Simulador de Negociação',
-    blurb: 'Construtor de estratégia + chat onde a IA personifica o fornecedor; score 0-100 no fim',
+    title: 'Simulador de Negociação',
+    blurb:
+      'Monta a estratégia (BATNA, SWOT, metas SMART) e simula a negociação com a IA no papel do fornecedor — com score no final.',
     Icon: MessageCircle,
   },
 };
@@ -85,20 +92,30 @@ export function AssistantToolCTA({ type }: Props) {
   return (
     <Link
       href={`/assistants/${type}`}
-      className="group mt-4 flex items-start gap-3 rounded-2xl border border-brand/30 bg-brand/5 hover:bg-brand/10 hover:border-brand/50 px-4 py-3 transition-all duration-300 active:scale-[0.99]"
+      aria-label={`Abrir ${title}`}
+      className="group no-underline mt-4 flex items-center gap-4 rounded-2xl border border-brand/30 bg-gradient-to-br from-brand/10 to-brand/[0.04] hover:from-brand/20 hover:to-brand/10 hover:border-brand/60 px-4 py-4 shadow-sm hover:shadow-md transition-all duration-300 active:scale-[0.99]"
     >
-      <Icon
-        className="h-5 w-5 text-brand flex-shrink-0 mt-0.5"
-        aria-hidden="true"
-      />
-      <div className="flex-1 min-w-0 space-y-0.5">
-        <div className="text-sm font-medium text-foreground">{title}</div>
-        <div className="text-xs text-muted-foreground line-clamp-2">{blurb}</div>
+      <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-brand/15 text-brand group-hover:bg-brand/25 transition-colors">
+        <Icon className="h-6 w-6" aria-hidden="true" />
+      </span>
+      <div className="flex-1 min-w-0 space-y-1">
+        <div className="text-[11px] font-semibold uppercase tracking-wide text-brand">
+          Ferramenta dedicada
+        </div>
+        <div className="text-sm font-semibold text-foreground leading-tight">
+          {title}
+        </div>
+        <div className="text-xs text-muted-foreground leading-snug line-clamp-3">
+          {blurb}
+        </div>
       </div>
-      <ArrowRight
-        className="h-4 w-4 text-brand flex-shrink-0 mt-1 group-hover:translate-x-0.5 transition-transform"
-        aria-hidden="true"
-      />
+      <span className="flex items-center gap-1 self-center text-xs font-semibold text-brand flex-shrink-0 whitespace-nowrap">
+        Abrir
+        <ArrowRight
+          className="h-4 w-4 group-hover:translate-x-0.5 transition-transform"
+          aria-hidden="true"
+        />
+      </span>
     </Link>
   );
 }
@@ -113,10 +130,9 @@ const VALID_TYPES = new Set<AssistantToolType>([
   'negotiation',
 ]);
 
-// Server-callable detector. Procura o PRIMEIRO `/assistants/<type>`
-// canônico no texto da resposta do LLM. Retorna null se não achar nada
-// ou se achar `suppliers` (que tem CTA próprio via supplier_search
-// intent, com query pré-preenchida).
+// Server- and client-callable detector. Procura o PRIMEIRO `/assistants/<type>`
+// canônico no texto da resposta do LLM. Retorna null se não achar nada ou se
+// achar `suppliers` (que tem CTA próprio via supplier_search intent).
 export function detectAssistantToolCTA(text: string): AssistantToolType | null {
   const m = text.match(/\/assistants\/([a-z][a-z0-9-]*)\b/i);
   if (!m) return null;
@@ -126,15 +142,24 @@ export function detectAssistantToolCTA(text: string): AssistantToolType | null {
   return candidate;
 }
 
-// Turn bare canonical `/assistants/<type>` mentions in the LLM's markdown into
-// real clickable links — so the inline reference is itself clickable, not just
-// plain text. Includes `suppliers` (a valid route, unlike the card which has
-// its own supplier_search CTA). The negative lookbehind skips paths already
-// inside a markdown link `](...)`, link text `[...]`, inline code `` `...` ``,
-// or a longer path, so it never double-links what the model already wrote.
-const LINKIFY_RE =
-  /(?<![\w\x60/(\[])\/assistants\/(rfp|kraljic|porter|abc|financial|profile|negotiation|suppliers)\b/gi;
+// Tipos cujo caminho cru removemos do texto exibido (o card assume o CTA).
+// Inclui `suppliers` (caminho válido) pra não deixar o path feio na frase.
+const STRIP_TYPES =
+  'rfp|kraljic|porter|abc|financial|profile|negotiation|suppliers';
+// "...em /assistants/rfp" → remove a preposição + o caminho, deixando a frase
+// natural ("use a ferramenta dedicada — ela gera...").
+const STRIP_PREP_RE = new RegExp(
+  `\\s+(?:em|no|na|via|in|at)\\s+/assistants/(?:${STRIP_TYPES})\\b`,
+  'gi',
+);
+// Qualquer caminho cru remanescente.
+const STRIP_BARE_RE = new RegExp(`/assistants/(?:${STRIP_TYPES})\\b`, 'gi');
 
-export function linkifyAssistantPaths(md: string): string {
-  return md.replace(LINKIFY_RE, (match) => `[${match}](${match})`);
+export function stripAssistantPaths(md: string): string {
+  return md
+    .replace(STRIP_PREP_RE, '')
+    .replace(STRIP_BARE_RE, '')
+    .replace(/ {2,}/g, ' ')
+    .replace(/ +([.,;:!?])/g, '$1')
+    .trim();
 }
