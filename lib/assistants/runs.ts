@@ -2,6 +2,7 @@ import { getServerSupabase } from '@/lib/db/supabase';
 import type {
   AssistantRunRow,
   AssistantType,
+  RefineMessage,
   RfpParams,
   KraljicParams,
   PorterParams,
@@ -208,6 +209,26 @@ export async function updateRunScore(
     .eq('id', id);
   if (error) {
     console.warn('[assistants/runs] updateRunScore failed:', error.message);
+    return false;
+  }
+  return true;
+}
+
+// Item 6 do roadmap — persiste o histórico do refine-chat. O cliente envia o
+// histórico completo a cada turno, então gravamos o snapshot inteiro (simples
+// e correto, igual ao transcript da negociação). Fire-and-forget no onFinish:
+// falha de persistência não pode quebrar o streaming do refine.
+export async function updateRunRefineMessages(
+  id: string,
+  messages: RefineMessage[],
+): Promise<boolean> {
+  const sb = getServerSupabase();
+  const { error } = await sb
+    .from('assistant_runs')
+    .update({ refine_messages: messages })
+    .eq('id', id);
+  if (error) {
+    console.warn('[assistants/runs] updateRunRefineMessages failed:', error.message);
     return false;
   }
   return true;

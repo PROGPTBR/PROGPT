@@ -10,7 +10,7 @@ import { rerank } from '@/lib/rag/reranker';
 import { startTrace, flushAsync } from '@/lib/observability/langfuse';
 import { recordApiUsage } from '@/lib/observability/api-usage';
 import { withUser } from '@/lib/observability/user-context';
-import { getRunForOwner } from '@/lib/assistants/runs';
+import { getRunForOwner, updateRunRefineMessages } from '@/lib/assistants/runs';
 import { buildRefineSystemForType } from '@/lib/assistants/refine';
 import type {
   RfpParams,
@@ -160,6 +160,16 @@ async function refineBody(
             env,
           },
         });
+        // Item 6 — persiste o refine-chat (cliente manda histórico completo;
+        // append da resposta do assistant). Fire-and-forget; só grava se a
+        // resposta veio limpa, pra não persistir turno vazio/abortado.
+        if (text.trim().length > 0) {
+          const ts = new Date().toISOString();
+          void updateRunRefineMessages(run.id, [
+            ...parsed.messages.map((m) => ({ role: m.role, content: m.content })),
+            { role: 'assistant' as const, content: text, ts },
+          ]);
+        }
         trace.end({ chars_out: text.length, runId: run.id });
         await flushAsync();
       },

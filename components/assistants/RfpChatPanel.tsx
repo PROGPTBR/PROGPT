@@ -7,11 +7,13 @@ import { toast } from 'sonner';
 import { Send, Sparkles, User as UserIcon, FilePlus2, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-// Sub-projeto 21 — Chat panel for refining a completed RFP.
+// Painel de refino de um run concluído (compartilhado por todos os tipos).
 //
-// In-memory only (not persisted) — refinement is a working conversation,
-// not part of the deliverable. If a future sub-projeto wants history,
-// add a rfp_refinement_messages table keyed by run_id.
+// Item 6 do roadmap — o refine-chat agora É persistido (reverte a decisão
+// in-memory do sub-projeto 21): grava por turno no onFinish da rota
+// /runs/[id]/chat (coluna refine_messages) e hidrata ao montar via GET
+// /runs/[id]/refine-messages. Sobrevive a reload. (O badge "Aplicado" não é
+// persistido — só o texto da conversa.)
 
 type Msg = {
   role: 'user' | 'assistant';
@@ -37,6 +39,26 @@ export function RfpChatPanel({ runId, onRfpUpdated }: Props) {
   const [streaming, setStreaming] = useState(false);
   const [applyingIdx, setApplyingIdx] = useState<number | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
+
+  // Item 6 — hidrata o histórico persistido do refine-chat ao abrir o run.
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch(`/api/assistants/runs/${runId}/refine-messages`);
+        if (!res.ok) return;
+        const data = (await res.json()) as { messages?: Msg[] };
+        if (!cancelled && Array.isArray(data.messages) && data.messages.length > 0) {
+          setMessages(data.messages.map((m) => ({ role: m.role, content: m.content })));
+        }
+      } catch {
+        // não-fatal — começa vazio
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [runId]);
 
   async function applySuggestion(idx: number) {
     const msg = messages[idx];
