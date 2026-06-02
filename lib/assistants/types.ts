@@ -733,6 +733,15 @@ export type AssistantRunRow = {
   strategy?: NegotiationStrategyResult | null;
   transcript?: NegotiationTranscriptTurn[] | null;
   score?: NegotiationScore | null;
+  // Item 6 do roadmap — histórico persistido do refine-chat (qualquer tipo).
+  refine_messages?: RefineMessage[] | null;
+};
+
+// Uma mensagem do refine-chat persistido (item 6 do roadmap).
+export type RefineMessage = {
+  role: 'user' | 'assistant';
+  content: string;
+  ts?: string;
 };
 
 // ── Supplier Scorecard (Strategic Sourcing step 8) ───────────────────────
