@@ -225,10 +225,19 @@ describe('rag prompt-builder', () => {
     expect(SYSTEM_PROMPT).toMatch(/tem prioridade sobre esta|prioridade/i);
   });
 
-  it('redirect rule keeps theoretical questions in the chat (not bounced to tools)', async () => {
+  it('redirect rule fires even for theoretical/how-to questions when the topic maps to a tool', async () => {
     const { SYSTEM_PROMPT } = await import('@/lib/rag/prompt-builder');
-    expect(SYSTEM_PROMPT).toMatch(/puramente te[óo]rica|teórica/i);
-    expect(SYSTEM_PROMPT).toMatch(/não substitui o ensino te[óo]rico|responda normalmente no chat/i);
+    // theory stays in the answer, but the tool is still indicated at the end
+    expect(SYSTEM_PROMPT).toMatch(/mesmo que.*(te[óo]rica|como faço)/i);
+    expect(SYSTEM_PROMPT).toMatch(/SEMPRE.*(final|fechamento)/i);
+    // only skip when NO tool matches the topic
+    expect(SYSTEM_PROMPT).toMatch(/não corresponde a nenhuma|fora de procurement/i);
+  });
+
+  it('lists the scorecard tool + its trigger cues (sub-projeto 31 was missing from the chat CTA)', async () => {
+    const { SYSTEM_PROMPT } = await import('@/lib/rag/prompt-builder');
+    expect(SYSTEM_PROMPT).toMatch(/\/assistants\/scorecard/);
+    expect(SYSTEM_PROMPT).toMatch(/scorecard de fornecedor|supplier scorecard/i);
   });
 
   // ── missing-referenced-input + refusal reframing ─────────────────────────
