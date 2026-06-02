@@ -5,8 +5,7 @@ import { toast } from 'sonner';
 import { Upload, Loader2, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import type { AbcItem, ProfileParams } from '@/lib/assistants/types';
-import { UseProfilePicker } from './UseProfilePicker';
+import type { AbcItem } from '@/lib/assistants/types';
 
 // Sub-projeto 31 — Form da análise ABC.
 //
@@ -59,15 +58,7 @@ export function AbcForm({
   const [loadingTemplates, setLoadingTemplates] = useState(true);
   const [importing, setImporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [perfilId, setPerfilId] = useState<string | undefined>(undefined);
-
-  function handleProfileSelected(id: string, p: ProfileParams) {
-    if (analysisName.trim().length === 0)
-      setAnalysisName(`Análise ABC — ${p.nomeCategoria}`);
-    if (notes.trim().length === 0)
-      setNotes(`Categoria de compra: ${p.nomeCategoria}. ${p.descricao}`);
-    setPerfilId(id);
-  }
+  const [perfilId] = useState<string | undefined>(undefined);
 
   const fetchTemplates = useCallback(async () => {
     setLoadingTemplates(true);
@@ -180,9 +171,6 @@ export function AbcForm({
       onSubmit={handleSubmit}
       className="space-y-6 rounded-md border border-border bg-card p-6 max-w-5xl"
     >
-      <div className="flex justify-end">
-        <UseProfilePicker onProfileSelected={handleProfileSelected} />
-      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="md:col-span-2">
           <label className="text-xs font-medium block mb-1">Template</label>
