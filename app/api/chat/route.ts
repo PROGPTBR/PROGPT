@@ -171,6 +171,12 @@ export async function POST(req: Request): Promise<Response> {
 
     const result = streamText({
       model: openai(getOpenAIModel('generation')),
+      // Sem temperatura explícita o default da OpenAI é 1.0 — alto demais pra
+      // um assistente RAG: o modelo às vezes IGNORA o contexto recuperado e
+      // responde "Não tenho fonte" mesmo com os chunks certos injetados (mesma
+      // pergunta → respostas diferentes). 0.3 mantém fidelidade ao contexto +
+      // consistência, sem ficar robótico.
+      temperature: 0.3,
       system: rag.system,
       messages: llmMessages,
       onFinish: async ({ text, usage, finishReason, providerMetadata }) => {

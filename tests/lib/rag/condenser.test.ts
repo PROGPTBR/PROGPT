@@ -7,19 +7,15 @@ beforeEach(() => {
 });
 
 function mockOpenAI(returns: { text?: string; throws?: Error }) {
+  const create = vi.fn().mockImplementation(async () => {
+    if (returns.throws) throw returns.throws;
+    return { choices: [{ message: { content: returns.text ?? '' } }] };
+  });
   vi.doMock('@/lib/llm/openai', () => ({
-    getOpenAI: () => ({
-      chat: {
-        completions: {
-          create: vi.fn().mockImplementation(async () => {
-            if (returns.throws) throw returns.throws;
-            return { choices: [{ message: { content: returns.text ?? '' } }] };
-          }),
-        },
-      },
-    }),
+    getOpenAI: () => ({ chat: { completions: { create } } }),
     getOpenAIModel: () => 'gpt-4o-mini',
   }));
+  return { create };
 }
 
 describe('rag condenser', () => {
@@ -72,6 +68,18 @@ describe('rag condenser', () => {
     ];
     const result = await condenseQuery(messages);
     expect(result).toBe('c');
+  });
+
+  it('calls OpenAI with temperature 0 (deterministic query rewrite)', async () => {
+    const { create } = mockOpenAI({ text: 'pergunta autônoma' });
+    const { condenseQuery } = await import('@/lib/rag/condenser');
+    await condenseQuery([
+      { role: 'user', content: 'a' },
+      { role: 'assistant', content: 'b' },
+      { role: 'user', content: 'c' },
+    ]);
+    const callBody = create.mock.calls[0]?.[0] as { temperature?: number };
+    expect(callBody.temperature).toBe(0);
   });
 
   it('strips wrapping quotes from the rewritten output', async () => {

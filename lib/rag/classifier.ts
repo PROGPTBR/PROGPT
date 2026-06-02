@@ -56,6 +56,12 @@ export async function classify(query: string): Promise<Classification> {
         { role: 'system', content: SYSTEM_PROMPT },
         { role: 'user', content: `Pergunta:\n${query}` },
       ],
+      // Roteamento DEVE ser determinístico. Sem isto, o default 1.0 fazia a
+      // MESMA pergunta cair às vezes em "smalltalk" (needsRetrieval=false) →
+      // runRag pulava o retrieval → prompt sem contexto → "Não tenho fonte".
+      // Era a causa da recusa intermitente (parecia "um usuário sim, outro não",
+      // mas era só o dado do classificador variando por request).
+      temperature: 0,
       response_format: { type: 'json_object' },
       max_completion_tokens: 256,
     });

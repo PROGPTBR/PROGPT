@@ -160,6 +160,21 @@ describe('rag classifier', () => {
     expect(sys).toMatch(/META/);
   });
 
+  it('calls the model with temperature 0 (deterministic routing — fixes intermittent smalltalk misroute)', async () => {
+    const { create } = mockOpenAI({
+      text: JSON.stringify({
+        theory: null,
+        intent: 'definition',
+        language: 'pt',
+        needsRetrieval: true,
+      }),
+    });
+    const { classify } = await import('@/lib/rag/classifier');
+    await classify('qual o impacto da reforma tributária na indústria química?');
+    const callBody = create.mock.calls[0]?.[0] as { temperature?: number };
+    expect(callBody.temperature).toBe(0);
+  });
+
   it('accepts theory as null and intent as application', async () => {
     mockOpenAI({
       text: JSON.stringify({

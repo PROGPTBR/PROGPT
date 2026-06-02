@@ -229,6 +229,9 @@ export function buildAssistantHandler<
     try {
       const result = streamText({
         model: openai(getOpenAIModel('generation')),
+        // Default 1.0 é alto demais e deixa o entregável inconsistente entre
+        // execuções. 0.4 mantém alguma variação narrativa com consistência.
+        temperature: 0.4,
         system,
         messages: [{ role: 'user', content: userPrompt }],
         onFinish: async ({ text, usage, finishReason, providerMetadata }) => {

@@ -133,6 +133,9 @@ async function refineBody(
   try {
     const result = streamText({
       model: openai(getOpenAIModel('generation')),
+      // Mesmo motivo do /api/chat: baixa temperatura pra o refino ficar fiel ao
+      // artefato + base e não recusar de forma inconsistente (default 1.0).
+      temperature: 0.3,
       system,
       messages: parsed.messages,
       onFinish: async ({ text, usage, finishReason, providerMetadata }) => {
