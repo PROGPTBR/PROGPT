@@ -40,6 +40,10 @@ export async function condenseQuery(messages: ChatMessage[]): Promise<string> {
         { role: 'system', content: SYSTEM_PROMPT },
         { role: 'user', content: formatHistory(messages) },
       ],
+      // Reescrita de query é determinística — default 1.0 podia gerar uma
+      // pergunta autônoma ruim que não recupera nada (mesma classe de bug do
+      // classificador, no caminho multi-turno).
+      temperature: 0,
       max_completion_tokens: 256,
     });
     const text = (res.choices[0]?.message?.content ?? '').trim();
