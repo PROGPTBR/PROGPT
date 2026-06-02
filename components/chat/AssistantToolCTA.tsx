@@ -125,3 +125,16 @@ export function detectAssistantToolCTA(text: string): AssistantToolType | null {
   if (!VALID_TYPES.has(candidate)) return null;
   return candidate;
 }
+
+// Turn bare canonical `/assistants/<type>` mentions in the LLM's markdown into
+// real clickable links — so the inline reference is itself clickable, not just
+// plain text. Includes `suppliers` (a valid route, unlike the card which has
+// its own supplier_search CTA). The negative lookbehind skips paths already
+// inside a markdown link `](...)`, link text `[...]`, inline code `` `...` ``,
+// or a longer path, so it never double-links what the model already wrote.
+const LINKIFY_RE =
+  /(?<![\w\x60/(\[])\/assistants\/(rfp|kraljic|porter|abc|financial|profile|negotiation|suppliers)\b/gi;
+
+export function linkifyAssistantPaths(md: string): string {
+  return md.replace(LINKIFY_RE, (match) => `[${match}](${match})`);
+}

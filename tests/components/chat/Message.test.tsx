@@ -1,7 +1,9 @@
 // @vitest-environment jsdom
-import { describe, expect, it } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, expect, it, afterEach } from 'vitest';
+import { render, screen, cleanup } from '@testing-library/react';
 import { Message } from '@/components/chat/Message';
+
+afterEach(() => cleanup());
 
 describe('Message', () => {
   it('renders user message as plain text', () => {
@@ -83,5 +85,78 @@ describe('Message', () => {
       />,
     );
     expect(container.querySelectorAll('button').length).toBe(0);
+  });
+});
+
+describe('Message — assistant tool CTA derived from content', () => {
+  it('renders the CTA card (link to the tool) when the content mentions a path, even with NO backend annotation', () => {
+    render(
+      <Message
+        role="assistant"
+        isStreaming={false}
+        content="Use a ferramenta dedicada em /assistants/rfp — ela gera um .docx."
+      />,
+    );
+    const card = screen
+      .getAllByRole('link')
+      .find((a) => a.getAttribute('href') === '/assistants/rfp');
+    expect(card).toBeTruthy();
+    expect(card!.textContent).toMatch(/RFP|Cota/i);
+  });
+
+  it('also makes the inline path itself a clickable link in the markdown', () => {
+    const { container } = render(
+      <Message
+        role="assistant"
+        isStreaming={false}
+        content="abra em /assistants/kraljic para a matriz"
+      />,
+    );
+    // an <a> inside the prose body (the linkified inline mention)
+    const inline = container.querySelector(
+      '.prose a[href="/assistants/kraljic"]',
+    );
+    expect(inline).toBeTruthy();
+  });
+
+  it('does NOT render the big card while streaming (the inline link may still appear, the card must not)', () => {
+    render(
+      <Message
+        role="assistant"
+        isStreaming
+        content="Use /assistants/porter para as 5 forças."
+      />,
+    );
+    // The card carries a distinctive title ("Abrir Análise de Porter").
+    expect(screen.queryByText(/Abrir Análise de Porter/i)).toBeNull();
+  });
+
+  it('renders no CTA when content has no assistant path', () => {
+    render(
+      <Message
+        role="assistant"
+        isStreaming={false}
+        content="Kraljic foi publicado na HBR em 1983."
+      />,
+    );
+    const any = screen
+      .queryAllByRole('link')
+      .find((a) => a.getAttribute('href')?.startsWith('/assistants/'));
+    expect(any).toBeFalsy();
+  });
+
+  it('honors an explicit backend annotation even when content has no path', () => {
+    render(
+      <Message
+        role="assistant"
+        isStreaming={false}
+        content="texto sem caminho"
+        assistantCTA="financial"
+      />,
+    );
+    const card = screen
+      .getAllByRole('link')
+      .find((a) => a.getAttribute('href') === '/assistants/financial');
+    expect(card).toBeTruthy();
   });
 });
