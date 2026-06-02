@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { FolderOpen, ArrowRight, Sparkles, Phone } from 'lucide-react';
 import { Composer, type ChatAttachment } from './Composer';
 import { AssistantLauncher } from './AssistantLauncher';
+import { OnboardingQuickStartCard } from './OnboardingQuickStartCard';
 
 // 2B Supply contact CTA — surfaces in the empty state as a "got value
 // from this? talk to us" handoff. tel: link for click-to-call on mobile;
@@ -104,6 +105,10 @@ export function EmptyState({
           </div>
           <AssistantLauncher variant="hero" />
         </div>
+
+        {/* Onboarding quick-win — só pra quem ainda não dispensou (1ª visita).
+            Leva aos 3 caminhos de "aha" mais rápidos. */}
+        <OnboardingQuickStartCard />
 
         {/* 2B Supply contact CTA — handoff to a real human when the IA
             doesn't cover it (or for sales/onboarding). Tel link works
