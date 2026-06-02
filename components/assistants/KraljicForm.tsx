@@ -8,8 +8,6 @@ import { Input } from '@/components/ui/input';
 import { KraljicItemTable, EMPTY_ITEM, type ItemDraft } from './KraljicItemTable';
 import { KraljicImportDialog } from './KraljicImportDialog';
 import { KraljicScoringAssistant } from './KraljicScoringAssistant';
-import { UseProfilePicker } from './UseProfilePicker';
-import type { ProfileParams } from '@/lib/assistants/types';
 
 export type KraljicFormValues = {
   templateId: string;
@@ -71,23 +69,6 @@ export function KraljicForm({ onSubmit }: { onSubmit: (v: KraljicFormValues) => 
     values.portfolioName.trim().length > 0 &&
     validItems.length >= 2;
 
-  function handleProfileSelected(perfilId: string, p: ProfileParams) {
-    setValues((v) => ({
-      ...v,
-      portfolioName: v.portfolioName.trim().length > 0 ? v.portfolioName : p.nomeCategoria,
-      items:
-        v.items.filter((it) => it.name.trim().length > 0).length > 0
-          ? v.items
-          : p.subSegmentos.slice(0, 5).map((seg) => ({
-              ...EMPTY_ITEM,
-              name: seg,
-              segment: seg,
-              category: p.nomeCategoria,
-            })),
-      perfilId,
-    }));
-  }
-
   return (
     <form
       className="space-y-5 max-w-5xl"
@@ -96,9 +77,6 @@ export function KraljicForm({ onSubmit }: { onSubmit: (v: KraljicFormValues) => 
         if (valid) onSubmit({ ...values, items: validItems });
       }}
     >
-      <div className="flex justify-end">
-        <UseProfilePicker onProfileSelected={handleProfileSelected} />
-      </div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div>
           <label className="text-xs font-medium block mb-1">
