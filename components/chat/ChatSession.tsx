@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useRef, type FormEvent } from 'react';
 import { useChat, type Message as AIMessage } from 'ai/react';
 import { toast } from 'sonner';
 import type { ChatMessage } from '@/lib/rag/types';
@@ -8,7 +8,6 @@ import type { StoredSession } from '@/lib/chat-storage';
 import { EmptyState } from './EmptyState';
 import { MessageList } from './MessageList';
 import { Composer, type ChatAttachment } from './Composer';
-import { ActiveProfileChip } from './ActiveProfileChip';
 import { AssistantLauncher } from './AssistantLauncher';
 
 type Props = {
@@ -16,8 +15,6 @@ type Props = {
   initialRatings?: Map<string, 'up' | 'down'>;
   onMessagesChange: (messages: ChatMessage[]) => void;
   onTitleChange?: (title: string) => void;
-  // Sub-projeto 34 — Perfil ativo no chat.
-  onActivePerfilChange?: (perfilId: string | null) => void;
 };
 
 function toChatMessages(messages: AIMessage[]): ChatMessage[] {
@@ -68,7 +65,6 @@ export function ChatSession({
   initialRatings,
   onMessagesChange,
   onTitleChange,
-  onActivePerfilChange,
 }: Props) {
   // Sub-projeto 34 — perfilId is read at SUBMIT time (not at hook init)
   // because useChat captures `body` once. Pass it via the per-call
@@ -142,13 +138,6 @@ export function ChatSession({
     void append({ role: 'user', content: wrapped }, { body: perfilBody() });
   };
 
-  const profileChip: ReactNode = onActivePerfilChange ? (
-    <ActiveProfileChip
-      activePerfilId={session.activePerfilId ?? null}
-      onChange={onActivePerfilChange}
-    />
-  ) : null;
-
   return (
     <>
       {messages.length === 0 ? (
@@ -158,7 +147,6 @@ export function ChatSession({
           onSubmit={onComposerSubmit}
           isLoading={isLoading}
           onStop={stop}
-          profileChip={profileChip}
         />
       ) : (
         <>
@@ -174,7 +162,6 @@ export function ChatSession({
             initialRatings={initialRatings}
             onPickFollowup={onPickFollowup}
           />
-          {profileChip}
           <AssistantLauncher variant="compact" />
           <Composer
             input={input}

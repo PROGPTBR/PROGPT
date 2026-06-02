@@ -9,7 +9,6 @@ import {
   Grid2x2,
   Layers,
   MessageCircle,
-  User,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -28,7 +27,6 @@ type LauncherEntry = {
 };
 
 const ENTRIES: LauncherEntry[] = [
-  { href: '/assistants/profile', label: 'Perfil', Icon: User },
   { href: '/assistants/abc', label: 'ABC', Icon: BarChart3 },
   { href: '/assistants/porter', label: 'Porter', Icon: Layers },
   { href: '/assistants/suppliers', label: 'Fornecedores', Icon: Factory },

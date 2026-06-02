@@ -1,8 +1,7 @@
 'use client';
 
 import { type FormEvent } from 'react';
-import Link from 'next/link';
-import { FolderOpen, ArrowRight, Sparkles, Phone } from 'lucide-react';
+import { ArrowRight, Sparkles, Phone } from 'lucide-react';
 import { Composer, type ChatAttachment } from './Composer';
 import { AssistantLauncher } from './AssistantLauncher';
 import { OnboardingQuickStartCard } from './OnboardingQuickStartCard';
@@ -22,8 +21,6 @@ type Props = {
   onSubmit: (e?: FormEvent, attachment?: ChatAttachment) => void;
   isLoading: boolean;
   onStop: () => void;
-  /** Optional ActiveProfileChip slot rendered below the composer. */
-  profileChip?: React.ReactNode;
 };
 
 export function EmptyState({
@@ -32,7 +29,6 @@ export function EmptyState({
   onSubmit,
   isLoading,
   onStop,
-  profileChip,
 }: Props) {
   return (
     <div className="flex-1 flex flex-col items-center justify-center px-6 py-8 overflow-y-auto">
@@ -68,32 +64,6 @@ export function EmptyState({
             variant="hero"
             placeholder="Pergunte alguma coisa…"
           />
-        </div>
-
-        {/* Active profile chip + personalize CTA — paired on the same row.
-            The chip picks an existing Perfil for this session; the link
-            opens the creation flow with a brief explanation of what
-            Perfis do for the chat. */}
-        <div className="w-full flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
-          {profileChip}
-          <Link
-            href="/assistants/profile"
-            className="group inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <FolderOpen className="h-3.5 w-3.5 flex-shrink-0" aria-hidden="true" />
-            <span>
-              Personalize criando um{' '}
-              <span className="text-brand font-medium">Perfil da Categoria</span>
-              <span className="text-muted-foreground/80">
-                {' '}
-                — direciona as respostas para o seu contexto
-              </span>
-            </span>
-            <ArrowRight
-              className="h-3 w-3 flex-shrink-0 group-hover:translate-x-0.5 transition-transform"
-              aria-hidden="true"
-            />
-          </Link>
         </div>
 
         {/* Assistant launcher — destaque dos 8 assistentes (feedback de
