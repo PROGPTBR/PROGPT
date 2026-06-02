@@ -36,14 +36,12 @@ describe('EmptyState', () => {
     expect(heading.textContent).toMatch(/IA de Suprimentos.*Qual problema/i);
   });
 
-  it('renders the Perfil da Categoria link', () => {
+  it('does NOT render the Perfil da Categoria link (removed from chat — confundia usuários)', () => {
     renderState();
-    const link = screen.getByRole('link', { name: /Perfil da Categoria/i });
-    expect(link).toBeTruthy();
-    expect(link.getAttribute('href')).toBe('/assistants/profile');
+    expect(screen.queryByRole('link', { name: /Perfil da Categoria/i })).toBeNull();
   });
 
-  it('renders the assistant launcher with all 8 assistants', () => {
+  it('renders the assistant launcher with the 7 assistants (Perfil removido do chat)', () => {
     renderState();
     // Launcher chips são <a> com href pra /assistants/*
     const launcherNav = screen.getByRole('navigation', {
@@ -51,7 +49,6 @@ describe('EmptyState', () => {
     });
     expect(launcherNav).toBeTruthy();
     for (const slug of [
-      'profile',
       'abc',
       'porter',
       'suppliers',
@@ -63,5 +60,7 @@ describe('EmptyState', () => {
       const link = launcherNav.querySelector(`a[href="/assistants/${slug}"]`);
       expect(link).toBeTruthy();
     }
+    // Perfil foi removido do chat (continua no hub /assistants)
+    expect(launcherNav.querySelector('a[href="/assistants/profile"]')).toBeNull();
   });
 });
