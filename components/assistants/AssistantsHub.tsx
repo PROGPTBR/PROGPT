@@ -11,18 +11,20 @@ import { RfpDocumentPreview } from './previews/RfpDocumentPreview';
 import { PorterForcesPreview } from './previews/PorterForcesPreview';
 import { FinancialScorePreview } from './previews/FinancialScorePreview';
 import { AbcCurvePreview } from './previews/AbcCurvePreview';
-import { ProfileDocPreview } from './previews/ProfileDocPreview';
 import { SuppliersPreview } from './previews/SuppliersPreview';
 import { NegotiationPreview } from './previews/NegotiationPreview';
 import { ScorecardPreview } from './previews/ScorecardPreview';
 
 // Hub layout — Spotlight + Roadmap.
 //
-// Section 1: header + macro progress bar (X/8 ativos)
-// Section 2: 2 large spotlight cards for available assistants, each with
+// Section 1: header + macro progress bar (X/7 ativos)
+// Section 2: large spotlight cards for available assistants, each with
 //            a stylized SVG preview of the output
-// Section 3: compact 8-node roadmap strip (horizontal desktop, vertical
+// Section 3: compact 7-node roadmap strip (horizontal desktop, vertical
 //            mobile) showing the full sourcing pipeline + status
+//
+// Perfil da Categoria foi removido do hub + chat (confundia usuários); a
+// página /assistants/profile e o "Iniciar de um Perfil" no RFP seguem ativos.
 
 type SpotlightAssistant = {
   step: number;
@@ -37,20 +39,6 @@ type SpotlightAssistant = {
 const SPOTLIGHTS: SpotlightAssistant[] = [
   {
     step: 1,
-    stepCategory: 'Perfil',
-    href: '/assistants/profile',
-    title: 'Perfil da Categoria',
-    short:
-      'Caracterize uma categoria de compra antes de ir pra análise. 15 campos estruturados que alimentam os próximos passos.',
-    bullets: [
-      'Upload de PDF/DOCX pré-preenche o form',
-      'Botão "Iniciar de um Perfil" nos outros assistentes',
-      'Markdown + .docx + chat de refinamento',
-    ],
-    Preview: ProfileDocPreview,
-  },
-  {
-    step: 2,
     stepCategory: 'Análise',
     href: '/assistants/abc',
     title: 'Análise ABC',
@@ -64,7 +52,7 @@ const SPOTLIGHTS: SpotlightAssistant[] = [
     Preview: AbcCurvePreview,
   },
   {
-    step: 3,
+    step: 2,
     stepCategory: 'Mercado',
     href: '/assistants/porter',
     title: 'Porter',
@@ -78,7 +66,7 @@ const SPOTLIGHTS: SpotlightAssistant[] = [
     Preview: PorterForcesPreview,
   },
   {
-    step: 3,
+    step: 2,
     stepCategory: 'Mercado',
     href: '/assistants/suppliers',
     title: 'Busca de Fornecedores',
@@ -92,7 +80,7 @@ const SPOTLIGHTS: SpotlightAssistant[] = [
     Preview: SuppliersPreview,
   },
   {
-    step: 4,
+    step: 3,
     stepCategory: 'Estratégia',
     href: '/assistants/kraljic',
     title: 'Kraljic',
@@ -106,7 +94,7 @@ const SPOTLIGHTS: SpotlightAssistant[] = [
     Preview: KraljicMatrixPreview,
   },
   {
-    step: 5,
+    step: 4,
     stepCategory: 'Engajamento',
     href: '/assistants/rfp',
     title: 'RFP',
@@ -120,7 +108,7 @@ const SPOTLIGHTS: SpotlightAssistant[] = [
     Preview: RfpDocumentPreview,
   },
   {
-    step: 6,
+    step: 5,
     stepCategory: 'Negociação',
     href: '/assistants/negotiation',
     title: 'Simulador de Negociação',
@@ -134,7 +122,7 @@ const SPOTLIGHTS: SpotlightAssistant[] = [
     Preview: NegotiationPreview,
   },
   {
-    step: 7,
+    step: 6,
     stepCategory: 'Contrato',
     href: '/assistants/financial',
     title: 'Análise Financeira',
@@ -148,7 +136,7 @@ const SPOTLIGHTS: SpotlightAssistant[] = [
     Preview: FinancialScorePreview,
   },
   {
-    step: 8,
+    step: 7,
     stepCategory: 'Gestão de fornecedores',
     href: '/assistants/scorecard',
     title: 'Supplier Scorecard',
@@ -172,14 +160,13 @@ type RoadmapStep = {
 };
 
 const STEPS: RoadmapStep[] = [
-  { n: 1, shortLabel: 'Perfil', fullName: 'Perfil da Categoria', available: true, href: '/assistants/profile' },
-  { n: 2, shortLabel: 'Análise', fullName: 'Análise da Categoria', available: true, href: '/assistants/abc' },
-  { n: 3, shortLabel: 'Mercado', fullName: 'Visão do Mercado Fornecedor', available: true, href: '/assistants/porter' },
-  { n: 4, shortLabel: 'Estratégia', fullName: 'Estratégia de Sourcing', available: true, href: '/assistants/kraljic' },
-  { n: 5, shortLabel: 'Engajamento', fullName: 'Engajamento dos Fornecedores', available: true, href: '/assistants/rfp' },
-  { n: 6, shortLabel: 'Negociação', fullName: 'Negociação', available: true, href: '/assistants/negotiation' },
-  { n: 7, shortLabel: 'Contrato', fullName: 'Implementação do Contrato', available: true, href: '/assistants/financial' },
-  { n: 8, shortLabel: 'Controle', fullName: 'Controle e Melhoria Contínua', available: true, href: '/assistants/scorecard' },
+  { n: 1, shortLabel: 'Análise', fullName: 'Análise da Categoria', available: true, href: '/assistants/abc' },
+  { n: 2, shortLabel: 'Mercado', fullName: 'Visão do Mercado Fornecedor', available: true, href: '/assistants/porter' },
+  { n: 3, shortLabel: 'Estratégia', fullName: 'Estratégia de Sourcing', available: true, href: '/assistants/kraljic' },
+  { n: 4, shortLabel: 'Engajamento', fullName: 'Engajamento dos Fornecedores', available: true, href: '/assistants/rfp' },
+  { n: 5, shortLabel: 'Negociação', fullName: 'Negociação', available: true, href: '/assistants/negotiation' },
+  { n: 6, shortLabel: 'Contrato', fullName: 'Implementação do Contrato', available: true, href: '/assistants/financial' },
+  { n: 7, shortLabel: 'Controle', fullName: 'Controle e Melhoria Contínua', available: true, href: '/assistants/scorecard' },
 ];
 
 const ACTIVE_COUNT = STEPS.filter((s) => s.available).length;
@@ -292,7 +279,7 @@ export function AssistantsHub() {
       </section>
 
       {/* ───── Section 3: Roadmap strip ───── */}
-      <section aria-label="Roadmap dos 8 passos">
+      <section aria-label="Roadmap dos 7 passos">
         <div className="text-[10px] font-medium uppercase tracking-wider text-gray-500 mb-5">
           No roadmap
         </div>
@@ -305,7 +292,7 @@ export function AssistantsHub() {
             className="absolute top-5 left-[5%] right-[5%] h-px bg-white/10"
           />
 
-          <ol className="relative grid grid-cols-8 gap-1">
+          <ol className="relative grid grid-cols-7 gap-1">
             {STEPS.map((s) => {
               const tooltip = s.available
                 ? `Disponível — ${s.fullName}`
