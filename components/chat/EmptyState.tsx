@@ -1,7 +1,8 @@
 'use client';
 
 import { type FormEvent } from 'react';
-import { ArrowRight, Sparkles, Phone } from 'lucide-react';
+import Link from 'next/link';
+import { ArrowRight, Sparkles, Phone, BookOpen } from 'lucide-react';
 import { Composer, type ChatAttachment } from './Composer';
 import { AssistantLauncher } from './AssistantLauncher';
 import { OnboardingQuickStartCard } from './OnboardingQuickStartCard';
@@ -75,6 +76,20 @@ export function EmptyState({
           </div>
           <AssistantLauncher variant="hero" />
         </div>
+
+        {/* Descobrir — Biblioteca de Prompts (sub-projeto 32). Caminho de
+            descoberta pros +100 prompts prontos de procurement. */}
+        <Link
+          href="/prompts"
+          className="group inline-flex flex-wrap items-center justify-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <BookOpen className="h-4 w-4 text-brand" aria-hidden="true" />
+          Explore <span className="text-foreground font-medium">+100 prompts</span> prontos de procurement
+          <ArrowRight
+            className="h-3.5 w-3.5 text-brand group-hover:translate-x-0.5 transition-transform"
+            aria-hidden="true"
+          />
+        </Link>
 
         {/* Onboarding quick-win — só pra quem ainda não dispensou (1ª visita).
             Leva aos 3 caminhos de "aha" mais rápidos. */}

@@ -11,6 +11,7 @@ import {
   DollarSign,
   FileCode,
   TrendingUp,
+  BookOpen,
   ArrowLeft,
 } from 'lucide-react';
 import { BrandLogo } from '@/components/brand/BrandLogo';
@@ -18,6 +19,7 @@ import { BrandLogo } from '@/components/brand/BrandLogo';
 const ITEMS = [
   { href: '/admin/users', label: 'Usuários', Icon: Users },
   { href: '/admin/articles', label: 'Artigos', Icon: FileText },
+  { href: '/admin/prompts', label: 'Prompts', Icon: BookOpen },
   { href: '/admin/themes', label: 'Temas', Icon: Tag },
   { href: '/admin/templates', label: 'Templates', Icon: FileCode },
   { href: '/admin/ingest', label: 'Ingestão', Icon: Upload },

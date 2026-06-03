@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Plus, Trash2, Sparkles, Pencil } from 'lucide-react';
+import { Plus, Trash2, Sparkles, Pencil, BookOpen } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import type { StoredSession } from '@/lib/chat-storage';
 import { UserRow } from '@/components/auth/UserRow';
@@ -81,6 +81,16 @@ export function Sidebar({
       >
         <Sparkles className="h-4 w-4" aria-hidden="true" />
         <span>Assistentes</span>
+        <span className="ml-auto text-xs text-muted-foreground group-hover:text-brand/80 transition-colors">
+          →
+        </span>
+      </Link>
+      <Link
+        href="/prompts"
+        className="group flex items-center gap-2 px-4 py-3 text-sm font-medium border-b border-border text-brand hover:bg-brand/5 transition-colors"
+      >
+        <BookOpen className="h-4 w-4" aria-hidden="true" />
+        <span>Biblioteca de Prompts</span>
         <span className="ml-auto text-xs text-muted-foreground group-hover:text-brand/80 transition-colors">
           →
         </span>

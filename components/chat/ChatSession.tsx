@@ -9,6 +9,7 @@ import { EmptyState } from './EmptyState';
 import { MessageList } from './MessageList';
 import { Composer, type ChatAttachment } from './Composer';
 import { AssistantLauncher } from './AssistantLauncher';
+import { CHAT_PREFILL_KEY } from '@/lib/prompts/chat-prefill';
 
 type Props = {
   session: StoredSession;
@@ -102,6 +103,23 @@ export function ChatSession({
       if (title && onTitleChange) onTitleChange(title);
     },
   });
+
+  // Sub-projeto 32 — prefill vindo da Biblioteca de Prompts ("Usar no chat").
+  // O texto é deixado em sessionStorage pelo /prompts; lemos uma vez no mount
+  // (ChatSession remonta por key={currentId}) e jogamos no composer pra o
+  // usuário ajustar os [colchetes] e enviar.
+  useEffect(() => {
+    try {
+      const pending = sessionStorage.getItem(CHAT_PREFILL_KEY);
+      if (pending) {
+        setInput(pending);
+        sessionStorage.removeItem(CHAT_PREFILL_KEY);
+      }
+    } catch {
+      // sessionStorage indisponível — ignora.
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Persiste as mensagens quando um turno termina (isLoading: true → false).
   // Lê o `messages` atual do hook (não o closure stale), então o par
