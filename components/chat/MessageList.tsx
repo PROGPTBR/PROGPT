@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { Message } from './Message';
+import { ThinkingDots } from './ThinkingDots';
 import type { ChatMessage } from '@/lib/rag/types';
 import type { AssistantToolType } from './AssistantToolCTA';
 
@@ -72,6 +73,11 @@ export function MessageList({
   }, [messages, isLoading]);
 
   const lastIdx = messages.length - 1;
+  // Feedback de "processando" no gap entre enviar e o 1º token, enquanto ainda
+  // não há bolha do assistant (a fase de condense/classify/retrieve/rerank).
+  // Quando a bolha do assistant aparece, o indicador dela (Message) assume.
+  const showThinking =
+    isLoading && (messages.length === 0 || messages[lastIdx]?.role !== 'assistant');
 
   return (
     <div ref={ref} className="flex-1 overflow-y-auto">
@@ -100,6 +106,13 @@ export function MessageList({
             />
           );
         })}
+        {showThinking ? (
+          <li className="flex justify-start" aria-live="polite">
+            <div className="bg-card dark:bg-[#141414] border border-border rounded-2xl px-5 py-4">
+              <ThinkingDots />
+            </div>
+          </li>
+        ) : null}
       </ol>
     </div>
   );

@@ -5,6 +5,7 @@ import remarkGfm from 'remark-gfm';
 import { MessageActions } from './MessageActions';
 import { FollowupChips } from './FollowupChips';
 import { SupplierSearchCTA } from './SupplierSearchCTA';
+import { ThinkingDots } from './ThinkingDots';
 import {
   AssistantToolCTA,
   detectAssistantToolCTA,
@@ -65,11 +66,17 @@ export function Message({
           </ReactMarkdown>
         </div>
         {isStreaming ? (
-          <span
-            data-streaming-dot
-            className="inline-block ml-1 h-2 w-2 rounded-full bg-brand animate-pulse"
-            aria-label="Gerando"
-          />
+          content.trim() ? (
+            <span
+              data-streaming-dot
+              className="inline-block ml-1 h-2 w-2 rounded-full bg-brand animate-pulse"
+              aria-label="Gerando"
+            />
+          ) : (
+            // Bolha do assistant já existe mas o 1º token ainda não chegou —
+            // mostra os pontinhos em vez de uma bolha vazia.
+            <ThinkingDots />
+          )
         ) : null}
         {!isStreaming && supplierSearchQuery ? (
           <SupplierSearchCTA query={supplierSearchQuery} />

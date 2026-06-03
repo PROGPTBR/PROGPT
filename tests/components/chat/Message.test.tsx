@@ -30,6 +30,14 @@ describe('Message', () => {
     expect(container.querySelector('[data-streaming-dot]')).toBeFalsy();
   });
 
+  it('shows thinking dots (not the streaming dot) when streaming with empty content', () => {
+    const { container } = render(
+      <Message role="assistant" content="" isStreaming={true} />,
+    );
+    expect(container.querySelector('[data-thinking-dots]')).toBeTruthy();
+    expect(container.querySelector('[data-streaming-dot]')).toBeFalsy();
+  });
+
   it('renders followup chips on last assistant message when not streaming', () => {
     const { container } = render(
       <Message
