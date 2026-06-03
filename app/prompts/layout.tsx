@@ -38,7 +38,7 @@ export default async function PromptsLayout({
         </div>
       </header>
 
-      <main className="relative z-10 mx-auto max-w-6xl px-6 py-10">{children}</main>
+      <main className="relative z-10 mx-auto max-w-7xl px-6 py-10">{children}</main>
     </div>
   );
 }

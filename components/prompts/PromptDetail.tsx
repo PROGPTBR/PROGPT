@@ -16,15 +16,7 @@ type Props = {
 export function PromptDetail({ prompt, isFavorite, onToggleFavorite }: Props) {
   const router = useRouter();
 
-  if (!prompt) {
-    return (
-      <div className="h-full flex items-center justify-center p-8 text-center">
-        <p className="text-sm text-muted-foreground">
-          Selecione um prompt à esquerda para ver o conteúdo completo.
-        </p>
-      </div>
-    );
-  }
+  if (!prompt) return null;
 
   async function handleCopy() {
     try {
@@ -45,32 +37,15 @@ export function PromptDetail({ prompt, isFavorite, onToggleFavorite }: Props) {
   }
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="p-4 border-b border-border">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <span className="inline-block text-[10px] uppercase tracking-wider text-brand font-semibold mb-1">
-              {prompt.category}
-            </span>
-            <h2 className="text-lg font-semibold leading-snug">{prompt.title}</h2>
-            {prompt.summary && (
-              <p className="text-sm text-muted-foreground mt-1">{prompt.summary}</p>
-            )}
-          </div>
-          <button
-            type="button"
-            onClick={() => onToggleFavorite(prompt.id)}
-            aria-pressed={isFavorite}
-            aria-label={isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
-            title={isFavorite ? 'Remover dos favoritos' : 'Favoritar'}
-            className="flex-shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-full hover:bg-accent transition-colors"
-          >
-            <Star
-              className={`h-4 w-4 ${isFavorite ? 'fill-brand text-brand' : 'text-muted-foreground'}`}
-              aria-hidden="true"
-            />
-          </button>
-        </div>
+    <div className="flex flex-col h-full max-h-[85vh] min-h-0">
+      <div className="p-5 border-b border-border pr-10">
+        <span className="inline-block text-[10px] uppercase tracking-wider text-brand font-semibold mb-1">
+          {prompt.category}
+        </span>
+        <h2 className="text-lg md:text-xl font-semibold leading-snug">{prompt.title}</h2>
+        {prompt.summary && (
+          <p className="text-sm text-muted-foreground mt-1.5">{prompt.summary}</p>
+        )}
 
         {prompt.tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mt-3">
@@ -94,13 +69,27 @@ export function PromptDetail({ prompt, isFavorite, onToggleFavorite }: Props) {
             <Copy className="h-3.5 w-3.5 mr-1.5" aria-hidden="true" />
             Copiar
           </Button>
+          <Button
+            variant={isFavorite ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => onToggleFavorite(prompt.id)}
+            aria-pressed={isFavorite}
+            aria-label={isFavorite ? 'Remover dos favoritos' : 'Favoritar'}
+          >
+            <Star
+              className={`h-3.5 w-3.5 mr-1.5 ${isFavorite ? 'fill-current' : ''}`}
+              aria-hidden="true"
+            />
+            {isFavorite ? 'Favoritado' : 'Favoritar'}
+          </Button>
         </div>
-        <p className="text-[11px] text-muted-foreground mt-2">
-          Dica: troque os trechos entre <code className="text-brand">[colchetes]</code> pelos seus dados antes de enviar.
+        <p className="text-[11px] text-muted-foreground mt-2.5">
+          Dica: troque os trechos entre{' '}
+          <code className="text-brand">[colchetes]</code> pelos seus dados antes de enviar.
         </p>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="flex-1 overflow-y-auto p-5">
         <pre className="whitespace-pre-wrap break-words font-sans text-sm leading-relaxed text-foreground/90">
           {prompt.content}
         </pre>
