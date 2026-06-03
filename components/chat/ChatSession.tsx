@@ -9,11 +9,14 @@ import { EmptyState } from './EmptyState';
 import { MessageList } from './MessageList';
 import { Composer, type ChatAttachment } from './Composer';
 import { AssistantLauncher } from './AssistantLauncher';
-import { CHAT_PREFILL_KEY } from '@/lib/prompts/chat-prefill';
 
 type Props = {
   session: StoredSession;
   initialRatings?: Map<string, 'up' | 'down'>;
+  /** Texto a pré-preencher no composer (vem da Biblioteca de Prompts). */
+  prefill?: string | null;
+  /** Chamado quando o prefill foi aplicado, pro pai zerar o estado pendente. */
+  onPrefillConsumed?: () => void;
   onMessagesChange: (messages: ChatMessage[]) => void;
   onTitleChange?: (title: string) => void;
 };
@@ -64,6 +67,8 @@ export function wrapWithAttachment(
 export function ChatSession({
   session,
   initialRatings,
+  prefill,
+  onPrefillConsumed,
   onMessagesChange,
   onTitleChange,
 }: Props) {
@@ -105,21 +110,15 @@ export function ChatSession({
   });
 
   // Sub-projeto 32 — prefill vindo da Biblioteca de Prompts ("Usar no chat").
-  // O texto é deixado em sessionStorage pelo /prompts; lemos uma vez no mount
-  // (ChatSession remonta por key={currentId}) e jogamos no composer pra o
-  // usuário ajustar os [colchetes] e enviar.
+  // O pai (ChatRoot) decide a sessão-alvo (sempre uma nova/vazia) e passa o
+  // texto por prop; aqui só jogamos no composer e avisamos que foi consumido.
   useEffect(() => {
-    try {
-      const pending = sessionStorage.getItem(CHAT_PREFILL_KEY);
-      if (pending) {
-        setInput(pending);
-        sessionStorage.removeItem(CHAT_PREFILL_KEY);
-      }
-    } catch {
-      // sessionStorage indisponível — ignora.
+    if (prefill) {
+      setInput(prefill);
+      onPrefillConsumed?.();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [prefill]);
 
   // Persiste as mensagens quando um turno termina (isLoading: true → false).
   // Lê o `messages` atual do hook (não o closure stale), então o par
