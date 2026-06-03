@@ -14,6 +14,7 @@
     "db:types": "supabase gen types typescript --linked > lib/db/database.types.ts",
     "format": "prettier --write .",
     "articles:reclassify": "tsx scripts/reclassify.ts",
+    "prompts:import": "tsx scripts/import-prompts.ts",
     "rag:query": "tsx scripts/rag-query.ts",
     "rag:eval": "tsx scripts/eval/run.ts",
     "eval:gen": "tsx scripts/eval/gen-run.ts"

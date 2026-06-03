@@ -73,6 +73,10 @@ Audiência: gestores de compras brasileiros (PT-BR primário, EN secundário).
 
 **Milestone 1 closed.**
 
+| # | Tag | Entrega |
+|---|---|---|
+| 32 | `prompts-library-complete` | **Biblioteca de Prompts**: importa +85 prompts curados de procurement do app-fonte próprio (`pro-ai-circle`, Supabase privado) pra dentro do PROGPT. **Migration 0034** cria `prompts` (admin-curada; RLS `select` pra authenticated com `is_published OR is_admin()` — drafts só admin; mutações via service-role, igual `articles`) + `prompt_favorites` (owner-only, `user_id default auth.uid()`). **Importação** (`scripts/import-prompts.ts`, `npm run prompts:import`): lê o Supabase fonte com **service-role key** (env local `SOURCE_SUPABASE_*`, nunca no Railway/commit — a MCP não enxerga o projeto fonte e o anon é RLS-blocked), filtra `is_approved`, resolve `category_id→nome`, aplica `scrubBranding` (`lib/prompts/scrub.ts` — remove IAgentics/ProAICircle/DealSim, ver memory `branding.md`), escreve `scripts/data/prompts-seed.json` versionado. **Seed** (`scripts/seed_prompts.py`): upsert idempotente por `prompt_number` via `db_connect` pooler. **UI `/prompts`** (logado, gated em `middleware.ts` + `app/prompts/layout.tsx`): sidebar de categorias + "★ Favoritos" + busca client-side + detalhe; botão **"Usar no chat"** joga o conteúdo no `sessionStorage` (`progpt_chat_prefill`) → `/chat` → `ChatSession` lê no mount e prefila o composer (usuário ajusta os `[colchetes]`); favoritos via `hooks/usePromptFavorites` (supabaseBrowser, otimista). **Admin `/admin/prompts`** (CRUD espelhando `/admin/articles`: `app/api/admin/prompts/{route,[id]/route}.ts` com requireAdmin→404 + service-role + zod). Link na Sidebar do chat + card "Descobrir" no EmptyState + entrada no AdminSidebar. +~20 vitest (scrub, favoritos hook, browse, admin routes). |
+
 ## Go-live B2C — checklist + hardening (sessão 2026-05-29/30)
 Estado completo em [docs/product/go-live-readiness.md](docs/product/go-live-readiness.md). Fechado no código: cancelamento da subscription Asaas **antes** do delete de conta + fail-fast de sandbox em produção (PR #84); webhook Asaas loga evento não-tratado em vez de dropar em silêncio (#86); rate-limit no `GET /api/suppliers/cnae-search` (#88); **cap de 30 turnos free** no simulador de negociação (`canTakeNegotiationTurn`, #92); **dashboard interno de funil `/admin/funnel`** (signup→ativação→pago + uso por assistente, SQL fn `admin_funnel_metrics`, migration 0030, #93); helper `scripts/db_connect.py` (fallback pro pooler IPv4, #95). Supabase **Pro** ativo (backup diário). **Pendente — setup externo do dono**: comprar `2bsupply.com.br` → destrava Resend + Turnstile reais; criar conta Sentry (error monitoring, item #3 do checklist).
 
@@ -285,6 +289,8 @@ NEXT_PUBLIC_PRO_PRICE_BRL=99.00 # sub-projeto 27 — preço Pro mensal, fonte ú
 RESEND_API_KEY=                # sub-projeto 30 — token resend.com pra emails transacionais
 EMAIL_FROM=                    # sub-projeto 30 — sender. Default: 'PROGPT <onboarding@resend.dev>' (sandbox-friendly). Prod: 'PROGPT <noreply@2bsupply.com.br>'
 APP_URL=                       # sub-projeto 30 — URL pública usada em links de email. Default: Railway URL
+SOURCE_SUPABASE_URL=           # sub-projeto 32 — Supabase do app-fonte de prompts (default jzxuwziiyvyaguvcbtdw). SÓ pra import local
+SOURCE_SUPABASE_SERVICE_ROLE_KEY= # sub-projeto 32 — service-role do projeto fonte. SÓ pra `npm run prompts:import` local; NUNCA no Railway nem commitada
 ```
 
 ## Comandos
