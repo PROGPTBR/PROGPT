@@ -67,11 +67,13 @@ describe('PromptsLibrary', () => {
     expect(screen.queryByText('Sourcing Global')).toBeNull();
   });
 
-  it('"Usar no chat" guarda o conteúdo no sessionStorage e navega pro /chat', async () => {
+  it('abrir um prompt e "Usar no chat" guarda no sessionStorage e navega pro /chat', async () => {
     const user = userEvent.setup();
     await renderLib();
-    // p1 é o selecionado por padrão (primeiro)
-    await user.click(screen.getByRole('button', { name: /Usar no chat/ }));
+    // abre o leitor (modal) clicando na linha do prompt
+    await user.click(screen.getByRole('button', { name: /Sourcing Global/ }));
+    const useBtn = await screen.findByRole('button', { name: /Usar no chat/ });
+    await user.click(useBtn);
     expect(window.sessionStorage.getItem('progpt_chat_prefill')).toBe(
       'Conteúdo do prompt 1 com [categoria].',
     );

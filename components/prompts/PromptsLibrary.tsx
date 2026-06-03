@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Search, Star } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { usePromptFavorites } from '@/hooks/usePromptFavorites';
 import type { PublicPrompt } from '@/lib/prompts/types';
 import { PromptDetail } from './PromptDetail';
@@ -18,7 +19,7 @@ export function PromptsLibrary({ prompts, initialFavorites }: Props) {
   const { favorites, isFavorite, toggle } = usePromptFavorites(initialFavorites);
   const [category, setCategory] = useState<CategoryFilter>('all');
   const [search, setSearch] = useState('');
-  const [selectedId, setSelectedId] = useState<string | null>(prompts[0]?.id ?? null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const categories = useMemo(() => {
     const m = new Map<string, number>();
@@ -42,13 +43,6 @@ export function PromptsLibrary({ prompts, initialFavorites }: Props) {
     return out;
   }, [prompts, category, search, favorites]);
 
-  // Mantém uma seleção válida quando o filtro muda.
-  useEffect(() => {
-    if (!filtered.some((p) => p.id === selectedId)) {
-      setSelectedId(filtered[0]?.id ?? null);
-    }
-  }, [filtered, selectedId]);
-
   const selected = prompts.find((p) => p.id === selectedId) ?? null;
 
   return (
@@ -58,14 +52,15 @@ export function PromptsLibrary({ prompts, initialFavorites }: Props) {
           Biblioteca de Prompts <span className="text-brand">.</span>
         </h1>
         <p className="text-sm text-muted-foreground mt-2">
-          {prompts.length} prompts de procurement prontos para usar — copie ou mande
-          direto pro chat e ajuste os <code className="text-brand">[colchetes]</code>.
+          {prompts.length} prompts de procurement prontos para usar — abra um, copie
+          ou mande direto pro chat e ajuste os{' '}
+          <code className="text-brand">[colchetes]</code>.
         </p>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-[210px_1.3fr_1.1fr] gap-0 rounded-md border border-border overflow-hidden bg-card min-h-[480px]">
+      <div className="grid grid-cols-1 md:grid-cols-[210px_1fr] gap-0 rounded-md border border-border overflow-hidden bg-card">
         {/* Sidebar de categorias */}
-        <nav className="border-b md:border-b-0 md:border-r border-border p-2 space-y-0.5 text-sm bg-muted/30 max-h-[640px] overflow-y-auto">
+        <nav className="border-b md:border-b-0 md:border-r border-border p-2 space-y-0.5 text-sm bg-muted/30 md:max-h-[72vh] md:overflow-y-auto">
           <CategoryButton
             label="Todos"
             count={prompts.length}
@@ -90,8 +85,8 @@ export function PromptsLibrary({ prompts, initialFavorites }: Props) {
           ))}
         </nav>
 
-        {/* Lista + busca */}
-        <div className="border-b md:border-b-0 md:border-r border-border flex flex-col max-h-[640px]">
+        {/* Lista (larga) */}
+        <div className="flex flex-col min-w-0 max-h-[72vh]">
           <div className="p-2 border-b border-border">
             <div className="relative">
               <Search
@@ -116,17 +111,14 @@ export function PromptsLibrary({ prompts, initialFavorites }: Props) {
               filtered.map((p) => (
                 <li
                   key={p.id}
-                  className={`flex items-start gap-1 transition-colors ${
-                    p.id === selectedId ? 'bg-primary/10' : 'hover:bg-accent'
-                  }`}
+                  className="flex items-start gap-1 transition-colors hover:bg-accent"
                 >
                   <button
                     type="button"
                     onClick={() => setSelectedId(p.id)}
-                    aria-current={p.id === selectedId ? 'true' : undefined}
-                    className="min-w-0 flex-1 text-left pl-3 py-2.5"
+                    className="min-w-0 flex-1 text-left pl-3 py-3"
                   >
-                    <div className="text-sm font-medium truncate">{p.title}</div>
+                    <div className="text-sm font-medium">{p.title}</div>
                     {p.summary && (
                       <div className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
                         {p.summary}
@@ -141,10 +133,10 @@ export function PromptsLibrary({ prompts, initialFavorites }: Props) {
                     onClick={() => void toggle(p.id)}
                     aria-pressed={isFavorite(p.id)}
                     aria-label={isFavorite(p.id) ? 'Remover dos favoritos' : 'Favoritar'}
-                    className="flex-shrink-0 p-2.5"
+                    className="flex-shrink-0 p-3"
                   >
                     <Star
-                      className={`h-3.5 w-3.5 ${
+                      className={`h-4 w-4 ${
                         isFavorite(p.id)
                           ? 'fill-brand text-brand'
                           : 'text-muted-foreground hover:text-foreground'
@@ -157,16 +149,24 @@ export function PromptsLibrary({ prompts, initialFavorites }: Props) {
             )}
           </ul>
         </div>
+      </div>
 
-        {/* Detalhe */}
-        <div className="bg-background max-h-[640px]">
+      {/* Leitor — modal amplo, conteúdo completo com rolagem própria */}
+      <Dialog
+        open={!!selected}
+        onOpenChange={(open) => {
+          if (!open) setSelectedId(null);
+        }}
+      >
+        <DialogContent className="p-0 gap-0 sm:max-w-2xl max-h-[85vh] overflow-hidden">
+          <DialogTitle className="sr-only">{selected?.title ?? 'Prompt'}</DialogTitle>
           <PromptDetail
             prompt={selected}
             isFavorite={selected ? isFavorite(selected.id) : false}
             onToggleFavorite={(id) => void toggle(id)}
           />
-        </div>
-      </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
