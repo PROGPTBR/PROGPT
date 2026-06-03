@@ -6,7 +6,11 @@ import { getLibrarySnapshot } from './library-snapshot';
 import type { ProfileSnapshot, RagResult, RetrievedChunk } from './types';
 import type { Trace } from '@/lib/observability/types';
 
-const RERANK_TOP_N = 8;
+// Quantos trechos chegam ao prompt após o rerank. Subido de 8 → 12 (sub-projeto
+// 32) pra dar mais material da base ao modelo elaborar respostas com a
+// profundidade que o SYSTEM_PROMPT exige. retrieve() entrega 30 candidatos;
+// MIN_RELEVANCE (0.10) ainda descarta ruído. Gate: recall@5 ≥ 0.85 (rag:eval).
+const RERANK_TOP_N = 12;
 
 export type RunRagOpts = {
   parentTrace?: Trace;

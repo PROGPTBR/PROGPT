@@ -85,7 +85,7 @@ export type RecordUsageInput = {
 // rewrite historical events.
 
 // OpenAI chat/responses rate cards (USD per 1M tokens). Frozen at write time.
-// As of 2026-05. ADD A NEW MODEL'S RATE HERE (with date) BEFORE setting it in
+// As of 2026-06. ADD A NEW MODEL'S RATE HERE (with date) BEFORE setting it in
 // any OPENAI_MODEL_* env — otherwise cost is estimated at the conservative
 // fallback below, not the true rate.
 type OpenAiRate = { inputPerM: number; cachedInputPerM: number; outputPerM: number };
@@ -94,10 +94,19 @@ type OpenAiRate = { inputPerM: number; cachedInputPerM: number; outputPerM: numb
 const RATE_GPT4O_MINI: OpenAiRate = { inputPerM: 0.15, cachedInputPerM: 0.075, outputPerM: 0.6 };
 // gpt-4o: $2.50 input / $1.25 cached / $10 output (~16x mini)
 const RATE_GPT4O: OpenAiRate = { inputPerM: 2.5, cachedInputPerM: 1.25, outputPerM: 10 };
+// gpt-5.4-mini (sub-projeto 32 — tier de geração desde 2026-06): $0.75 in / $0.075 cached / $4.50 out
+const RATE_GPT54_MINI: OpenAiRate = { inputPerM: 0.75, cachedInputPerM: 0.075, outputPerM: 4.5 };
+// gpt-5.4: $2.50 in / $0.25 cached / $15 out
+const RATE_GPT54: OpenAiRate = { inputPerM: 2.5, cachedInputPerM: 0.25, outputPerM: 15 };
+// gpt-5.5: $5 in / $0.50 cached / $30 out
+const RATE_GPT55: OpenAiRate = { inputPerM: 5, cachedInputPerM: 0.5, outputPerM: 30 };
 
 const OPENAI_RATES: Record<string, OpenAiRate> = {
   'gpt-4o-mini': RATE_GPT4O_MINI,
   'gpt-4o': RATE_GPT4O,
+  'gpt-5.4-mini': RATE_GPT54_MINI,
+  'gpt-5.4': RATE_GPT54,
+  'gpt-5.5': RATE_GPT55,
 };
 
 // Most expensive known rate — conservative fallback for an unlisted model so
@@ -117,6 +126,10 @@ function openAiRate(model: string | undefined): OpenAiRate {
   if (m === '') return RATE_GPT4O_MINI;
   if (m.startsWith('gpt-4o-mini')) return RATE_GPT4O_MINI;
   if (m.startsWith('gpt-4o')) return RATE_GPT4O;
+  // gpt-5.x — order: mini antes do full (mini é prefixo-superset do 5.4 base).
+  if (m.startsWith('gpt-5.4-mini')) return RATE_GPT54_MINI;
+  if (m.startsWith('gpt-5.4')) return RATE_GPT54;
+  if (m.startsWith('gpt-5.5')) return RATE_GPT55;
   return OPENAI_RATES[m] ?? RATE_FALLBACK;
 }
 

@@ -155,21 +155,48 @@ describe('computeCostUsdCents — per-model OpenAI rate cards', () => {
     expect(cost).toBeCloseTo(250, 4); // 1M*$2.50
   });
 
-  it('unknown non-empty model falls back to the most expensive known rate (never under-counts)', () => {
-    const known4o = computeCostUsdCents({
+  it('gpt-5.4-mini billed at 5.4-mini rates', () => {
+    const cost = computeCostUsdCents({
       provider: 'openai',
       operation: 'chat-generate',
-      model: 'gpt-4o',
+      model: 'gpt-5.4-mini',
+      tokensIn: 1_000_000,
+      tokensOut: 1_000_000,
+    });
+    // 1M*$0.75 + 1M*$4.50 = $5.25 = 525 cents
+    expect(cost).toBeCloseTo(525, 4);
+  });
+
+  it('versioned gpt-5.4-mini-* matches mini by prefix (not full gpt-5.4)', () => {
+    const cost = computeCostUsdCents({
+      provider: 'openai',
+      operation: 'chat-generate',
+      model: 'gpt-5.4-mini-2026-03-17',
       tokensIn: 1_000_000,
     });
+    expect(cost).toBeCloseTo(75, 4); // 1M*$0.75 (mini), not the $2.50 full rate
+  });
+
+  it('gpt-5.4 (full) billed above its mini', () => {
+    const cost = computeCostUsdCents({
+      provider: 'openai',
+      operation: 'chat-generate',
+      model: 'gpt-5.4',
+      tokensIn: 1_000_000,
+    });
+    expect(cost).toBeCloseTo(250, 4); // 1M*$2.50
+  });
+
+  it('unknown non-empty model falls back to the most expensive known rate (never under-counts)', () => {
     const unknown = computeCostUsdCents({
       provider: 'openai',
       operation: 'chat-generate',
       model: 'some-future-model-x',
       tokensIn: 1_000_000,
     });
-    expect(unknown).toBeCloseTo(known4o, 4);
-    expect(unknown).toBeGreaterThan(15); // strictly above the mini rate
+    // most expensive known is gpt-5.5: $5/1M input = 500 cents
+    expect(unknown).toBeCloseTo(500, 4);
+    expect(unknown).toBeGreaterThan(250); // strictly above gpt-4o
   });
 
   it('missing/empty model keeps the historical mini default (back-compat)', () => {
