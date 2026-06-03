@@ -6,6 +6,7 @@ import {
   type FormEvent,
   type KeyboardEvent,
   useCallback,
+  useLayoutEffect,
   useRef,
   useState,
 } from 'react';
@@ -190,6 +191,21 @@ export function Composer({
 
   const hero = variant === 'hero';
 
+  // Auto-cresce o textarea conforme o conteúdo (até um teto), pra um prompt
+  // grande — ex. vindo da Biblioteca de Prompts — aparecer inteiro em vez de
+  // espremido numa linha. Acima do teto, rola internamente.
+  const taRef = useRef<HTMLTextAreaElement>(null);
+  const maxPx = hero ? 340 : 240;
+  const autosize = useCallback(() => {
+    const el = taRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${Math.min(el.scrollHeight, maxPx)}px`;
+  }, [maxPx]);
+  useLayoutEffect(() => {
+    autosize();
+  }, [input, autosize]);
+
   // Container styling differs by variant.
   // - inline: pinned-bottom form with top border + safe-area padding
   // - hero: free-floating card in the middle of the screen, larger pill input
@@ -248,13 +264,14 @@ export function Composer({
               className="hidden"
             />
             <textarea
+              ref={taRef}
               value={input}
               onChange={(e) => onChange(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder={placeholder ?? 'Pergunte alguma coisa…'}
               rows={2}
               autoFocus
-              className="block w-full resize-none max-h-48 overflow-y-auto bg-transparent px-5 pt-4 pb-2 text-base text-foreground placeholder-muted-foreground outline-none"
+              className="block w-full resize-none overflow-y-auto bg-transparent px-5 pt-4 pb-2 text-base text-foreground placeholder-muted-foreground outline-none"
             />
             <div className="flex items-center justify-between px-3 pb-3 pt-1">
               <div className="flex items-center gap-1">
@@ -323,6 +340,7 @@ export function Composer({
               disabled={isLoading}
             />
             <textarea
+              ref={taRef}
               value={input}
               onChange={(e) => onChange(e.target.value)}
               onKeyDown={handleKeyDown}
@@ -333,7 +351,7 @@ export function Composer({
                   : 'Pergunte algo sobre teorias de procurement…')
               }
               rows={1}
-              className="flex-1 resize-none max-h-32 overflow-y-auto rounded-xl bg-muted/40 border border-border px-4 py-3 text-sm text-foreground placeholder-muted-foreground outline-none focus:border-brand focus:bg-muted/60 transition-colors"
+              className="flex-1 resize-none overflow-y-auto rounded-xl bg-muted/40 border border-border px-4 py-3 text-sm text-foreground placeholder-muted-foreground outline-none focus:border-brand focus:bg-muted/60 transition-colors"
             />
             {isLoading ? (
               <button
