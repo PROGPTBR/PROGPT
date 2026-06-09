@@ -57,6 +57,8 @@ export type ApiOperation =
   | 'assistant-negotiation-opener'
   | 'assistant-negotiation-turn'
   | 'assistant-negotiation-score'
+  | 'assistant-negotiation-speak'
+  | 'assistant-negotiation-advise'
   | 'assistant-scorecard-generate'
   | 'assistant-scorecard-refine'
   | 'assistant-scorecard-apply';
@@ -147,6 +149,16 @@ const COHERE_RERANK_PER_CALL = 2.0 / 1000;
 // deliberado pra evitar migration de schema só pra essa op.
 const OPENAI_WHISPER_PER_MIN = 0.006;
 
+// gpt-4o-mini-tts (sub-projeto 34, modo voz da negociação): $0.60/1M tokens de
+// texto de input + ~$0.015/min de áudio gerado (tarifa do lançamento 2025-03,
+// não listada na pricing page de 2026-06 — manter conservador). A API de
+// speech NÃO retorna usage; o call site grava tokensIn = ceil(chars/4).
+// Estimamos a duração por chars/600/min (fala PT real ~750-900 chars/min →
+// superestima ~25-50%, ou seja, SOBRE-fatura; nunca sub-fatura).
+const TTS_TEXT_INPUT_PER_M = 0.6;
+const TTS_AUDIO_PER_MIN = 0.015;
+const TTS_CHARS_PER_MIN = 600;
+
 /**
  * Compute estimated cost in USD cents for a given API usage event. Pure
  * function — easy to unit test. Adjust the rate constants above when
@@ -164,6 +176,16 @@ export function computeCostUsdCents(input: RecordUsageInput): number {
     if (input.operation === 'chat-transcribe') {
       const durationSecs = tIn;
       const usd = (durationSecs / 60) * OPENAI_WHISPER_PER_MIN;
+      return usd * 100;
+    }
+
+    // TTS (modo voz da negociação): texto de input por token + áudio gerado
+    // por minuto estimado a partir dos chars (tokensIn = ceil(chars/4)).
+    if (input.operation === 'assistant-negotiation-speak') {
+      const chars = tIn * 4;
+      const usd =
+        (tIn / 1_000_000) * TTS_TEXT_INPUT_PER_M +
+        (chars / TTS_CHARS_PER_MIN) * TTS_AUDIO_PER_MIN;
       return usd * 100;
     }
 

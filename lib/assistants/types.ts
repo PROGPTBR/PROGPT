@@ -667,12 +667,14 @@ export type NegotiationSimulatorSetup = z.infer<
 >;
 
 // Turno no chat. Stateless por turno; client mantém histórico.
+// Max 16000: uma mensagem pode embutir um contrato/proposta anexado
+// (<anexo>, parse capado em 8000 chars) + a pergunta do comprador (sub-projeto 34).
 export const NegotiationTurnRequestSchema = z.object({
   messages: z
     .array(
       z.object({
         role: z.enum(['user', 'assistant']),
-        content: z.string().min(1).max(8000),
+        content: z.string().min(1).max(16000),
       }),
     )
     .min(1)

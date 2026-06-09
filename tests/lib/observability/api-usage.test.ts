@@ -91,6 +91,19 @@ describe('computeCostUsdCents', () => {
     expect(cost).toBeCloseTo(200, 4);
   });
 
+  it('TTS (assistant-negotiation-speak): texto por token + áudio por minuto estimado', () => {
+    // 600 chars de fala → tokensIn = 150. Texto: 150/1M*$0.60 ≈ $0.00009.
+    // Áudio: 600 chars / 600 chars-por-min = 1 min * $0.015 = $0.015.
+    // Total ≈ $0.01509 = 1.509 cents.
+    const cost = computeCostUsdCents({
+      provider: 'openai',
+      operation: 'assistant-negotiation-speak',
+      model: 'gpt-4o-mini-tts',
+      tokensIn: 150,
+    });
+    expect(cost).toBeCloseTo(1.509, 3);
+  });
+
   it('returns 0 for zero token / zero call inputs', () => {
     expect(
       computeCostUsdCents({ provider: 'openai', operation: 'chat-generate' }),
