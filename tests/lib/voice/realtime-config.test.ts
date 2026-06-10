@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import {
+  DEFAULT_VOICE,
   REALTIME_MODEL,
+  VOICE_OPTIONS,
   VOICE_SESSION_MAX_SECS,
   SEARCH_TOOL,
   SEARCH_TOOL_NAME,
   buildVoiceInstructions,
   buildClientSecretRequest,
+  isVoiceName,
 } from '@/lib/voice/realtime-config';
 
 describe('realtime-config', () => {
@@ -45,5 +48,18 @@ describe('realtime-config', () => {
     expect(input.noise_reduction).toEqual({ type: 'near_field' });
     // server_vad cortava no meio de frases com pausa pra pensar
     expect(input.turn_detection.type).toBe('semantic_vad');
+  });
+
+  it('escolha de voz: catálogo válido, default no catálogo, override aplicado no request', () => {
+    expect(VOICE_OPTIONS.length).toBeGreaterThanOrEqual(4);
+    const ids = VOICE_OPTIONS.map((o) => o.id);
+    expect(new Set(ids).size).toBe(ids.length); // sem duplicatas
+    expect(isVoiceName(DEFAULT_VOICE)).toBe(true);
+    expect(isVoiceName('marin')).toBe(true);
+    expect(isVoiceName('hacker-voice')).toBe(false);
+    expect(isVoiceName(null)).toBe(false);
+
+    expect(buildClientSecretRequest().session.audio.output.voice).toBe(DEFAULT_VOICE);
+    expect(buildClientSecretRequest('marin').session.audio.output.voice).toBe('marin');
   });
 });

@@ -42,12 +42,21 @@ function mockLangfuse() {
 
 // ── /api/chat/voice/session ──────────────────────────────────────────────────
 
+function sessionReq(body?: unknown) {
+  return new Request('http://localhost/api/chat/voice/session', {
+    method: 'POST',
+    ...(body !== undefined
+      ? { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }
+      : {}),
+  });
+}
+
 describe('POST /api/chat/voice/session', () => {
   it('401 sem usuário', async () => {
     mockAuth(null);
     mockRateLimit(true);
     const { POST } = await import('@/app/api/chat/voice/session/route');
-    const res = await POST();
+    const res = await POST(sessionReq());
     expect(res.status).toBe(401);
   });
 
@@ -55,7 +64,7 @@ describe('POST /api/chat/voice/session', () => {
     mockAuth({ id: 'u1' });
     mockRateLimit(false);
     const { POST } = await import('@/app/api/chat/voice/session/route');
-    const res = await POST();
+    const res = await POST(sessionReq());
     expect(res.status).toBe(429);
   });
 
@@ -68,7 +77,7 @@ describe('POST /api/chat/voice/session', () => {
     );
     vi.stubGlobal('fetch', fetchSpy);
     const { POST } = await import('@/app/api/chat/voice/session/route');
-    const res = await POST();
+    const res = await POST(sessionReq());
     expect(res.status).toBe(200);
     const body = (await res.json()) as Record<string, unknown>;
     expect(body.clientSecret).toBe('ek_abc');
@@ -81,6 +90,31 @@ describe('POST /api/chat/voice/session', () => {
     );
   });
 
+  it('voz escolhida no body vai pro mint; voz fora do catálogo cai no default', async () => {
+    mockAuth({ id: 'u1' });
+    mockRateLimit(true);
+    vi.stubEnv('OPENAI_API_KEY', 'sk-test');
+    // Response nova por chamada — body de Response só pode ser lido uma vez
+    const fetchSpy = vi.fn().mockImplementation(() =>
+      Promise.resolve(
+        new Response(JSON.stringify({ value: 'ek_abc', expires_at: 123 }), { status: 200 }),
+      ),
+    );
+    vi.stubGlobal('fetch', fetchSpy);
+    const { POST } = await import('@/app/api/chat/voice/session/route');
+
+    const okRes = await POST(sessionReq({ voice: 'marin' }));
+    expect(okRes.status).toBe(200);
+    expect(((await okRes.json()) as { voice: string }).voice).toBe('marin');
+    const mintBody = JSON.parse(
+      (fetchSpy.mock.calls[0]![1] as RequestInit).body as string,
+    ) as { session: { audio: { output: { voice: string } } } };
+    expect(mintBody.session.audio.output.voice).toBe('marin');
+
+    const badRes = await POST(sessionReq({ voice: 'hacker-voice' }));
+    expect(((await badRes.json()) as { voice: string }).voice).toBe('echo');
+  });
+
   it('502 quando o mint da OpenAI falha', async () => {
     mockAuth({ id: 'u1' });
     mockRateLimit(true);
@@ -90,7 +124,7 @@ describe('POST /api/chat/voice/session', () => {
       vi.fn().mockResolvedValue(new Response('nope', { status: 500 })),
     );
     const { POST } = await import('@/app/api/chat/voice/session/route');
-    const res = await POST();
+    const res = await POST(sessionReq());
     expect(res.status).toBe(502);
   });
 });

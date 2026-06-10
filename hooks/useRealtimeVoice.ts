@@ -205,7 +205,7 @@ export function useRealtimeVoice(opts: {
     [pushTurn, runTool],
   );
 
-  const start = useCallback(async (): Promise<boolean> => {
+  const start = useCallback(async (voiceName?: string): Promise<boolean> => {
     if (status === 'connecting' || status === 'live') return false;
     endedRef.current = false;
     turnsRef.current = [];
@@ -216,8 +216,13 @@ export function useRealtimeVoice(opts: {
     setStatus('connecting');
 
     try {
-      // 1) Token efêmero (auth + rate-limit do chat acontecem no servidor)
-      const sessRes = await fetch('/api/chat/voice/session', { method: 'POST' });
+      // 1) Token efêmero (auth + rate-limit do chat acontecem no servidor;
+      // a voz é validada lá contra o catálogo — aqui só repassamos a escolha)
+      const sessRes = await fetch('/api/chat/voice/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(voiceName ? { voice: voiceName } : {}),
+      });
       if (sessRes.status === 429) {
         const data = (await sessRes.json().catch(() => ({}))) as {
           retry_after_secs?: number;
