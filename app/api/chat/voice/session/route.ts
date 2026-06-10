@@ -3,9 +3,12 @@ import { requireEnv } from '@/lib/env';
 import { getCurrentUser } from '@/lib/auth';
 import { checkChatRateLimit } from '@/lib/rate-limit';
 import {
+  DEFAULT_VOICE,
   REALTIME_MODEL,
   VOICE_SESSION_MAX_SECS,
   buildClientSecretRequest,
+  isVoiceName,
+  type VoiceName,
 } from '@/lib/voice/realtime-config';
 
 export const runtime = 'nodejs';
@@ -19,7 +22,7 @@ export const maxDuration = 30;
 // `OpenAI-Safety-Identifier` leva o UUID Supabase pseudonimizado (LGPD —
 // mesmo padrão do userId no Langfuse, nunca email).
 
-export async function POST(): Promise<Response> {
+export async function POST(req: Request): Promise<Response> {
   const user = await getCurrentUser();
   if (!user) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
@@ -33,6 +36,16 @@ export async function POST(): Promise<Response> {
     );
   }
 
+  // Voz escolhida pelo usuário (opcional). Fail-soft: body ausente/ inválido
+  // ou voz fora do catálogo caem no default — nunca string livre do client.
+  let voice: VoiceName = DEFAULT_VOICE;
+  try {
+    const body = (await req.json()) as { voice?: unknown } | undefined;
+    if (isVoiceName(body?.voice)) voice = body.voice;
+  } catch {
+    /* sem body → default */
+  }
+
   try {
     const res = await fetch('https://api.openai.com/v1/realtime/client_secrets', {
       method: 'POST',
@@ -41,7 +54,7 @@ export async function POST(): Promise<Response> {
         'Content-Type': 'application/json',
         'OpenAI-Safety-Identifier': user.id,
       },
-      body: JSON.stringify(buildClientSecretRequest()),
+      body: JSON.stringify(buildClientSecretRequest(voice)),
       signal: AbortSignal.timeout(15_000),
     });
     if (!res.ok) {
@@ -55,6 +68,7 @@ export async function POST(): Promise<Response> {
       expiresAt: data.expires_at,
       model: REALTIME_MODEL,
       maxSecs: VOICE_SESSION_MAX_SECS,
+      voice,
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);

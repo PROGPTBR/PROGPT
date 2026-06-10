@@ -10,8 +10,27 @@ export const REALTIME_MODEL = 'gpt-realtime-mini';
 /** Duração máxima de uma sessão de voz (TTL do token efêmero + timer no client). */
 export const VOICE_SESSION_MAX_SECS = 600; // 10 min
 
-/** Voz do consultor PROGPT (catálogo realtime da OpenAI). */
-export const VOICE_NAME = 'echo';
+/**
+ * Vozes do consultor PROGPT (catálogo realtime da OpenAI; todas validadas
+ * no mint com gpt-realtime-mini). O usuário escolhe no overlay de voz;
+ * o servidor valida contra esta lista — nunca aceita string livre do client.
+ */
+export const VOICE_OPTIONS = [
+  { id: 'echo', label: 'Echo', description: 'Masculina · firme' },
+  { id: 'cedar', label: 'Cedar', description: 'Masculina · natural' },
+  { id: 'ash', label: 'Ash', description: 'Masculina · grave' },
+  { id: 'marin', label: 'Marin', description: 'Feminina · natural' },
+  { id: 'sage', label: 'Sage', description: 'Feminina · suave' },
+  { id: 'coral', label: 'Coral', description: 'Feminina · calorosa' },
+] as const;
+
+export type VoiceName = (typeof VOICE_OPTIONS)[number]['id'];
+
+export const DEFAULT_VOICE: VoiceName = 'echo';
+
+export function isVoiceName(v: unknown): v is VoiceName {
+  return typeof v === 'string' && VOICE_OPTIONS.some((o) => o.id === v);
+}
 
 export const SEARCH_TOOL_NAME = 'buscar_base_conhecimento';
 
@@ -68,7 +87,7 @@ export const TRANSCRIPTION_PROMPT =
   'CBS, IBS, ICMS, PIS, Cofins, Lei 14.133.';
 
 /** Shape do body de mint (POST /v1/realtime/client_secrets, GA 2025-08+). */
-export function buildClientSecretRequest() {
+export function buildClientSecretRequest(voice: VoiceName = DEFAULT_VOICE) {
   return {
     expires_after: { anchor: 'created_at', seconds: VOICE_SESSION_MAX_SECS },
     session: {
@@ -89,7 +108,7 @@ export function buildClientSecretRequest() {
           // server_vad cortava no meio de frases com pausa pra pensar.
           turn_detection: { type: 'semantic_vad' },
         },
-        output: { voice: VOICE_NAME },
+        output: { voice },
       },
     },
   };
