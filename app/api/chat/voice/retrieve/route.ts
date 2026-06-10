@@ -4,7 +4,6 @@ import { getCurrentUser } from '@/lib/auth';
 import { checkChatRateLimit } from '@/lib/rate-limit';
 import { retrieve } from '@/lib/rag/retriever';
 import { rerank } from '@/lib/rag/reranker';
-import { recordApiUsage } from '@/lib/observability/api-usage';
 import { startTrace, flushAsync } from '@/lib/observability/langfuse';
 import { withUser } from '@/lib/observability/user-context';
 
