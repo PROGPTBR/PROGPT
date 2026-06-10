@@ -10,7 +10,7 @@ import {
   useRef,
   useState,
 } from 'react';
-import { Paperclip, Send, StopCircle, X, Loader2 } from 'lucide-react';
+import { AudioLines, Paperclip, Send, StopCircle, X, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { MicRecorderButton } from './MicRecorderButton';
 
@@ -39,6 +39,8 @@ type Props = {
   variant?: ComposerVariant;
   /** Override placeholder text (used by empty state). */
   placeholder?: string;
+  /** Quando presente, mostra o botão "Conversar por voz" (sub-projeto 35). */
+  onVoiceMode?: () => void;
 };
 
 const ACCEPT_ATTR =
@@ -65,6 +67,7 @@ export function Composer({
   onStop,
   variant = 'inline',
   placeholder,
+  onVoiceMode,
 }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [attachment, setAttachment] = useState<ChatAttachment | null>(null);
@@ -290,6 +293,18 @@ export function Composer({
                   onTranscript={handleTranscript}
                   disabled={isLoading}
                 />
+                {onVoiceMode && (
+                  <button
+                    type="button"
+                    onClick={onVoiceMode}
+                    disabled={isLoading}
+                    aria-label="Conversar por voz em tempo real"
+                    title="Conversar por voz — fale com o assistente em tempo real"
+                    className="inline-flex items-center justify-center rounded-full text-muted-foreground hover:text-brand hover:bg-brand/10 w-9 h-9 transition-colors active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    <AudioLines className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                )}
               </div>
               {isLoading ? (
                 <button
@@ -339,6 +354,18 @@ export function Composer({
               onTranscript={handleTranscript}
               disabled={isLoading}
             />
+            {onVoiceMode && (
+              <button
+                type="button"
+                onClick={onVoiceMode}
+                disabled={isLoading}
+                aria-label="Conversar por voz em tempo real"
+                title="Conversar por voz — fale com o assistente em tempo real"
+                className="inline-flex items-center justify-center rounded-full border border-border bg-muted/40 text-muted-foreground hover:text-brand hover:bg-brand/10 w-11 h-11 transition-all duration-300 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
+              >
+                <AudioLines className="h-4 w-4" aria-hidden="true" />
+              </button>
+            )}
             <textarea
               ref={taRef}
               value={input}

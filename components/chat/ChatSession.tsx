@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useChat, type Message as AIMessage } from 'ai/react';
 import { toast } from 'sonner';
 import type { ChatMessage } from '@/lib/rag/types';
@@ -9,6 +9,8 @@ import { EmptyState } from './EmptyState';
 import { MessageList } from './MessageList';
 import { Composer, type ChatAttachment } from './Composer';
 import { AssistantLauncher } from './AssistantLauncher';
+import { VoiceMode } from './VoiceMode';
+import type { VoiceTurn } from '@/hooks/useRealtimeVoice';
 
 type Props = {
   session: StoredSession;
@@ -77,7 +79,7 @@ export function ChatSession({
   // ChatRequestOptions.body which the SDK merges with the hook body.
   // `session.activePerfilId` is the source of truth — set via the chip
   // picker which calls onActivePerfilChange.
-  const { messages, input, setInput, handleSubmit, isLoading, stop, append } = useChat({
+  const { messages, input, setInput, setMessages, handleSubmit, isLoading, stop, append } = useChat({
     api: '/api/chat',
     id: session.id,
     body: { sessionId: session.id },
@@ -141,6 +143,22 @@ export function ChatSession({
     void append({ role: 'user', content: text }, { body: perfilBody() });
   };
 
+  // Sub-projeto 35 — conversa por voz em tempo real. Ao encerrar, o transcript
+  // vira histórico normal da sessão (continuidade voz↔texto + persistência).
+  const [voiceOpen, setVoiceOpen] = useState(false);
+  const onVoiceClose = (turns: VoiceTurn[]) => {
+    setVoiceOpen(false);
+    if (turns.length === 0) return;
+    const appended: AIMessage[] = turns.map((t, i) => ({
+      id: `${session.id}-voice-${messages.length + i}`,
+      role: t.role,
+      content: t.content,
+    }));
+    const all = [...messages, ...appended];
+    setMessages(all);
+    onMessagesChange(toChatMessages(all));
+  };
+
   const onComposerSubmit = (
     e?: FormEvent,
     attachment?: ChatAttachment,
@@ -157,6 +175,7 @@ export function ChatSession({
 
   return (
     <>
+      {voiceOpen && <VoiceMode onClose={onVoiceClose} />}
       {messages.length === 0 ? (
         <EmptyState
           input={input}
@@ -164,6 +183,7 @@ export function ChatSession({
           onSubmit={onComposerSubmit}
           isLoading={isLoading}
           onStop={stop}
+          onVoiceMode={() => setVoiceOpen(true)}
         />
       ) : (
         <>
@@ -186,6 +206,7 @@ export function ChatSession({
             onSubmit={onComposerSubmit}
             isLoading={isLoading}
             onStop={stop}
+            onVoiceMode={() => setVoiceOpen(true)}
           />
         </>
       )}

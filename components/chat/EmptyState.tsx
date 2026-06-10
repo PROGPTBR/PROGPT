@@ -22,6 +22,7 @@ type Props = {
   onSubmit: (e?: FormEvent, attachment?: ChatAttachment) => void;
   isLoading: boolean;
   onStop: () => void;
+  onVoiceMode?: () => void;
 };
 
 export function EmptyState({
@@ -30,6 +31,7 @@ export function EmptyState({
   onSubmit,
   isLoading,
   onStop,
+  onVoiceMode,
 }: Props) {
   return (
     <div className="flex-1 flex flex-col items-center justify-center px-6 py-8 overflow-y-auto">
@@ -64,6 +66,7 @@ export function EmptyState({
             onStop={onStop}
             variant="hero"
             placeholder="Pergunte alguma coisa…"
+            onVoiceMode={onVoiceMode}
           />
         </div>
 

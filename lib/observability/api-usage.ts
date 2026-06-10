@@ -59,6 +59,7 @@ export type ApiOperation =
   | 'assistant-negotiation-score'
   | 'assistant-negotiation-speak'
   | 'assistant-negotiation-advise'
+  | 'chat-voice-realtime'
   | 'assistant-scorecard-generate'
   | 'assistant-scorecard-refine'
   | 'assistant-scorecard-apply';
@@ -159,6 +160,17 @@ const TTS_TEXT_INPUT_PER_M = 0.6;
 const TTS_AUDIO_PER_MIN = 0.015;
 const TTS_CHARS_PER_MIN = 600;
 
+// gpt-realtime-mini (sub-projeto 35, assistente de voz do chat) — tarifa do
+// lançamento 2025-10 (não listada na pricing page de 2026-06; gpt-realtime-2
+// full é $32/$64 áudio). USD por 1M tokens. O usage da sessão é reportado pelo
+// client com split por modalidade no metadata; sem split, o fallback trata
+// TUDO como áudio (a modalidade mais cara — sobre-fatura, nunca sub-fatura).
+const REALTIME_MINI_AUDIO_IN_PER_M = 10;
+const REALTIME_MINI_AUDIO_OUT_PER_M = 20;
+const REALTIME_MINI_TEXT_IN_PER_M = 0.6;
+const REALTIME_MINI_TEXT_OUT_PER_M = 2.4;
+const REALTIME_MINI_CACHED_IN_PER_M = 0.3;
+
 /**
  * Compute estimated cost in USD cents for a given API usage event. Pure
  * function — easy to unit test. Adjust the rate constants above when
@@ -176,6 +188,29 @@ export function computeCostUsdCents(input: RecordUsageInput): number {
     if (input.operation === 'chat-transcribe') {
       const durationSecs = tIn;
       const usd = (durationSecs / 60) * OPENAI_WHISPER_PER_MIN;
+      return usd * 100;
+    }
+
+    // Realtime voz-a-voz (assistente de voz do chat): split por modalidade
+    // vem no metadata (audio_in/audio_out/text_in/text_out/cached_in tokens).
+    // Sem split, trata tokensIn/Out inteiros como áudio (conservador).
+    if (input.operation === 'chat-voice-realtime') {
+      const md = (input.metadata ?? {}) as Record<string, unknown>;
+      const n = (k: string) => (typeof md[k] === 'number' && md[k] >= 0 ? (md[k] as number) : 0);
+      const audioIn = n('audio_in');
+      const audioOut = n('audio_out');
+      const textIn = n('text_in');
+      const textOut = n('text_out');
+      const cachedIn = n('cached_in');
+      const hasSplit = audioIn + audioOut + textIn + textOut + cachedIn > 0;
+      const usd = hasSplit
+        ? (audioIn / 1_000_000) * REALTIME_MINI_AUDIO_IN_PER_M +
+          (audioOut / 1_000_000) * REALTIME_MINI_AUDIO_OUT_PER_M +
+          (textIn / 1_000_000) * REALTIME_MINI_TEXT_IN_PER_M +
+          (textOut / 1_000_000) * REALTIME_MINI_TEXT_OUT_PER_M +
+          (cachedIn / 1_000_000) * REALTIME_MINI_CACHED_IN_PER_M
+        : (tIn / 1_000_000) * REALTIME_MINI_AUDIO_IN_PER_M +
+          (tOut / 1_000_000) * REALTIME_MINI_AUDIO_OUT_PER_M;
       return usd * 100;
     }
 

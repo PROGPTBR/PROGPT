@@ -104,6 +104,32 @@ describe('computeCostUsdCents', () => {
     expect(cost).toBeCloseTo(1.509, 3);
   });
 
+  it('Realtime (chat-voice-realtime): fatura por modalidade quando o metadata traz o split', () => {
+    // 6000 audio in ($10/1M) + 6000 audio out ($20/1M) + 1000 text in ($0.60/1M)
+    // + 500 text out ($2.40/1M) = $0.06 + $0.12 + $0.0006 + $0.0012 = $0.1818 → 18.18 cents
+    const cost = computeCostUsdCents({
+      provider: 'openai',
+      operation: 'chat-voice-realtime',
+      model: 'gpt-realtime-mini',
+      tokensIn: 7000,
+      tokensOut: 6500,
+      metadata: { audio_in: 6000, audio_out: 6000, text_in: 1000, text_out: 500 },
+    });
+    expect(cost).toBeCloseTo(18.18, 2);
+  });
+
+  it('Realtime sem split no metadata: trata tudo como áudio (conservador, nunca sub-fatura)', () => {
+    // 1000 in + 1000 out, tudo como áudio: $0.01 + $0.02 = $0.03 → 3 cents
+    const cost = computeCostUsdCents({
+      provider: 'openai',
+      operation: 'chat-voice-realtime',
+      model: 'gpt-realtime-mini',
+      tokensIn: 1000,
+      tokensOut: 1000,
+    });
+    expect(cost).toBeCloseTo(3, 4);
+  });
+
   it('returns 0 for zero token / zero call inputs', () => {
     expect(
       computeCostUsdCents({ provider: 'openai', operation: 'chat-generate' }),
