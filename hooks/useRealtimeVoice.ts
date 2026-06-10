@@ -229,8 +229,16 @@ export function useRealtimeVoice(opts: {
       if (!sessRes.ok) throw new Error('Não foi possível iniciar a sessão de voz.');
       const session = (await sessRes.json()) as SessionInfo;
 
-      // 2) Microfone (o clique do usuário é o gesture do getUserMedia)
-      const mic = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // 2) Microfone (o clique do usuário é o gesture do getUserMedia).
+      // Constraints melhoram o sinal que chega no modelo: eco/ruído de fundo
+      // degradavam o reconhecimento de fala.
+      const mic = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+      });
       micRef.current = mic;
 
       // 3) WebRTC direto na OpenAI

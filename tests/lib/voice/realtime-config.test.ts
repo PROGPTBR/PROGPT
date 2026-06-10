@@ -26,13 +26,24 @@ describe('realtime-config', () => {
     expect(SEARCH_TOOL.parameters.required).toEqual(['query']);
   });
 
-  it('client secret request: TTL de 10 min, modelo mini, transcrição PT, server VAD', () => {
+  it('client secret request: TTL de 10 min, modelo mini, transcrição PT, semantic VAD', () => {
     const req = buildClientSecretRequest();
     expect(req.expires_after).toEqual({ anchor: 'created_at', seconds: VOICE_SESSION_MAX_SECS });
     expect(req.session.model).toBe(REALTIME_MODEL);
     expect(REALTIME_MODEL).toBe('gpt-realtime-mini');
     expect(req.session.audio.input.transcription.language).toBe('pt');
-    expect(req.session.audio.input.turn_detection.type).toBe('server_vad');
     expect(req.session.tools).toHaveLength(1);
+  });
+
+  it('reconhecimento de fala: transcribe moderno + prompt de jargão + noise reduction + semantic VAD', () => {
+    const req = buildClientSecretRequest();
+    const input = req.session.audio.input;
+    // whisper-1 errava o jargão de procurement em PT-BR (feedback 2026-06-10)
+    expect(input.transcription.model).toBe('gpt-4o-mini-transcribe');
+    expect(input.transcription.prompt).toMatch(/Kraljic/);
+    expect(input.transcription.prompt).toMatch(/RFP/);
+    expect(input.noise_reduction).toEqual({ type: 'near_field' });
+    // server_vad cortava no meio de frases com pausa pra pensar
+    expect(input.turn_detection.type).toBe('semantic_vad');
   });
 });
