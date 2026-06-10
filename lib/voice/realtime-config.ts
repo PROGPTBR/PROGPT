@@ -59,6 +59,14 @@ Quando o usuário anexar um documento (contrato, proposta, planilha), o conteúd
 Smalltalk breve é ok (responda curto e traga de volta pra compras). Temas totalmente fora de procurement/supply: diga que seu foco é compras e suprimentos.`;
 }
 
+// Prompt de vocabulário pra transcrição não errar o jargão de procurement
+// (o gpt-4o-*-transcribe aceita bias por prompt; whisper-1 era bem pior nisso).
+export const TRANSCRIPTION_PROMPT =
+  'Conversa sobre procurement e compras corporativas. Vocabulário: matriz de Kraljic, ' +
+  'cinco forças de Porter, strategic sourcing, RFP, RFQ, RFI, savings, spend, ' +
+  'curva ABC, supplier scorecard, SRM, TCO, BATNA, ZOPA, Incoterms, ' +
+  'CBS, IBS, ICMS, PIS, Cofins, Lei 14.133.';
+
 /** Shape do body de mint (POST /v1/realtime/client_secrets, GA 2025-08+). */
 export function buildClientSecretRequest() {
   return {
@@ -71,8 +79,15 @@ export function buildClientSecretRequest() {
       tool_choice: 'auto',
       audio: {
         input: {
-          transcription: { model: 'whisper-1', language: 'pt' },
-          turn_detection: { type: 'server_vad' },
+          transcription: {
+            model: 'gpt-4o-mini-transcribe',
+            language: 'pt',
+            prompt: TRANSCRIPTION_PROMPT,
+          },
+          noise_reduction: { type: 'near_field' },
+          // semantic_vad espera o usuário TERMINAR A IDEIA (não só silêncio) —
+          // server_vad cortava no meio de frases com pausa pra pensar.
+          turn_detection: { type: 'semantic_vad' },
         },
         output: { voice: VOICE_NAME },
       },
