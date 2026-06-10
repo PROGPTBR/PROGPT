@@ -90,20 +90,53 @@ describe('useChatSessionsRemote', () => {
     expect(result.current.current.messages).toEqual([]);
   });
 
-  it('loads existing rows on mount and selects the first (newest) as current', async () => {
+  // Decisão 2026-06-10: abrir o chat sempre cai numa conversa NOVA (não na
+  // última aberta). Reusa sessão vazia existente; senão cria uma fresca.
+  it('on mount selects an existing EMPTY session instead of the newest with messages', async () => {
     const rows: Row[] = [
       { id: 'a', title: 'recent', messages: [{ role: 'user', content: 'hi' }], updated_at: '2026-05-02T10:00:00Z' },
-      { id: 'b', title: 'older', messages: [], updated_at: '2026-05-01T10:00:00Z' },
+      { id: 'b', title: 'Nova conversa', messages: [], updated_at: '2026-05-01T10:00:00Z' },
     ];
-    mockBrowser({ initialRows: rows });
+    const m = mockBrowser({ initialRows: rows });
     const { useChatSessionsRemote } = await import('@/hooks/useChatSessionsRemote');
     const { result } = renderHook(() => useChatSessionsRemote());
     await waitFor(() => {
       expect(result.current.sessions).toHaveLength(2);
     });
-    expect(result.current.currentId).toBe('a');
+    expect(result.current.currentId).toBe('b'); // a vazia, não a mais recente
+    expect(result.current.current.messages).toHaveLength(0);
+    expect(m.insertCalls).toHaveLength(0); // reusa — não cria linha nova
+  });
+
+  it('on mount creates a fresh session when every existing one has messages', async () => {
+    const rows: Row[] = [
+      { id: 'a', title: 'recent', messages: [{ role: 'user', content: 'hi' }], updated_at: '2026-05-02T10:00:00Z' },
+    ];
+    const fresh: Row = { id: 'new-1', title: 'Nova conversa', messages: [], updated_at: isoNow() };
+    const m = mockBrowser({ initialRows: rows, insertRow: fresh });
+    const { useChatSessionsRemote } = await import('@/hooks/useChatSessionsRemote');
+    const { result } = renderHook(() => useChatSessionsRemote());
+    await waitFor(() => {
+      expect(result.current.sessions).toHaveLength(2);
+    });
+    expect(result.current.currentId).toBe('new-1');
+    expect(result.current.sessions[0]!.id).toBe('new-1'); // prepended
+    expect(result.current.sessions[1]!.id).toBe('a'); // histórico preservado
+    expect(m.insertCalls).toHaveLength(1);
+  });
+
+  it('on mount falls back to the newest session when the fresh insert fails', async () => {
+    const rows: Row[] = [
+      { id: 'a', title: 'recent', messages: [{ role: 'user', content: 'hi' }], updated_at: '2026-05-02T10:00:00Z' },
+    ];
+    mockBrowser({ initialRows: rows, insertError: { message: 'boom' } });
+    const { useChatSessionsRemote } = await import('@/hooks/useChatSessionsRemote');
+    const { result } = renderHook(() => useChatSessionsRemote());
+    await waitFor(() => {
+      expect(result.current.sessions).toHaveLength(1);
+    });
+    expect(result.current.currentId).toBe('a'); // comportamento antigo
     expect(result.current.current.title).toBe('recent');
-    expect(result.current.current.messages).toHaveLength(1);
   });
 
   it('createNew inserts a row, prepends to local state, switches currentId', async () => {

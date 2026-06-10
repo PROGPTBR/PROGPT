@@ -63,9 +63,32 @@ export function useChatSessionsRemote(): UseChatSessions {
         setSessions([fresh]);
         setCurrentId(fresh.id);
       } else {
+        // Abrir o chat sempre cai numa conversa NOVA (decisão 2026-06-10) —
+        // o histórico fica na sidebar. Reusa uma sessão vazia existente se
+        // houver (evita acumular linhas vazias a cada login); senão cria.
         const list = rows.map(rowToSession);
-        setSessions(list);
-        setCurrentId(list[0]!.id);
+        const empty = list.find((s) => s.messages.length === 0);
+        if (empty) {
+          setSessions(list);
+          setCurrentId(empty.id);
+        } else {
+          const { data: created, error: insErr } = await sb
+            .from('sessions')
+            .insert({})
+            .select('id, title, messages, updated_at, active_perfil_id')
+            .single();
+          if (cancelled) return;
+          if (insErr || !created) {
+            // fail-soft: comportamento antigo (abre a mais recente)
+            console.warn('[useChatSessionsRemote] fresh-on-load failed:', insErr);
+            setSessions(list);
+            setCurrentId(list[0]!.id);
+          } else {
+            const fresh = rowToSession(created as DBRow);
+            setSessions([fresh, ...list]);
+            setCurrentId(fresh.id);
+          }
+        }
       }
       setHydrated(true);
     })();
