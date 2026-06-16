@@ -8,6 +8,7 @@ import { PastFinancialView } from '@/components/assistants/PastFinancialView';
 import { PastAbcView } from '@/components/assistants/PastAbcView';
 import { PastProfileView } from '@/components/assistants/PastProfileView';
 import { PastNegotiationView } from '@/components/assistants/PastNegotiationView';
+import { PastScorecardView } from '@/components/assistants/PastScorecardView';
 import type {
   RfpParams,
   KraljicParams,
@@ -15,6 +16,7 @@ import type {
   FinancialParams,
   AbcParams,
   ProfileParams,
+  ScorecardParams,
   NegotiationStrategyParams,
   NegotiationStrategyResult,
   NegotiationTranscriptTurn,
@@ -112,6 +114,17 @@ export default async function AssistantRunDetailPage({
         runId={run.id}
         initialOutput={run.output_md}
         nomeCategoria={pf.nomeCategoria ?? '(categoria sem nome)'}
+      />
+    );
+  }
+
+  if (run.assistant_type === 'scorecard') {
+    const sp = run.params as ScorecardParams;
+    return (
+      <PastScorecardView
+        runId={run.id}
+        initialOutput={run.output_md}
+        scorecardName={sp.scorecardName ?? '(scorecard sem nome)'}
       />
     );
   }

@@ -724,7 +724,8 @@ export type AssistantRunRow = {
     | FinancialParams
     | AbcParams
     | ProfileParams
-    | NegotiationStrategyParams;
+    | NegotiationStrategyParams
+    | ScorecardParams;
   output_md: string | null;
   status: ThemeStatusRow;
   error_message: string | null;
