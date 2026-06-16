@@ -29,7 +29,8 @@ type AssistantTypeLocal =
   | 'financial'
   | 'abc'
   | 'profile'
-  | 'negotiation';
+  | 'negotiation'
+  | 'scorecard';
 
 type RunSummary = {
   id: string;
@@ -56,6 +57,9 @@ type RunSummary = {
     // Profile
     nomeCategoria?: string;
     subSegmentos?: string[];
+    // Scorecard
+    scorecardName?: string;
+    suppliers?: Array<{ name?: string }>;
   };
   status: 'running' | 'done' | 'error';
   error_message: string | null;
@@ -89,6 +93,7 @@ const TYPE_LABELS: Record<AssistantTypeLocal | 'all', string> = {
   abc: 'ABC',
   profile: 'Perfil',
   negotiation: 'Negociação',
+  scorecard: 'Scorecard',
 };
 
 const TYPE_ORDER: Array<AssistantTypeLocal | 'all'> = [
@@ -100,6 +105,7 @@ const TYPE_ORDER: Array<AssistantTypeLocal | 'all'> = [
   'abc',
   'financial',
   'profile',
+  'scorecard',
 ];
 
 export function RfpHistoryList() {
@@ -209,6 +215,7 @@ export function RfpHistoryList() {
         r.params.analysisName,
         r.params.analysisPeriod,
         r.params.nomeCategoria,
+        r.params.scorecardName,
         ...(r.params.subSegmentos ?? []),
       ]
         .filter(Boolean)
@@ -236,9 +243,11 @@ export function RfpHistoryList() {
                 ? 'perfil'
                 : assistantType === 'negotiation'
                   ? 'negociacao'
-                  : kind === 'docx'
-                    ? 'rfp'
-                    : 'cotacao';
+                  : assistantType === 'scorecard'
+                    ? 'scorecard'
+                    : kind === 'docx'
+                      ? 'rfp'
+                      : 'cotacao';
     const filename = `${prefix}-${runId.slice(0, 8)}.${kind}`;
     const errLabel =
       kind === 'docx' ? 'Falha ao baixar .docx' : 'Falha ao baixar planilha';
@@ -360,6 +369,7 @@ export function RfpHistoryList() {
             const isAbc = r.assistant_type === 'abc';
             const isProfile = r.assistant_type === 'profile';
             const isNegotiation = r.assistant_type === 'negotiation';
+            const isScorecard = r.assistant_type === 'scorecard';
             const scope = isKraljic
               ? (r.params.portfolioName ?? '(portfólio sem nome)')
               : isPorter
@@ -372,7 +382,9 @@ export function RfpHistoryList() {
                       ? (r.params.nomeCategoria ?? '(categoria sem nome)')
                       : isNegotiation
                         ? (r.params.supplierName ?? '(fornecedor sem nome)')
-                        : (r.params.scope ?? '(sem escopo)');
+                        : isScorecard
+                          ? (r.params.scorecardName ?? '(scorecard sem nome)')
+                          : (r.params.scope ?? '(sem escopo)');
             const category = isKraljic
               ? `${r.params.items?.length ?? 0} item(ns)`
               : isPorter
@@ -385,13 +397,22 @@ export function RfpHistoryList() {
                       ? `${r.params.subSegmentos?.length ?? 0} sub-segmento(s)`
                       : isNegotiation
                         ? (r.params.category ?? 'Estratégia de negociação')
-                        : (r.params.category ?? '—');
+                        : isScorecard
+                          ? `${r.params.suppliers?.length ?? 0} fornecedor(es)`
+                          : (r.params.category ?? '—');
             const client =
-              isKraljic || isPorter || isFinancial || isAbc || isProfile || isNegotiation
+              isKraljic ||
+              isPorter ||
+              isFinancial ||
+              isAbc ||
+              isProfile ||
+              isNegotiation ||
+              isScorecard
                 ? ''
                 : (r.params.client ?? '');
             const isDone = r.status === 'done';
-            // Porter, Financial, Profile and Negotiation don't produce a .xlsx.
+            // Porter, Financial, Profile and Negotiation don't produce a .xlsx
+            // (Scorecard does — multi-sheet, like Kraljic/ABC).
             const showXlsx = !isPorter && !isFinancial && !isProfile && !isNegotiation;
             return (
               <li
