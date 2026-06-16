@@ -101,7 +101,7 @@ export function PorterResult({
         </div>
       </div>
 
-      <article className="rounded-md border border-border bg-card p-6 prose prose-sm prose-invert max-w-none overflow-x-auto [&_table]:block [&_table]:overflow-x-auto [&_table]:whitespace-nowrap [&_table]:max-w-full [&_th]:px-2 [&_td]:px-2">
+      <article className="rounded-md border border-border bg-card p-6 prose prose-sm dark:prose-invert max-w-none overflow-x-auto [&_table]:block [&_table]:overflow-x-auto [&_table]:whitespace-nowrap [&_table]:max-w-full [&_th]:px-2 [&_td]:px-2">
         {markdown.length === 0 && generating ? (
           <p className="text-muted-foreground italic">
             Analisando o mercado fornecedor e classificando as 5 forças… ~10-15
