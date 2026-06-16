@@ -59,7 +59,7 @@ export function AssistantEntryChoice({
         <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">
           {title} <span className="text-brand">.</span>
         </h1>
-        <p className="text-sm text-gray-400 mt-2 max-w-2xl">{subtitle}</p>
+        <p className="text-sm text-muted-foreground mt-2 max-w-2xl">{subtitle}</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -67,29 +67,29 @@ export function AssistantEntryChoice({
         <a
           href={templateHref}
           download={templateFilename}
-          className="group flex flex-col rounded-2xl border border-white/5 bg-[#141414] hover:bg-[#181818] hover:border-white/10 transition-all duration-300 p-6 active:scale-[0.99]"
+          className="group flex flex-col rounded-2xl border border-border bg-card hover:bg-accent transition-all duration-300 p-6 active:scale-[0.99]"
         >
           <div className="flex items-center gap-3 mb-5">
-            <div className="flex-shrink-0 rounded-xl bg-white/5 border border-white/10 p-3 text-gray-300 group-hover:text-white transition-colors">
+            <div className="flex-shrink-0 rounded-xl bg-muted border border-border p-3 text-muted-foreground group-hover:text-foreground transition-colors">
               <TemplateIcon className="h-5 w-5" aria-hidden="true" />
             </div>
-            <div className="text-[10px] font-medium uppercase tracking-wider text-gray-500">
+            <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
               Opção 1
             </div>
           </div>
 
-          <h2 className="text-xl font-semibold tracking-tight text-white">
+          <h2 className="text-xl font-semibold tracking-tight text-foreground">
             Baixar template
           </h2>
-          <p className="text-sm text-gray-400 mt-2 leading-relaxed flex-1">
+          <p className="text-sm text-muted-foreground mt-2 leading-relaxed flex-1">
             {templateDescription}
           </p>
 
-          <div className="mt-5 flex items-center justify-between pt-4 border-t border-white/5">
-            <span className="text-[11px] text-gray-500 uppercase tracking-wider">
+          <div className="mt-5 flex items-center justify-between pt-4 border-t border-border">
+            <span className="text-[11px] text-muted-foreground uppercase tracking-wider">
               {templateFormat}
             </span>
-            <span className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-300 group-hover:text-white transition-colors">
+            <span className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground/80 group-hover:text-foreground transition-colors">
               Baixar
               <Download
                 className="h-3.5 w-3.5 group-hover:translate-y-0.5 transition-transform"
@@ -114,10 +114,10 @@ export function AssistantEntryChoice({
             </div>
           </div>
 
-          <h2 className="text-xl font-semibold tracking-tight text-white">
+          <h2 className="text-xl font-semibold tracking-tight text-foreground">
             Criar com assistente
           </h2>
-          <p className="text-sm text-gray-400 mt-2 leading-relaxed flex-1">
+          <p className="text-sm text-muted-foreground mt-2 leading-relaxed flex-1">
             {assistedDescription}
           </p>
 
