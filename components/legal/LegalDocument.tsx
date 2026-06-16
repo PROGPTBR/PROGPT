@@ -36,7 +36,7 @@ export function LegalDocument({ title, markdown }: Props) {
             <span>Versão {CURRENT_LEGAL_VERSION}</span>
           </div>
         </div>
-        <article className="prose prose-sm prose-invert max-w-none [&_h2]:mt-8 [&_h3]:mt-6 [&_a]:text-brand [&_a]:no-underline hover:[&_a]:underline [&_table]:block [&_table]:overflow-x-auto">
+        <article className="prose prose-sm dark:prose-invert max-w-none [&_h2]:mt-8 [&_h3]:mt-6 [&_a]:text-brand [&_a]:no-underline hover:[&_a]:underline [&_table]:block [&_table]:overflow-x-auto">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>{markdown}</ReactMarkdown>
         </article>
         <footer className="pt-8 border-t border-border text-xs text-muted-foreground flex flex-wrap gap-4">
