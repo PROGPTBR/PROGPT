@@ -9,20 +9,18 @@ import Image from 'next/image';
 // rendering the logo inside a small white pill so the brand colors
 // always pop, independent of the page theme.
 
-type Size = 'sm' | 'md' | 'lg' | 'big';
+type Size = 'sm' | 'md' | 'lg';
 
 const HEIGHT_CLASS: Record<Size, string> = {
   sm: 'h-5',
-  md: 'h-6',
+  md: 'h-10',
   lg: 'h-7',
-  big: 'h-10',
 };
 
 const PAD_CLASS: Record<Size, string> = {
   sm: 'px-2 py-1',
   md: 'px-2.5 py-1.5',
   lg: 'px-3 py-1.5',
-  big: 'px-2.5 py-1.5',
 };
 
 type Props = {
@@ -32,7 +30,7 @@ type Props = {
 };
 
 export function BrandLogo({
-  size = 'big',
+  size = 'md',
   className = '',
   priority = false,
 }: Props) {
@@ -46,7 +44,7 @@ export function BrandLogo({
         width={241}
         height={57}
         priority={priority}
-       className={`${HEIGHT_CLASS[size]} w-auto`}
+        className={`${HEIGHT_CLASS[size]} w-auto`}
       />
     </span>
   );
