@@ -14,6 +14,8 @@ type CompanyData = {
   company_description: string | null;
 };
 
+type CustomerType = 'pf' | 'pj';
+
 const EMPTY: CompanyData = {
   company_name: '',
   company_legal_name: '',
@@ -46,6 +48,12 @@ export function ProfileCompanyForm() {
   const [values, setValues] = useState<CompanyData>(EMPTY);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
+  // =========================
+  // PF / PJ
+  // =========================
+  const [customerType, setCustomerType] = useState<CustomerType>('pf');
+  const [cpf, setCpf] = useState('');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -90,6 +98,66 @@ export function ProfileCompanyForm() {
     }
   }
 
+// =========================
+  // VALIDATION BILLING
+  // =========================
+  {/* function canCheckout() {
+    if (!values.company_name) return false;
+    if (!values.company_email) return false;
+
+    if (customerType === 'pf') {
+      return cpf.length >= 11;
+    }
+
+    return (values.company_cnpj ?? '').length >= 14;
+  }
+ */}
+  // =========================
+  // CHECKOUT ASAAS
+  // =========================
+  {/* async function handleCheckout() {
+    setBillingLoading(true);
+
+    try {
+      const res = await fetch('/api/billing/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: values.company_name,
+          customerType,
+          cpf: customerType === 'pf' ? cpf : undefined,
+          cnpj: customerType === 'pj' ? values.company_cnpj : undefined,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error ?? 'checkout_error');
+      }
+
+      if (data.checkoutUrl) {
+        window.location.href = data.checkoutUrl;
+      }
+    } catch (err) {
+      toast.error('Erro ao iniciar pagamento', {
+        description: String(err),
+      });
+    } finally {
+      setBillingLoading(false);
+    }
+  } 
+
+  function PlanCard({ plan }: { plan: any }) {
+  return (
+    <div className="pt-6 border-t border-border space-y-3">
+      <h3 className="text-sm font-medium">
+        {plan.name}
+      </h3>
+    </div>
+  );
+}*/}
+
   if (loading) {
     return (
       <div className="rounded-2xl border border-border bg-card p-6 text-xs text-muted-foreground">
@@ -103,6 +171,36 @@ export function ProfileCompanyForm() {
       onSubmit={handleSubmit}
       className="space-y-5 rounded-2xl border border-border bg-card p-6"
     >
+
+ {/* =========================
+          PF / PJ SWITCH
+      ========================= 
+      <div className="flex gap-2 mb-4">
+        <button
+          type="button"
+          onClick={() => setCustomerType('pf')}
+          className={`px-3 py-1 rounded-md text-sm ${
+            customerType === 'pf'
+              ? 'bg-brand-gradient text-black'
+              : 'bg-foreground text-white border border-border'
+          }`}
+        >
+          Pessoa Física
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setCustomerType('pj')}
+          className={`px-3 py-1 rounded-md text-sm ${
+            customerType === 'pj'
+              ? 'bg-brand-gradient text-black'
+              : 'bg-foreground text-white border border-border'
+          }`}
+        >
+          Pessoa Jurídica
+        </button>
+      </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label htmlFor="cf-name" className={FIELD_LABEL_CLASS}>
@@ -206,7 +304,135 @@ export function ProfileCompanyForm() {
         assistentes (apresentação do RFP, banner da planilha de cotação e termos
         contratuais).
       </p>
+*/}
 
+  {/* =========================
+          PF / PJ SWITCH
+      ========================= */}
+      <div className="flex gap-2 mb-4">
+        <button
+          type="button"
+          onClick={() => setCustomerType('pf')}
+          className={`px-3 py-1 rounded-md text-sm ${
+            customerType === 'pf'
+              ? 'bg-brand-gradient text-black'
+              : 'bg-foreground text-white border border-border'
+          }`}
+        >
+          Pessoa Física
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setCustomerType('pj')}
+          className={`px-3 py-1 rounded-md text-sm ${
+            customerType === 'pj'
+              ? 'bg-brand-gradient text-black'
+              : 'bg-foreground text-white border border-border'
+          }`}
+        >
+          Pessoa Jurídica
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label className={FIELD_LABEL_CLASS}>Nome fantasia</label>
+          <input
+            id="cf-name"
+            value={values.company_name ?? ''}
+            onChange={(e) => setField('company_name', e.target.value)}
+            placeholder="Ex: ACME"
+            maxLength={200}
+            className={FIELD_INPUT_CLASS}
+          />
+        </div>
+        <div>
+          <label className={FIELD_LABEL_CLASS}>
+            {customerType === 'pf' ? 'CPF' : 'CNPJ'}
+          </label>
+
+          {customerType === 'pf' ? (
+            <input
+              value={cpf}
+              onChange={(e) => setCpf(e.target.value)}
+              className={FIELD_INPUT_CLASS}
+              placeholder="000.000.000-00"
+            />
+          ) : (
+            <input
+              value={values.company_cnpj ?? ''}
+              onChange={(e) => setField('company_cnpj', e.target.value)}
+              className={FIELD_INPUT_CLASS}
+              placeholder="00.000.000/0001-00"
+            />
+          )}
+        </div>
+
+        <div>
+          <label className={FIELD_LABEL_CLASS}>Razão social</label>
+          <input
+            value={values.company_legal_name ?? ''}
+            onChange={(e) => setField('company_legal_name', e.target.value)}
+            className={FIELD_INPUT_CLASS}
+          />
+        </div>
+
+        <div>
+          <label className={FIELD_LABEL_CLASS}>Telefone</label>
+          <input
+            value={values.company_phone ?? ''}
+            onChange={(e) => setField('company_phone', e.target.value)}
+            className={FIELD_INPUT_CLASS}
+          />
+        </div>
+
+        <div className="sm:col-span-2">
+          <label className={FIELD_LABEL_CLASS}>E-mail</label>
+          <input
+            type="email"
+            value={values.company_email ?? ''}
+            onChange={(e) => setField('company_email', e.target.value)}
+            className={FIELD_INPUT_CLASS}
+          />
+        </div>
+
+        <div className="sm:col-span-2">
+          <label className={FIELD_LABEL_CLASS}>Endereço</label>
+          <input
+            value={values.company_address ?? ''}
+            onChange={(e) => setField('company_address', e.target.value)}
+            className={FIELD_INPUT_CLASS}
+          />
+        </div>
+
+        <div className="sm:col-span-2">
+          <label className={FIELD_LABEL_CLASS}>Descrição</label>
+          <textarea
+            value={values.company_description ?? ''}
+            onChange={(e) => setField('company_description', e.target.value)}
+            className={`${FIELD_INPUT_CLASS} min-h-[100px]`}
+          />
+        </div>
+      </div>
+
+      {/* =========================
+          SAVE PROFILE
+      ========================= */}
+      <div className="flex justify-end pt-2 border-t border-border">
+        <button
+          type="submit"
+          disabled={saving}
+          className="inline-flex items-center gap-2 bg-brand-gradient text-black px-6 h-10 rounded-full text-sm font-medium"
+        >
+          <Save className="h-4 w-4" />
+          {saving ? 'Salvando…' : 'Salvar dados'}
+        </button>
+      </div>
+
+{/* =========================
+          SAVE PROFILE
+      ========================= */}
       <div className="flex justify-end pt-2 border-t border-border">
         <button
           type="submit"
@@ -216,6 +442,21 @@ export function ProfileCompanyForm() {
           <Save className="h-4 w-4" aria-hidden="true" />
           {saving ? 'Salvando…' : 'Salvar dados'}
         </button>
+      </div>
+
+      {/* =========================
+          BILLING SECTION
+      ========================= */}
+ 
+                <div className="pt-6 border-t border-border space-y-3">
+        <h3 className="text-sm font-medium text-white"> Plano Pro</h3>
+
+        <p className="text-xs text-muted-foreground">
+          R$ 99/mês — assinatura mensal
+        </p>
+
+       
+
       </div>
     </form>
   );

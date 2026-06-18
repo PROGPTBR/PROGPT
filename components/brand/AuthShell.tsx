@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { BrandLogo } from './BrandLogo';
+//import { BrandLogo } from './BrandLogo';
+import { Header } from '@/app/login/header';
 
 // Reusable layout for auth pages (login, signup, forgot, reset).
 // Theme-aware: light is default, dark via the toggle in the chat header
@@ -20,7 +21,7 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
         className="pointer-events-none absolute -bottom-20 -right-20 h-80 w-80 rounded-full bg-brand/5 blur-3xl"
       />
 
-      {/* Header */}
+      {/* Header 
       <header className="relative z-10 px-6 md:px-12 py-6">
         <Link
           href="/"
@@ -30,6 +31,10 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
           <BrandLogo size="md" priority />
         </Link>
       </header>
+*/}
+
+  {/* Header */}
+     <Header />
 
       {/* Centered card */}
       <main className="relative z-10 flex-1 flex items-center justify-center px-6 py-8">

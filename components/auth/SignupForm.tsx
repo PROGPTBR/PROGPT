@@ -7,7 +7,7 @@ import { TurnstileWidget } from './TurnstileWidget';
 
 const MIN_PASSWORD = 6;
 
-function friendlyError(code: string): string {
+{/* function friendlyError(code: string): string {
   switch (code) {
     case 'user_already_exists':
       return 'Já existe uma conta com este email. Use Entrar.';
@@ -22,7 +22,7 @@ function friendlyError(code: string): string {
     default:
       return 'Algo deu errado. Tente novamente.';
   }
-}
+}*/}
 
 type SignupState =
   | { kind: 'idle' }
@@ -31,9 +31,16 @@ type SignupState =
   | { kind: 'error'; message: string };
 
 export function SignupForm() {
-  const router = useRouter();
-  const params = useSearchParams();
-  const next = params.get('next') ?? '/chat';
+  const searchParams = useSearchParams();
+
+const plan = searchParams.get('plan');
+const next = searchParams.get('next') ?? '/chat';
+
+const router = useRouter();
+
+  console.log('Plano escolhido:', plan);
+
+ 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
@@ -68,19 +75,27 @@ export function SignupForm() {
     const res = await fetch('/api/auth/signup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email,
-        password,
-        captchaToken,
-        next,
-        acceptedTerms: true,
-      }),
+   body: JSON.stringify({
+  email,
+  password,
+  captchaToken,
+  next,
+  acceptedTerms: true,
+  plan: plan ?? undefined,
+}),
     });
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({ error: 'unknown' }));
-      setState({ kind: 'error', message: friendlyError(body.error ?? 'unknown') });
-      return;
-    }
+ if (!res.ok) {
+  const body = await res.json().catch(() => ({ error: 'unknown' }));
+
+  console.log('ERRO API SIGNUP:', body);
+
+  setState({
+    kind: 'error',
+    message: JSON.stringify(body),
+  });
+
+  return;
+}
     const body = await res.json();
     if (body.checkEmail) {
       setState({ kind: 'check-email' });
@@ -93,15 +108,15 @@ export function SignupForm() {
   if (state.kind === 'check-email') {
     return (
       <div className="space-y-4 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight">
+        <h1 className="text-3xl font-semibold tracking-tight text-white">
           Confira seu email <span className="text-brand">.</span>
         </h1>
-        <p className="text-sm text-muted-foreground leading-relaxed">
+        <p className="text-base text-muted-foreground leading-relaxed">
           Enviamos um link de confirmação para{' '}
-          <span className="font-medium text-foreground">{email}</span>. Clique no link
+          <span className="font-medium text-brand">{email}</span>. Clique no link
           para ativar a conta e poder entrar.
         </p>
-        <div className="text-sm pt-2">
+        <div className="text-base pt-2">
           <Link href="/login" className="text-brand hover:text-brand/80 transition-colors">
             Voltar para Entrar
           </Link>
@@ -113,15 +128,30 @@ export function SignupForm() {
   const submitting = state.kind === 'submitting';
   const errorMessage = state.kind === 'error' ? state.message : null;
 
+  const planName =
+  plan === 'pf-99'
+    ? 'Plano Pessoa Física'
+    : plan === 'pj'
+    ? 'Plano Pessoa Jurídica'
+    : null;
+
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
+        <h1 className="text-3xl font-semibold tracking-tight text-white">
           Criar conta <span className="text-brand">.</span>
         </h1>
-        <p className="mt-1.5 text-sm text-muted-foreground">
+        <p className="mt-1.5 text-lg text-muted-foreground">
           Use seu email para começar.
         </p>
+
+        {planName && (
+  <div className="mt-4 rounded-lg border border-brand/20 bg-brand/5 p-3">
+    <p className="text-sm text-brand font-medium">
+      Plano selecionado: <span className="text-brand">{planName}</span>
+    </p>
+  </div>
+)}
       </div>
       <form onSubmit={onSubmit} className="space-y-4">
         <div>
@@ -137,7 +167,7 @@ export function SignupForm() {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-lg bg-muted/40 border border-border px-4 py-2.5 text-sm text-foreground placeholder-muted-foreground outline-none focus:border-brand focus:bg-muted/60 transition-colors"
+            className="w-full rounded-lg bg-white border border-border px-4 py-2.5 text-lg text-foreground placeholder-muted-foreground outline-none focus:border-brand focus:bg-muted/60 transition-colors"
           />
         </div>
         <div>
@@ -154,7 +184,7 @@ export function SignupForm() {
             minLength={MIN_PASSWORD}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-lg bg-muted/40 border border-border px-4 py-2.5 text-sm text-foreground placeholder-muted-foreground outline-none focus:border-brand focus:bg-muted/60 transition-colors"
+            className="w-full rounded-lg bg-white border border-border px-4 py-2.5 text-lg text-foreground placeholder-muted-foreground outline-none focus:border-brand focus:bg-muted/60 transition-colors"
           />
           <p className="mt-2 text-xs text-muted-foreground">
             Mínimo {MIN_PASSWORD} caracteres.
@@ -199,15 +229,15 @@ export function SignupForm() {
         <button
           type="submit"
           disabled={submitting || !captchaToken || !acceptedTerms}
-          className="w-full inline-flex items-center justify-center bg-brand text-black h-11 rounded-full text-sm font-medium hover:bg-brand/90 disabled:opacity-60 disabled:cursor-not-allowed active:scale-95 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          className="w-full inline-flex items-center justify-center bg-brand-gradient text-black h-11 rounded-full text-sm font-medium button-gradient disabled:opacity-60 disabled:cursor-not-allowed active:scale-95 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           {submitting ? 'Cadastrando…' : 'Cadastrar'}
         </button>
       </form>
-      <div className="text-sm text-center pt-2 border-t border-border">
+      <div className="text-sm text-center pt-2 border-t border-p-1 pt-4">
         <Link
           href={`/login?next=${encodeURIComponent(next)}`}
-          className="text-brand hover:text-brand/80 transition-colors inline-block pt-4"
+          className="text-brand hover:text-brand/80 transition-colors text-2xl font-medium"
         >
           Já tenho conta
         </Link>

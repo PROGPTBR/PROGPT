@@ -1,8 +1,9 @@
+import { getServerSupabase } from '@/lib/db/supabase';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
-import { ProfileLogoUpload } from '@/components/profile/ProfileLogoUpload';
+{/* import { ProfileLogoUpload } from '@/components/profile/ProfileLogoUpload'; */}
 import { ProfileCompanyForm } from '@/components/profile/ProfileCompanyForm';
 import { ProfileCategoriesList } from '@/components/profile/ProfileCategoriesList';
 import { BrandLogo } from '@/components/brand/BrandLogo';
@@ -11,7 +12,47 @@ export const dynamic = 'force-dynamic';
 
 export default async function ProfilePage() {
   const user = await getCurrentUser();
-  if (!user) redirect('/login?next=/profile');
+if (!user) redirect('/login?next=/profile');
+
+const supabase = getServerSupabase();
+
+const { data: subscription } = await supabase
+  .from('subscriptions')
+  .select('*')
+  .eq('user_id', user.id)
+  .maybeSingle();
+
+const statusLabel =
+  subscription?.plan?.toLowerCase() === 'free'
+    ? 'Período de teste'
+    : subscription?.status === 'active'
+    ? 'Ativo'
+    : subscription?.status === 'canceled'
+    ? 'Cancelado'
+    : subscription?.status === 'past_due'
+    ? 'Pagamento pendente'
+    : subscription?.status === 'trialing'
+    ? 'Período de teste'
+    : subscription?.status ?? '-';
+
+    const statusColor =
+  subscription?.plan?.toLowerCase() === 'free'
+    ? 'text-white'
+    : subscription?.status === 'active'
+    ? 'text-green-500'
+    : subscription?.status === 'canceled'
+    ? 'text-red-500'
+    : 'text-yellow-500';
+
+    const daysLeft = subscription?.current_period_end
+  ? Math.max(
+      0,
+      Math.ceil(
+        (new Date(subscription.current_period_end).getTime() - Date.now()) /
+          (1000 * 60 * 60 * 24)
+      )
+    )
+  : null;
 
   return (
     <div className="relative min-h-screen bg-background dark:bg-[#0d0d0d] text-foreground dark:text-white font-outfit antialiased overflow-x-hidden">
@@ -55,7 +96,7 @@ export default async function ProfilePage() {
           </p>
         </div>
 
-        <section className="space-y-3">
+      {/*  <section className="space-y-3">
           <div>
             <h2 className="text-base font-medium">Logo da empresa</h2>
             <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
@@ -64,7 +105,39 @@ export default async function ProfilePage() {
             </p>
           </div>
           <ProfileLogoUpload />
-        </section>
+        </section>*/}
+           <section className="space-y-3">
+          <div>
+        <h2 className="text-white font-medium text-2xl"> Seu Plano</h2>
+            <p className="text-base text-muted-foreground mt-1 leading-relaxed">
+              Confira os detalhes da sua assinatura.
+            </p>
+</div>
+
+<div className="rounded-xl border border-border bg-card/40 p-5" >
+  <div className="space-y-2 text-base">
+    <p>
+      <span className="text-muted-foreground">Plano:</span>{' '}
+      <span className="text-brand font-medium">
+        {subscription?.plan ?? 'Free'}
+      </span>
+    </p>
+
+ <p>
+  <span className="text-muted-foreground">Status:</span>{' '}
+  <span className={`font-medium ${statusColor}`}>
+    {statusLabel}
+  </span>
+</p>
+
+{subscription?.plan?.toLowerCase() === 'free' && daysLeft !== null && (
+  <p className="text-sm text-green-500">
+    Seu período de teste termina em {daysLeft} dia(s).
+  </p>
+)}
+  </div>
+</div>
+</section>
 
         <section className="space-y-3">
           <div>

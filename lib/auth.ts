@@ -1,10 +1,29 @@
 import type { User } from '@supabase/supabase-js';
 import { supabaseServer } from '@/lib/db/supabase-server';
 
+{/* 
 export type Profile = {
   id: string;
   role: 'user' | 'admin';
   display_name: string | null;
+};
+*/}
+
+export type Profile = {
+  id: string;
+  role: 'user' | 'admin';
+  display_name: string | null;
+
+  full_name: string | null;
+  cpf_cnpj: string | null;
+  phone: string | null;
+
+  plan: string | null;
+  selected_plan: string | null;
+
+  asaas_customer_id: string | null;
+  asaas_subscription_id: string | null;
+  subscription_status: string | null;
 };
 
 export class NotAuthenticated extends Error {
@@ -27,10 +46,37 @@ export async function requireUser(): Promise<User> {
   return u;
 }
 
+{/* 
 export async function getProfile(userId: string): Promise<Profile | null> {
   const { data, error } = await supabaseServer()
     .from('profiles')
     .select('id, role, display_name')
+    .eq('id', userId)
+    .maybeSingle();
+  if (error) return null;
+  return (data as Profile | null) ?? null;
+}
+*/}
+
+export async function getProfile(userId: string): Promise<Profile | null> {
+  const { data, error } = await supabaseServer()
+    .from('profiles')
+    .select(`
+  id,
+  role,
+  display_name,
+
+  full_name,
+  cpf_cnpj,
+  phone,
+
+  plan,
+  selected_plan,
+
+  asaas_customer_id,
+  asaas_subscription_id,
+  subscription_status
+`)
     .eq('id', userId)
     .maybeSingle();
   if (error) return null;

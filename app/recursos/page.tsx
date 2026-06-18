@@ -7,7 +7,6 @@ import { Header } from '../login/header';
 
 import {
   ArrowRight,
-  Plus,
   Zap,
   Eye,
   ShieldCheck,

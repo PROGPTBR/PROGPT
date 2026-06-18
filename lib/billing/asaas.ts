@@ -53,19 +53,6 @@ function getConfig() {
   const apiKey = process.env.ASAAS_API_KEY;
   const apiUrl = process.env.ASAAS_API_URL ?? 'https://sandbox.asaas.com/api/v3';
   if (!apiKey) throw new Error('ASAAS_API_KEY env var missing');
-  // Em produção nunca cair no sandbox silenciosamente: se ASAAS_API_URL
-  // estiver ausente ou apontando pro sandbox, pagamentos reais iriam pro
-  // ambiente de teste e não gerariam receita (falha invisível). Fail-fast.
-  if (process.env.APP_ENV === 'production') {
-    if (!process.env.ASAAS_API_URL) {
-      throw new Error('ASAAS_API_URL env var missing in production (recusando o sandbox default)');
-    }
-    if (apiUrl.includes('sandbox')) {
-      throw new Error(
-        `ASAAS_API_URL aponta pro sandbox em produção (${apiUrl}) — pagamentos reais não seriam cobrados`,
-      );
-    }
-  }
   return { apiKey, apiUrl };
 }
 
@@ -95,13 +82,18 @@ async function asaasFetch<T>(
     parsed = text;
   }
 
-  if (!res.ok) {
-    throw new AsaasError(
-      `Asaas ${method} ${path} failed: ${res.status}`,
-      res.status,
-      parsed,
-    );
-  }
+if (!res.ok) {
+  console.log('====================');
+  console.log('ASAAS ERROR');
+  console.log(parsed);
+  console.log('====================');
+
+  throw new AsaasError(
+    `Asaas ${method} ${path} failed: ${res.status} - ${JSON.stringify(parsed)}`,
+    res.status,
+    parsed,
+  );
+}
 
   return parsed as T;
 }
@@ -127,8 +119,11 @@ export async function createAsaasCustomer(input: {
  * checkout (user escolhe na hora).
  */
 export async function createAsaasSubscription(
+
   input: CreateSubscriptionInput,
 ): Promise<CreateSubscriptionResult> {
+
+  
   const body = {
     customer: input.customerId,
     value: input.value,
@@ -148,6 +143,9 @@ export async function createAsaasSubscription(
     invoiceUrl?: string;
     paymentLink?: string;
   }>('POST', '/subscriptions', body);
+
+
+  console.log('ASAAS RAW RESULT:', JSON.stringify(result, null, 2));
 
   // Asaas retorna `invoiceUrl` pra primeira cobrança da subscription.
   // Se vier null (caso raro), fallback pra paymentLink.
@@ -177,5 +175,33 @@ export async function getAsaasSubscription(
 ): Promise<AsaasSubscription> {
   return asaasFetch<AsaasSubscription>('GET', `/subscriptions/${subscriptionId}`);
 }
+
+export async function createAsaasPaymentLink(input: {
+  name: string;
+  value: number;
+  description: string;
+}): Promise<{
+  id: string;
+  url: string;
+}> {
+  const result = await asaasFetch<{
+    id: string;
+    url: string;
+  }>('POST', '/paymentLinks', {
+    name: input.name,
+    billingType: 'UNDEFINED',
+    chargeType: 'RECURRENT',
+    value: input.value,
+    description: input.description,
+
+    dueDateLimitDays: 3,
+  });
+
+  return {
+    id: result.id,
+    url: result.url,
+  };
+}
+
 
 export { AsaasError };

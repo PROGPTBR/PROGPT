@@ -1,20 +1,10 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { Header } from '../login/header';
 
-import {
-  ArrowRight,
-  Plus,
-  Zap,
-  Eye,
-  ShieldCheck,
-  Database,
-  Clock,
-  Layers,
-} from 'lucide-react';
+import {  Plus } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
