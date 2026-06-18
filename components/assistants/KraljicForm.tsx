@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { KraljicItemTable, EMPTY_ITEM, type ItemDraft } from './KraljicItemTable';
 import { KraljicImportDialog } from './KraljicImportDialog';
 import { KraljicScoringAssistant } from './KraljicScoringAssistant';
+import { KRALJIC_EXAMPLES } from '@/lib/assistants/examples';
 
 export type KraljicFormValues = {
   templateId: string;
@@ -61,6 +62,21 @@ export function KraljicForm({ onSubmit }: { onSubmit: (v: KraljicFormValues) => 
     void fetchTemplates();
   }, [fetchTemplates]);
 
+  function loadExample() {
+    const ex = KRALJIC_EXAMPLES[0];
+    if (!ex) return;
+    const p = ex.params;
+    setValues((v) => ({
+      ...v,
+      portfolioName: p.portfolioName,
+      analysisPeriod: p.analysisPeriod ?? '',
+      notes: p.notes ?? '',
+      // KraljicItem.spendMM é number; o input usa string.
+      items: p.items.map((it) => ({ ...it, spendMM: String(it.spendMM) })),
+    }));
+    toast.success('Exemplo carregado — ajuste e gere');
+  }
+
   const validItems = values.items.filter(
     (it) => it.name.trim().length > 0 && Number(it.spendMM) >= 0,
   );
@@ -77,6 +93,11 @@ export function KraljicForm({ onSubmit }: { onSubmit: (v: KraljicFormValues) => 
         if (valid) onSubmit({ ...values, items: validItems });
       }}
     >
+      <div className="flex justify-end">
+        <Button type="button" variant="outline" size="sm" onClick={loadExample}>
+          Carregar exemplo
+        </Button>
+      </div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div>
           <label className="text-xs font-medium block mb-1">

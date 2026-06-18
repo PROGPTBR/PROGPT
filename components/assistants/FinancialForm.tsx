@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import type { FinancialIndicators } from '@/lib/assistants/types';
 import { calculateFinancialScore } from '@/lib/assistants/financial';
+import { FINANCIAL_EXAMPLES } from '@/lib/assistants/examples';
 
 // Sub-projeto 30 — Form para análise financeira de fornecedor.
 //
@@ -123,6 +124,18 @@ export function FinancialForm({
     void fetchTemplates();
   }, [fetchTemplates]);
 
+  function loadExample() {
+    const ex = FINANCIAL_EXAMPLES[0];
+    if (!ex) return;
+    const p = ex.params;
+    setSupplierName(p.supplierName);
+    setCnpj(p.cnpj ?? '');
+    setReferenceYear(p.referenceYear ?? '');
+    setObservacoes(p.observacoes ?? '');
+    setIndicators(p.indicators);
+    toast.success('Exemplo carregado — ajuste e gere');
+  }
+
   function setField(key: keyof FinancialIndicators, raw: string) {
     setIndicators((prev) => {
       const next = { ...prev };
@@ -226,6 +239,11 @@ export function FinancialForm({
       onSubmit={handleSubmit}
       className="space-y-6 rounded-md border border-border bg-card p-6 max-w-4xl"
     >
+      <div className="flex justify-end">
+        <Button type="button" variant="outline" size="sm" onClick={loadExample}>
+          Carregar exemplo
+        </Button>
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="md:col-span-2">
           <label className="text-xs font-medium block mb-1">Template</label>
