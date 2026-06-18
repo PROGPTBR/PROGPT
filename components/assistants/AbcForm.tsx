@@ -6,6 +6,7 @@ import { Upload, Loader2, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import type { AbcItem } from '@/lib/assistants/types';
+import { ABC_EXAMPLES } from '@/lib/assistants/examples';
 
 // Sub-projeto 31 — Form da análise ABC.
 //
@@ -80,6 +81,18 @@ export function AbcForm({
   useEffect(() => {
     void fetchTemplates();
   }, [fetchTemplates]);
+
+  function loadExample() {
+    const ex = ABC_EXAMPLES[0];
+    if (!ex) return;
+    const p = ex.params;
+    setAnalysisName(p.analysisName);
+    setAnalysisPeriod(p.analysisPeriod ?? '');
+    setNotes(p.notes ?? '');
+    setConsolidate(p.consolidate ?? true);
+    setItems(p.items);
+    toast.success('Exemplo carregado — ajuste e gere');
+  }
 
   async function handleImport(file: File) {
     setImporting(true);
@@ -171,6 +184,11 @@ export function AbcForm({
       onSubmit={handleSubmit}
       className="space-y-6 rounded-md border border-border bg-card p-6 max-w-5xl"
     >
+      <div className="flex justify-end">
+        <Button type="button" variant="outline" size="sm" onClick={loadExample}>
+          Carregar exemplo
+        </Button>
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="md:col-span-2">
           <label className="text-xs font-medium block mb-1">Template</label>

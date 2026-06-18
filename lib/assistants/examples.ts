@@ -1,4 +1,13 @@
-import type { ProfileParams, ScorecardParams, RfpParams } from './types';
+import type {
+  ProfileParams,
+  ScorecardParams,
+  RfpParams,
+  KraljicParams,
+  AbcParams,
+  FinancialParams,
+  PorterParams,
+} from './types';
+import { PORTER_STATEMENTS } from './porter-statements';
 
 // Item 4 (ativação) — exemplos "carregar exemplo" pros forms mais pesados
 // (Profile, Scorecard, RFP). Reduz fricção: o usuário vê como é um bom input
@@ -130,6 +139,115 @@ export const RFP_EXAMPLES: FormExample<RfpParams>[] = [
       ],
       notes:
         'Fornecedor ideal combina proximidade logística no Sudeste/Sul, capacidade de inovação em barreiras de umidade e referências no setor de alimentos. A RFQ será analisada em conjunto por Compras, P&D (requisitos técnicos) e Supply (lead times).',
+    },
+  },
+];
+
+export const KRALJIC_EXAMPLES: FormExample<KraljicParams>[] = [
+  {
+    id: 'embalagens-flexiveis-portfolio',
+    label: 'Embalagens Flexíveis — portfólio',
+    params: {
+      portfolioName: 'Portfólio de Embalagens Flexíveis 2026',
+      analysisPeriod: '2026 Q2',
+      notes:
+        'Mapeamento dos principais insumos da categoria de embalagem flexível para definir estratégia de sourcing por quadrante. Spend em R$ MM/ano.',
+      items: [
+        // name, segment, category, spendMM, criticality, technicalSpec, customerValue, marketStructure, marketRivalry, supplierPower, supplierSwitching
+        { name: 'Resina PE (commodity)', segment: 'Matéria-prima', category: 'Resinas', spendMM: 12, criticality: 2, technicalSpec: 2, customerValue: 2, marketStructure: 2, marketRivalry: 2, supplierPower: 2, supplierSwitching: 2 },
+        { name: 'Filme com barreira EVOH', segment: 'Estruturas técnicas', category: 'Filmes', spendMM: 8, criticality: 4, technicalSpec: 4, customerValue: 4, marketStructure: 4, marketRivalry: 3, supplierPower: 4, supplierSwitching: 4 },
+        { name: 'Tinta flexográfica especial', segment: 'Insumos de impressão', category: 'Tintas', spendMM: 1.5, criticality: 3, technicalSpec: 4, customerValue: 3, marketStructure: 4, marketRivalry: 2, supplierPower: 4, supplierSwitching: 4 },
+        { name: 'Adesivo de laminação', segment: 'Insumos de conversão', category: 'Adesivos', spendMM: 2.2, criticality: 2, technicalSpec: 2, customerValue: 2, marketStructure: 2, marketRivalry: 3, supplierPower: 2, supplierSwitching: 2 },
+        { name: 'Bobinas BOPP', segment: 'Substratos', category: 'Filmes', spendMM: 6, criticality: 3, technicalSpec: 3, customerValue: 3, marketStructure: 2, marketRivalry: 3, supplierPower: 3, supplierSwitching: 2 },
+        { name: 'Verniz de sobreimpressão', segment: 'Acabamento', category: 'Vernizes', spendMM: 0.4, criticality: 1, technicalSpec: 2, customerValue: 1, marketStructure: 1, marketRivalry: 2, supplierPower: 1, supplierSwitching: 1 },
+      ],
+    },
+  },
+];
+
+export const ABC_EXAMPLES: FormExample<AbcParams>[] = [
+  {
+    id: 'embalagens-flexiveis-spend',
+    label: 'Embalagens Flexíveis — spend anual',
+    params: {
+      analysisName: 'Curva ABC — Insumos de Embalagem Flexível 2026',
+      analysisPeriod: 'Ano fiscal 2025',
+      notes:
+        'Spend anual consolidado dos insumos da categoria de embalagem flexível. Valores em R$ (não MM). Espera-se concentração típica 80/20 nas resinas e filmes.',
+      consolidate: true,
+      items: [
+        { name: 'Resina PE (polietileno)', supplier: 'Polifilm Indústria', category: 'Resinas', quantity: 620, unit: 'ton', spend: 4_200_000 },
+        { name: 'Resina PP (polipropileno)', supplier: 'BarrierPack Brasil', category: 'Resinas', quantity: 410, unit: 'ton', spend: 2_800_000 },
+        { name: 'Filme com barreira EVOH', supplier: 'NordPack Soluções', category: 'Filmes', quantity: 95, unit: 'ton', spend: 1_600_000 },
+        { name: 'Bobinas BOPP', supplier: 'FlexFilms Co.', category: 'Filmes', quantity: 180, unit: 'ton', spend: 1_250_000 },
+        { name: 'Tinta flexográfica', supplier: 'Laminados Andina', category: 'Tintas', quantity: 38_000, unit: 'kg', spend: 720_000 },
+        { name: 'Adesivo de laminação', supplier: 'EmbalaSul', category: 'Adesivos', quantity: 24_000, unit: 'kg', spend: 540_000 },
+        { name: 'Cilindros e clichês', supplier: 'GravaTech', category: 'Ferramental', quantity: 120, unit: 'un', spend: 310_000 },
+        { name: 'Verniz de sobreimpressão', supplier: 'Laminados Andina', category: 'Vernizes', quantity: 9_500, unit: 'kg', spend: 180_000 },
+        { name: 'Solvente acetato de etila', supplier: 'QuimSul', category: 'Solventes', quantity: 22_000, unit: 'L', spend: 145_000 },
+        { name: 'Núcleos de papelão (tubetes)', supplier: 'TuboPack', category: 'Acessórios', quantity: 85_000, unit: 'un', spend: 88_000 },
+        { name: 'Fitas e etiquetas', supplier: 'EtiqBrasil', category: 'Acessórios', quantity: 140_000, unit: 'un', spend: 42_000 },
+        { name: 'Paletes e filme stretch', supplier: 'LogPack', category: 'Movimentação', quantity: 3_200, unit: 'un', spend: 28_000 },
+      ],
+    },
+  },
+];
+
+export const FINANCIAL_EXAMPLES: FormExample<FinancialParams>[] = [
+  {
+    id: 'fornecedor-embalagens-saudavel',
+    label: 'Fornecedor de embalagens — saudável',
+    params: {
+      supplierName: 'Polifilm Indústria de Embalagens S.A. (exemplo)',
+      cnpj: '12.345.678/0001-90',
+      referenceYear: '2024',
+      observacoes:
+        'Fornecedor candidato a contrato anual de filmes laminados (~R$ 1,2 MM/ano). Avaliação de saúde financeira como parte do due diligence pré-contrato.',
+      indicators: {
+        receitaLiquida: 850,
+        ebitda: 145,
+        lucroLiquido: 62,
+        margemLiquidaPct: 7.3,
+        margemEbitdaPct: 17.1,
+        dividaLiquidaEbitda: 1.8,
+        endividamentoGeralPct: 48,
+        liquidezCorrente: 1.6,
+        patrimonioLiquido: 410,
+        roePct: 15.1,
+        roicPct: 12.4,
+        fluxoCaixaOperacional: 118,
+      },
+    },
+  },
+];
+
+// Perfil de pressão por força para o exemplo de Embalagens Flexíveis:
+// fornecedores de resina concentrados (alta), rivalidade entre convertedores
+// alta, entrantes barrados por capital (baixa), substitutos moderados,
+// compradores (grandes indústrias de alimentos) com bom poder (médio-alto).
+const PORTER_FORCE_EXAMPLE_SCORE: Record<string, number> = {
+  'poder-fornecedor': 4,
+  rivalidade: 4,
+  'novos-entrantes': 2,
+  substitutos: 3,
+  'poder-comprador': 3,
+};
+
+export const PORTER_EXAMPLES: FormExample<PorterParams>[] = [
+  {
+    id: 'embalagens-flexiveis-mercado',
+    label: 'Embalagens Flexíveis — mercado',
+    params: {
+      categoria: 'Embalagens Flexíveis / Filmes laminados',
+      segmento: 'Indústria de conversão B2B',
+      escopo: 'Brasil, com importações pontuais da América Latina',
+      observacoes:
+        'Mercado de convertedores de embalagem flexível para alimentos. Matéria-prima (resina) atrelada a petroquímicas concentradas; muitos convertedores de médio porte competindo por escala.',
+      statements: PORTER_STATEMENTS.map((s) => ({
+        id: s.id,
+        weight: 2,
+        score: PORTER_FORCE_EXAMPLE_SCORE[s.force] ?? 3,
+      })),
     },
   },
 ];

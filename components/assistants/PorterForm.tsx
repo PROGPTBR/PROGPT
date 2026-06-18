@@ -16,6 +16,7 @@ import {
   PORTER_INTENSITY_LABELS,
   intensityFromScore,
 } from '@/lib/assistants/porter-statements';
+import { PORTER_EXAMPLES } from '@/lib/assistants/examples';
 
 // Sub-projeto 29 v2 — Quantitative Porter form (PG model).
 //
@@ -106,6 +107,18 @@ export function PorterForm({
     void fetchTemplates();
   }, [fetchTemplates]);
 
+  function loadExample() {
+    const ex = PORTER_EXAMPLES[0];
+    if (!ex) return;
+    const p = ex.params;
+    setCategoria(p.categoria);
+    setSegmento(p.segmento ?? '');
+    setEscopo(p.escopo ?? '');
+    setObservacoes(p.observacoes ?? '');
+    setStatements(p.statements);
+    toast.success('Exemplo carregado — ajuste e gere');
+  }
+
   function updateStatement(id: string, patch: Partial<PorterStatementScore>) {
     setStatements((prev) =>
       prev.map((s) => (s.id === id ? { ...s, ...patch } : s)),
@@ -166,6 +179,12 @@ export function PorterForm({
       onSubmit={handleSubmit}
       className="space-y-6 rounded-md border border-border bg-card p-6 max-w-4xl"
     >
+      <div className="flex justify-end">
+        <Button type="button" variant="outline" size="sm" onClick={loadExample}>
+          Carregar exemplo
+        </Button>
+      </div>
+
       {/* ── Top-level inputs ──────────────────────────────────────────── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="md:col-span-2">
