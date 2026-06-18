@@ -51,7 +51,7 @@ export function CookieConsent() {
       <div className="flex items-start gap-3">
         <Cookie className="h-5 w-5 text-brand mt-0.5 flex-shrink-0" aria-hidden />
         <div className="space-y-1">
-          <div className="font-semibold text-sm">Cookies & privacidade</div>
+          <div className="font-semibold text-base text-white">Cookies & privacidade</div>
           <p className="text-xs text-muted-foreground leading-relaxed">
             Usamos cookies essenciais pra manter você logado e proteger
             o serviço contra abuso. Não usamos cookies de marketing nem
@@ -70,14 +70,14 @@ export function CookieConsent() {
         <button
           type="button"
           onClick={() => persist('essential-only')}
-          className="flex-1 rounded-full border border-border bg-background hover:bg-accent h-9 text-xs font-medium transition-colors"
+          className="flex-1 rounded-full text-white border border-border bg-background hover:bg-accent h-9 text-xs font-medium transition-colors"
         >
           Apenas essenciais
         </button>
         <button
           type="button"
           onClick={() => persist('all')}
-          className="flex-1 rounded-full .bg-brand-gradient text-black hover:bg-brand/90 h-9 text-xs font-semibold transition-colors active:scale-95"
+          className="flex-1 rounded-full bg-brand-gradient text-black hover:bg-brand/90 h-9 text-xs font-semibold transition-colors active:scale-95"
         >
           Aceitar tudo
         </button>
