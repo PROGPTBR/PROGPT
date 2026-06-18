@@ -44,7 +44,7 @@ export function BrandLogo({
         width={241}
         height={57}
         priority={priority}
-       className={`${HEIGHT_CLASS[size]} w-auto`}
+       className={`h-10 w-auto`}
       />
     </span>
   );
