@@ -14,11 +14,11 @@ function friendlyError(error: { message: string; code?: string } | null): string
 }
 
 const INPUT_CLASS =
-  'w-full rounded-lg bg-muted/40 border border-border px-4 py-2.5 text-sm text-foreground placeholder-muted-foreground outline-none focus:border-brand focus:bg-muted/60 transition-colors';
+  'w-full rounded-lg bg-white border border-border px-4 py-2.5 text-lg text-foreground placeholder-muted-foreground outline-none focus:border-brand focus:bg-muted/60 transition-colors';
 const LABEL_CLASS =
   'block text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2';
 const SUBMIT_CLASS =
-  'w-full inline-flex items-center justify-center bg-brand text-black h-11 rounded-full text-sm font-medium hover:bg-brand/90 disabled:opacity-60 disabled:cursor-not-allowed active:scale-95 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-background';
+  'w-full inline-flex items-center justify-center bg-brand text-black h-11 rounded-full text-sm font-medium bg-brand-gradient disabled:opacity-60 disabled:cursor-not-allowed active:scale-95 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-background';
 const ERROR_CLASS =
   'rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300';
 
