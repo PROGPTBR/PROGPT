@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { Header } from '../../login/header';
-import { getCurrentUser, getProfile } from '@/lib/auth';
+import { getCurrentUser} from '@/lib/auth';
 import { getSubscription } from '@/lib/billing/subscription';
 import { SubscriptionPanel } from '@/components/billing/SubscriptionPanel';
 import { BackButton } from '@/components/BackButton';
@@ -13,7 +13,6 @@ export default async function AccountBillingPage() {
   if (!user) redirect('/login?next=/account/billing');
 
   const subscription = await getSubscription(user.id);
-  const profile = await getProfile(user.id);
 
   return (
     <>
@@ -37,7 +36,6 @@ export default async function AccountBillingPage() {
 
         <SubscriptionPanel
   subscription={subscription}
-  profile={profile}
 />
       </main>
     </div>
