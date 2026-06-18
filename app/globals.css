@@ -9,10 +9,10 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
+    --background: 222 47% 6%;
     --foreground: 222 47% 11%;
 
-    --card: 0 0% 100%;
+    --card: 222 47% 6%;
     --card-foreground: 222 47% 11%;
 
     --popover: 0 0% 100%;
@@ -33,11 +33,21 @@
     --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214 32% 91%;
+    --border: 204 88% 47%;
     --input: 214 32% 91%;
     --ring: 186 88% 47%;
 
     --radius: 0.5rem;
+
+     h1,
+     h2,
+   h3,
+    h4,
+   h5,
+   h6 {
+    font-family: var(--font-outfit);
+    font-weight: 600;
+  }
   }
 
   .dark {
@@ -69,6 +79,21 @@
     --input: 217 33% 20%;
     --ring: 186 88% 47%;
   }
+
+@layer utilities {
+  .bg-brand-gradient {
+    background: linear-gradient(to right, #14eeff, #04b1f9);
+     transition: background-color 0.3s ease, transform 0.3s ease;
+  }
+ .menu-topo a{
+ border-radius:100px;
+ }
+    .menu-topo a:hover,.menu-topo a:active, .menu-topo a:visited, .menu-topo a:focus{
+    background: #c6c6c61f;
+    border-radius:100px;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+  }
+}
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
