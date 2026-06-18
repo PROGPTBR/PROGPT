@@ -77,7 +77,7 @@ export function CookieConsent() {
         <button
           type="button"
           onClick={() => persist('all')}
-          className="flex-1 rounded-full bg-brand text-black hover:bg-brand/90 h-9 text-xs font-semibold transition-colors active:scale-95"
+          className="flex-1 rounded-full .bg-brand-gradient text-black hover:bg-brand/90 h-9 text-xs font-semibold transition-colors active:scale-95"
         >
           Aceitar tudo
         </button>

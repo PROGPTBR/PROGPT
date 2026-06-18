@@ -49,10 +49,10 @@ export function LoginForm() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
+        <h1 className="text-3xl font-semibold tracking-tight text-white">
           Entrar <span className="text-brand">.</span>
         </h1>
-        <p className="mt-1.5 text-sm text-muted-foreground">
+        <p className="mt-1.5 text-lg text-muted-foreground">
           Use seu email e senha para acessar.
         </p>
       </div>
@@ -92,11 +92,11 @@ export function LoginForm() {
           {loading ? 'Entrando…' : 'Entrar'}
         </button>
       </form>
-      <div className="text-sm text-center space-y-2 pt-2 border-t border-border">
+      <div className="text-sm text-center space-y-2 pt-2 border-t border-p-1">
         <div className="pt-4">
           <Link
             href={`/signup?next=${encodeURIComponent(next)}`}
-            className="text-brand hover:text-brand/80 transition-colors"
+            className="text-brand hover:text-brand/80 transition-colors text-2xl font-medium"
           >
             Criar conta
           </Link>
@@ -104,7 +104,7 @@ export function LoginForm() {
         <div>
           <Link
             href="/forgot-password"
-            className="text-muted-foreground hover:text-foreground transition-colors text-xs"
+            className="li-pq text-muted-foreground transition-colors"
           >
             Esqueci minha senha
           </Link>
