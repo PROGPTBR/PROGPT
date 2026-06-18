@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
-{/* import { ProfileLogoUpload } from '@/components/profile/ProfileLogoUpload'; */}
+import { ProfileLogoUpload } from '@/components/profile/ProfileLogoUpload';
 import { ProfileCompanyForm } from '@/components/profile/ProfileCompanyForm';
 import { ProfileCategoriesList } from '@/components/profile/ProfileCategoriesList';
 import { BrandLogo } from '@/components/brand/BrandLogo';
@@ -54,6 +54,7 @@ const statusLabel =
     )
   : null;
 
+
   return (
     <div className="relative min-h-screen bg-background dark:bg-[#0d0d0d] text-foreground dark:text-white font-outfit antialiased overflow-x-hidden">
       {/* Decorative cyan glow */}
@@ -74,7 +75,7 @@ const statusLabel =
           </Link>
           <Link
             href="/chat"
-            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            className="inline-flex items-center gap-1.5 text-base text-muted-foreground hover:text-brand transition-colors"
           >
             <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
             Voltar para o chat
@@ -85,27 +86,16 @@ const statusLabel =
       {/* Content */}
       <main className="relative z-10 max-w-3xl mx-auto px-6 py-10 space-y-10">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">
+          <h1 className="text-4xl font-semibold tracking-tight text-white">
             Meu perfil <span className="text-brand">.</span>
           </h1>
-          <p className="text-sm text-muted-foreground mt-1.5">
+          <p className="text-base text-muted-foreground mt-1.5">
             Logado como{' '}
-            <span className="font-medium text-foreground">
+            <span className="font-medium text-brand">
               {user.email ?? user.id}
             </span>
           </p>
         </div>
-
-      {/*  <section className="space-y-3">
-          <div>
-            <h2 className="text-base font-medium">Logo da empresa</h2>
-            <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-              Este logo é incluído nos documentos gerados (RFP .docx e planilha
-              de cotação .xlsx). PNG ou JPG, até 2 MB.
-            </p>
-          </div>
-          <ProfileLogoUpload />
-        </section>*/}
            <section className="space-y-3">
           <div>
         <h2 className="text-white font-medium text-2xl"> Seu Plano</h2>
@@ -113,6 +103,7 @@ const statusLabel =
               Confira os detalhes da sua assinatura.
             </p>
 </div>
+
 
 <div className="rounded-xl border border-border bg-card/40 p-5" >
   <div className="space-y-2 text-base">
@@ -138,11 +129,21 @@ const statusLabel =
   </div>
 </div>
 </section>
+        <section className="space-y-3">
+          <div>
+            <h2 className="text-white font-medium text-2xl">Foto do Perfil</h2>
+            <p className="text-base text-muted-foreground mt-1 leading-relaxed">
+              Este logo é incluído nos documentos gerados (RFP .docx e planilha
+              de cotação .xlsx). PNG ou JPG, até 2 MB.
+            </p>
+          </div>
+          <ProfileLogoUpload />
+        </section>
 
         <section className="space-y-3">
           <div>
-            <h2 className="text-base font-medium">Dados da empresa</h2>
-            <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+            <h2 className="text-white font-medium text-2xl">Meus Dados</h2>
+            <p className="text-base text-muted-foreground mt-1 leading-relaxed">
               Estes campos são incluídos automaticamente nos documentos gerados —
               apresentação do RFP, banner da planilha de cotação e cláusulas de
               termos.
@@ -153,8 +154,8 @@ const statusLabel =
 
         <section className="space-y-3">
           <div>
-            <h2 className="text-base font-medium">Minhas categorias</h2>
-            <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+            <h2 className="text-white font-medium text-2xl">Minhas categorias</h2>
+            <p className="text-base text-muted-foreground mt-1 leading-relaxed">
               Perfis de categoria que você cadastrou. Use no chat (seletor
               acima do campo de mensagem) ou no botão &quot;Iniciar de um
               Perfil&quot; dentro dos assistentes RFP / Kraljic / Porter /
