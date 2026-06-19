@@ -27,6 +27,7 @@ export const dynamic = 'force-dynamic';
 const Body = z.object({
   name: z.string().trim().min(2).max(120),
   cpf: z.string(),
+  phone: z.string().optional(),
   professionalRequirement: z.string().trim().max(255).optional(),
 });
 
@@ -51,6 +52,8 @@ export async function POST(req: Request) {
   let user;
   try {
     user = await requireUser();
+    console.log('USER ID:', user.id);
+    
   } catch (err) {
     if (err instanceof NotAuthenticated) {
       return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
@@ -65,35 +68,45 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'invalid_body' }, { status: 400 });
   }
 
-  const cpf = formatCpf(parsed.cpf);
-  const svc = getServerSupabase();
+const cpf = formatCpf(parsed.cpf);
 
-const { error: profileError } = await svc
+if (!isValidCpf(cpf)) {
+  return NextResponse.json({ error: 'invalid_cpf' }, { status: 400 });
+}
+
+const svc = getServerSupabase();
+
+const result = await svc
   .from('profiles')
   .update({
     full_name: parsed.name,
     cpf_cnpj: cpf,
-    professional_requirement: parsed.professionalRequirement,
+    phone: parsed.phone ?? null,
+    professional_requirement: parsed.professionalRequirement ?? null,
   })
-  .eq('id', user.id);
+  .eq('id', user.id)
+  .select();
 
-if (profileError) {
-  console.error('[billing/checkout] profile update failed:', profileError);
-}
+console.log('PROFILE UPDATE RESULT:', result);
 
-  if (!isValidCpf(cpf)) {
-    return NextResponse.json({ error: 'invalid_cpf' }, { status: 400 });
-  }
+
 
   // Race protection
   const existing = await getSubscription(user.id);
-  if (existing) {
-    if (existing.status === 'active' || existing.status === 'past_due') {
-      return NextResponse.json(
-        { error: 'already_subscribed' },
-        { status: 409 },
-      );
-    }
+if (existing) {
+  const hasPaidSubscription =
+    !!existing.asaas_subscription_id;
+
+  if (
+    hasPaidSubscription &&
+    (existing.status === 'active' ||
+      existing.status === 'past_due')
+  ) {
+    return NextResponse.json(
+      { error: 'already_subscribed' },
+      { status: 409 },
+    );
+  }
     if (existing.status === 'pending') {
       const ageMs = Date.now() - new Date(existing.created_at).getTime();
       if (ageMs < PENDING_GRACE_MS && existing.asaas_subscription_id) {

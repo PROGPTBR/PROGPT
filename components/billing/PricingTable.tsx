@@ -31,6 +31,12 @@ type Props = {
   isPro: boolean;
   plans: Plan[];
   userPlanSlug: string | null;
+  profile: {
+    full_name?: string | null;
+    cpf_cnpj?: string | null;
+    phone?: string | null;
+    professional_requirement?: string | null;
+  } | null;
 };
 
 function FeatureRow({ text, included }: { text: string; included: boolean }) {
@@ -79,22 +85,70 @@ export function PricingTable({
   isPro,
   plans,
   userPlanSlug,
+  profile,
 }: Props) {
+  const router = useRouter();
+
   const [showCheckout, setShowCheckout] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
+
+  const profileComplete =
+    !!profile?.full_name &&
+    !!profile?.cpf_cnpj &&
+    !!profile?.phone &&
+    !!profile?.professional_requirement;
+
+  async function handleDirectCheckout(plan: Plan) {
+    try {
+      const res = await fetch(
+        `/api/billing/checkout?plan=${plan.slug}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+         body: JSON.stringify({
+  name: profile!.full_name,
+  cpf: profile!.cpf_cnpj,
+  phone: profile!.phone,
+  professionalRequirement:
+    profile!.professional_requirement,
+}),
+        }
+      );
+
+      const body = await res.json();
+
+if (!res.ok) {
+  if (body.error === 'already_subscribed') {
+    toast.info('Você já tem uma assinatura ativa.');
+    router.push('/account/billing');
+    return;
+  }
+
+  console.error(body);
+  return;
+}
+
+      window.location.href = body.checkoutUrl;
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
   console.log(plans);
 
   const orderedPlans = [...plans].sort((a, b) => {
-  const order: Record<string, number> = {
-    free: 1,
-    'pf-99': 2,
-    'pj-consulte': 3,
-  };
+    const order: Record<string, number> = {
+      free: 1,
+      'pf-99': 2,
+      'pj-consulte': 3,
+    };
 
-  return (order[a.slug] || 99) - (order[b.slug] || 99);
-});
+    return (order[a.slug] || 99) - (order[b.slug] || 99);
+  });
 
-  return (
+ return (
   
     <div className="space-y-10">
       <header className="text-center space-y-3">
@@ -198,14 +252,22 @@ export function PricingTable({
     Comece grátis primeiro
   </Link>
 ) : (
-  <button
-    type="button"
-    onClick={() => { setSelectedPlan(plan); setShowCheckout(true); }}
-    className="w-full rounded-full bg-brand-gradient text-black hover:bg-brand/90 h-10 text-sm font-semibold transition-all duration-300 active:scale-95 inline-flex items-center justify-center gap-2"
-  >
-    Assinar Plano
-    <ArrowRight className="h-3.5 w-3.5" />
-  </button>
+<button
+  type="button"
+  onClick={() => {
+    setSelectedPlan(plan);
+
+    if (profileComplete) {
+      handleDirectCheckout(plan);
+    } else {
+      setShowCheckout(true);
+    }
+  }}
+  className="w-full rounded-full bg-brand-gradient text-black hover:bg-brand/90 h-10 text-sm font-semibold transition-all duration-300 active:scale-95 inline-flex items-center justify-center gap-2"
+>
+  Assinar Plano
+  <ArrowRight className="h-3.5 w-3.5" />
+</button>
 )}
 
     </div>
@@ -255,10 +317,7 @@ function CheckoutForm({
   const cpfOk = isValidCpf(cpfClean);
   const nameOk = name.trim().length >= 2;
   const canSubmit = cpfOk && nameOk && !busy;
-  const phoneClean = formatPhone(phone);
-  function formatPhone(raw: string): string {
-  return raw.replace(/\D/g, '');
-}
+
 
 async function handleSubmit(e: React.FormEvent) {
   e.preventDefault();
@@ -269,7 +328,7 @@ async function handleSubmit(e: React.FormEvent) {
   setError(null);
 
   try {
-    const res = await fetch('/api/billing/checkout?plan=pf-99', {
+    const res = await fetch(`/api/billing/checkout?plan=${plan.slug}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -278,7 +337,7 @@ async function handleSubmit(e: React.FormEvent) {
 body: JSON.stringify({
   name: name.trim(),
   cpf: cpfClean,
-  phone: phoneClean,
+  phone: phone.replace(/\D/g, ''),
   professionalRequirement,
 }),
 });
