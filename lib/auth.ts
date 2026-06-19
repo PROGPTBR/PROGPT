@@ -69,6 +69,7 @@ export async function getProfile(userId: string): Promise<Profile | null> {
   full_name,
   cpf_cnpj,
   phone,
+  professional_requirement,
 
   plan,
   selected_plan,

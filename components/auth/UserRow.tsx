@@ -40,7 +40,7 @@ export function UserRow() {
   }
 
   return (
-    <div className="border-t border-border">
+    <div className="border-t border-white/5">
       <Link
         href="/profile"
         className="flex items-center gap-2 px-4 py-2.5 text-base text-muted-foreground hover:bg-brand/10 hover:text-white transition-colors"
@@ -71,7 +71,7 @@ export function UserRow() {
         <Trash2 className="h-4 w-4" aria-hidden="true" />
         <span>Excluir minha conta</span>
       </Link>
-      <div className="flex items-center gap-3 p-4 border-t border-border">
+      <div className="flex items-center gap-3 p-4 border-t border-white/5">
         <div className="h-8 w-8 rounded-full bg-brand text-black flex items-center justify-center text-xs font-semibold shrink-0">
           {initial}
         </div>

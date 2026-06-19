@@ -15,8 +15,6 @@ import { isValidCpf, formatCpf } from '@/lib/validators/cpf';
 // pra coletar Nome + CPF (Asaas exige cpfCnpj). Submit chama
 // /api/billing/checkout e redireciona pro hosted checkout do Asaas.
 
-
-
 type Plan = {
   id: string;
   slug: string;
@@ -35,9 +33,6 @@ type Props = {
   userPlanSlug: string | null;
 };
 
-const PRO_PRICE_BRL =
-  process.env.NEXT_PUBLIC_PRO_PRICE_BRL ?? '99.00';
-
 function FeatureRow({ text, included }: { text: string; included: boolean }) {
   return (
     <li className="flex items-start gap-2 text-sm">
@@ -52,6 +47,33 @@ function FeatureRow({ text, included }: { text: string; included: boolean }) {
     </li>
   );
 }
+
+function maskCPF(value: string) {
+  return value
+    .replace(/\D/g, '')
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d{1,2})$/, '$1-$2')
+    .slice(0, 14);
+}
+
+function maskPhone(value: string) {
+  const numbers = value.replace(/\D/g, '').slice(0, 11);
+
+  if (numbers.length <= 2) {
+    return numbers;
+  }
+
+  if (numbers.length <= 7) {
+    return numbers.replace(/^(\d{2})(\d+)/, '($1) $2');
+  }
+
+  return numbers.replace(
+    /^(\d{2})(\d{5})(\d{0,4}).*/,
+    '($1) $2-$3'
+  );
+}
+
 export function PricingTable({
   authed,
   isPro,
@@ -59,6 +81,18 @@ export function PricingTable({
   userPlanSlug,
 }: Props) {
   const [showCheckout, setShowCheckout] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
+  console.log(plans);
+
+  const orderedPlans = [...plans].sort((a, b) => {
+  const order: Record<string, number> = {
+    free: 1,
+    'pf-99': 2,
+    'pj-consulte': 3,
+  };
+
+  return (order[a.slug] || 99) - (order[b.slug] || 99);
+});
 
   return (
   
@@ -79,7 +113,7 @@ export function PricingTable({
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
  
-{plans.map((plan) => {
+{orderedPlans.map((plan) => {
   const isRecommended = plan.slug === 'pf-99';
 
   return (
@@ -166,7 +200,7 @@ export function PricingTable({
 ) : (
   <button
     type="button"
-    onClick={() => setShowCheckout(true)}
+    onClick={() => { setSelectedPlan(plan); setShowCheckout(true); }}
     className="w-full rounded-full bg-brand-gradient text-black hover:bg-brand/90 h-10 text-sm font-semibold transition-all duration-300 active:scale-95 inline-flex items-center justify-center gap-2"
   >
     Assinar Plano
@@ -191,27 +225,40 @@ export function PricingTable({
         </div>
       )}
 
-      {showCheckout && (
-        <CheckoutForm onClose={() => setShowCheckout(false)} />
-      )}
+{showCheckout && selectedPlan && (
+  <CheckoutForm
+    plan={selectedPlan}
+    onClose={() => setShowCheckout(false)}
+  />
+)}
     </div>
   );
 }
 
 // ─── CheckoutForm: modal Nome + CPF antes de redirecionar pro Asaas ───
-
-function CheckoutForm({ onClose }: { onClose: () => void }) {
+function CheckoutForm({
+  onClose,
+  plan,
+}: {
+  onClose: () => void;
+  plan: Plan;
+}) {
   const router = useRouter();
   const [name, setName] = useState('');
   const [cpfInput, setCpfInput] = useState('');
   const [phone, setPhone] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [professionalRequirement, setProfessionalRequirement] = useState('');
 
   const cpfClean = formatCpf(cpfInput);
   const cpfOk = isValidCpf(cpfClean);
   const nameOk = name.trim().length >= 2;
   const canSubmit = cpfOk && nameOk && !busy;
+  const phoneClean = formatPhone(phone);
+  function formatPhone(raw: string): string {
+  return raw.replace(/\D/g, '');
+}
 
 async function handleSubmit(e: React.FormEvent) {
   e.preventDefault();
@@ -227,12 +274,14 @@ async function handleSubmit(e: React.FormEvent) {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        name: name.trim(),
-        cpf: cpfClean,
-      }),
-    });
-
+      
+body: JSON.stringify({
+  name: name.trim(),
+  cpf: cpfClean,
+  phone: phoneClean,
+  professionalRequirement,
+}),
+});
     const body = await res.json();
 
     console.log('CHECKOUT RESPONSE:', body);
@@ -269,10 +318,12 @@ async function handleSubmit(e: React.FormEvent) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="space-y-1">
-          <h2 className="text-3xl font-semibold text-white">Assinar Pro <span className="text-brand">.</span></h2>
+          <h2 className="text-3xl font-semibold text-white">
+  {plan.name} <span className="text-brand">.</span>
+</h2>
           <p className="text-base text-muted-foreground">
-            Pra emitir a cobrança, precisamos do seu nome completo e CPF.
-            Cobramos R$ {PRO_PRICE_BRL}/mês via Asaas (cartão ou Pix recorrente).
+            Pra emitir a cobrança, precisamos de algumas informações.
+            Cobramos R$ {plan.price.toFixed(2)}/mês via Asaas (cartão ou Pix recorrente).
           </p>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -293,6 +344,7 @@ async function handleSubmit(e: React.FormEvent) {
               className="w-full rounded-lg bg-white border border-border px-4 py-2.5 text-lg text-foreground placeholder-muted-foreground outline-none focus:border-brand focus:bg-muted/60 transition-colors"
             />
           </div>
+
           <div>
             <label
               htmlFor="checkout-cpf"
@@ -300,16 +352,16 @@ async function handleSubmit(e: React.FormEvent) {
             >
               CPF
             </label>
-            <input
-              id="checkout-cpf"
-              type="text"
-              required
-              value={cpfInput}
-              onChange={(e) => setCpfInput(e.target.value)}
-              inputMode="numeric"
-              autoComplete="off"
-              className="w-full rounded-lg bg-white border border-border px-4 py-2.5 text-lg text-foreground placeholder-muted-foreground outline-none focus:border-brand focus:bg-muted/60 transition-colors"
-            />
+<input
+  id="checkout-cpf"
+  type="text"
+  required
+  value={cpfInput}
+  onChange={(e) => setCpfInput(maskCPF(e.target.value))}
+  inputMode="numeric"
+  autoComplete="off"
+  className="w-full rounded-lg bg-white border border-border px-4 py-2.5 text-lg text-foreground placeholder-muted-foreground outline-none focus:border-brand focus:bg-muted/60 transition-colors"
+/>
             {cpfInput.length > 0 && !cpfOk && (
               <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
                 CPF inválido — verifique os dígitos.
@@ -325,12 +377,23 @@ async function handleSubmit(e: React.FormEvent) {
   <input
     type="tel"
     value={phone}
-    onChange={(e) => setPhone(e.target.value)}
+    onChange={(e) => setPhone(maskPhone(e.target.value))}
     className="w-full rounded-lg bg-white border border-border px-4 py-2.5 text-lg text-foreground placeholder-muted-foreground outline-none focus:border-brand focus:bg-muted/60 transition-colors"
-
   />
 </div>
 
+<div>
+  <label className="text-xs uppercase tracking-wider text-muted-foreground">
+    Exigência Profissional
+  </label>
+
+  <input
+    type="text"
+    value={professionalRequirement}
+    onChange={(e) => setProfessionalRequirement(e.target.value)}
+    className="w-full rounded-lg bg-white border border-border px-4 py-2.5 text-lg text-foreground placeholder-muted-foreground outline-none focus:border-brand focus:bg-muted/60 transition-colors"
+  />
+</div>
           {error && (
             <div
               role="alert"
@@ -356,7 +419,7 @@ async function handleSubmit(e: React.FormEvent) {
               {busy ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-                  Abrindo…
+                  carregando…
                 </>
               ) : (
                 <>Continuar <ArrowRight className="h-3.5 w-3.5" aria-hidden /></>

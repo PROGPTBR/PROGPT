@@ -61,11 +61,11 @@ export function AssistantLauncher({ variant = 'compact' }: Props) {
             href={href}
             className={
               isHero
-                ? 'group inline-flex items-center gap-1.5 rounded-full border border-brand/40 bg-brand/5 hover:bg-brand/15 hover:border-brand/60 px-3.5 h-9 text-xs font-medium text-brand whitespace-nowrap transition-all duration-300 active:scale-95 flex-shrink-0'
-                : 'group inline-flex items-center gap-1.5 rounded-full border border-border bg-card hover:bg-accent hover:border-brand/40 px-3 h-8 text-xs font-medium text-foreground/80 hover:text-foreground whitespace-nowrap transition-all duration-300 active:scale-95 flex-shrink-0'
+                ? 'group inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-transparent hover:bg-brand/15 hover:border-brand/60 px-7 h-10 text-sm font-medium text-brand whitespace-nowrap transition-all duration-300 active:scale-95 flex-shrink-0 text-white'
+                : 'group inline-flex items-center gap-1.5 rounded-full border border-border bg-card hover:bg-accent hover:border-brand/40 px-3 h-8 text-sm font-medium text-foreground/80 hover:text-foreground whitespace-nowrap transition-all duration-300 active:scale-95 flex-shrink-0'
             }
           >
-            <Icon className="h-3.5 w-3.5" aria-hidden />
+            <Icon className="h-4 w-4 text-brand" aria-hidden />
             {label}
           </Link>
         ))}

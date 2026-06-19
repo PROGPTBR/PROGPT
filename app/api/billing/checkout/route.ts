@@ -27,6 +27,7 @@ export const dynamic = 'force-dynamic';
 const Body = z.object({
   name: z.string().trim().min(2).max(120),
   cpf: z.string(),
+  professionalRequirement: z.string().trim().max(255).optional(),
 });
 
 const PRO_PRICE = 99.0;
@@ -65,6 +66,21 @@ export async function POST(req: Request) {
   }
 
   const cpf = formatCpf(parsed.cpf);
+  const svc = getServerSupabase();
+
+const { error: profileError } = await svc
+  .from('profiles')
+  .update({
+    full_name: parsed.name,
+    cpf_cnpj: cpf,
+    professional_requirement: parsed.professionalRequirement,
+  })
+  .eq('id', user.id);
+
+if (profileError) {
+  console.error('[billing/checkout] profile update failed:', profileError);
+}
+
   if (!isValidCpf(cpf)) {
     return NextResponse.json({ error: 'invalid_cpf' }, { status: 400 });
   }
@@ -134,7 +150,6 @@ export async function POST(req: Request) {
   }
 
   // Persist subscription row (upsert — se existing.id, atualiza; senão insert)
-  const svc = getServerSupabase();
   const subRow = {
     user_id: user.id,
     asaas_customer_id: asaasCustomerId,
