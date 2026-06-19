@@ -44,7 +44,7 @@ export function EmptyState({
               className="h-6 w-6 text-brand flex-shrink-0 mt-1"
               aria-hidden="true"
             />
-            <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground leading-snug">
+            <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-white leading-snug">
               Sua IA de Suprimentos está pronta.
               <br />
               <span className="text-brand">Qual problema vamos resolver?</span>
@@ -74,7 +74,7 @@ export function EmptyState({
             usuário). Fica acima dos chat-starters porque a maior parte
             do valor da plataforma está nos assistentes. */}
         <div className="w-full">
-          <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2 text-center">
+          <div className="text-xs uppercase tracking-wide text-muted-foreground mb-5 text-center">
             Vá direto pro assistente
           </div>
           <AssistantLauncher variant="hero" />

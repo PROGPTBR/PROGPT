@@ -272,7 +272,7 @@ export function Composer({
               onChange={(e) => onChange(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder={placeholder ?? 'Pergunte alguma coisa…'}
-              rows={2}
+              rows={5}
               autoFocus
               className="block w-full resize-none overflow-y-auto bg-transparent px-5 pt-4 pb-2 text-base text-foreground placeholder-muted-foreground outline-none"
             />

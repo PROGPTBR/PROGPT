@@ -60,8 +60,8 @@ export function Sidebar({
   }
 
   return (
-    <aside className="w-72 shrink-0 border-r border-border bg-card/60 dark:bg-black/40 backdrop-blur-md flex flex-col h-full">
-      <div className="flex items-center justify-between px-4 py-4 border-b border-border">
+    <aside className="w-72 shrink-0 border-border bg-card/60 dark:bg-black/40 backdrop-blur-md flex flex-col h-full">
+      <div className="flex items-center justify-between px-4 py-4 border-b border-white/10">
         <Link href="/" className="inline-flex items-center">
           <BrandLogo size="md" priority />
         </Link>
@@ -70,14 +70,14 @@ export function Sidebar({
           onClick={onNew}
           aria-label="Nova conversa"
           title="Nova conversa"
-          className="inline-flex items-center justify-center rounded-full bg-brand text-black w-8 h-8 hover:bg-brand/90 active:scale-95 transition-all duration-300"
+          className="inline-flex items-center justify-center rounded-full bg-brand text-white w-8 h-8 hover:bg-brand/90 active:scale-95 transition-all duration-300"
         >
           <Plus className="h-4 w-4" aria-hidden="true" />
         </button>
       </div>
       <Link
         href="/assistants"
-        className="group flex items-center gap-2 px-4 py-3 text-sm font-medium border-b border-border text-brand hover:bg-brand/5 transition-colors"
+        className="group flex items-center gap-2 px-4 py-3 text-sm font-medium border-b border-white/10 text-brand hover:bg-brand/5 transition-colors"
       >
         <Sparkles className="h-4 w-4" aria-hidden="true" />
         <span>Assistentes</span>
@@ -87,7 +87,7 @@ export function Sidebar({
       </Link>
       <Link
         href="/prompts"
-        className="group flex items-center gap-2 px-4 py-3 text-sm font-medium border-b border-border text-brand hover:bg-brand/5 transition-colors"
+        className="group flex items-center gap-2 px-4 py-3 text-sm font-medium border-b border-white/10 text-brand hover:bg-brand/5 transition-colors"
       >
         <BookOpen className="h-4 w-4" aria-hidden="true" />
         <span>Biblioteca de Prompts</span>
@@ -103,10 +103,10 @@ export function Sidebar({
             return (
               <li key={s.id}>
                 <div
-                  className={`group flex items-center gap-2 rounded-lg px-3 py-2 cursor-pointer text-sm transition-colors ${
+                  className={`group flex items-center gap-2 px-3 py-2 mt-2 cursor-pointer text-sm transition-colors ${
                     active
-                      ? 'bg-brand/10 border border-brand/20'
-                      : 'hover:bg-accent border border-transparent'
+                      ? 'bg-brand/10 border-borderbg-brand/10 border-l-2 border-border'
+                      : 'hover:bg-accent border-l-2 border-white/5'
                   }`}
                   onClick={() => {
                     if (!editing) onSwitch(s.id);
@@ -136,7 +136,7 @@ export function Sidebar({
                     ) : (
                       <>
                         <div
-                          className={`truncate ${active ? 'text-foreground' : 'text-foreground/80'}`}
+                          className={`truncate ${active ? 'text-white' : 'text-white'}`}
                         >
                           {s.title}
                         </div>

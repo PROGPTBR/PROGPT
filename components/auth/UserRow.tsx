@@ -43,7 +43,7 @@ export function UserRow() {
     <div className="border-t border-border">
       <Link
         href="/profile"
-        className="flex items-center gap-2 px-4 py-2.5 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+        className="flex items-center gap-2 px-4 py-2.5 text-base text-muted-foreground hover:bg-brand/10 hover:text-white transition-colors"
       >
         <UserCircle className="h-4 w-4" aria-hidden="true" />
         <span>Meu perfil</span>
@@ -51,7 +51,7 @@ export function UserRow() {
       {isAdmin && (
         <Link
           href="/admin"
-          className="flex items-center gap-2 px-4 py-2.5 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+          className="flex items-center gap-2 px-4 py-2.5 text-base text-muted-foreground hover:bg-brand/10 hover:text-white transition-colors"
         >
           <Shield className="h-4 w-4" aria-hidden="true" />
           <span>Admin</span>
@@ -59,7 +59,7 @@ export function UserRow() {
       )}
       <Link
         href="/account/billing"
-        className="flex items-center gap-2 px-4 py-2.5 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+        className="flex items-center gap-2 px-4 py-2.5 text-base text-muted-foreground hover:bg-brand/10 hover:text-white transition-colors"
       >
         <CreditCard className="h-4 w-4" aria-hidden="true" />
         <span>Assinatura</span>
@@ -76,7 +76,7 @@ export function UserRow() {
           {initial}
         </div>
         <div className="flex-1 min-w-0">
-          <div className="truncate text-sm text-foreground/80">{email}</div>
+          <div className="truncate text-sm text-white">{email}</div>
         </div>
         <button
           type="button"

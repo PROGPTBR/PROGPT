@@ -43,7 +43,7 @@ const config: Config = {
         ring: 'hsl(var(--ring))',
         // 2B Supply brand color — used as pure accent in headlines and emphasis,
         // matching the same role it plays on 2bsupply.com.br.
-        brand: '#0ed1e0',
+        brand: '#0e8de1',
         // Material You (Material Design 3) tokens — light mode only for now.
         // Palette derived from the 2B Supply brand seed `#0ed1e0` (bright cyan)
         // using the MD3 HCT tonal scale. Primary lives at tone 40 (accessible

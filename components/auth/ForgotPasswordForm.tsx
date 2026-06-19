@@ -40,10 +40,10 @@ export function ForgotPasswordForm() {
   if (done) {
     return (
       <div className="space-y-4 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight">
+        <h1 className="text-3xl font-semibold tracking-tight text-white">
           Verifique seu email <span className="text-brand">.</span>
         </h1>
-        <p className="text-sm text-muted-foreground leading-relaxed">
+        <p className="text-lg text-muted-foreground">
           Se este email existir em nossa base, enviamos um link para redefinir a
           senha.
         </p>
@@ -62,10 +62,10 @@ export function ForgotPasswordForm() {
   return (
     <form onSubmit={onSubmit} className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
+        <h1 className="text-3xl font-semibold tracking-tight text-white">
           Esqueci minha senha <span className="text-brand">.</span>
         </h1>
-        <p className="mt-1.5 text-sm text-muted-foreground">
+        <p className="mt-1.5 text-lg text-muted-foreground">
           Enviaremos um link para redefinir sua senha.
         </p>
       </div>
@@ -82,7 +82,7 @@ export function ForgotPasswordForm() {
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="w-full rounded-lg bg-muted/40 border border-border px-4 py-2.5 text-sm text-foreground placeholder-muted-foreground outline-none focus:border-brand focus:bg-muted/60 transition-colors"
+          className="w-full rounded-lg bg-white border border-border px-4 py-2.5 text-lg text-foreground placeholder-muted-foreground outline-none focus:border-brand focus:bg-muted/60 transition-colors"
         />
       </div>
       <TurnstileWidget onVerify={setCaptchaToken} />
