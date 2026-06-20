@@ -17,21 +17,21 @@ export function Header() {
   return (
     <nav
       id="landing-navbar"
-      className="bg-background/80 border-bot-1 fixed top-0 left-0 w-full z-50 transition-all duration-300 backdrop-blur-md border-b border-white/5 py-4 px-6 md:px-12 flex justify-between items-center"
+      className="bg-background/80 border-bot-1 fixed top-0 left-0 w-full z-50 transition-all duration-300 backdrop-blur-md border-b border-border py-4 px-6 md:px-12 flex justify-between items-center"
     >
       <Link href="/" className="flex items-center">
         <BrandLogo size="md" priority />
       </Link>
 
-      <div className="menu-topo hidden md:flex space-x-2 items-center text-sm font-medium text-gray-300">
+      <div className="menu-topo hidden md:flex space-x-2 items-center text-sm font-medium text-muted-foreground">
         {NAV_LINKS.map((link) => (
           <Link
             key={link.href}
             href={link.href}
             className={`py-2 px-5 rounded-full transition-all duration-300 ${
               pathname === link.href
-                ? 'bg-white/10 text-white'
-                : 'hover:bg-white/10 hover:text-white'
+                ? 'bg-muted text-foreground'
+                : 'hover:bg-muted hover:text-foreground'
             }`}
           >
             {link.label}

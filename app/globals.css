@@ -5,95 +5,88 @@
 @tailwind utilities;
 
 /* Token values are space-separated HSL components consumed via hsl(var(--token)).
-   Do not wrap them in hsl() here — Tailwind's color resolver does that. */
+   Do not wrap them in hsl() here — Tailwind's color resolver does that.
+
+   Design system: "Dark premium" — deep navy base + the 2B Supply logo palette
+   (bright cyan #0ed1e0 -> blue #0e8de1) used as the single accent across the app.
+   Both :root and .dark resolve to the same dark palette so the UI is coherent
+   regardless of the next-themes toggle state (the app was authored dark-first).
+*/
 
 @layer base {
+  /* Light theme (opt-in via the toggle). Clean, airy — white surfaces,
+     deep-navy text, the 2B Supply blue as the accent. */
   :root {
-    --background: 222 47% 6%;
+    --background: 210 40% 98%; /* #f7fafc off-white */
     --foreground: 222 47% 11%;
 
-    --card: 222 47% 6%;
+    --card: 0 0% 100%; /* white elevated surface */
     --card-foreground: 222 47% 11%;
 
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    --primary: 186 88% 47%; /* #0ed1e0 2B Supply brand cyan */
-    --primary-foreground: 0 0% 0%; /* black — WCAG-safe on cyan */
+    --primary: 204 84% 45%; /* #1283d4 brand blue — readable on white */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96%;
+    --secondary: 210 40% 94%;
     --secondary-foreground: 222 47% 11%;
 
     --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
+    --muted-foreground: 215 16% 40%;
 
-    --accent: 210 40% 96%;
+    --accent: 204 90% 95%; /* faint blue tint for hovers */
     --accent-foreground: 222 47% 11%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 204 88% 47%;
-    --input: 214 32% 91%;
-    --ring: 186 88% 47%;
+    --border: 214 32% 88%;
+    --input: 214 32% 86%;
+    --ring: 204 84% 45%;
 
-    --radius: 0.5rem;
-
-     h1,
-     h2,
-   h3,
-    h4,
-   h5,
-   h6 {
-    font-family: var(--font-outfit);
-    font-weight: 600;
-  }
+    --radius: 0.625rem;
   }
 
   .dark {
-    --background: 222 47% 6%;
-    --foreground: 210 40% 98%;
+    --background: 222 47% 7%;
+    --foreground: 210 40% 96%;
 
-    --card: 222 47% 6%;
-    --card-foreground: 210 40% 98%;
+    --card: 222 40% 12%;
+    --card-foreground: 210 40% 96%;
 
-    --popover: 222 47% 6%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 222 42% 11%;
+    --popover-foreground: 210 40% 96%;
 
-    --primary: 186 88% 47%; /* brand cyan stays the same across modes */
-    --primary-foreground: 0 0% 0%; /* black on cyan */
+    --primary: 186 88% 47%;
+    --primary-foreground: 222 47% 9%;
 
     --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary-foreground: 210 40% 96%;
 
-    --muted: 217 33% 17%;
+    --muted: 217 33% 15%;
     --muted-foreground: 215 20% 65%;
 
-    --accent: 217 33% 17%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 217 33% 18%;
+    --accent-foreground: 210 40% 96%;
 
-    --destructive: 0 63% 31%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 217 33% 20%;
-    --input: 217 33% 20%;
+    --border: 217 28% 18%;
+    --input: 217 28% 20%;
     --ring: 186 88% 47%;
   }
 
-@layer utilities {
-  .bg-brand-gradient {
-    background: linear-gradient(to right, #14eeff, #04b1f9);
-     transition: background-color 0.3s ease, transform 0.3s ease;
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-outfit);
+    font-weight: 600;
   }
- .menu-topo a{
- border-radius:100px;
- }
-    .menu-topo a:hover,.menu-topo a:active, .menu-topo a:visited, .menu-topo a:focus{
-    background: #c6c6c61f;
-    border-radius:100px;
-    transition: background-color 0.3s ease, transform 0.3s ease;
-  }
-}
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
@@ -103,4 +96,87 @@
     @apply border-border;
   }
 
+  ::selection {
+    background: rgba(14, 209, 224, 0.28);
+    color: #fff;
+  }
+}
+
+@layer utilities {
+  /* Brand gradient (logo cyan -> blue). Used on primary CTAs and accents. */
+  .bg-brand-gradient {
+    background: linear-gradient(135deg, #0ed1e0 0%, #0e8de1 100%);
+    transition: filter 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+  }
+  .bg-brand-gradient:hover {
+    filter: brightness(1.07);
+  }
+
+  /* Soft tinted background for hovered/active surfaces and section panels. */
+  .bg-brand-gradient-soft {
+    background: linear-gradient(
+      135deg,
+      rgba(14, 209, 224, 0.12) 0%,
+      rgba(14, 141, 225, 0.12) 100%
+    );
+  }
+
+  /* Gradient text for headlines / emphasized words. The padding-bottom
+     enlarges the painted box so descenders (p, q, j, g) are never clipped
+     by background-clip:text on tight line-heights. */
+  .text-brand-gradient {
+    background: linear-gradient(135deg, #0ed1e0 0%, #0e8de1 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    padding-bottom: 0.12em;
+  }
+
+  /* Subtle glow under primary CTAs for depth. */
+  .brand-glow {
+    box-shadow: 0 10px 34px -10px rgba(14, 141, 225, 0.55);
+  }
+
+  /* Ambient radial backdrop for heroes / empty states. */
+  .brand-aura {
+    background:
+      radial-gradient(60% 50% at 20% 0%, rgba(14, 209, 224, 0.10), transparent 70%),
+      radial-gradient(50% 50% at 90% 10%, rgba(14, 141, 225, 0.10), transparent 70%);
+  }
+
+  /* Landing top menu rounded hover (kept from original). */
+  .menu-topo a {
+    border-radius: 100px;
+  }
+  .menu-topo a:hover,
+  .menu-topo a:active,
+  .menu-topo a:visited,
+  .menu-topo a:focus {
+    background: #c6c6c61f;
+    border-radius: 100px;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+  }
+}
+
+/* Refined scrollbars to match the dark premium surface. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(217 24% 26%) transparent;
+}
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(217 24% 24%);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(217 24% 32%);
+  background-clip: padding-box;
 }

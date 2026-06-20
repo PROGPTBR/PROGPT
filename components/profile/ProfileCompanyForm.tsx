@@ -182,7 +182,7 @@ export function ProfileCompanyForm() {
           className={`px-3 py-1 rounded-md text-sm ${
             customerType === 'pf'
               ? 'bg-brand-gradient text-black'
-              : 'bg-foreground text-white border border-border'
+              : 'bg-primary text-primary-foreground border border-border'
           }`}
         >
           Pessoa Física
@@ -194,7 +194,7 @@ export function ProfileCompanyForm() {
           className={`px-3 py-1 rounded-md text-sm ${
             customerType === 'pj'
               ? 'bg-brand-gradient text-black'
-              : 'bg-foreground text-white border border-border'
+              : 'bg-primary text-primary-foreground border border-border'
           }`}
         >
           Pessoa Jurídica
@@ -316,7 +316,7 @@ export function ProfileCompanyForm() {
           className={`px-3 py-1 rounded-md text-sm ${
             customerType === 'pf'
               ? 'bg-brand-gradient text-black'
-              : 'bg-foreground text-white border border-border'
+              : 'bg-primary text-primary-foreground border border-border'
           }`}
         >
           Pessoa Física
@@ -328,7 +328,7 @@ export function ProfileCompanyForm() {
           className={`px-3 py-1 rounded-md text-sm ${
             customerType === 'pj'
               ? 'bg-brand-gradient text-black'
-              : 'bg-foreground text-white border border-border'
+              : 'bg-primary text-primary-foreground border border-border'
           }`}
         >
           Pessoa Jurídica
@@ -449,7 +449,7 @@ export function ProfileCompanyForm() {
       ========================= */}
  
                 <div className="pt-6 border-t border-border space-y-3">
-        <h3 className="text-sm font-medium text-white"> Plano Pro</h3>
+        <h3 className="text-sm font-medium text-foreground"> Plano Pro</h3>
 
         <p className="text-xs text-muted-foreground">
           R$ 99/mês — assinatura mensal

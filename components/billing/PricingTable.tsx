@@ -152,12 +152,12 @@ if (!res.ok) {
   
     <div className="space-y-10">
       <header className="text-center space-y-3">
-        <h1 className="text-3xl text-white md:text-4xl font-semibold tracking-tight">
+        <h1 className="text-3xl text-foreground md:text-4xl font-semibold tracking-tight">
           Planos <span className="text-brand">.</span>
         </h1>
           <div className="mb-12 text-center">
               <h2 className="text-4xl md:text-5xl font-medium tracking-tight max-w-3xl mx-auto">
-                <span className="text-white">Comece grátis,</span>{' '}
+                <span className="text-foreground">Comece grátis,</span>{' '}
                 <span className="text-brand">
                   faça upgrade quando precisar.
                 </span>
@@ -176,7 +176,7 @@ if (!res.ok) {
       className={`rounded-2xl p-6 space-y-4 relative ${
         isRecommended
           ? 'border-2 border-brand bg-card'
-          : 'border border-white/5 bg-card'
+          : 'border border-border bg-card'
       }`}
     >
       {isRecommended && (
@@ -195,7 +195,7 @@ if (!res.ok) {
         </div>
 
         <div className="flex items-baseline gap-1">
-         <span className="text-white text-3xl font-semibold">
+         <span className="text-foreground text-3xl font-semibold">
   {plan.slug === 'pj-consulte'
     ? 'Sob Consulta'
     : `R$ ${Number(plan.price).toFixed(2)}`}
@@ -231,7 +231,7 @@ if (!res.ok) {
   !authed && (
     <Link
       href="/signup?next=/pricing"
-      className="inline-flex w-full items-center justify-center gap-2 bg-white/5 border border-white/10 text-white py-2.5 rounded-full text-sm font-medium hover:bg-white/10 active:scale-95 transition-all duration-300"
+      className="inline-flex w-full items-center justify-center gap-2 bg-muted border border-border text-foreground py-2.5 rounded-full text-sm font-medium hover:bg-muted active:scale-95 transition-all duration-300"
     >
       Criar conta grátis
     </Link>
@@ -239,7 +239,7 @@ if (!res.ok) {
 ) : plan.slug === 'pj-consulte' ? (
   <button
     type="button"
-    className="inline-flex w-full items-center justify-center gap-2 bg-white/5 border border-white/10 text-white py-2.5 rounded-full text-sm font-medium hover:bg-white/10 active:scale-95 transition-all duration-300"
+    className="inline-flex w-full items-center justify-center gap-2 bg-muted border border-border text-foreground py-2.5 rounded-full text-sm font-medium hover:bg-muted active:scale-95 transition-all duration-300"
   >
     Solicitar proposta
     <ArrowRight className="h-3.5 w-3.5" />
@@ -377,7 +377,7 @@ body: JSON.stringify({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="space-y-1">
-          <h2 className="text-3xl font-semibold text-white">
+          <h2 className="text-3xl font-semibold text-foreground">
   {plan.name} <span className="text-brand">.</span>
 </h2>
           <p className="text-base text-muted-foreground">

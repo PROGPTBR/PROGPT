@@ -216,7 +216,7 @@ export function Composer({
     ? `relative w-full transition-colors ${
         dragOver ? 'bg-brand/5' : ''
       }`
-    : `relative border-t bg-background dark:bg-[#0d0d0d] p-4 pb-[max(env(safe-area-inset-bottom),1rem)] transition-colors ${
+    : `relative border-t bg-background p-4 pb-[max(env(safe-area-inset-bottom),1rem)] transition-colors ${
         dragOver ? 'border-brand bg-brand/5' : 'border-border'
       }`;
 
@@ -322,7 +322,7 @@ export function Composer({
                   aria-label="Enviar"
                   title="Enviar"
                   disabled={(!input.trim() && !attachment) || uploading}
-                  className="inline-flex items-center justify-center rounded-full bg-brand text-black hover:bg-brand/90 disabled:opacity-40 disabled:cursor-not-allowed w-9 h-9 transition-all duration-300 active:scale-95"
+                  className="inline-flex items-center justify-center rounded-full bg-brand-gradient text-black hover:brightness-110 brand-glow disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none w-9 h-9 transition-all duration-300 active:scale-95"
                 >
                   <Send className="h-4 w-4" aria-hidden="true" />
                 </button>
@@ -396,7 +396,7 @@ export function Composer({
                 aria-label="Enviar"
                 title="Enviar"
                 disabled={(!input.trim() && !attachment) || uploading}
-                className="inline-flex items-center justify-center rounded-full bg-brand text-black hover:bg-brand/90 disabled:opacity-40 disabled:cursor-not-allowed w-11 h-11 transition-all duration-300 active:scale-95 flex-shrink-0"
+                className="inline-flex items-center justify-center rounded-full bg-brand-gradient text-black hover:brightness-110 brand-glow disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none w-11 h-11 transition-all duration-300 active:scale-95 flex-shrink-0"
               >
                 <Send className="h-4 w-4" aria-hidden="true" />
               </button>

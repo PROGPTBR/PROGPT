@@ -18,7 +18,7 @@ export default async function AssistantsLayout({
     throw err;
   }
   return (
-    <div className="relative min-h-screen bg-background dark:bg-[#0d0d0d] text-foreground dark:text-white font-outfit antialiased overflow-x-hidden">
+    <div className="relative min-h-screen bg-background text-foreground font-outfit antialiased overflow-x-hidden">
       {/* Decorative cyan glow shapes — translucent cyan reads on both light
           and dark backgrounds. */}
       <div
@@ -30,7 +30,7 @@ export default async function AssistantsLayout({
         className="pointer-events-none absolute top-1/2 -left-20 h-80 w-80 rounded-full bg-brand/5 blur-3xl"
       />
 
-      <header className="relative z-10 border-b border-border bg-card/40 dark:bg-black/20 backdrop-blur-md sticky top-0">
+      <header className="relative z-10 border-b border-border bg-card/40 backdrop-blur-md sticky top-0">
         <div className="mx-auto max-w-6xl px-6 py-4 flex items-center justify-between">
           <Link href="/" className="inline-flex items-center">
             <BrandLogo size="md" priority />

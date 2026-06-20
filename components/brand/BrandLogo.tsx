@@ -36,7 +36,7 @@ export function BrandLogo({
 }: Props) {
   return (
     <span
-      className={`inline-flex items-center rounded-md ring-black/5 ${PAD_CLASS[size]} ${className}`}
+      className={`inline-flex items-center rounded-lg ${PAD_CLASS[size]} ${className} bg-[#0b1222] dark:bg-transparent`}
     >
       <Image
         src="/2bsupply-logo.png"

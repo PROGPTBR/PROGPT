@@ -108,7 +108,7 @@ export function MessageList({
         })}
         {showThinking ? (
           <li className="flex justify-start" aria-live="polite">
-            <div className="bg-card dark:bg-[#141414] border border-border rounded-2xl px-5 py-4">
+            <div className="bg-card dark:bg-card border border-border rounded-2xl px-5 py-4">
               <ThinkingDots />
             </div>
           </li>

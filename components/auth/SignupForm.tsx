@@ -108,7 +108,7 @@ const router = useRouter();
   if (state.kind === 'check-email') {
     return (
       <div className="space-y-4 text-center">
-        <h1 className="text-3xl font-semibold tracking-tight text-white">
+        <h1 className="text-3xl font-semibold tracking-tight text-foreground">
           Confira seu email <span className="text-brand">.</span>
         </h1>
         <p className="text-base text-muted-foreground leading-relaxed">
@@ -138,7 +138,7 @@ const router = useRouter();
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-semibold tracking-tight text-white">
+        <h1 className="text-3xl font-semibold tracking-tight text-foreground">
           Criar conta <span className="text-brand">.</span>
         </h1>
         <p className="mt-1.5 text-lg text-muted-foreground">

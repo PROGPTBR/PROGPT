@@ -182,7 +182,7 @@ export function AssistantsHub() {
             <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">
               Assistentes <span className="text-brand">.</span>
             </h1>
-            <p className="text-sm text-gray-400 mt-2">
+            <p className="text-sm text-muted-foreground mt-2">
               {ACTIVE_COUNT} de {STEPS.length} passos do{' '}
               <span className="text-brand font-medium">Strategic Sourcing</span>{' '}
               com assistente ativo.
@@ -190,7 +190,7 @@ export function AssistantsHub() {
           </div>
           <Link
             href="/assistants/history"
-            className="inline-flex items-center gap-1.5 text-sm rounded-full border border-white/10 bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white px-4 h-9 transition-all duration-300 active:scale-95"
+            className="inline-flex items-center gap-1.5 text-sm rounded-full border border-border bg-muted hover:bg-accent text-muted-foreground hover:text-foreground px-4 h-9 transition-all duration-300 active:scale-95"
           >
             <History className="h-4 w-4" aria-hidden="true" />
             Meu histórico
@@ -199,7 +199,7 @@ export function AssistantsHub() {
 
         {/* Progress bar */}
         <div className="space-y-1.5">
-          <div className="h-1 w-full rounded-full bg-white/5 overflow-hidden">
+          <div className="h-1 w-full rounded-full bg-muted overflow-hidden">
             <div
               className="h-full bg-brand rounded-full transition-all duration-500 ease-out"
               style={{ width: `${PROGRESS_PCT}%` }}
@@ -210,7 +210,7 @@ export function AssistantsHub() {
               aria-label={`${ACTIVE_COUNT} de ${STEPS.length} passos ativos`}
             />
           </div>
-          <div className="flex justify-between text-[10px] text-gray-500 font-medium tracking-wider uppercase">
+          <div className="flex justify-between text-[10px] text-muted-foreground font-medium tracking-wider uppercase">
             <span>Roadmap do produto</span>
             <span>{PROGRESS_PCT}%</span>
           </div>
@@ -226,7 +226,7 @@ export function AssistantsHub() {
               <Link
                 key={a.href}
                 href={a.href}
-                className="group flex flex-col rounded-2xl border border-white/5 bg-[#141414] hover:bg-[#181818] hover:border-brand/30 transition-all duration-300 p-6 active:scale-[0.99]"
+                className="group flex flex-col rounded-2xl border border-border bg-card hover:bg-accent hover:border-brand/30 transition-all duration-300 p-6 active:scale-[0.99]"
               >
                 {/* Preview */}
                 <div className="rounded-xl bg-black/40 overflow-hidden aspect-[16/9] mb-5 ring-1 ring-white/5">
@@ -234,17 +234,17 @@ export function AssistantsHub() {
                 </div>
 
                 {/* Step badge */}
-                <div className="text-[10px] font-medium uppercase tracking-wider text-gray-500 mb-1.5">
+                <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground mb-1.5">
                   Passo {a.step} · {a.stepCategory}
                 </div>
 
                 {/* Title */}
-                <h2 className="text-2xl font-semibold tracking-tight text-white">
+                <h2 className="text-2xl font-semibold tracking-tight text-foreground">
                   {a.title}
                 </h2>
 
                 {/* Short description */}
-                <p className="text-sm text-gray-400 mt-2 leading-relaxed">
+                <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
                   {a.short}
                 </p>
 
@@ -253,7 +253,7 @@ export function AssistantsHub() {
                   {a.bullets.map((b) => (
                     <li
                       key={b}
-                      className="flex items-center gap-2 text-xs text-gray-300"
+                      className="flex items-center gap-2 text-xs text-muted-foreground"
                     >
                       <Check
                         className="h-3 w-3 text-brand flex-shrink-0"
@@ -280,7 +280,7 @@ export function AssistantsHub() {
 
       {/* ───── Section 3: Roadmap strip ───── */}
       <section aria-label="Roadmap dos 7 passos">
-        <div className="text-[10px] font-medium uppercase tracking-wider text-gray-500 mb-5">
+        <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground mb-5">
           No roadmap
         </div>
 
@@ -289,7 +289,7 @@ export function AssistantsHub() {
           {/* Connecting line */}
           <div
             aria-hidden="true"
-            className="absolute top-5 left-[5%] right-[5%] h-px bg-white/10"
+            className="absolute top-5 left-[5%] right-[5%] h-px bg-muted"
           />
 
           <ol className="relative grid grid-cols-7 gap-1">
@@ -310,7 +310,7 @@ export function AssistantsHub() {
                     className={`relative flex items-center justify-center w-10 h-10 rounded-full text-xs font-semibold transition-all duration-300 ${
                       s.available
                         ? 'bg-brand/10 border-2 border-brand text-brand hover:bg-brand/20 hover:scale-110 cursor-pointer active:scale-95'
-                        : 'bg-[#0d0d0d] border border-white/10 text-gray-500 cursor-default'
+                        : 'bg-muted/40 border border-border text-muted-foreground cursor-default'
                     }`}
                   >
                     {s.n}
@@ -318,14 +318,14 @@ export function AssistantsHub() {
                   <div className="text-center">
                     <div
                       className={`text-[10px] font-medium ${
-                        s.available ? 'text-white' : 'text-gray-500'
+                        s.available ? 'text-foreground' : 'text-muted-foreground'
                       }`}
                     >
                       {s.shortLabel}
                     </div>
                     <div
                       className={`mt-0.5 text-[9px] uppercase tracking-wider ${
-                        s.available ? 'text-brand' : 'text-gray-600'
+                        s.available ? 'text-brand' : 'text-muted-foreground'
                       }`}
                     >
                       {s.available ? 'Disponível' : 'Em breve'}
@@ -342,7 +342,7 @@ export function AssistantsHub() {
           {/* Vertical dashed line */}
           <div
             aria-hidden="true"
-            className="absolute top-5 bottom-5 left-[19px] w-px border-l border-dashed border-white/10"
+            className="absolute top-5 bottom-5 left-[19px] w-px border-l border-dashed border-border"
           />
           {STEPS.map((s) => {
             const tooltip = s.available
@@ -359,7 +359,7 @@ export function AssistantsHub() {
                   className={`absolute -left-8 flex items-center justify-center w-8 h-8 rounded-full text-xs font-semibold transition-colors ${
                     s.available
                       ? 'bg-brand/10 border-2 border-brand text-brand active:scale-95'
-                      : 'bg-[#0d0d0d] border border-white/10 text-gray-500'
+                      : 'bg-muted/40 border border-border text-muted-foreground'
                   }`}
                 >
                   {s.n}
@@ -367,14 +367,14 @@ export function AssistantsHub() {
                 <div className="flex items-center justify-between w-full">
                   <div
                     className={`text-sm ${
-                      s.available ? 'text-white' : 'text-gray-400'
+                      s.available ? 'text-foreground' : 'text-muted-foreground'
                     }`}
                   >
                     {s.fullName}
                   </div>
                   <span
                     className={`text-[10px] uppercase tracking-wider ${
-                      s.available ? 'text-brand' : 'text-gray-600'
+                      s.available ? 'text-brand' : 'text-muted-foreground'
                     }`}
                   >
                     {s.available ? 'Disponível' : 'Em breve'}

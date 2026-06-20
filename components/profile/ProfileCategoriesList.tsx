@@ -73,7 +73,7 @@ export function ProfileCategoriesList() {
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2 text-xs text-gray-500 p-3">
+      <div className="flex items-center gap-2 text-xs text-muted-foreground p-3">
         <Loader2 className="h-3.5 w-3.5 animate-spin" />
         Carregando…
       </div>
@@ -82,7 +82,7 @@ export function ProfileCategoriesList() {
 
   if (runs.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-white/10 bg-white/[0.02] p-6 text-center text-sm text-gray-400">
+      <div className="rounded-xl border border-dashed border-border bg-muted/40 p-6 text-center text-sm text-muted-foreground">
         <p className="mb-3">Você ainda não cadastrou nenhuma categoria.</p>
         <Link
           href="/assistants/profile"
@@ -107,7 +107,7 @@ export function ProfileCategoriesList() {
           return (
             <li
               key={r.id}
-              className="rounded-xl border border-white/5 bg-[#141414] hover:bg-[#181818] hover:border-white/10 transition-all duration-300"
+              className="rounded-xl border border-border bg-card hover:bg-accent hover:border-border transition-all duration-300"
             >
               <Link
                 href={`/assistants/runs/${r.id}`}
@@ -118,10 +118,10 @@ export function ProfileCategoriesList() {
                     <FolderOpen className="h-4 w-4" aria-hidden="true" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="text-sm font-medium text-white line-clamp-1">
+                    <div className="text-sm font-medium text-foreground line-clamp-1">
                       {r.params.nomeCategoria || '(sem nome)'}
                     </div>
-                    <div className="mt-0.5 text-[11px] text-gray-500 line-clamp-1">
+                    <div className="mt-0.5 text-[11px] text-muted-foreground line-clamp-1">
                       {fmtDate(r.created_at)}
                       {sub.length > 0 && (
                         <>
@@ -158,7 +158,7 @@ export function ProfileCategoriesList() {
                   </div>
                 </div>
                 <ExternalLink
-                  className="flex-shrink-0 h-3.5 w-3.5 text-gray-500"
+                  className="flex-shrink-0 h-3.5 w-3.5 text-muted-foreground"
                   aria-hidden="true"
                 />
               </Link>
@@ -168,7 +168,7 @@ export function ProfileCategoriesList() {
       </ul>
       <Link
         href="/assistants/profile"
-        className="inline-flex items-center gap-1.5 text-xs rounded-full border border-white/10 bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white px-3 py-1.5 transition-all"
+        className="inline-flex items-center gap-1.5 text-xs rounded-full border border-border bg-muted hover:bg-accent text-muted-foreground hover:text-foreground px-3 py-1.5 transition-all"
       >
         <Plus className="h-3.5 w-3.5" aria-hidden="true" />
         Nova categoria

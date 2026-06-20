@@ -9,7 +9,7 @@ import { Header } from '@/app/login/header';
 
 export function AuthShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative min-h-screen bg-background dark:bg-[#0d0d0d] text-foreground dark:text-white font-outfit antialiased flex flex-col overflow-hidden">
+    <div className="relative min-h-screen bg-background text-foreground font-outfit antialiased flex flex-col overflow-hidden">
       {/* Decorative cyan glow shapes — translucent cyan reads on both
           light and dark backgrounds. */}
       <div

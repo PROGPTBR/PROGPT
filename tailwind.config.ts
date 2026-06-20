@@ -41,9 +41,15 @@ const config: Config = {
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
-        // 2B Supply brand color — used as pure accent in headlines and emphasis,
-        // matching the same role it plays on 2bsupply.com.br.
-        brand: '#0e8de1',
+        // 2B Supply brand palette — derived from the logo (cyan -> blue).
+        // `brand` (DEFAULT) keeps every existing `bg-brand`/`text-brand` working;
+        // `brand-cyan`/`brand-blue` expose the two gradient stops directly.
+        brand: {
+          DEFAULT: '#0e8de1',
+          cyan: '#0ed1e0',
+          blue: '#0e8de1',
+          dark: '#0a6fbf',
+        },
         // Material You (Material Design 3) tokens — light mode only for now.
         // Palette derived from the 2B Supply brand seed `#0ed1e0` (bright cyan)
         // using the MD3 HCT tonal scale. Primary lives at tone 40 (accessible
