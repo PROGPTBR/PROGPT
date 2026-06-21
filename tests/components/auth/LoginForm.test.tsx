@@ -36,7 +36,8 @@ describe('LoginForm', () => {
     render(<LoginForm />);
     const user = userEvent.setup();
     await user.type(screen.getByLabelText(/email/i), 'a@b.com');
-    await user.type(screen.getByLabelText(/senha/i), 'pw1234');
+    // Exact 'Senha' so it targets the field, not the "Mostrar senha" toggle.
+    await user.type(screen.getByLabelText('Senha'), 'pw1234');
     await user.click(screen.getByRole('button', { name: /entrar/i }));
     expect(signInWithPassword).toHaveBeenCalledWith({ email: 'a@b.com', password: 'pw1234' });
   });
@@ -54,7 +55,7 @@ describe('LoginForm', () => {
     render(<LoginForm />);
     const user = userEvent.setup();
     await user.type(screen.getByLabelText(/email/i), 'a@b.com');
-    await user.type(screen.getByLabelText(/senha/i), 'pw');
+    await user.type(screen.getByLabelText('Senha'), 'pw');
     await user.click(screen.getByRole('button', { name: /entrar/i }));
     expect(await screen.findByText(/email ou senha incorretos/i)).toBeTruthy();
   });
