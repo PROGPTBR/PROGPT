@@ -118,7 +118,7 @@ const router = useRouter();
           </div>
 
           <div className="flex items-center gap-2 mb-4">
-          <h1 className="text-3xl text-white md:text-4xl font-semibold tracking-tight mx-auto text-center">
+          <h1 className="text-3xl text-foreground md:text-4xl font-semibold tracking-tight mx-auto text-center">
           Recursos <span className="text-brand">.</span>
         </h1>
 </div>
@@ -134,12 +134,12 @@ const router = useRouter();
                 aria-hidden="true"
                 className="w-1.5 h-1.5 rounded-full bg-brand"
               />
-              <span className="text-sm text-gray-400 font-medium">
+              <span className="text-sm text-muted-foreground font-medium">
                 PROGPT · uma plataforma 2B Supply
               </span>
             </div>
             <h2 className="text-4xl md:text-5xl font-medium tracking-tight max-w-4xl">
-              <span className="text-white">Inteligência invisível</span>{' '}
+              <span className="text-foreground">Inteligência invisível</span>{' '}
               <span className="text-brand">
                 acelerando cada um dos 8 passos do Strategic Sourcing.
               </span>
@@ -154,7 +154,7 @@ const router = useRouter();
                   idx === 1 ? 'reveal-delay-1' : idx === 2 ? 'reveal-delay-2' : ''
                 }`}
               >
-                <div className="rounded-2xl overflow-hidden mb-6 bg-[#1a1a1a] aspect-[4/3] relative">
+                <div className="rounded-2xl overflow-hidden mb-6 bg-card aspect-[4/3] relative">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={card.image}
@@ -162,8 +162,8 @@ const router = useRouter();
                     className="w-full h-full object-cover opacity-80 mix-blend-luminosity hover:mix-blend-normal transition-all duration-500"
                   />
                 </div>
-                <h3 className="text-xl font-medium text-white mb-2">{card.title}</h3>
-                <p className="text-gray-400 text-sm leading-relaxed">{card.blurb}</p>
+                <h3 className="text-xl font-medium text-foreground mb-2">{card.title}</h3>
+                <p className="text-muted-foreground text-sm leading-relaxed">{card.blurb}</p>
               </div>
             ))}
           </div>
@@ -173,43 +173,43 @@ const router = useRouter();
 {/* ───── Use cases (tabs simulado) ───── */}
         <section
           id="assistentes"
-          className="mt-10 py-24 px-6 md:px-12 max-w-7xl border-white/5"
+          className="mt-10 py-24 px-6 md:px-12 max-w-7xl border-border"
         >
                  <div className="flex items-center gap-2 mb-4">
               <div
                 aria-hidden="true"
                 className="w-1.5 h-1.5 rounded-full bg-brand"
               />
-              <span className="text-sm text-gray-400 font-medium">
+              <span className="text-sm text-muted-foreground font-medium">
                 Casos de uso
               </span>
             </div>
 
           <div className="mb-12 reveal">
             <h2 className="text-4xl md:text-5xl font-medium tracking-tight max-w-4xl">
-              <span className="text-white">Diferentes caminhos,</span>{' '}
+              <span className="text-foreground">Diferentes caminhos,</span>{' '}
               <span className="text-brand">guiados por um especialista silencioso.</span>
             </h2>
           </div>
 
           <div className="reveal">
-            <div className="flex space-x-6 border-b border-white/10 mb-10 overflow-x-auto whitespace-nowrap pb-px">
-              <button className="text-white border-b-2 border-brand pb-3 px-1 text-sm font-medium">
+            <div className="flex space-x-6 border-b border-border mb-10 overflow-x-auto whitespace-nowrap pb-px">
+              <button className="text-foreground border-b-2 border-brand pb-3 px-1 text-sm font-medium">
                 Estratégia · Kraljic
               </button>
-              <button className="text-gray-500 hover:text-gray-300 border-b-2 border-transparent pb-3 px-1 text-sm font-medium transition-colors">
+              <button className="text-muted-foreground hover:text-muted-foreground border-b-2 border-transparent pb-3 px-1 text-sm font-medium transition-colors">
                 RFP / RFQ
               </button>
-              <button className="text-gray-500 hover:text-gray-300 border-b-2 border-transparent pb-3 px-1 text-sm font-medium transition-colors">
+              <button className="text-muted-foreground hover:text-muted-foreground border-b-2 border-transparent pb-3 px-1 text-sm font-medium transition-colors">
                 Análise de portfólio
               </button>
-              <button className="text-gray-500 hover:text-gray-300 border-b-2 border-transparent pb-3 px-1 text-sm font-medium transition-colors">
-                Negociação <span className="ml-1 text-xs text-gray-600">(em breve)</span>
+              <button className="text-muted-foreground hover:text-muted-foreground border-b-2 border-transparent pb-3 px-1 text-sm font-medium transition-colors">
+                Negociação <span className="ml-1 text-xs text-muted-foreground">(em breve)</span>
               </button>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-              <div className="rounded-2xl overflow-hidden bg-[#1a1a1a] aspect-video relative">
+              <div className="rounded-2xl overflow-hidden bg-card aspect-video relative">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={USE_CASES[0]!.image}
@@ -225,7 +225,7 @@ const router = useRouter();
                 <span className="text-sm text-brand mb-4 block font-medium">
                   {USE_CASES[0]!.label}
                 </span>
-                <h3 className="text-3xl font-medium text-white mb-6 leading-tight">
+                <h3 className="text-3xl font-medium text-foreground mb-6 leading-tight">
                   {USE_CASES[0]!.title}
                 </h3>
                 <Link
@@ -243,32 +243,32 @@ const router = useRouter();
   {/* ───── Seção Benefícios ───── */}
     <section
           id="beneficios"
-          className="mt-10 px-6 md:px-12 max-w-7xl mx-auto border-white/5"
+          className="mt-10 px-6 md:px-12 max-w-7xl mx-auto border-border"
         >
                <div className="flex items-center gap-2 mb-4">
               <div
                 aria-hidden="true"
                 className="w-1.5 h-1.5 rounded-full bg-brand"
               />
-              <span className="text-sm text-gray-400 font-medium">
+              <span className="text-sm text-muted-foreground font-medium">
                 Benefícios 
               </span>
             </div>
 
              <h2 className="mb-16 text-4xl md:text-5xl font-medium tracking-tight max-w-4xl">
-              <span className="text-white">Poder invisível ao seu lado,</span>{' '}
+              <span className="text-foreground">Poder invisível ao seu lado,</span>{' '}
               <span className="text-brand">
                 entregando resultados todos os dias.
               </span>
             </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-white/5 border border-white/5 rounded-2xl overflow-hidden">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-muted border border-border rounded-2xl overflow-hidden">
             {BENEFITS.map((b, idx) => {
               const Icon = b.icon;
               return (
                 <div
                   key={b.title}
-                  className={`bg-[#080c16] p-8 reveal hover:bg-[#060a1426] transition-colors ${
+                  className={`bg-card p-8 reveal hover:bg-accent transition-colors ${
                     idx % 3 === 1
                       ? 'reveal-delay-1'
                       : idx % 3 === 2
@@ -280,8 +280,8 @@ const router = useRouter();
                   <div className="w-14 h-14 rounded-full border border-brand/30 bg-brand/5 flex items-center justify-center mb-6 text-brand">
                     <Icon className="w-7 h-7" aria-hidden="true" />
                   </div>
-                  <h4 className="text-white font-medium mb-3">{b.title}</h4>
-                  <p className="text-gray-400 text-sm leading-relaxed">{b.blurb}</p>
+                  <h4 className="text-foreground font-medium mb-3">{b.title}</h4>
+                  <p className="text-muted-foreground text-sm leading-relaxed">{b.blurb}</p>
                 </div>
               );
             })}

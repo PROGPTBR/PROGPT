@@ -17,15 +17,39 @@ export function ChatRoot() {
   useEffect(() => setMounted(true), []);
 
   if (!mounted) {
-    return <div className="h-screen bg-background dark:bg-[#0d0d0d]" />;
+    return <div className="h-screen bg-background" />;
   }
 
   return <ChatRootMounted />;
 }
 
+const SIDEBAR_COLLAPSED_KEY = 'progpt_sidebar_collapsed';
+
 function ChatRootMounted() {
   const sessionsApi = useChatSessions();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+
+  // Restore the persisted collapse preference after mount.
+  useEffect(() => {
+    try {
+      setCollapsed(window.localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1');
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  function toggleCollapse() {
+    setCollapsed((c) => {
+      const next = !c;
+      try {
+        window.localStorage.setItem(SIDEBAR_COLLAPSED_KEY, next ? '1' : '0');
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  }
 
   // Sub-projeto 32 — "Usar no chat" da Biblioteca de Prompts. Capturamos o
   // texto do sessionStorage UMA vez aqui no pai (antes de qualquer ChatSession
@@ -57,7 +81,7 @@ function ChatRootMounted() {
   }, [pendingPrefill, sessionsApi.currentId, sessionsApi.current, sessionsApi.createNew]);
 
   if (!sessionsApi.currentId) {
-    return <div className="h-screen bg-background dark:bg-[#0d0d0d]" />;
+    return <div className="h-screen bg-background" />;
   }
 
   // Só prefila a sessão-alvo (a nova/vazia). A conversa antiga (com mensagens)
@@ -68,7 +92,7 @@ function ChatRootMounted() {
       : null;
 
   return (
-    <div className="flex h-screen bg-background dark:bg-[#0d0d0d] text-foreground dark:text-white font-outfit antialiased">
+    <div className="flex h-screen bg-background text-foreground font-outfit antialiased">
       <div className="hidden md:flex">
         <Sidebar
           sessions={sessionsApi.sessions}
@@ -77,12 +101,14 @@ function ChatRootMounted() {
           onNew={sessionsApi.createNew}
           onDelete={sessionsApi.deleteSession}
           onRename={sessionsApi.renameSession}
+          collapsed={collapsed}
+          onToggleCollapse={toggleCollapse}
         />
       </div>
       <Sheet open={drawerOpen} onOpenChange={(open) => setDrawerOpen(open)}>
         <SheetContent
           side="left"
-          className="p-0 w-72 bg-background dark:bg-[#0d0d0d] border-border dark:border-white/5"
+          className="p-0 w-72 bg-background border-border"
         >
           <Sidebar
             sessions={sessionsApi.sessions}

@@ -37,7 +37,7 @@ const statusLabel =
 
     const statusColor =
   subscription?.plan?.toLowerCase() === 'free'
-    ? 'text-white'
+    ? 'text-foreground'
     : subscription?.status === 'active'
     ? 'text-green-500'
     : subscription?.status === 'canceled'
@@ -56,7 +56,7 @@ const statusLabel =
 
 
   return (
-    <div className="relative min-h-screen bg-background dark:bg-[#0d0d0d] text-foreground dark:text-white font-outfit antialiased overflow-x-hidden">
+    <div className="relative min-h-screen bg-background text-foreground font-outfit antialiased overflow-x-hidden">
       {/* Decorative cyan glow */}
       <div
         aria-hidden="true"
@@ -68,7 +68,7 @@ const statusLabel =
       />
 
       {/* Header */}
-      <header className="relative z-10 border-b border-border bg-card/40 dark:bg-black/20 backdrop-blur-md">
+      <header className="relative z-10 border-b border-border bg-card/40 backdrop-blur-md">
         <div className="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link href="/chat" className="inline-flex items-center">
             <BrandLogo size="md" priority />
@@ -86,7 +86,7 @@ const statusLabel =
       {/* Content */}
       <main className="relative z-10 max-w-3xl mx-auto px-6 py-10 space-y-10">
         <div>
-          <h1 className="text-4xl font-semibold tracking-tight text-white">
+          <h1 className="text-4xl font-semibold tracking-tight text-foreground">
             Meu perfil <span className="text-brand">.</span>
           </h1>
           <p className="text-base text-muted-foreground mt-1.5">
@@ -98,7 +98,7 @@ const statusLabel =
         </div>
            <section className="space-y-3">
           <div>
-        <h2 className="text-white font-medium text-2xl"> Seu Plano</h2>
+        <h2 className="text-foreground font-medium text-2xl"> Seu Plano</h2>
             <p className="text-base text-muted-foreground mt-1 leading-relaxed">
               Confira os detalhes da sua assinatura.
             </p>
@@ -131,7 +131,7 @@ const statusLabel =
 </section>
         <section className="space-y-3">
           <div>
-            <h2 className="text-white font-medium text-2xl">Foto do Perfil</h2>
+            <h2 className="text-foreground font-medium text-2xl">Foto do Perfil</h2>
             <p className="text-base text-muted-foreground mt-1 leading-relaxed">
               Este logo é incluído nos documentos gerados (RFP .docx e planilha
               de cotação .xlsx). PNG ou JPG, até 2 MB.
@@ -142,7 +142,7 @@ const statusLabel =
 
         <section className="space-y-3">
           <div>
-            <h2 className="text-white font-medium text-2xl">Meus Dados</h2>
+            <h2 className="text-foreground font-medium text-2xl">Meus Dados</h2>
             <p className="text-base text-muted-foreground mt-1 leading-relaxed">
               Estes campos são incluídos automaticamente nos documentos gerados —
               apresentação do RFP, banner da planilha de cotação e cláusulas de
@@ -154,7 +154,7 @@ const statusLabel =
 
         <section className="space-y-3">
           <div>
-            <h2 className="text-white font-medium text-2xl">Minhas categorias</h2>
+            <h2 className="text-foreground font-medium text-2xl">Minhas categorias</h2>
             <p className="text-base text-muted-foreground mt-1 leading-relaxed">
               Perfis de categoria que você cadastrou. Use no chat (seletor
               acima do campo de mensagem) ou no botão &quot;Iniciar de um

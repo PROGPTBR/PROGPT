@@ -56,7 +56,7 @@ return (
           </div>
 
 
-<section id="planos" className="px-6 md:px-12 max-w-7xl mx-auto border-white/5">
+<section id="planos" className="px-6 md:px-12 max-w-7xl mx-auto border-border">
 <PricingTable
   authed={!!user}
   isPro={pro}

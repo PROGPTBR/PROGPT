@@ -40,7 +40,7 @@ export function ForgotPasswordForm() {
   if (done) {
     return (
       <div className="space-y-4 text-center">
-        <h1 className="text-3xl font-semibold tracking-tight text-white">
+        <h1 className="text-3xl font-semibold tracking-tight text-foreground">
           Verifique seu email <span className="text-brand">.</span>
         </h1>
         <p className="text-lg text-muted-foreground">
@@ -62,7 +62,7 @@ export function ForgotPasswordForm() {
   return (
     <form onSubmit={onSubmit} className="space-y-6">
       <div>
-        <h1 className="text-3xl font-semibold tracking-tight text-white">
+        <h1 className="text-3xl font-semibold tracking-tight text-foreground">
           Esqueci minha senha <span className="text-brand">.</span>
         </h1>
         <p className="mt-1.5 text-lg text-muted-foreground">

@@ -165,7 +165,7 @@ export function VoiceMode({ onClose }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-background/95 dark:bg-[#0d0d0d]/95 backdrop-blur-sm flex flex-col"
+      className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex flex-col"
       role="dialog"
       aria-label="Conversa por voz com o assistente"
     >

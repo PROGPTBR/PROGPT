@@ -41,7 +41,7 @@ const router = useRouter();
           </div>
 
                     <div className="flex items-center gap-2 mb-4">
-          <h1 className="text-3xl text-white md:text-4xl font-semibold tracking-tight mx-auto text-center">
+          <h1 className="text-3xl text-foreground md:text-4xl font-semibold tracking-tight mx-auto text-center">
           FAQ <span className="text-brand">.</span>
         </h1>
 </div>
@@ -49,11 +49,11 @@ const router = useRouter();
     {/* ───── FAQ ───── */}
          <section
            id="faq"
-           className="px-6 md:px-12 max-w-7xl mx-auto border-white/5"
+           className="px-6 md:px-12 max-w-7xl mx-auto border-border"
          >
            <div className="mb-16 reveal">
              <h2 className="text-4xl md:text-5xl font-medium tracking-tight text-center">
-               <span className="text-white">Suas dúvidas,</span>{' '}
+               <span className="text-foreground">Suas dúvidas,</span>{' '}
                <span className="text-brand">respondidas com clareza.</span>
              </h2>
            </div>
@@ -63,12 +63,12 @@ const router = useRouter();
                {FAQS.slice(0, 3).map((q) => (
                  <div
                    key={q}
-                   className="border-b border-white/5 py-4 px-4 border hover:border-border rounded-2xl flex justify-between items-center cursor-pointer group"
+                   className="border-b border-border py-4 px-4 border hover:border-border rounded-2xl flex justify-between items-center cursor-pointer group"
                  >
-                   <span className="text-sm text-gray-300 group-hover:text-white transition-colors">
+                   <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">
                      {q}
                    </span>
-                   <Plus className="w-4 h-4 text-gray-500 group-hover:text-brand transition-colors" aria-hidden="true" />
+                   <Plus className="w-4 h-4 text-muted-foreground group-hover:text-brand transition-colors" aria-hidden="true" />
                  </div>
                ))}
              </div>
@@ -76,12 +76,12 @@ const router = useRouter();
                {FAQS.slice(3).map((q) => (
                  <div
                    key={q}
-                   className="border-b border-white/5 py-4 px-4 border hover:border-border rounded-2xl  flex justify-between items-center cursor-pointer group"
+                   className="border-b border-border py-4 px-4 border hover:border-border rounded-2xl  flex justify-between items-center cursor-pointer group"
                  >
-                   <span className="text-sm text-gray-300 group-hover:text-white transition-colors">
+                   <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">
                      {q}
                    </span>
-                   <Plus className="w-4 h-4 text-gray-500 group-hover:text-brand transition-colors" aria-hidden="true" />
+                   <Plus className="w-4 h-4 text-muted-foreground group-hover:text-brand transition-colors" aria-hidden="true" />
                  </div>
                ))}
              </div>

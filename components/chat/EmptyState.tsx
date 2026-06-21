@@ -34,8 +34,13 @@ export function EmptyState({
   onVoiceMode,
 }: Props) {
   return (
-    <div className="flex-1 flex flex-col items-center justify-center px-6 py-8 overflow-y-auto">
-      <div className="w-full max-w-2xl flex flex-col items-center gap-8">
+    <div className="relative flex-1 flex flex-col items-center justify-center px-6 py-8 overflow-y-auto">
+      {/* Ambient brand backdrop — soft cyan/blue glow behind the hero. */}
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-80 brand-aura"
+        aria-hidden="true"
+      />
+      <div className="relative w-full max-w-2xl flex flex-col items-center gap-8">
         {/* Hero pitch — action-oriented; positions ProcurementGPT as a
             focused supply-chain tool, not a generic chat. */}
         <div className="flex flex-col items-center gap-3 text-center">
@@ -44,10 +49,10 @@ export function EmptyState({
               className="h-6 w-6 text-brand flex-shrink-0 mt-1"
               aria-hidden="true"
             />
-            <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-white leading-snug">
+            <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground leading-snug">
               Sua IA de Suprimentos está pronta.
               <br />
-              <span className="text-brand">Qual problema vamos resolver?</span>
+              <span className="text-brand-gradient">Qual problema vamos resolver?</span>
             </h1>
           </div>
           <p className="text-sm md:text-base text-muted-foreground max-w-xl">

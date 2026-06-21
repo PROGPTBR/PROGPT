@@ -31,7 +31,7 @@ const ITEMS = [
 export function AdminSidebar() {
   const pathname = usePathname();
   return (
-    <aside className="w-56 shrink-0 border-r border-border bg-card/60 dark:bg-black/40 backdrop-blur-md flex flex-col h-screen sticky top-0">
+    <aside className="w-56 shrink-0 border-r border-border bg-card/60 backdrop-blur-md flex flex-col h-screen sticky top-0">
       <div className="px-4 py-4 border-b border-border">
         <Link href="/" className="inline-flex items-center mb-3">
           <BrandLogo size="md" priority />
