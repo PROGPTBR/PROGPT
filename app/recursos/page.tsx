@@ -268,7 +268,7 @@ const router = useRouter();
               return (
                 <div
                   key={b.title}
-                  className={`bg-[#080c16] p-8 reveal hover:bg-[#060a1426] transition-colors ${
+                  className={`bg-card p-8 reveal hover:bg-accent transition-colors ${
                     idx % 3 === 1
                       ? 'reveal-delay-1'
                       : idx % 3 === 2
