@@ -581,13 +581,35 @@ function ReplyEditor({ reply, hasEmail, onChanged }: { reply: Reply; hasEmail: b
 function SettingsPanel({ onBack }: { onBack: () => void }) {
   const [s, setS] = useState<Settings | null>(null);
   const [saving, setSaving] = useState(false);
+  const [alias, setAlias] = useState<string | null>(null);
+  const [inboundEnabled, setInboundEnabled] = useState(false);
+  const [activating, setActivating] = useState(false);
 
   useEffect(() => {
     fetch('/api/assistants/comprador/settings')
       .then((r) => r.json())
-      .then((d: { settings: Settings }) => setS(d.settings))
+      .then((d: { settings: Settings; inboundAlias: string | null; inboundEnabled: boolean }) => {
+        setS(d.settings);
+        setAlias(d.inboundAlias);
+        setInboundEnabled(d.inboundEnabled);
+      })
       .catch(() => setS({ tone: 'cordial', rules: '', signature: '', approval_required: true, auto_draft: true }));
   }, []);
+
+  async function activate() {
+    setActivating(true);
+    try {
+      const res = await fetch('/api/assistants/comprador/inbound/activate', { method: 'POST' });
+      const d = (await res.json()) as { alias?: string; error?: string };
+      if (!res.ok || !d.alias) throw new Error(d.error ?? 'falha');
+      setAlias(d.alias);
+      toast.success('Recebimento por e-mail ativado.');
+    } catch (err) {
+      toast.error('Não foi possível ativar', { description: String(err) });
+    } finally {
+      setActivating(false);
+    }
+  }
 
   async function salvar() {
     if (!s) return;
@@ -681,8 +703,53 @@ function SettingsPanel({ onBack }: { onBack: () => void }) {
           onChange={(e) => setS({ ...s, auto_draft: e.target.checked })}
           className="h-4 w-4 accent-brand"
         />
-        <span className="text-foreground">Rascunhar resposta automaticamente ao analisar</span>
+        <span className="text-foreground">Rascunhar resposta automaticamente ao analisar/receber</span>
       </label>
+
+      {/* Recebimento por e-mail (Resend Inbound) */}
+      <div className="rounded-xl border border-brand/30 bg-brand-gradient-soft p-4 space-y-2">
+        <div className="flex items-center gap-2 text-sm font-semibold">
+          <Mail className="h-4 w-4 text-brand" /> Recebimento por e-mail
+        </div>
+        {alias ? (
+          <div className="space-y-2">
+            <p className="text-xs text-muted-foreground">
+              Encaminhe (ou peça pros fornecedores enviarem) as cotações para este endereço — elas caem na sua caixa já analisadas:
+            </p>
+            <div className="flex items-center gap-2">
+              <code className="flex-1 rounded-md bg-card border border-border px-2.5 py-1.5 text-xs break-all">{alias}</code>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  navigator.clipboard?.writeText(alias);
+                  toast.success('Copiado');
+                }}
+              >
+                Copiar
+              </Button>
+            </div>
+          </div>
+        ) : inboundEnabled ? (
+          <div className="space-y-2">
+            <p className="text-xs text-muted-foreground">
+              Ative um endereço dedicado pra receber cotações automaticamente.
+            </p>
+            <button
+              onClick={activate}
+              disabled={activating}
+              className="inline-flex items-center gap-1.5 rounded-full bg-brand-gradient text-black h-9 px-4 text-sm font-semibold brand-glow hover:brightness-110 disabled:opacity-50 transition-all"
+            >
+              {activating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
+              Ativar recebimento por e-mail
+            </button>
+          </div>
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            Recebimento ainda não habilitado no servidor (falta configurar o domínio de inbound).
+          </p>
+        )}
+      </div>
 
       <button
         onClick={salvar}
