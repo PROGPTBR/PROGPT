@@ -16,6 +16,7 @@ import type {
   ComplianceReport,
   TaxRegimeComparison,
 } from '@/lib/fiscal/types';
+import { consultarSancoes, type SancoesResult } from '@/lib/fiscal/sancoes';
 
 // Sub-projeto 36 (fase 1) — Homologação / Qualificação de Fornecedor.
 //
@@ -32,6 +33,7 @@ export type HomologacaoClassified = {
   risk: SupplierRiskScore | null;
   compliance: ComplianceReport | null;
   regimes: TaxRegimeComparison | null;
+  sancoes: SancoesResult | null; // CEIS/CNEP (Portal da Transparência)
   error?: string;
 };
 
@@ -46,8 +48,16 @@ export async function fetchHomologacaoData(
     risk: null,
     compliance: null,
     regimes: null,
+    sancoes: null,
   };
-  if (!base.enabled) return base;
+  // Sanções (CEIS/CNEP) é um serviço SEPARADO (Portal da Transparência) com
+  // sua própria env; roda mesmo que o serviço fiscal esteja off, e é fail-soft.
+  const sancoesP = consultarSancoes(params.cnpj).catch(() => null);
+
+  if (!base.enabled) {
+    base.sancoes = await sancoesP;
+    return base;
+  }
 
   // cadastro + risco + compliance em paralelo, tolerante a falha parcial.
   const [cnpjR, riskR, compR] = await Promise.allSettled([
@@ -58,6 +68,7 @@ export async function fetchHomologacaoData(
   if (cnpjR.status === 'fulfilled') base.cnpjData = cnpjR.value;
   if (riskR.status === 'fulfilled') base.risk = riskR.value;
   if (compR.status === 'fulfilled') base.compliance = compR.value;
+  base.sancoes = await sancoesP;
 
   // regime tributário só quando o usuário informou setor + faturamento.
   if (params.setor && typeof params.faturamentoAnualBRL === 'number') {
@@ -101,7 +112,8 @@ export const HOMOLOGACAO_SYSTEM_PROMPT = `Você é um especialista sênior em St
    - **Próximos passos / due diligence complementar**: o que o comprador deve coletar antes de fechar (certidões atualizadas, documentos, visita técnica) conforme a faixa de risco.
 4. **Profundidade sênior**: amarre cada recomendação a um critério objetivo. Evite generalidades vazias.
 5. **Fundamente** boas práticas de homologação na base de conhecimento (qualificação de fornecedores, due diligence, gestão de risco de suprimento) — sem citar autores/IDs/colchetes.
-6. **Sem preâmbulo conversacional**; comece pelo título. Markdown limpo, tabelas markdown, **bold** nos valores críticos.`;
+6. **Sem preâmbulo conversacional**; comece pelo título. Markdown limpo, tabelas markdown, **bold** nos valores críticos.
+7. **Sanções são impeditivas**: se houver achado em CEIS/CNEP (sanção/inidoneidade), a recomendação final NÃO pode ser "aprovar" — trate como bloqueio/recusa até análise jurídica, independentemente do score fiscal.`;
 
 const RISK_LABEL: Record<string, string> = {
   baixo: 'Baixo',
@@ -219,6 +231,35 @@ function fiscalDataBlock(c: HomologacaoClassified): string {
   return `## Dados fiscais consultados (INPUT — verdade de base)\n\n${lines.filter(Boolean).join('\n')}`;
 }
 
+function sancoesBlock(s: SancoesResult | null): string {
+  if (!s || !s.enabled) {
+    return `## Sanções e inidoneidade (CEIS/CNEP)
+
+⚠️ Consulta a listas de sanção (Portal da Transparência) não configurada neste ambiente. Recomende a verificação manual de CEIS/CNEP/CEPIM no Portal da Transparência.`;
+  }
+  if (!s.consultado) {
+    return `## Sanções e inidoneidade (CEIS/CNEP)
+
+⚠️ A consulta às listas de sanção não retornou${s.error ? ` (motivo técnico: ${s.error})` : ''}. Oriente verificação manual no Portal da Transparência.`;
+  }
+  if (s.sancoes.length === 0) {
+    return `## Sanções e inidoneidade (CEIS/CNEP) — INPUT verificado
+
+✅ Nenhuma sanção encontrada nas listas CEIS (Empresas Inidôneas e Suspensas) e CNEP (Empresas Punidas) do Portal da Transparência para este CNPJ na data da consulta.`;
+  }
+  const rows = s.sancoes.map(
+    (x) =>
+      `| ${x.fonte} | ${x.tipo || '—'} | ${x.orgao || '—'} | ${x.dataInicio || '—'} | ${x.dataFim || '—'} |`,
+  );
+  return `## Sanções e inidoneidade (CEIS/CNEP) — ⛔ ACHADO CRÍTICO (INPUT)
+
+**Foram encontradas ${s.sancoes.length} sanção(ões) ativas/registradas para este CNPJ.** Isso é, por boa prática de homologação, **impeditivo ou de altíssima severidade** — trate como bloqueio até análise jurídica.
+
+| Fonte | Tipo | Órgão | Início | Fim |
+|---|---|---|---|---|
+${rows.join('\n')}`;
+}
+
 export function buildHomologacaoPrompt(
   params: HomologacaoParams,
   classified: HomologacaoClassified,
@@ -280,6 +321,7 @@ Gere agora o relatório de homologação do fornecedor seguindo o template e as 
     user: [
       headerBlock,
       fiscalDataBlock(classified),
+      sancoesBlock(classified.sancoes),
       companyBlock,
       certidoesBlock,
       templateBlock,

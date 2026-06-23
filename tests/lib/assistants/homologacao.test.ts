@@ -58,6 +58,7 @@ describe('buildHomologacaoPrompt', () => {
         simples_nacional: false,
         mei: false,
       },
+      sancoes: { enabled: true, consultado: true, sancoes: [] },
       risk: {
         cnpj: '84429695000111',
         razao_social: 'WEG SA',
@@ -116,8 +117,38 @@ describe('buildHomologacaoPrompt', () => {
       risk: null,
       compliance: null,
       regimes: null,
+      sancoes: null,
     };
     const { user } = buildHomologacaoPrompt(PARAMS, classified, TEMPLATE, [], null);
     expect(user).toMatch(/não está configurado|verificação manual/i);
+  });
+
+  it('sanção encontrada vira achado CRÍTICO no prompt', () => {
+    const classified: HomologacaoClassified = {
+      cnpj: '84429695000111',
+      enabled: true,
+      available: true,
+      cnpjData: null,
+      risk: null,
+      compliance: null,
+      regimes: null,
+      sancoes: {
+        enabled: true,
+        consultado: true,
+        sancoes: [
+          {
+            fonte: 'CEIS',
+            nome: 'WEG SA',
+            tipo: 'Inidoneidade',
+            orgao: 'CGU',
+            dataInicio: '2026-01-01',
+            dataFim: '2027-01-01',
+          },
+        ],
+      },
+    };
+    const { user } = buildHomologacaoPrompt(PARAMS, classified, TEMPLATE, [], null);
+    expect(user).toMatch(/CRÍTICO|impeditivo/i);
+    expect(user).toContain('CEIS');
   });
 });
