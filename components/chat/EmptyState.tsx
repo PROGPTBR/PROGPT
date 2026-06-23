@@ -34,13 +34,15 @@ export function EmptyState({
   onVoiceMode,
 }: Props) {
   return (
-    <div className="relative flex-1 flex flex-col items-center justify-center px-6 py-8 overflow-y-auto">
+    <div className="relative flex-1 flex flex-col items-center px-6 py-8 overflow-y-auto">
       {/* Ambient brand backdrop — soft cyan/blue glow behind the hero. */}
       <div
         className="pointer-events-none absolute inset-x-0 top-0 h-80 brand-aura"
         aria-hidden="true"
       />
-      <div className="relative w-full max-w-2xl flex flex-col items-center gap-8">
+      {/* my-auto (em vez de justify-center) centraliza sem cortar o topo no
+          mobile quando o conteúdo é mais alto que a viewport. */}
+      <div className="relative my-auto w-full max-w-2xl flex flex-col items-center gap-8">
         {/* Hero pitch — action-oriented; positions ProcurementGPT as a
             focused supply-chain tool, not a generic chat. */}
         <div className="flex flex-col items-center gap-3 text-center">

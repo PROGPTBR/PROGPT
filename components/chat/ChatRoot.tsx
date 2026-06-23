@@ -109,7 +109,7 @@ function ChatRootMounted() {
         <SheetContent
           side="left"
           showCloseButton={false}
-          className="p-0 w-[17rem] max-w-[85vw] bg-background border-border"
+          className="p-0 w-[17rem] max-w-[85vw] bg-[#0a0f1a] border-border"
         >
           <Sidebar
             sessions={sessionsApi.sessions}
