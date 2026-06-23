@@ -31,7 +31,8 @@ type AssistantTypeLocal =
   | 'profile'
   | 'negotiation'
   | 'scorecard'
-  | 'homologacao';
+  | 'homologacao'
+  | 'pesquisa_precos';
 
 type RunSummary = {
   id: string;
@@ -63,6 +64,9 @@ type RunSummary = {
     suppliers?: Array<{ name?: string }>;
     // Homologação (cnpj já declarado acima, no bloco Financial)
     fornecedorNome?: string;
+    // Pesquisa de Preços
+    titulo?: string;
+    itens?: Array<{ descricao?: string }>;
   };
   status: 'running' | 'done' | 'error';
   error_message: string | null;
@@ -98,6 +102,7 @@ const TYPE_LABELS: Record<AssistantTypeLocal | 'all', string> = {
   negotiation: 'Negociação',
   scorecard: 'Scorecard',
   homologacao: 'Homologação',
+  pesquisa_precos: 'Pesquisa de Preços',
 };
 
 const TYPE_ORDER: Array<AssistantTypeLocal | 'all'> = [
@@ -111,6 +116,7 @@ const TYPE_ORDER: Array<AssistantTypeLocal | 'all'> = [
   'profile',
   'scorecard',
   'homologacao',
+  'pesquisa_precos',
 ];
 
 export function RfpHistoryList() {
@@ -252,9 +258,11 @@ export function RfpHistoryList() {
                     ? 'scorecard'
                     : assistantType === 'homologacao'
                       ? 'homologacao'
-                      : kind === 'docx'
-                        ? 'rfp'
-                        : 'cotacao';
+                      : assistantType === 'pesquisa_precos'
+                        ? 'pesquisa-precos'
+                        : kind === 'docx'
+                          ? 'rfp'
+                          : 'cotacao';
     const filename = `${prefix}-${runId.slice(0, 8)}.${kind}`;
     const errLabel =
       kind === 'docx' ? 'Falha ao baixar .docx' : 'Falha ao baixar planilha';
@@ -378,6 +386,7 @@ export function RfpHistoryList() {
             const isNegotiation = r.assistant_type === 'negotiation';
             const isScorecard = r.assistant_type === 'scorecard';
             const isHomologacao = r.assistant_type === 'homologacao';
+            const isPesquisaPrecos = r.assistant_type === 'pesquisa_precos';
             const scope = isKraljic
               ? (r.params.portfolioName ?? '(portfólio sem nome)')
               : isPorter
@@ -394,7 +403,9 @@ export function RfpHistoryList() {
                           ? (r.params.scorecardName ?? '(scorecard sem nome)')
                           : isHomologacao
                             ? (r.params.fornecedorNome || r.params.cnpj || '(fornecedor)')
-                            : (r.params.scope ?? '(sem escopo)');
+                            : isPesquisaPrecos
+                              ? (r.params.titulo ?? '(pesquisa sem título)')
+                              : (r.params.scope ?? '(sem escopo)');
             const category = isKraljic
               ? `${r.params.items?.length ?? 0} item(ns)`
               : isPorter
@@ -411,7 +422,9 @@ export function RfpHistoryList() {
                           ? `${r.params.suppliers?.length ?? 0} fornecedor(es)`
                           : isHomologacao
                             ? 'Homologação fiscal'
-                            : (r.params.category ?? '—');
+                            : isPesquisaPrecos
+                              ? `${r.params.itens?.length ?? 0} item(ns)`
+                              : (r.params.category ?? '—');
             const client =
               isKraljic ||
               isPorter ||
@@ -420,14 +433,20 @@ export function RfpHistoryList() {
               isProfile ||
               isNegotiation ||
               isScorecard ||
-              isHomologacao
+              isHomologacao ||
+              isPesquisaPrecos
                 ? ''
                 : (r.params.client ?? '');
             const isDone = r.status === 'done';
             // Porter, Financial, Profile, Negotiation e Homologação não geram
             // .xlsx (Scorecard/Kraljic/ABC sim — multi-sheet).
             const showXlsx =
-              !isPorter && !isFinancial && !isProfile && !isNegotiation && !isHomologacao;
+              !isPorter &&
+              !isFinancial &&
+              !isProfile &&
+              !isNegotiation &&
+              !isHomologacao &&
+              !isPesquisaPrecos;
             return (
               <li
                 key={r.id}

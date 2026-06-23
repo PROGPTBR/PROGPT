@@ -15,6 +15,7 @@ import { SuppliersPreview } from './previews/SuppliersPreview';
 import { NegotiationPreview } from './previews/NegotiationPreview';
 import { ScorecardPreview } from './previews/ScorecardPreview';
 import { HomologacaoPreview } from './previews/HomologacaoPreview';
+import { PesquisaPrecosPreview } from './previews/PesquisaPrecosPreview';
 
 // Hub layout — Spotlight + Roadmap.
 //
@@ -163,6 +164,20 @@ const SPOTLIGHTS: SpotlightAssistant[] = [
       'Relatório de homologação em .docx',
     ],
     Preview: HomologacaoPreview,
+  },
+  {
+    step: 8,
+    stepCategory: 'Custo e preço',
+    href: '/assistants/pesquisa_precos',
+    title: 'Pesquisa de Preços',
+    short:
+      'Descreva os itens e ele busca o preço de referência nas compras públicas (CATMAT / Painel de Preços) — mediana, faixa e fontes.',
+    bullets: [
+      'Preço de referência por item (mediana + faixa p25–p75)',
+      'Fonte: compras públicas reais (Painel de Preços)',
+      'Mapa de preços em .docx para RFP e negociação',
+    ],
+    Preview: PesquisaPrecosPreview,
   },
 ];
 

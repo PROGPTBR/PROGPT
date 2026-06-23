@@ -10,6 +10,7 @@ import { PastProfileView } from '@/components/assistants/PastProfileView';
 import { PastNegotiationView } from '@/components/assistants/PastNegotiationView';
 import { PastScorecardView } from '@/components/assistants/PastScorecardView';
 import { PastHomologacaoView } from '@/components/assistants/PastHomologacaoView';
+import { PastPesquisaPrecosView } from '@/components/assistants/PastPesquisaPrecosView';
 import type {
   RfpParams,
   KraljicParams,
@@ -19,6 +20,7 @@ import type {
   ProfileParams,
   ScorecardParams,
   HomologacaoParams,
+  PesquisaPrecosParams,
   NegotiationStrategyParams,
   NegotiationStrategyResult,
   NegotiationTranscriptTurn,
@@ -138,6 +140,17 @@ export default async function AssistantRunDetailPage({
         runId={run.id}
         initialOutput={run.output_md}
         supplierLabel={hp.fornecedorNome || hp.cnpj || '(fornecedor)'}
+      />
+    );
+  }
+
+  if (run.assistant_type === 'pesquisa_precos') {
+    const pp = run.params as PesquisaPrecosParams;
+    return (
+      <PastPesquisaPrecosView
+        runId={run.id}
+        initialOutput={run.output_md}
+        titulo={pp.titulo ?? '(pesquisa sem título)'}
       />
     );
   }

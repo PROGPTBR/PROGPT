@@ -5,6 +5,7 @@ import {
   ArrowRight,
   BarChart3,
   Briefcase,
+  Coins,
   FileText,
   Layers,
   MessageCircle,
@@ -32,7 +33,8 @@ export type AssistantToolType =
   | 'scorecard'
   | 'profile'
   | 'negotiation'
-  | 'homologacao';
+  | 'homologacao'
+  | 'pesquisa_precos';
 
 type Meta = {
   title: string;
@@ -95,6 +97,12 @@ const META: Record<AssistantToolType, Meta> = {
       'Informe o CNPJ e ele consulta situação cadastral, score de risco, compliance e certidões na Receita — com relatório de homologação e recomendação.',
     Icon: ShieldCheck,
   },
+  pesquisa_precos: {
+    title: 'Pesquisa de Preços',
+    blurb:
+      'Descreva os itens e ele busca o preço de referência nas compras públicas (CATMAT / Painel de Preços) — mediana, faixa e fontes para ancorar RFP, custo e negociação.',
+    Icon: Coins,
+  },
 };
 
 type Props = {
@@ -146,13 +154,14 @@ const VALID_TYPES = new Set<AssistantToolType>([
   'profile',
   'negotiation',
   'homologacao',
+  'pesquisa_precos',
 ]);
 
 // Server- and client-callable detector. Procura o PRIMEIRO `/assistants/<type>`
 // canônico no texto da resposta do LLM. Retorna null se não achar nada ou se
 // achar `suppliers` (que tem CTA próprio via supplier_search intent).
 export function detectAssistantToolCTA(text: string): AssistantToolType | null {
-  const m = text.match(/\/assistants\/([a-z][a-z0-9-]*)\b/i);
+  const m = text.match(/\/assistants\/([a-z][a-z0-9_-]*)\b/i);
   if (!m) return null;
   const candidate = m[1]!.toLowerCase() as AssistantToolType;
   if (candidate === ('suppliers' as AssistantToolType)) return null;
@@ -163,7 +172,7 @@ export function detectAssistantToolCTA(text: string): AssistantToolType | null {
 // Tipos cujo caminho cru removemos do texto exibido (o card assume o CTA).
 // Inclui `suppliers` (caminho válido) pra não deixar o path feio na frase.
 const STRIP_TYPES =
-  'rfp|kraljic|porter|abc|financial|scorecard|profile|negotiation|homologacao|suppliers';
+  'rfp|kraljic|porter|abc|financial|scorecard|profile|negotiation|homologacao|pesquisa_precos|suppliers';
 // "...em /assistants/rfp" → remove a preposição + o caminho, deixando a frase
 // natural ("use a ferramenta dedicada — ela gera...").
 const STRIP_PREP_RE = new RegExp(
