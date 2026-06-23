@@ -9,6 +9,7 @@ import { PastAbcView } from '@/components/assistants/PastAbcView';
 import { PastProfileView } from '@/components/assistants/PastProfileView';
 import { PastNegotiationView } from '@/components/assistants/PastNegotiationView';
 import { PastScorecardView } from '@/components/assistants/PastScorecardView';
+import { PastHomologacaoView } from '@/components/assistants/PastHomologacaoView';
 import type {
   RfpParams,
   KraljicParams,
@@ -17,6 +18,7 @@ import type {
   AbcParams,
   ProfileParams,
   ScorecardParams,
+  HomologacaoParams,
   NegotiationStrategyParams,
   NegotiationStrategyResult,
   NegotiationTranscriptTurn,
@@ -125,6 +127,17 @@ export default async function AssistantRunDetailPage({
         runId={run.id}
         initialOutput={run.output_md}
         scorecardName={sp.scorecardName ?? '(scorecard sem nome)'}
+      />
+    );
+  }
+
+  if (run.assistant_type === 'homologacao') {
+    const hp = run.params as HomologacaoParams;
+    return (
+      <PastHomologacaoView
+        runId={run.id}
+        initialOutput={run.output_md}
+        supplierLabel={hp.fornecedorNome || hp.cnpj || '(fornecedor)'}
       />
     );
   }

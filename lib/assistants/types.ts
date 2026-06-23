@@ -17,7 +17,8 @@ export type AssistantType =
   | 'abc'
   | 'profile'
   | 'negotiation'
-  | 'scorecard';
+  | 'scorecard'
+  | 'homologacao';
 
 export const ASSISTANT_TYPES = [
   'rfp',
@@ -28,6 +29,7 @@ export const ASSISTANT_TYPES = [
   'profile',
   'negotiation',
   'scorecard',
+  'homologacao',
 ] as const;
 
 export type ThemeStatusRow = 'running' | 'done' | 'error';
@@ -725,7 +727,8 @@ export type AssistantRunRow = {
     | AbcParams
     | ProfileParams
     | NegotiationStrategyParams
-    | ScorecardParams;
+    | ScorecardParams
+    | HomologacaoParams;
   output_md: string | null;
   status: ThemeStatusRow;
   error_message: string | null;
@@ -814,3 +817,31 @@ export type ClassifiedSupplier = ScorecardSupplier & {
   rank: number; // 1 = best
   band: ScorecardBand;
 };
+
+// ── Homologação de Fornecedor (sub-projeto 36, fase 1) ───────────────────
+// Entrada: o CNPJ é o essencial; nome/setor/notas são opcionais. O passo
+// determinístico do handler chama o serviço fiscal (lib/fiscal) com o CNPJ.
+function isCnpjDigits(s: string): boolean {
+  return s.replace(/\D/g, '').length === 14;
+}
+
+export const HomologacaoParamsSchema = z.object({
+  cnpj: z
+    .string()
+    .trim()
+    .min(14)
+    .max(20)
+    .refine(isCnpjDigits, { message: 'CNPJ deve ter 14 dígitos' }),
+  fornecedorNome: z.string().trim().max(200).optional().default(''),
+  // Setor para a comparação de regime tributário (opcional).
+  setor: z.enum(['comércio', 'serviços', 'indústria']).optional(),
+  faturamentoAnualBRL: z.number().nonnegative().optional(),
+  notas: z.string().trim().max(2000).optional().default(''),
+});
+export type HomologacaoParams = z.infer<typeof HomologacaoParamsSchema>;
+
+export const HomologacaoRequestSchema = z.object({
+  templateId: z.string().uuid(),
+  params: HomologacaoParamsSchema,
+});
+export type HomologacaoRequest = z.infer<typeof HomologacaoRequestSchema>;

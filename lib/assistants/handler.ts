@@ -58,7 +58,10 @@ export type AssistantHandlerConfig<
       params: z.infer<Schema>['params'],
     ) => Record<string, unknown>;
     spanOutput?: (classified: Classified) => Record<string, unknown>;
-    run: (params: z.infer<Schema>['params']) => Classified;
+    // Pode ser síncrono (Kraljic/ABC/etc.) ou assíncrono (Homologação faz
+    // lookup HTTP no serviço fiscal). `await` num valor síncrono é no-op,
+    // então os assistentes existentes não mudam.
+    run: (params: z.infer<Schema>['params']) => Classified | Promise<Classified>;
   };
   // Build the retrieval query from params + the classification result.
   buildRetrievalQuery: (
@@ -188,7 +191,7 @@ export function buildAssistantHandler<
         config.classify.spanName ?? 'classify',
         config.classify.spanInput?.(parsed.params) ?? {},
       );
-      classified = config.classify.run(parsed.params);
+      classified = await config.classify.run(parsed.params);
       classifySpan.end(config.classify.spanOutput?.(classified) ?? {});
     } else {
       classified = undefined as Classified;

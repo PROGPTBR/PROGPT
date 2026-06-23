@@ -34,7 +34,8 @@ export type ComplianceFinding = {
   severidade: RiskLevel;
   titulo: string;
   detalhe: string;
-  recomendacao: string | null;
+  // O serviço omite a chave quando não há recomendação (visto no smoke-test).
+  recomendacao?: string | null;
 };
 
 // GET /v1/agentic/compliance/{cnpj}
