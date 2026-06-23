@@ -126,7 +126,9 @@ function fiscalDataBlock(c: HomologacaoClassified): string {
   if (!c.available) {
     return `## Dados fiscais
 
-⚠️ A consulta ao CNPJ ${c.cnpj} não retornou dados (serviço indisponível ou CNPJ não encontrado). Sinalize isso no relatório e oriente verificação manual.`;
+⚠️ A consulta ao CNPJ ${c.cnpj} não retornou dados (serviço indisponível ou CNPJ não encontrado).${
+      c.error ? ` Motivo técnico: ${c.error}.` : ''
+    } Sinalize isso no relatório e oriente verificação manual.`;
   }
 
   const lines: string[] = [];
