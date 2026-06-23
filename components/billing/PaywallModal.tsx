@@ -64,7 +64,7 @@ export function PaywallModal({ assistantType, onClose }: Props) {
             Plano Pro
           </div>
           <div className="text-2xl font-semibold">
-            R$ 99<span className="text-sm font-normal text-muted-foreground">/mês</span>
+            R$ 127,99<span className="text-sm font-normal text-muted-foreground">/mês</span>
           </div>
           <ul className="text-sm text-foreground/90 space-y-1 pt-1">
             <li>✓ Todos os 7 assistentes ilimitados</li>

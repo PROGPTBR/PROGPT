@@ -89,6 +89,18 @@ export function ChatSession({
       content: m.content,
     })),
     onResponse: async (res) => {
+      if (res.status === 402) {
+        toast.error('Seu acesso expirou. Assine o Pro para continuar usando o assistente.', {
+          duration: 8000,
+          action: {
+            label: 'Ver planos',
+            onClick: () => {
+              window.location.href = '/pricing';
+            },
+          },
+        });
+        return;
+      }
       if (res.status === 429) {
         const body = await res.clone().json().catch(() => ({}));
         const secs: number = typeof body?.retry_after_secs === 'number' ? body.retry_after_secs : 60;

@@ -48,6 +48,10 @@ const CANCEL_EVENTS = [
   'PAYMENT_DELETED',
   'SUBSCRIPTION_DELETED',
 ];
+// Sub-projeto 36 — cartão cadastrado no checkout → Asaas cria a 1ª cobrança
+// (datada pós-trial) e dispara PAYMENT_CREATED. Numa assinatura ainda
+// 'pending', isso significa "cartão confirmado" → libera os 3 dias de trial.
+const TRIAL_START_EVENTS = ['PAYMENT_CREATED'];
 
 // Eventos informativos do Asaas que NÃO mudam o estado da nossa
 // subscription — ignoramos de propósito, sem ruído de log. Qualquer
@@ -55,7 +59,6 @@ const CANCEL_EVENTS = [
 // um warn (vira sinal no Railway / Sentry) pra não dropar em silêncio um
 // evento que talvez devesse mexer no estado (ex.: chargeback novo).
 const KNOWN_IGNORED_EVENTS = new Set([
-  'PAYMENT_CREATED',
   'PAYMENT_UPDATED',
   'PAYMENT_AWAITING_RISK_ANALYSIS',
   'PAYMENT_APPROVED_BY_RISK_ANALYSIS',
@@ -69,7 +72,12 @@ const KNOWN_IGNORED_EVENTS = new Set([
   'SUBSCRIPTION_UPDATED',
 ]);
 
-const HANDLED_EVENTS = new Set([...PAID_EVENTS, ...PAST_DUE_EVENTS, ...CANCEL_EVENTS]);
+const HANDLED_EVENTS = new Set([
+  ...PAID_EVENTS,
+  ...PAST_DUE_EVENTS,
+  ...CANCEL_EVENTS,
+  ...TRIAL_START_EVENTS,
+]);
 
 function mapBillingType(t: string | undefined): 'credit_card' | 'pix' | 'boleto' | null {
   switch (t) {
@@ -182,6 +190,15 @@ export async function POST(req: Request) {
   } else if (CANCEL_EVENTS.includes(event.event)) {
     update.status = 'cancelled';
     update.cancelled_at = new Date().toISOString();
+  } else if (TRIAL_START_EVENTS.includes(event.event)) {
+    // Cartão cadastrado → libera o trial. Só transiciona quando ainda
+    // 'pending' (cobranças de renovação também disparam PAYMENT_CREATED, mas
+    // aí a sub já está active/trialing → no-op).
+    if (sub.status === 'pending') {
+      update.status = 'trialing';
+      update.payment_method =
+        mapBillingType(event.payment?.billingType) ?? sub.payment_method;
+    }
   }
 
   // Evento que não cai em nenhum bucket conhecido nem na lista de

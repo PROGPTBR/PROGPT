@@ -452,7 +452,7 @@ export function ProfileCompanyForm() {
         <h3 className="text-sm font-medium text-foreground"> Plano Pro</h3>
 
         <p className="text-xs text-muted-foreground">
-          R$ 99/mês — assinatura mensal
+          R$ 127,99/mês — assinatura mensal
         </p>
 
        

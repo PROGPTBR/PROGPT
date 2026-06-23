@@ -49,10 +49,16 @@ class AsaasError extends Error {
   }
 }
 
-function getConfig() {
-  const apiKey = process.env.ASAAS_API_KEY;
-  const apiUrl = process.env.ASAAS_API_URL ?? 'https://sandbox.asaas.com/api/v3';
-  if (!apiKey) throw new Error('ASAAS_API_KEY env var missing');
+async function getConfig() {
+  // Config administrável (billing_settings) com fallback no env. Async porque
+  // lê do banco — o admin gerencia a chave/URL pelo painel /admin/billing.
+  const { getBillingSettings } = await import('./settings');
+  const { apiKey, apiUrl } = await getBillingSettings();
+  if (!apiKey) {
+    throw new Error(
+      'Asaas API key não configurada (billing_settings ou ASAAS_API_KEY env)',
+    );
+  }
   return { apiKey, apiUrl };
 }
 
@@ -61,7 +67,7 @@ async function asaasFetch<T>(
   path: string,
   body?: Record<string, unknown>,
 ): Promise<T> {
-  const { apiKey, apiUrl } = getConfig();
+  const { apiKey, apiUrl } = await getConfig();
   const res = await fetch(`${apiUrl}${path}`, {
     method,
     headers: {

@@ -51,8 +51,8 @@ ABC, Perfil, Negociação — 7 execuções totais por conta).
 
 ### 3.2 Plano Pro
 
-Mediante pagamento de assinatura mensal recorrente de R$ 99,00 (noventa
-e nove reais), o Pro libera acesso ilimitado a todos os assistentes.
+Mediante pagamento de assinatura mensal recorrente de R$ 127,99 (cento e vinte e sete reais e noventa e nove
+centavos), o Pro libera acesso ilimitado a todos os assistentes.
 
 A cobrança é processada pela **Asaas Gestão Financeira S.A.** (CNPJ
 19.540.550/0001-21), via cartão de crédito ou Pix recorrente. O ciclo
