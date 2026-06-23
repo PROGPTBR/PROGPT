@@ -76,8 +76,25 @@ export type TaxRegimeComparison = {
   observacoes: string;
 };
 
-// GET /v1/cnpj/{cnpj} — consumimos só o subconjunto top-level seguro
-// (campos aninhados de atividade têm chaves acentuadas; evitamos).
+// GET /v1/cnpj/{cnpj}. `endereco` e `qsa` têm chaves ASCII limpas (consumimos);
+// só `atividade_principal` tem chaves acentuadas (código/descrição) — evitamos.
+export type CnpjEndereco = {
+  logradouro?: string;
+  complemento?: string;
+  bairro?: string;
+  municipio?: string;
+  uf?: string;
+  cep?: string;
+  pais?: string;
+};
+
+export type CnpjSocio = {
+  nome: string;
+  qualificacao?: string;
+  faixa_etaria?: string;
+  // cpf_cnpj_socio vem mascarado da fonte; não consumimos (LGPD).
+};
+
 export type CnpjData = {
   cnpj: string;
   razao_social: string;
@@ -87,6 +104,9 @@ export type CnpjData = {
   natureza_juridica: string;
   porte: string | null;
   capital_social: number | null;
+  data_abertura: string | null;
+  endereco: CnpjEndereco | null;
+  qsa: CnpjSocio[];
   simples_nacional: boolean | null;
   mei: boolean | null;
 };

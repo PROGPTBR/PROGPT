@@ -43,6 +43,21 @@ describe('buildHomologacaoPrompt', () => {
       cnpj: '84429695000111',
       enabled: true,
       available: true,
+      cnpjData: {
+        cnpj: '84429695000111',
+        razao_social: 'WEG SA',
+        nome_fantasia: null,
+        situacao_cadastral: 'ATIVA',
+        data_situacao_cadastral: null,
+        natureza_juridica: 'Sociedade Anônima Aberta',
+        porte: 'DEMAIS',
+        capital_social: 1000000,
+        data_abertura: '1961-09-16',
+        endereco: { municipio: 'JARAGUA DO SUL', uf: 'SC', cep: '89256900' },
+        qsa: [{ nome: 'FULANO DE TAL', qualificacao: 'Diretor', faixa_etaria: 'Entre 51 a 60 anos' }],
+        simples_nacional: false,
+        mei: false,
+      },
       risk: {
         cnpj: '84429695000111',
         razao_social: 'WEG SA',
@@ -82,6 +97,11 @@ describe('buildHomologacaoPrompt', () => {
     expect(user).toContain('90/100');
     expect(user).toContain('certidoes');
     expect(user).toContain('Aprovar');
+    // Cadastro: endereço + quadro societário vêm do /v1/cnpj (não de IA).
+    expect(user).toContain('Cadastro');
+    expect(user).toContain('JARAGUA DO SUL');
+    expect(user).toContain('FULANO DE TAL');
+    expect(user).toContain('Quadro societário');
   });
 
   it('serviço desligado → bloco com checklist de verificação manual (fail-soft)', () => {
@@ -89,6 +109,7 @@ describe('buildHomologacaoPrompt', () => {
       cnpj: '84429695000111',
       enabled: false,
       available: false,
+      cnpjData: null,
       risk: null,
       compliance: null,
       regimes: null,

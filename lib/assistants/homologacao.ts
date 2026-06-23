@@ -4,11 +4,13 @@ import type { CompanyData } from '@/lib/db/user-company';
 import { splitTemplateBody, renderPlaceholders } from './template-assembly';
 import {
   isFiscalEnabled,
+  consultarCnpj,
   riskScoreSupplier,
   analyzeCnpjCompliance,
   compareTaxRegimes,
 } from '@/lib/fiscal/client';
 import type {
+  CnpjData,
   SupplierRiskScore,
   ComplianceReport,
   TaxRegimeComparison,
@@ -25,6 +27,7 @@ export type HomologacaoClassified = {
   cnpj: string;
   enabled: boolean; // serviço configurado?
   available: boolean; // alguma consulta respondeu?
+  cnpjData: CnpjData | null; // cadastro (endereço, QSA, natureza, capital)
   risk: SupplierRiskScore | null;
   compliance: ComplianceReport | null;
   regimes: TaxRegimeComparison | null;
@@ -38,17 +41,20 @@ export async function fetchHomologacaoData(
     cnpj: params.cnpj,
     enabled: isFiscalEnabled(),
     available: false,
+    cnpjData: null,
     risk: null,
     compliance: null,
     regimes: null,
   };
   if (!base.enabled) return base;
 
-  // risco + compliance em paralelo, tolerante a falha parcial.
-  const [riskR, compR] = await Promise.allSettled([
+  // cadastro + risco + compliance em paralelo, tolerante a falha parcial.
+  const [cnpjR, riskR, compR] = await Promise.allSettled([
+    consultarCnpj(params.cnpj),
     riskScoreSupplier(params.cnpj),
     analyzeCnpjCompliance(params.cnpj),
   ]);
+  if (cnpjR.status === 'fulfilled') base.cnpjData = cnpjR.value;
   if (riskR.status === 'fulfilled') base.risk = riskR.value;
   if (compR.status === 'fulfilled') base.compliance = compR.value;
 
@@ -64,14 +70,16 @@ export async function fetchHomologacaoData(
     }
   }
 
-  base.available = !!(base.risk || base.compliance);
+  base.available = !!(base.cnpjData || base.risk || base.compliance);
   if (!base.available) {
     const err =
-      riskR.status === 'rejected'
-        ? riskR.reason
-        : compR.status === 'rejected'
-          ? compR.reason
-          : null;
+      cnpjR.status === 'rejected'
+        ? cnpjR.reason
+        : riskR.status === 'rejected'
+          ? riskR.reason
+          : compR.status === 'rejected'
+            ? compR.reason
+            : null;
     base.error = err instanceof Error ? err.message : String(err ?? 'indisponível');
   }
   return base;
@@ -132,6 +140,41 @@ function fiscalDataBlock(c: HomologacaoClassified): string {
   }
 
   const lines: string[] = [];
+  if (c.cnpjData) {
+    const d = c.cnpjData;
+    const end = d.endereco;
+    const enderecoStr = end
+      ? [end.logradouro, end.complemento, end.bairro, end.municipio && end.uf ? `${end.municipio}/${end.uf}` : end.municipio, end.cep]
+          .filter(Boolean)
+          .join(', ')
+      : null;
+    lines.push(
+      `### Cadastro (Receita)`,
+      `- **Razão social**: ${d.razao_social}`,
+      d.nome_fantasia ? `- **Nome fantasia**: ${d.nome_fantasia}` : '',
+      `- **Situação cadastral**: ${d.situacao_cadastral}`,
+      `- **Natureza jurídica**: ${d.natureza_juridica}`,
+      d.porte ? `- **Porte**: ${d.porte}` : '',
+      typeof d.capital_social === 'number'
+        ? `- **Capital social**: R$ ${d.capital_social.toLocaleString('pt-BR')}`
+        : '',
+      d.data_abertura ? `- **Abertura**: ${d.data_abertura}` : '',
+      enderecoStr ? `- **Endereço**: ${enderecoStr}` : '',
+      typeof d.simples_nacional === 'boolean'
+        ? `- **Optante Simples**: ${d.simples_nacional ? 'sim' : 'não'}`
+        : '',
+    );
+    if (d.qsa.length) {
+      lines.push(
+        `- **Quadro societário (${d.qsa.length})**:`,
+        ...d.qsa.map(
+          (s) =>
+            `  - ${s.nome}${s.qualificacao ? ` — ${s.qualificacao}` : ''}${s.faixa_etaria ? ` (${s.faixa_etaria})` : ''}`,
+        ),
+      );
+    }
+    lines.push('');
+  }
   if (c.risk) {
     lines.push(
       `### Score de risco do fornecedor`,
