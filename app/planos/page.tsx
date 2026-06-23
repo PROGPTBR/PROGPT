@@ -6,10 +6,15 @@ import { isPro, getUserPlan } from '@/lib/billing/subscription';
 import { PricingTable } from '@/components/billing/PricingTable';
 import { getPlans } from '@/lib/billing/planos';
 
-
 export const dynamic = 'force-dynamic';
 
-export default async function PricingPage() {
+export default async function PricingPage({
+  searchParams
+}: {
+  searchParams?: {
+    expired?: string;
+  };
+}) {
   const user = await getCurrentUser();
 
   const pro = user
@@ -26,17 +31,18 @@ export default async function PricingPage() {
 
   const plans = await getPlans();
 
-return (
+  const trialExpired =
+    searchParams?.expired === 'true';
 
+    console.log('TRIAL EXPIRED:', trialExpired);
+    
+  return (
     <>
       <Header />
 
       <div className="min-h-screen bg-background text-foreground">
-   
-
         <main className="max-w-7xl mx-auto px-6 py-12">
-
-           <div className="max-w-7xl mx-auto px-6 py-16 flex items-center justify-between">
+          <div className="max-w-7xl mx-auto px-6 py-16 flex items-center justify-between">
             <Link
               href={user ? '/login' : '/'}
               className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-brand transition-colors"
@@ -55,16 +61,19 @@ return (
             )}
           </div>
 
-
-<section id="planos" className="px-6 md:px-12 max-w-7xl mx-auto border-border">
-<PricingTable
-  authed={!!user}
-  isPro={pro}
-  plans={plans}
-  userPlanSlug={userPlanSlug}
-  profile={profile}
-/>
-</section>
+          <section
+            id="planos"
+            className="px-6 md:px-12 max-w-7xl mx-auto border-border"
+          >
+            <PricingTable
+              authed={!!user}
+              isPro={pro}
+              plans={plans}
+              userPlanSlug={userPlanSlug}
+              profile={profile}
+              trialExpired={trialExpired}
+            />
+          </section>
         </main>
       </div>
     </>

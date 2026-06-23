@@ -14,6 +14,7 @@ import { AbcCurvePreview } from './previews/AbcCurvePreview';
 import { SuppliersPreview } from './previews/SuppliersPreview';
 import { NegotiationPreview } from './previews/NegotiationPreview';
 import { ScorecardPreview } from './previews/ScorecardPreview';
+import { HomologacaoPreview } from './previews/HomologacaoPreview';
 
 // Hub layout — Spotlight + Roadmap.
 //
@@ -148,6 +149,20 @@ const SPOTLIGHTS: SpotlightAssistant[] = [
       '.docx + .xlsx multi-sheet',
     ],
     Preview: ScorecardPreview,
+  },
+  {
+    step: 7,
+    stepCategory: 'Gestão de fornecedores',
+    href: '/assistants/homologacao',
+    title: 'Homologação de Fornecedor',
+    short:
+      'Informe o CNPJ e ele consulta situação cadastral, score de risco, compliance e certidões na Receita — e gera o relatório de homologação.',
+    bullets: [
+      'Consulta CNPJ na Receita (BrasilAPI)',
+      'Score de risco + recomendação (aprovar/ressalvas/recusar)',
+      'Relatório de homologação em .docx',
+    ],
+    Preview: HomologacaoPreview,
   },
 ];
 

@@ -53,6 +53,27 @@ export const SEARCH_TOOL = {
   },
 };
 
+export const FISCAL_TOOL_NAME = 'consultar_dados_fiscais';
+
+// Tool de consulta fiscal por CNPJ (sub-projeto 36 fase 4).
+export const FISCAL_TOOL = {
+  type: 'function' as const,
+  name: FISCAL_TOOL_NAME,
+  description:
+    'Consulta dados oficiais de um fornecedor pelo CNPJ na Receita (BrasilAPI): razão social, situação cadastral (ativa/suspensa/inapta/baixada) e um score de risco fiscal. Chame sempre que o usuário pedir para validar, verificar, homologar ou consultar um CNPJ ou a situação de um fornecedor.',
+  parameters: {
+    type: 'object',
+    properties: {
+      cnpj: {
+        type: 'string',
+        description:
+          'O CNPJ a consultar — apenas os 14 dígitos ou formatado (ex.: "11.222.333/0001-81" ou "11222333000181").',
+      },
+    },
+    required: ['cnpj'],
+  },
+};
+
 // Persona falada — adaptada do SYSTEM_PROMPT do chat (lib/rag/prompt-builder.ts)
 // pro runtime de voz. NÃO compartilha bytes com o original (runtime diferente,
 // sem prefix cache de chat): aqui a regra de ouro é resposta CURTA e FALADA.
@@ -70,6 +91,9 @@ export function buildVoiceInstructions(): string {
 - Se a busca não retornar nada relevante, diga explicitamente que não tem fonte na base sobre isso — pode oferecer o princípio geral, sinalizando ("em termos gerais...").
 - NUNCA invente teoria, autor, framework ou data. Cite autor e ano quando o framework é o assunto ("a matriz de Kraljic, do Peter Kraljic, de 1983...").
 - NÃO mencione a ferramenta de busca, "trechos", "base de dados" ou fontes pro usuário — responda como conhecimento fluente.
+
+# Consulta fiscal por CNPJ
+Quando o usuário pedir para validar, verificar, homologar ou consultar um CNPJ ou a situação de um fornecedor, chame a ferramenta ${FISCAL_TOOL_NAME} com o CNPJ e relate de forma curta e falada a situação cadastral e o risco. Se a consulta não retornar dados, diga que não conseguiu consultar agora.
 
 # Documentos anexados
 Quando o usuário anexar um documento (contrato, proposta, planilha), o conteúdo entra na conversa como texto. Use-o como contexto primário pra perguntas sobre o documento.
@@ -94,7 +118,7 @@ export function buildClientSecretRequest(voice: VoiceName = DEFAULT_VOICE) {
       type: 'realtime',
       model: REALTIME_MODEL,
       instructions: buildVoiceInstructions(),
-      tools: [SEARCH_TOOL],
+      tools: [SEARCH_TOOL, FISCAL_TOOL],
       tool_choice: 'auto',
       audio: {
         input: {

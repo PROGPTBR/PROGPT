@@ -30,6 +30,7 @@ type Props = {
   isPro: boolean;
   plans: Plan[];
   userPlanSlug: string | null;
+  trialExpired?: boolean;
   profile: {
     full_name?: string | null;
     cpf_cnpj?: string | null;
@@ -84,7 +85,9 @@ export function PricingTable({
   plans,
   userPlanSlug,
   profile,
+  trialExpired = false,
 }: Props) {
+  const expired = trialExpired;
   const router = useRouter();
 
   const [showCheckout, setShowCheckout] = useState(false);
@@ -209,9 +212,15 @@ export function PricingTable({
 
               <div className="pt-7">
                 {isCurrent ? (
-                  <div className="text-center text-sm text-emerald-600 dark:text-emerald-400 font-medium py-2">
-                    ✓ Você já está neste plano
-                  </div>
+                  expired ? (
+                    <div className="text-center text-sm text-red-500 font-medium py-2">
+                      Seu período gratuito expirou. Escolha um plano para continuar.
+                    </div>
+                  ) : (
+                    <div className="text-center text-sm text-emerald-600 dark:text-emerald-400 font-medium py-2">
+                      ✓ Você já está neste plano
+                    </div>
+                  )
                 ) : plan.slug === 'free' ? (
                   !authed && (
                     <Link

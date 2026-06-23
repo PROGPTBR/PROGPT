@@ -1,9 +1,30 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { ArrowLeft, Bookmark, BookmarkCheck, Download, Filter, Inbox } from 'lucide-react';
+import { toast } from 'sonner';
+import {
+  ArrowLeft,
+  Bookmark,
+  BookmarkCheck,
+  Download,
+  Filter,
+  Inbox,
+  Loader2,
+  ShieldCheck,
+} from 'lucide-react';
 import type { GroupedSupplier, SearchResponse, UF } from '@/lib/suppliers/types';
+import type { FiscalBadge } from '@/lib/fiscal/snapshot';
 import { SuppliersResultCard } from './SuppliersResultCard';
+
+const ENRICH_CAP = 30;
+
+function matrizCnpj(g: GroupedSupplier): string {
+  const m = g.units.find((u) => u.cnpj.slice(8, 12) === '0001');
+  if (m) return m.cnpj;
+  return [...g.units].sort(
+    (a, b) => (b.capital_social ?? 0) - (a.capital_social ?? 0),
+  )[0]!.cnpj;
+}
 
 type Props = {
   response: SearchResponse;
@@ -50,6 +71,8 @@ export function SuppliersResults({
 }: Props) {
   const [sizeFilter, setSizeFilter] = useState<SizeFilter>('all');
   const [contactOnly, setContactOnly] = useState(false);
+  const [fiscalMap, setFiscalMap] = useState<Map<string, FiscalBadge>>(new Map());
+  const [enriching, setEnriching] = useState(false);
 
   const filtered = useMemo(() => {
     return response.groups.filter((g) => {
@@ -61,6 +84,40 @@ export function SuppliersResults({
 
   const totalLabel =
     response.total >= 500 ? '500+' : response.total.toString();
+
+  async function verificarFiscal() {
+    const targets = filtered.slice(0, ENRICH_CAP).map(matrizCnpj);
+    if (targets.length === 0) return;
+    setEnriching(true);
+    try {
+      const res = await fetch('/api/suppliers/enrich', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cnpjs: targets }),
+      });
+      if (!res.ok) {
+        toast.error(
+          res.status === 429
+            ? 'Limite atingido. Tente em 1 min.'
+            : 'Falha ao verificar situação fiscal',
+        );
+        return;
+      }
+      const data = (await res.json()) as { results: Record<string, FiscalBadge> };
+      setFiscalMap(new Map(Object.entries(data.results)));
+      const badges = Object.values(data.results);
+      if (!badges.some((b) => b.available)) {
+        toast.message('Consulta fiscal indisponível neste momento.');
+      } else {
+        const ativas = badges.filter((b) => b.situacao === 'ATIVA').length;
+        toast.success(`${badges.length} verificados · ${ativas} com cadastro ATIVO`);
+      }
+    } catch (err) {
+      toast.error('Falha na verificação', { description: String(err) });
+    } finally {
+      setEnriching(false);
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -92,6 +149,20 @@ export function SuppliersResults({
           </div>
           {response.groups.length > 0 && (
             <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={verificarFiscal}
+                disabled={enriching}
+                title={`Consultar situação cadastral e risco na Receita (até ${ENRICH_CAP} primeiros)`}
+                className="inline-flex items-center gap-2 rounded-full border border-border bg-card hover:bg-accent hover:border-brand/30 text-foreground px-5 h-10 text-sm font-medium transition-all duration-300 active:scale-95 disabled:opacity-60"
+              >
+                {enriching ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+                ) : (
+                  <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
+                )}
+                {enriching ? 'Verificando…' : 'Verificar situação fiscal'}
+              </button>
               {onSave && (
                 <button
                   type="button"
@@ -175,7 +246,11 @@ export function SuppliersResults({
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map((g) => (
-            <SuppliersResultCard key={g.cnpjBasico} group={g} />
+            <SuppliersResultCard
+              key={g.cnpjBasico}
+              group={g}
+              fiscal={fiscalMap.get(matrizCnpj(g))}
+            />
           ))}
         </div>
       )}

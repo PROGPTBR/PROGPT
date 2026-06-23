@@ -12,10 +12,46 @@ import {
   Users,
 } from 'lucide-react';
 import type { GroupedSupplier, SupplierResult } from '@/lib/suppliers/types';
+import type { FiscalBadge } from '@/lib/fiscal/snapshot';
 
 type Props = {
   group: GroupedSupplier;
+  fiscal?: FiscalBadge;
 };
+
+const RISK_LABEL: Record<string, string> = {
+  baixo: 'baixo',
+  medio: 'médio',
+  alto: 'alto',
+  critico: 'crítico',
+};
+
+function FiscalSelo({ fiscal }: { fiscal?: FiscalBadge }) {
+  if (!fiscal || !fiscal.available) return null;
+  const ativa = fiscal.situacao === 'ATIVA';
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      <span
+        className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-medium border ${
+          ativa
+            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400'
+            : 'bg-red-500/10 border-red-500/30 text-red-600 dark:text-red-400'
+        }`}
+        title="Situação cadastral na Receita"
+      >
+        {fiscal.situacao ?? '—'}
+      </span>
+      {fiscal.score != null && (
+        <span
+          className="inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-medium bg-muted/60 border border-border text-foreground/80"
+          title="Score de risco fiscal"
+        >
+          risco {RISK_LABEL[fiscal.risco ?? ''] ?? fiscal.risco} · {fiscal.score}/100
+        </span>
+      )}
+    </div>
+  );
+}
 
 function formatCnpj(cnpj: string): string {
   const d = cnpj.replace(/\D/g, '');
@@ -73,7 +109,7 @@ function collectUfs(units: SupplierResult[]): string[] {
   return Array.from(set).sort();
 }
 
-export function SuppliersResultCard({ group }: Props) {
+export function SuppliersResultCard({ group, fiscal }: Props) {
   const [expanded, setExpanded] = useState(false);
 
   const matriz = pickMatriz(group.units);
@@ -108,6 +144,7 @@ export function SuppliersResultCard({ group }: Props) {
         <div className="text-[11px] font-mono text-muted-foreground">
           CNPJ base {formatCnpjBasico(group.cnpjBasico)}
         </div>
+        <FiscalSelo fiscal={fiscal} />
       </div>
 
       <div className="flex flex-wrap gap-1.5">

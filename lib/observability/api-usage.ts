@@ -62,7 +62,9 @@ export type ApiOperation =
   | 'chat-voice-realtime'
   | 'assistant-scorecard-generate'
   | 'assistant-scorecard-refine'
-  | 'assistant-scorecard-apply';
+  | 'assistant-scorecard-apply'
+  | 'assistant-homologacao-generate'
+  | 'assistant-homologacao-reputacao';
 
 export type RecordUsageInput = {
   provider: ApiProvider;

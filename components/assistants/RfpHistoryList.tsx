@@ -30,7 +30,8 @@ type AssistantTypeLocal =
   | 'abc'
   | 'profile'
   | 'negotiation'
-  | 'scorecard';
+  | 'scorecard'
+  | 'homologacao';
 
 type RunSummary = {
   id: string;
@@ -60,6 +61,8 @@ type RunSummary = {
     // Scorecard
     scorecardName?: string;
     suppliers?: Array<{ name?: string }>;
+    // Homologação (cnpj já declarado acima, no bloco Financial)
+    fornecedorNome?: string;
   };
   status: 'running' | 'done' | 'error';
   error_message: string | null;
@@ -94,6 +97,7 @@ const TYPE_LABELS: Record<AssistantTypeLocal | 'all', string> = {
   profile: 'Perfil',
   negotiation: 'Negociação',
   scorecard: 'Scorecard',
+  homologacao: 'Homologação',
 };
 
 const TYPE_ORDER: Array<AssistantTypeLocal | 'all'> = [
@@ -106,6 +110,7 @@ const TYPE_ORDER: Array<AssistantTypeLocal | 'all'> = [
   'financial',
   'profile',
   'scorecard',
+  'homologacao',
 ];
 
 export function RfpHistoryList() {
@@ -245,9 +250,11 @@ export function RfpHistoryList() {
                   ? 'negociacao'
                   : assistantType === 'scorecard'
                     ? 'scorecard'
-                    : kind === 'docx'
-                      ? 'rfp'
-                      : 'cotacao';
+                    : assistantType === 'homologacao'
+                      ? 'homologacao'
+                      : kind === 'docx'
+                        ? 'rfp'
+                        : 'cotacao';
     const filename = `${prefix}-${runId.slice(0, 8)}.${kind}`;
     const errLabel =
       kind === 'docx' ? 'Falha ao baixar .docx' : 'Falha ao baixar planilha';
@@ -370,6 +377,7 @@ export function RfpHistoryList() {
             const isProfile = r.assistant_type === 'profile';
             const isNegotiation = r.assistant_type === 'negotiation';
             const isScorecard = r.assistant_type === 'scorecard';
+            const isHomologacao = r.assistant_type === 'homologacao';
             const scope = isKraljic
               ? (r.params.portfolioName ?? '(portfólio sem nome)')
               : isPorter
@@ -384,7 +392,9 @@ export function RfpHistoryList() {
                         ? (r.params.supplierName ?? '(fornecedor sem nome)')
                         : isScorecard
                           ? (r.params.scorecardName ?? '(scorecard sem nome)')
-                          : (r.params.scope ?? '(sem escopo)');
+                          : isHomologacao
+                            ? (r.params.fornecedorNome || r.params.cnpj || '(fornecedor)')
+                            : (r.params.scope ?? '(sem escopo)');
             const category = isKraljic
               ? `${r.params.items?.length ?? 0} item(ns)`
               : isPorter
@@ -399,7 +409,9 @@ export function RfpHistoryList() {
                         ? (r.params.category ?? 'Estratégia de negociação')
                         : isScorecard
                           ? `${r.params.suppliers?.length ?? 0} fornecedor(es)`
-                          : (r.params.category ?? '—');
+                          : isHomologacao
+                            ? 'Homologação fiscal'
+                            : (r.params.category ?? '—');
             const client =
               isKraljic ||
               isPorter ||
@@ -407,13 +419,15 @@ export function RfpHistoryList() {
               isAbc ||
               isProfile ||
               isNegotiation ||
-              isScorecard
+              isScorecard ||
+              isHomologacao
                 ? ''
                 : (r.params.client ?? '');
             const isDone = r.status === 'done';
-            // Porter, Financial, Profile and Negotiation don't produce a .xlsx
-            // (Scorecard does — multi-sheet, like Kraljic/ABC).
-            const showXlsx = !isPorter && !isFinancial && !isProfile && !isNegotiation;
+            // Porter, Financial, Profile, Negotiation e Homologação não geram
+            // .xlsx (Scorecard/Kraljic/ABC sim — multi-sheet).
+            const showXlsx =
+              !isPorter && !isFinancial && !isProfile && !isNegotiation && !isHomologacao;
             return (
               <li
                 key={r.id}

@@ -7,6 +7,7 @@ import {
   ABC_EXAMPLES,
   FINANCIAL_EXAMPLES,
   PORTER_EXAMPLES,
+  HOMOLOGACAO_EXAMPLES,
 } from '@/lib/assistants/examples';
 import {
   ProfileParamsSchema,
@@ -16,6 +17,7 @@ import {
   AbcParamsSchema,
   FinancialParamsSchema,
   PorterParamsSchema,
+  HomologacaoParamsSchema,
 } from '@/lib/assistants/types';
 
 // The whole point of the examples is that "Carregar exemplo" yields a form that
@@ -30,6 +32,7 @@ describe('assistant form examples', () => {
     expect(ABC_EXAMPLES.length).toBeGreaterThan(0);
     expect(FINANCIAL_EXAMPLES.length).toBeGreaterThan(0);
     expect(PORTER_EXAMPLES.length).toBeGreaterThan(0);
+    expect(HOMOLOGACAO_EXAMPLES.length).toBeGreaterThan(0);
   });
 
   it('every profile example satisfies ProfileParamsSchema', () => {
@@ -71,6 +74,12 @@ describe('assistant form examples', () => {
   it('every porter example satisfies PorterParamsSchema', () => {
     for (const ex of PORTER_EXAMPLES) {
       expect(() => PorterParamsSchema.parse(ex.params), ex.id).not.toThrow();
+    }
+  });
+
+  it('every homologacao example satisfies HomologacaoParamsSchema', () => {
+    for (const ex of HOMOLOGACAO_EXAMPLES) {
+      expect(() => HomologacaoParamsSchema.parse(ex.params), ex.id).not.toThrow();
     }
   });
 });

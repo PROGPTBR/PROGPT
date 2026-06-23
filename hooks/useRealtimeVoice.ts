@@ -7,7 +7,7 @@ import {
   addUsage,
   type RealtimeUsage,
 } from '@/lib/voice/event-reducer';
-import { SEARCH_TOOL_NAME } from '@/lib/voice/realtime-config';
+import { SEARCH_TOOL_NAME, FISCAL_TOOL_NAME } from '@/lib/voice/realtime-config';
 
 // Sub-projeto 35 — sessão de voz realtime do chat.
 //
@@ -132,8 +132,9 @@ export function useRealtimeVoice(opts: {
 
   const runTool = useCallback(
     async (callId: string, name: string, rawArgs: string) => {
-      let output = JSON.stringify({ context: '' });
+      let output = JSON.stringify({});
       if (name === SEARCH_TOOL_NAME) {
+        output = JSON.stringify({ context: '' });
         try {
           const args = JSON.parse(rawArgs || '{}') as { query?: string };
           const query = (args.query ?? '').trim();
@@ -150,6 +151,25 @@ export function useRealtimeVoice(opts: {
           }
         } catch {
           /* fail-soft: devolve contexto vazio; o prompt manda sinalizar */
+        }
+      } else if (name === FISCAL_TOOL_NAME) {
+        output = JSON.stringify({ resumo: 'Não consegui consultar esse CNPJ agora.' });
+        try {
+          const args = JSON.parse(rawArgs || '{}') as { cnpj?: string };
+          const cnpj = (args.cnpj ?? '').trim();
+          if (cnpj) {
+            const res = await fetch('/api/chat/voice/fiscal', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ cnpj }),
+            });
+            if (res.ok) {
+              const data = (await res.json()) as { resumo: string };
+              output = JSON.stringify({ resumo: data.resumo });
+            }
+          }
+        } catch {
+          /* fail-soft: a IA fala que não conseguiu consultar */
         }
       }
       sendEvent({

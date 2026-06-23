@@ -101,6 +101,51 @@ export function FinancialForm({
   const [extracting, setExtracting] = useState(false);
   const [perfilId] = useState<string | undefined>(undefined);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [lookingUp, setLookingUp] = useState(false);
+  const [fiscalLookup, setFiscalLookup] = useState<null | {
+    enabled: boolean;
+    available: boolean;
+    razaoSocial: string | null;
+    situacao: string | null;
+    municipio: string | null;
+    uf: string | null;
+    score: number | null;
+    risco: string | null;
+  }>(null);
+
+  async function consultarCnpjFiscal() {
+    if (cnpj.replace(/\D/g, '').length !== 14) {
+      toast.error('Informe os 14 dígitos do CNPJ.');
+      return;
+    }
+    setLookingUp(true);
+    setFiscalLookup(null);
+    try {
+      const res = await fetch('/api/fiscal/lookup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cnpj }),
+      });
+      if (!res.ok) {
+        toast.error(res.status === 429 ? 'Limite atingido. Tente em 1 min.' : 'Falha na consulta de CNPJ');
+        return;
+      }
+      const data = (await res.json()) as NonNullable<typeof fiscalLookup>;
+      setFiscalLookup(data);
+      if (!data.enabled) {
+        toast.message('Consulta fiscal não está ativa neste ambiente.');
+      } else if (!data.available) {
+        toast.message('CNPJ não encontrado na base fiscal.');
+      } else {
+        if (!supplierName.trim() && data.razaoSocial) setSupplierName(data.razaoSocial);
+        toast.success('CNPJ consultado — entra no relatório.');
+      }
+    } catch (err) {
+      toast.error('Falha na consulta', { description: String(err) });
+    } finally {
+      setLookingUp(false);
+    }
+  }
 
 
   const fetchTemplates = useCallback(async () => {
@@ -280,12 +325,65 @@ export function FinancialForm({
 
         <div>
           <label className="text-xs font-medium block mb-1">CNPJ</label>
-          <Input
-            value={cnpj}
-            onChange={(e) => setCnpj(e.target.value)}
-            placeholder="XX.XXX.XXX/0001-XX"
-            maxLength={32}
-          />
+          <div className="flex gap-2">
+            <Input
+              value={cnpj}
+              onChange={(e) => setCnpj(e.target.value)}
+              placeholder="XX.XXX.XXX/0001-XX"
+              maxLength={32}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={consultarCnpjFiscal}
+              disabled={lookingUp}
+              title="Consultar situação cadastral e risco na Receita"
+            >
+              {lookingUp ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                'Consultar'
+              )}
+            </Button>
+          </div>
+          {fiscalLookup?.available && (
+            <div className="mt-1.5 rounded-md border border-border bg-muted/40 p-2 text-[11px] space-y-0.5">
+              <div>
+                <span className="text-muted-foreground">Razão social:</span>{' '}
+                {fiscalLookup.razaoSocial}
+              </div>
+              <div className="flex gap-3 flex-wrap">
+                <span>
+                  <span className="text-muted-foreground">Situação:</span>{' '}
+                  <strong
+                    className={
+                      fiscalLookup.situacao === 'ATIVA'
+                        ? 'text-emerald-600 dark:text-emerald-400'
+                        : 'text-red-600 dark:text-red-400'
+                    }
+                  >
+                    {fiscalLookup.situacao}
+                  </strong>
+                </span>
+                {fiscalLookup.municipio && (
+                  <span>
+                    <span className="text-muted-foreground">Local:</span>{' '}
+                    {fiscalLookup.municipio}/{fiscalLookup.uf}
+                  </span>
+                )}
+                {fiscalLookup.score != null && (
+                  <span>
+                    <span className="text-muted-foreground">Risco fiscal:</span>{' '}
+                    {fiscalLookup.score}/100 ({fiscalLookup.risco})
+                  </span>
+                )}
+              </div>
+              <div className="text-muted-foreground">
+                Esses dados entram automaticamente no relatório.
+              </div>
+            </div>
+          )}
         </div>
 
         <div>
