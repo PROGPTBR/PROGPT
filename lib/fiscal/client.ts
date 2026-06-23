@@ -49,7 +49,7 @@ function onlyDigits(s: string): string {
   return s.replace(/\D/g, '');
 }
 
-async function fiscalGet<T>(path: string): Promise<T> {
+async function fiscalGetOnce<T>(path: string): Promise<T> {
   const res = await fetch(`${getBaseUrl()}${path}`, {
     method: 'GET',
     headers: { Accept: 'application/json', 'User-Agent': 'PROGPT/1.0' },
@@ -68,6 +68,21 @@ async function fiscalGet<T>(path: string): Promise<T> {
     throw new FiscalError(`Fiscal GET ${path} failed: ${res.status}`, res.status, parsed);
   }
   return parsed as T;
+}
+
+// 1 retry pra absorver o COLD START do serviço no Railway: o container dorme
+// quando ocioso; a 1ª request o acorda e pode estourar o timeout, mas a 2ª (já
+// quente) responde rápido. Retry em timeout/erro de rede e 5xx; NÃO em 4xx
+// (CNPJ inválido) nem em config ausente (status 0).
+async function fiscalGet<T>(path: string): Promise<T> {
+  try {
+    return await fiscalGetOnce<T>(path);
+  } catch (err) {
+    const retriable = err instanceof FiscalError ? err.status >= 500 : true;
+    if (!retriable) throw err;
+    await new Promise((r) => setTimeout(r, 1200));
+    return fiscalGetOnce<T>(path);
+  }
 }
 
 // ── Endpoints tipados (cacheados por 24h por CNPJ) ──────────────────────────

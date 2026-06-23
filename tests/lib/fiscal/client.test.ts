@@ -85,13 +85,44 @@ describe('fiscal client — chamadas tipadas', () => {
     expect(url).toContain('folha_pagamento_anual=240000');
   });
 
-  it('erro HTTP vira FiscalError com o status', async () => {
+  it('erro HTTP 5xx persistente vira FiscalError após o retry', async () => {
     vi.stubEnv('FISCAL_API_URL', 'http://fiscal.local:8000');
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('nope', { status: 503 })));
+    // Response nova por chamada — o retry lê o body de novo.
+    const fetchSpy = vi
+      .fn()
+      .mockImplementation(() => Promise.resolve(new Response('nope', { status: 503 })));
+    vi.stubGlobal('fetch', fetchSpy);
     await expect(analyzeCnpjCompliance('00000000000191')).rejects.toMatchObject({
       name: 'FiscalError',
       status: 503,
     });
+    expect(fetchSpy).toHaveBeenCalledTimes(2); // 1 + 1 retry
+  });
+});
+
+describe('fiscal client — retry (cold start)', () => {
+  it('5xx na 1ª chamada → retry → sucesso na 2ª (absorve cold start)', async () => {
+    vi.stubEnv('FISCAL_API_URL', 'http://fiscal.local:8000');
+    const fetchSpy = vi
+      .fn()
+      .mockResolvedValueOnce(new Response('cold', { status: 503 }))
+      .mockResolvedValueOnce(
+        json({ cnpj: '00000000000191', razao_social: 'X', risco: 'baixo', score: 90, fatores: [], recomendacao: 'aprovar', data_analise: '2026-06-23' }),
+      );
+    vi.stubGlobal('fetch', fetchSpy);
+
+    const r = await riskScoreSupplier('00000000000191');
+    expect(r.score).toBe(90);
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
+  });
+
+  it('4xx NÃO faz retry (CNPJ inválido — erro definitivo)', async () => {
+    vi.stubEnv('FISCAL_API_URL', 'http://fiscal.local:8000');
+    const fetchSpy = vi.fn().mockResolvedValue(new Response('bad', { status: 400 }));
+    vi.stubGlobal('fetch', fetchSpy);
+
+    await expect(analyzeCnpjCompliance('123')).rejects.toMatchObject({ status: 400 });
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
   });
 });
 
