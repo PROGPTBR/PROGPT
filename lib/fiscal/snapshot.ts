@@ -14,6 +14,23 @@ export type FiscalSnapshot = {
   error?: string;
 };
 
+// Versão compacta do snapshot pro selo fiscal (busca de fornecedores).
+export type FiscalBadge = {
+  available: boolean;
+  situacao: string | null;
+  score: number | null;
+  risco: string | null;
+};
+
+export function snapshotToBadge(s: FiscalSnapshot): FiscalBadge {
+  return {
+    available: s.available,
+    situacao: s.cnpjData?.situacao_cadastral ?? null,
+    score: s.risk?.score ?? null,
+    risco: s.risk?.risco ?? null,
+  };
+}
+
 export async function fetchFiscalSnapshot(cnpj: string): Promise<FiscalSnapshot> {
   const snap: FiscalSnapshot = {
     enabled: isFiscalEnabled(),
