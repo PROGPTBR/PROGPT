@@ -8,6 +8,7 @@ import {
   FileText,
   Layers,
   MessageCircle,
+  ShieldCheck,
   Star,
   TrendingUp,
   UserCircle2,
@@ -30,7 +31,8 @@ export type AssistantToolType =
   | 'financial'
   | 'scorecard'
   | 'profile'
-  | 'negotiation';
+  | 'negotiation'
+  | 'homologacao';
 
 type Meta = {
   title: string;
@@ -87,6 +89,12 @@ const META: Record<AssistantToolType, Meta> = {
       'Monta a estratégia (BATNA, SWOT, metas SMART) e simula a negociação com a IA no papel do fornecedor — com score no final.',
     Icon: MessageCircle,
   },
+  homologacao: {
+    title: 'Homologação de Fornecedor',
+    blurb:
+      'Informe o CNPJ e ele consulta situação cadastral, score de risco, compliance e certidões na Receita — com relatório de homologação e recomendação.',
+    Icon: ShieldCheck,
+  },
 };
 
 type Props = {
@@ -137,6 +145,7 @@ const VALID_TYPES = new Set<AssistantToolType>([
   'scorecard',
   'profile',
   'negotiation',
+  'homologacao',
 ]);
 
 // Server- and client-callable detector. Procura o PRIMEIRO `/assistants/<type>`
@@ -154,7 +163,7 @@ export function detectAssistantToolCTA(text: string): AssistantToolType | null {
 // Tipos cujo caminho cru removemos do texto exibido (o card assume o CTA).
 // Inclui `suppliers` (caminho válido) pra não deixar o path feio na frase.
 const STRIP_TYPES =
-  'rfp|kraljic|porter|abc|financial|scorecard|profile|negotiation|suppliers';
+  'rfp|kraljic|porter|abc|financial|scorecard|profile|negotiation|homologacao|suppliers';
 // "...em /assistants/rfp" → remove a preposição + o caminho, deixando a frase
 // natural ("use a ferramenta dedicada — ela gera...").
 const STRIP_PREP_RE = new RegExp(

@@ -6,6 +6,7 @@ import type {
   AbcParams,
   FinancialParams,
   PorterParams,
+  HomologacaoParams,
 } from './types';
 import { PORTER_STATEMENTS } from './porter-statements';
 
@@ -248,6 +249,21 @@ export const PORTER_EXAMPLES: FormExample<PorterParams>[] = [
         weight: 2,
         score: PORTER_FORCE_EXAMPLE_SCORE[s.force] ?? 3,
       })),
+    },
+  },
+];
+
+export const HOMOLOGACAO_EXAMPLES: FormExample<HomologacaoParams>[] = [
+  {
+    id: 'weg-homologacao',
+    label: 'WEG S.A. — homologação',
+    params: {
+      cnpj: '84.429.695/0001-11',
+      fornecedorNome: 'WEG S.A.',
+      setor: 'indústria',
+      faturamentoAnualBRL: 30000000000,
+      notas:
+        'Fornecedor candidato a contrato de motores e automação industrial. Homologação como parte do due diligence pré-contrato.',
     },
   },
 ];
