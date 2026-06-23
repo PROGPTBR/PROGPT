@@ -59,6 +59,11 @@ describe('buildHomologacaoPrompt', () => {
         mei: false,
       },
       sancoes: { enabled: true, consultado: true, sancoes: [] },
+      reputacao: {
+        enabled: true,
+        available: true,
+        resumo: 'Nenhum sinal reputacional relevante encontrado na busca web.',
+      },
       risk: {
         cnpj: '84429695000111',
         razao_social: 'WEG SA',
@@ -106,6 +111,9 @@ describe('buildHomologacaoPrompt', () => {
     // Links de certidões oficiais (consulta manual) sempre presentes.
     expect(user).toContain('CNDT');
     expect(user).toMatch(/consulta-crf\.caixa\.gov\.br|FGTS/);
+    // Reputacional: bloco indicativo presente com o resumo.
+    expect(user).toMatch(/INDICATIVO|não-oficial/i);
+    expect(user).toContain('Nenhum sinal reputacional relevante');
   });
 
   it('serviço desligado → bloco com checklist de verificação manual (fail-soft)', () => {
@@ -118,6 +126,7 @@ describe('buildHomologacaoPrompt', () => {
       compliance: null,
       regimes: null,
       sancoes: null,
+      reputacao: null,
     };
     const { user } = buildHomologacaoPrompt(PARAMS, classified, TEMPLATE, [], null);
     expect(user).toMatch(/não está configurado|verificação manual/i);
@@ -146,6 +155,7 @@ describe('buildHomologacaoPrompt', () => {
           },
         ],
       },
+      reputacao: null,
     };
     const { user } = buildHomologacaoPrompt(PARAMS, classified, TEMPLATE, [], null);
     expect(user).toMatch(/CRÍTICO|impeditivo/i);

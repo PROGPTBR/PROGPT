@@ -63,7 +63,8 @@ export type ApiOperation =
   | 'assistant-scorecard-generate'
   | 'assistant-scorecard-refine'
   | 'assistant-scorecard-apply'
-  | 'assistant-homologacao-generate';
+  | 'assistant-homologacao-generate'
+  | 'assistant-homologacao-reputacao';
 
 export type RecordUsageInput = {
   provider: ApiProvider;
