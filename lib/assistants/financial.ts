@@ -8,6 +8,7 @@ import type {
 } from './types';
 import { splitTemplateBody, renderPlaceholders } from './template-assembly';
 import type { CompanyData } from '@/lib/db/user-company';
+import type { FiscalSnapshot } from '@/lib/fiscal/snapshot';
 
 // Sub-projeto 30 — Análise financeira determinística de fornecedor.
 //
@@ -175,7 +176,9 @@ export const FINANCIAL_SYSTEM_PROMPT = `Você é um Analista de Risco de Crédit
 
 10. **Não invente valores ausentes**. Quando um indicador está marcado como N/D no contexto, mencione a ausência em vez de inventar. Score já foi calculado descontando pilares ausentes (pontuação 0 nesses pilares).
 
-11. **Formato Markdown limpo**. Headings (#, ##), tabelas para o demonstrativo resumido e o scorecard, **bold** para destaques. Sem preâmbulo conversacional. Comece direto pelo título do relatório.`;
+11. **Formato Markdown limpo**. Headings (#, ##), tabelas para o demonstrativo resumido e o scorecard, **bold** para destaques. Sem preâmbulo conversacional. Comece direto pelo título do relatório.
+
+12. **Saúde fiscal/cadastral (quando houver \`<dados-fiscais>\`)**: o contexto pode trazer situação cadastral na Receita e um score de risco fiscal do CNPJ. Combine com a saúde financeira numa seção curta "Situação fiscal/cadastral": uma situação **diferente de ATIVA** (suspensa, inapta, baixada) é um **alerta grave** que pesa contra a contratação INDEPENDENTE de bons indicadores financeiros — sinalize com destaque. Se os dados fiscais não vieram, não invente — apenas siga com a análise financeira.`;
 
 function formatIndicator(v: number | undefined, suffix = ''): string {
   if (v === undefined || v === null || !Number.isFinite(v)) return 'N/D';
@@ -233,12 +236,42 @@ function formatChunks(chunks: RetrievedChunk[]): string {
     .join('\n\n---\n\n');
 }
 
+const RISK_LABEL: Record<string, string> = {
+  baixo: 'Baixo',
+  medio: 'Médio',
+  alto: 'Alto',
+  critico: 'Crítico',
+};
+
+// Bloco de saúde fiscal/cadastral injetado quando o CNPJ foi consultado.
+function fiscalBlock(fiscal: FiscalSnapshot | null): string {
+  if (!fiscal || !fiscal.enabled || !fiscal.available) return '';
+  const d = fiscal.cnpjData;
+  const r = fiscal.risk;
+  const lines = [
+    d ? `- **Situação cadastral (Receita)**: ${d.situacao_cadastral}` : '',
+    d ? `- **Razão social**: ${d.razao_social}` : '',
+    d?.natureza_juridica ? `- **Natureza jurídica**: ${d.natureza_juridica}` : '',
+    d?.endereco?.municipio && d.endereco.uf
+      ? `- **Município/UF**: ${d.endereco.municipio}/${d.endereco.uf}`
+      : '',
+    r ? `- **Score de risco fiscal**: ${r.score}/100 (${RISK_LABEL[r.risco] ?? r.risco})` : '',
+    r ? `- **Recomendação fiscal**: ${r.recomendacao}` : '',
+  ].filter(Boolean);
+  return `## Dados fiscais/cadastrais (Receita) — INPUT, combine com a análise financeira
+
+<dados-fiscais>
+${lines.join('\n')}
+</dados-fiscais>`;
+}
+
 export function buildFinancialPrompt(
   params: FinancialParams,
   template: TemplateRow,
   chunks: RetrievedChunk[],
   analysis: FinancialAnalysis,
   company: CompanyData | null = null,
+  fiscal: FiscalSnapshot | null = null,
 ): { system: string; user: string } {
   const companyBlock = company
     ? [
@@ -301,9 +334,12 @@ Gere o relatório de análise financeira agora. Comece direto pelo título. Para
       paramsBlock,
       indicatorsBlock,
       analysisBlock,
+      fiscalBlock(fiscal),
       templateBlock,
       contextBlock,
       instruction,
-    ].join('\n\n---\n\n'),
+    ]
+      .filter(Boolean)
+      .join('\n\n---\n\n'),
   };
 }
