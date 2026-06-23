@@ -8,7 +8,6 @@ import { toast } from 'sonner';
 import { isValidCpf, formatCpf } from '@/lib/validators/cpf';
 
 
-
 // Sub-projeto 27 — Pricing page principal component.
 //
 // 2 colunas Free vs Pro. CTA do Pro abre <CheckoutForm> inline modal
@@ -31,6 +30,7 @@ type Props = {
   isPro: boolean;
   plans: Plan[];
   userPlanSlug: string | null;
+  trialExpired?: boolean;
   profile: {
     full_name?: string | null;
     cpf_cnpj?: string | null;
@@ -86,7 +86,11 @@ export function PricingTable({
   plans,
   userPlanSlug,
   profile,
+  trialExpired = false,
 }: Props) {
+
+const expired = trialExpired;
+
   const router = useRouter();
 
   const [showCheckout, setShowCheckout] = useState(false);
@@ -170,6 +174,13 @@ if (!res.ok) {
 {orderedPlans.map((plan) => {
   const isRecommended = plan.slug === 'pf-99';
 
+
+  // const trialExpired =
+  // userPlanSlug === 'free' &&
+  // profile?.created_at &&
+  // Date.now() - new Date(profile.created_at).getTime() >
+   //  3 * 24 * 60 * 60 * 1000;
+
   return (
     <div
       key={plan.id}
@@ -223,10 +234,16 @@ if (!res.ok) {
         ))}
       </ul>
         
-    {userPlanSlug === plan.slug ? (
-  <div className="text-center text-sm text-emerald-600 dark:text-emerald-400 font-medium py-2">
-    ✓ Você já está neste plano
-  </div>
+{userPlanSlug === plan.slug ? (
+  expired ? (
+    <div className="text-center text-sm text-red-500 font-medium py-2">
+      Seu período gratuito expirou. Escolha um plano para continuar.
+    </div>
+  ) : (
+    <div className="text-center text-sm text-emerald-600 dark:text-emerald-400 font-medium py-2">
+      ✓ Você já está neste plano
+    </div>
+  )
 ) : plan.slug === 'free' ? (
   !authed && (
     <Link
