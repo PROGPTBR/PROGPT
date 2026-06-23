@@ -8,6 +8,7 @@ import {
   FINANCIAL_EXAMPLES,
   PORTER_EXAMPLES,
   HOMOLOGACAO_EXAMPLES,
+  PESQUISA_PRECOS_EXAMPLES,
 } from '@/lib/assistants/examples';
 import {
   ProfileParamsSchema,
@@ -18,6 +19,7 @@ import {
   FinancialParamsSchema,
   PorterParamsSchema,
   HomologacaoParamsSchema,
+  PesquisaPrecosParamsSchema,
 } from '@/lib/assistants/types';
 
 // The whole point of the examples is that "Carregar exemplo" yields a form that
@@ -80,6 +82,13 @@ describe('assistant form examples', () => {
   it('every homologacao example satisfies HomologacaoParamsSchema', () => {
     for (const ex of HOMOLOGACAO_EXAMPLES) {
       expect(() => HomologacaoParamsSchema.parse(ex.params), ex.id).not.toThrow();
+    }
+  });
+
+  it('pesquisa_precos examples exist and satisfy PesquisaPrecosParamsSchema', () => {
+    expect(PESQUISA_PRECOS_EXAMPLES.length).toBeGreaterThan(0);
+    for (const ex of PESQUISA_PRECOS_EXAMPLES) {
+      expect(() => PesquisaPrecosParamsSchema.parse(ex.params), ex.id).not.toThrow();
     }
   });
 });

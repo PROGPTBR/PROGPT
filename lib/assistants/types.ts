@@ -18,7 +18,8 @@ export type AssistantType =
   | 'profile'
   | 'negotiation'
   | 'scorecard'
-  | 'homologacao';
+  | 'homologacao'
+  | 'pesquisa_precos';
 
 export const ASSISTANT_TYPES = [
   'rfp',
@@ -30,6 +31,7 @@ export const ASSISTANT_TYPES = [
   'negotiation',
   'scorecard',
   'homologacao',
+  'pesquisa_precos',
 ] as const;
 
 export type ThemeStatusRow = 'running' | 'done' | 'error';
@@ -728,7 +730,8 @@ export type AssistantRunRow = {
     | ProfileParams
     | NegotiationStrategyParams
     | ScorecardParams
-    | HomologacaoParams;
+    | HomologacaoParams
+    | PesquisaPrecosParams;
   output_md: string | null;
   status: ThemeStatusRow;
   error_message: string | null;
@@ -845,3 +848,31 @@ export const HomologacaoRequestSchema = z.object({
   params: HomologacaoParamsSchema,
 });
 export type HomologacaoRequest = z.infer<typeof HomologacaoRequestSchema>;
+
+// ── Pesquisa de Preços (sub-projeto 37, fase 1) ──────────────────────────────
+// Mapa de preços de referência a partir das compras públicas (CATMAT).
+export const PesquisaPrecosItemSchema = z.object({
+  descricao: z.string().trim().min(2).max(300),
+  unidade: z.string().trim().max(40).optional().default(''),
+  quantidade: z.number().positive().max(1_000_000_000).optional(),
+});
+export type PesquisaPrecosItem = z.infer<typeof PesquisaPrecosItemSchema>;
+
+export const PesquisaPrecosParamsSchema = z.object({
+  titulo: z.string().trim().min(1).max(200),
+  // UF opcional p/ filtrar preços por estado (preços variam por região).
+  uf: z
+    .string()
+    .trim()
+    .regex(/^[A-Za-z]{2}$/)
+    .optional(),
+  itens: z.array(PesquisaPrecosItemSchema).min(1).max(10),
+  notas: z.string().trim().max(2000).optional().default(''),
+});
+export type PesquisaPrecosParams = z.infer<typeof PesquisaPrecosParamsSchema>;
+
+export const PesquisaPrecosRequestSchema = z.object({
+  templateId: z.string().uuid(),
+  params: PesquisaPrecosParamsSchema,
+});
+export type PesquisaPrecosRequest = z.infer<typeof PesquisaPrecosRequestSchema>;

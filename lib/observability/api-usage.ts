@@ -64,7 +64,9 @@ export type ApiOperation =
   | 'assistant-scorecard-refine'
   | 'assistant-scorecard-apply'
   | 'assistant-homologacao-generate'
-  | 'assistant-homologacao-reputacao';
+  | 'assistant-homologacao-reputacao'
+  | 'assistant-pesquisa-precos-generate'
+  | 'govdata-catmat-pick';
 
 export type RecordUsageInput = {
   provider: ApiProvider;
