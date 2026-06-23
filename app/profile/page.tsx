@@ -1,189 +1,186 @@
 import { getServerSupabase } from '@/lib/db/supabase';
 import Link from 'next/link';
-import { ArrowLeft, Trash2 } from 'lucide-react';
+import { Trash2, CreditCard, UserCircle, ImageIcon, Building2, FolderKanban } from 'lucide-react';
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
+import { Header } from '../login/header';
+import { BackButton } from '@/components/BackButton';
 import { ProfileLogoUpload } from '@/components/profile/ProfileLogoUpload';
 import { ProfileCompanyForm } from '@/components/profile/ProfileCompanyForm';
 import { ProfileCategoriesList } from '@/components/profile/ProfileCategoriesList';
-import { BrandLogo } from '@/components/brand/BrandLogo';
 
 export const dynamic = 'force-dynamic';
 
 export default async function ProfilePage() {
   const user = await getCurrentUser();
-if (!user) redirect('/login?next=/profile');
+  if (!user) redirect('/login?next=/profile');
 
-const supabase = getServerSupabase();
+  const supabase = getServerSupabase();
+  const { data: subscription } = await supabase
+    .from('subscriptions')
+    .select('*')
+    .eq('user_id', user.id)
+    .maybeSingle();
 
-const { data: subscription } = await supabase
-  .from('subscriptions')
-  .select('*')
-  .eq('user_id', user.id)
-  .maybeSingle();
+  const statusLabel =
+    subscription?.status === 'active'
+      ? 'Ativo'
+      : subscription?.status === 'trialing'
+        ? 'Período de teste'
+        : subscription?.status === 'past_due'
+          ? 'Pagamento pendente'
+          : subscription?.status === 'cancelled'
+            ? 'Cancelado'
+            : subscription?.status === 'expired'
+              ? 'Expirado'
+              : 'Free';
 
-const statusLabel =
-  subscription?.plan?.toLowerCase() === 'free'
-    ? 'Período de teste'
-    : subscription?.status === 'active'
-    ? 'Ativo'
-    : subscription?.status === 'canceled'
-    ? 'Cancelado'
-    : subscription?.status === 'past_due'
-    ? 'Pagamento pendente'
-    : subscription?.status === 'trialing'
-    ? 'Período de teste'
-    : subscription?.status ?? '-';
+  const statusCls =
+    subscription?.status === 'active'
+      ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-300'
+      : subscription?.status === 'trialing'
+        ? 'border-brand/40 bg-brand/10 text-brand'
+        : subscription?.status === 'past_due' || subscription?.status === 'expired'
+          ? 'border-red-500/40 bg-red-500/10 text-red-600 dark:text-red-300'
+          : 'border-border bg-muted text-muted-foreground';
 
-    const statusColor =
-  subscription?.plan?.toLowerCase() === 'free'
-    ? 'text-foreground'
-    : subscription?.status === 'active'
-    ? 'text-green-500'
-    : subscription?.status === 'canceled'
-    ? 'text-red-500'
-    : 'text-yellow-500';
-
-    const daysLeft = subscription?.current_period_end
-  ? Math.max(
-      0,
-      Math.ceil(
-        (new Date(subscription.current_period_end).getTime() - Date.now()) /
-          (1000 * 60 * 60 * 24)
+  const daysLeft = subscription?.trial_end
+    ? Math.max(
+        0,
+        Math.ceil(
+          (new Date(subscription.trial_end).getTime() - Date.now()) /
+            (1000 * 60 * 60 * 24),
+        ),
       )
-    )
-  : null;
-
+    : null;
 
   return (
-    <div className="relative min-h-screen bg-background text-foreground font-outfit antialiased overflow-x-hidden">
-      {/* Decorative cyan glow */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute top-0 right-1/4 h-96 w-96 rounded-full bg-brand/8 blur-3xl"
-      />
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute top-1/2 -left-20 h-80 w-80 rounded-full bg-brand/5 blur-3xl"
-      />
+    <>
+      <Header />
+      <div className="min-h-screen bg-background text-foreground font-outfit antialiased">
+        <main className="mx-auto max-w-3xl px-6 pt-24 pb-16 space-y-8">
+          <BackButton />
 
-      {/* Header */}
-      <header className="relative z-10 border-b border-border bg-card/40 backdrop-blur-md">
-        <div className="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/chat" className="inline-flex items-center">
-            <BrandLogo size="md" priority />
-          </Link>
-          <Link
-            href="/chat"
-            className="inline-flex items-center gap-1.5 text-base text-muted-foreground hover:text-brand transition-colors"
+          {/* Hero */}
+          <div className="flex items-center gap-4">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-brand-gradient text-black text-xl font-bold brand-glow">
+              {(user.email?.[0] ?? '?').toUpperCase()}
+            </div>
+            <div className="min-w-0">
+              <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">
+                Meu perfil <span className="text-brand">.</span>
+              </h1>
+              <p className="text-sm text-muted-foreground truncate">
+                {user.email ?? user.id}
+              </p>
+            </div>
+          </div>
+
+          {/* Plano */}
+          <section className="rounded-2xl border border-border bg-card p-6 space-y-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <CreditCard className="h-4 w-4 text-brand" aria-hidden="true" />
+                <h2 className="text-base font-semibold">Seu plano</h2>
+              </div>
+              <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${statusCls}`}>
+                {statusLabel}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <div className="text-xs uppercase tracking-wider text-muted-foreground">Plano</div>
+                <div className="mt-0.5 font-medium text-foreground capitalize">
+                  {subscription?.plan ?? 'Free'}
+                </div>
+              </div>
+              {daysLeft !== null && subscription?.status === 'trialing' && (
+                <div>
+                  <div className="text-xs uppercase tracking-wider text-muted-foreground">Teste termina em</div>
+                  <div className="mt-0.5 font-medium text-brand">{daysLeft} dia(s)</div>
+                </div>
+              )}
+            </div>
+            <Link
+              href="/account/billing"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-brand hover:text-brand/80 transition-colors"
+            >
+              Gerenciar assinatura →
+            </Link>
+          </section>
+
+          {/* Foto / logo */}
+          <ProfileSection
+            icon={<ImageIcon className="h-4 w-4 text-brand" aria-hidden="true" />}
+            title="Logo da empresa"
+            desc="Incluído nos documentos gerados (.docx e .xlsx). PNG ou JPG, até 2 MB."
           >
-            <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
-            Voltar para o chat
-          </Link>
-        </div>
-      </header>
+            <ProfileLogoUpload />
+          </ProfileSection>
 
-      {/* Content */}
-      <main className="relative z-10 max-w-3xl mx-auto px-6 py-10 space-y-10">
-        <div>
-          <h1 className="text-4xl font-semibold tracking-tight text-foreground">
-            Meu perfil <span className="text-brand">.</span>
-          </h1>
-          <p className="text-base text-muted-foreground mt-1.5">
-            Logado como{' '}
-            <span className="font-medium text-brand">
-              {user.email ?? user.id}
-            </span>
-          </p>
-        </div>
-           <section className="space-y-3">
-          <div>
-        <h2 className="text-foreground font-medium text-2xl"> Seu Plano</h2>
-            <p className="text-base text-muted-foreground mt-1 leading-relaxed">
-              Confira os detalhes da sua assinatura.
-            </p>
-</div>
+          {/* Dados */}
+          <ProfileSection
+            icon={<Building2 className="h-4 w-4 text-brand" aria-hidden="true" />}
+            title="Dados da empresa"
+            desc="Usados automaticamente na capa do RFP, no banner da planilha e nas cláusulas."
+          >
+            <ProfileCompanyForm />
+          </ProfileSection>
 
+          {/* Categorias */}
+          <ProfileSection
+            icon={<FolderKanban className="h-4 w-4 text-brand" aria-hidden="true" />}
+            title="Minhas categorias"
+            desc={'Perfis de categoria que você cadastrou — use no chat ou em "Iniciar de um Perfil" nos assistentes.'}
+          >
+            <ProfileCategoriesList />
+          </ProfileSection>
 
-<div className="rounded-xl border border-border bg-card/40 p-5" >
-  <div className="space-y-2 text-base">
-    <p>
-      <span className="text-muted-foreground">Plano:</span>{' '}
-      <span className="text-brand font-medium">
-        {subscription?.plan ?? 'Free'}
-      </span>
-    </p>
-
- <p>
-  <span className="text-muted-foreground">Status:</span>{' '}
-  <span className={`font-medium ${statusColor}`}>
-    {statusLabel}
-  </span>
-</p>
-
-{subscription?.plan?.toLowerCase() === 'free' && daysLeft !== null && (
-  <p className="text-sm text-green-500">
-    Seu período de teste termina em {daysLeft} dia(s).
-  </p>
-)}
-  </div>
-</div>
-</section>
-        <section className="space-y-3">
-          <div>
-            <h2 className="text-foreground font-medium text-2xl">Foto do Perfil</h2>
-            <p className="text-base text-muted-foreground mt-1 leading-relaxed">
-              Este logo é incluído nos documentos gerados (RFP .docx e planilha
-              de cotação .xlsx). PNG ou JPG, até 2 MB.
-            </p>
-          </div>
-          <ProfileLogoUpload />
-        </section>
-
-        <section className="space-y-3">
-          <div>
-            <h2 className="text-foreground font-medium text-2xl">Meus Dados</h2>
-            <p className="text-base text-muted-foreground mt-1 leading-relaxed">
-              Estes campos são incluídos automaticamente nos documentos gerados —
-              apresentação do RFP, banner da planilha de cotação e cláusulas de
-              termos.
-            </p>
-          </div>
-          <ProfileCompanyForm />
-        </section>
-
-        <section className="space-y-3">
-          <div>
-            <h2 className="text-foreground font-medium text-2xl">Minhas categorias</h2>
-            <p className="text-base text-muted-foreground mt-1 leading-relaxed">
-              Perfis de categoria que você cadastrou. Use no chat (seletor
-              acima do campo de mensagem) ou no botão &quot;Iniciar de um
-              Perfil&quot; dentro dos assistentes RFP / Kraljic / Porter /
-              ABC para pré-popular os campos.
-            </p>
-          </div>
-          <ProfileCategoriesList />
-        </section>
-
-        {/* Conta — ação destrutiva, discreta no fim do perfil (não mais
-            exposta na sidebar). */}
-        <section className="space-y-3 pt-6 border-t border-border">
-          <div>
-            <h2 className="text-foreground font-medium text-2xl">Conta</h2>
-            <p className="text-base text-muted-foreground mt-1 leading-relaxed">
+          {/* Conta — danger zone */}
+          <section className="rounded-2xl border border-red-500/20 bg-red-500/[0.03] p-6 space-y-3">
+            <div className="flex items-center gap-2">
+              <UserCircle className="h-4 w-4 text-red-500" aria-hidden="true" />
+              <h2 className="text-base font-semibold">Conta</h2>
+            </div>
+            <p className="text-sm text-muted-foreground">
               Encerrar sua conta remove permanentemente seus dados (conversas,
               execuções e perfil). Esta ação não pode ser desfeita.
             </p>
-          </div>
-          <Link
-            href="/account/delete"
-            className="inline-flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/5 text-red-600 dark:text-red-400 hover:bg-red-500/10 hover:border-red-500/50 px-4 py-2.5 text-sm font-medium transition-colors"
-          >
-            <Trash2 className="h-4 w-4" aria-hidden="true" />
-            Excluir minha conta
-          </Link>
-        </section>
-      </main>
-    </div>
+            <Link
+              href="/account/delete"
+              className="inline-flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/5 text-red-600 dark:text-red-400 hover:bg-red-500/10 hover:border-red-500/50 px-4 py-2.5 text-sm font-medium transition-colors"
+            >
+              <Trash2 className="h-4 w-4" aria-hidden="true" />
+              Excluir minha conta
+            </Link>
+          </section>
+        </main>
+      </div>
+    </>
+  );
+}
+
+function ProfileSection({
+  icon,
+  title,
+  desc,
+  children,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  desc: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="rounded-2xl border border-border bg-card p-6 space-y-4">
+      <div className="space-y-1">
+        <div className="flex items-center gap-2">
+          {icon}
+          <h2 className="text-base font-semibold">{title}</h2>
+        </div>
+        <p className="text-sm text-muted-foreground leading-relaxed">{desc}</p>
+      </div>
+      {children}
+    </section>
   );
 }
