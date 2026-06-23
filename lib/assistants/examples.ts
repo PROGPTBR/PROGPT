@@ -7,6 +7,7 @@ import type {
   FinancialParams,
   PorterParams,
   HomologacaoParams,
+  PesquisaPrecosParams,
 } from './types';
 import { PORTER_STATEMENTS } from './porter-statements';
 
@@ -264,6 +265,24 @@ export const HOMOLOGACAO_EXAMPLES: FormExample<HomologacaoParams>[] = [
       faturamentoAnualBRL: 30000000000,
       notas:
         'Fornecedor candidato a contrato de motores e automação industrial. Homologação como parte do due diligence pré-contrato.',
+    },
+  },
+];
+
+export const PESQUISA_PRECOS_EXAMPLES: FormExample<PesquisaPrecosParams>[] = [
+  {
+    id: 'materiais-escritorio',
+    label: 'Materiais de escritório — preço de referência',
+    params: {
+      titulo: 'Cesta de materiais de escritório — pesquisa de preços',
+      uf: 'SP',
+      itens: [
+        { descricao: 'Açúcar refinado branco 1kg', unidade: 'kg', quantidade: 500 },
+        { descricao: 'Café torrado e moído 500g', unidade: 'pacote', quantidade: 300 },
+        { descricao: 'Papel A4 75g resma 500 folhas', unidade: 'resma', quantidade: 200 },
+      ],
+      notas:
+        'Estimativa de preço de referência para abertura de processo de compra; ancorar RFP e meta de negociação.',
     },
   },
 ];

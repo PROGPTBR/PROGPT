@@ -65,6 +65,8 @@ export type ApiOperation =
   | 'assistant-scorecard-apply'
   | 'assistant-homologacao-generate'
   | 'assistant-homologacao-reputacao'
+  | 'assistant-pesquisa-precos-generate'
+  | 'govdata-catmat-pick'
   | 'comprador-analyze'
   | 'comprador-draft-reply';
 
