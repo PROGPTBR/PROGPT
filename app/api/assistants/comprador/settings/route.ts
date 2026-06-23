@@ -26,9 +26,11 @@ export async function GET() {
     .eq('user_id', user.id)
     .maybeSingle();
 
+  const row = data as { inbound_alias?: string | null; inbound_confirm?: string | null } | null;
   return NextResponse.json({
     settings: normalizeSettings(data as Record<string, unknown> | null),
-    inboundAlias: (data as { inbound_alias?: string | null } | null)?.inbound_alias ?? null,
+    inboundAlias: row?.inbound_alias ?? null,
+    inboundConfirm: row?.inbound_confirm ?? null,
     inboundEnabled: !!process.env.RESEND_INBOUND_DOMAIN,
   });
 }

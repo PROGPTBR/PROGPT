@@ -583,15 +583,18 @@ function SettingsPanel({ onBack }: { onBack: () => void }) {
   const [saving, setSaving] = useState(false);
   const [alias, setAlias] = useState<string | null>(null);
   const [inboundEnabled, setInboundEnabled] = useState(false);
+  const [inboundConfirm, setInboundConfirm] = useState<string | null>(null);
   const [activating, setActivating] = useState(false);
+  const [provider, setProvider] = useState<'gmail' | 'outlook'>('gmail');
 
   useEffect(() => {
     fetch('/api/assistants/comprador/settings')
       .then((r) => r.json())
-      .then((d: { settings: Settings; inboundAlias: string | null; inboundEnabled: boolean }) => {
+      .then((d: { settings: Settings; inboundAlias: string | null; inboundEnabled: boolean; inboundConfirm: string | null }) => {
         setS(d.settings);
         setAlias(d.inboundAlias);
         setInboundEnabled(d.inboundEnabled);
+        setInboundConfirm(d.inboundConfirm);
       })
       .catch(() => setS({ tone: 'cordial', rules: '', signature: '', approval_required: true, auto_draft: true }));
   }, []);
@@ -729,6 +732,48 @@ function SettingsPanel({ onBack }: { onBack: () => void }) {
                 Copiar
               </Button>
             </div>
+
+            {/* Guia de conexão Gmail/Outlook */}
+            <div className="rounded-lg border border-border bg-card p-3 space-y-3">
+              <div className="flex items-center gap-2">
+                {(['gmail', 'outlook'] as const).map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => setProvider(p)}
+                    className={`rounded-full px-3 h-7 text-xs font-medium border transition-colors ${
+                      provider === p ? 'bg-brand text-black border-brand' : 'border-border text-muted-foreground hover:bg-accent'
+                    }`}
+                  >
+                    {p === 'gmail' ? 'Gmail' : 'Outlook'}
+                  </button>
+                ))}
+              </div>
+              {provider === 'gmail' ? (
+                <ol className="list-decimal pl-4 space-y-1.5 text-xs text-muted-foreground">
+                  <li>No Gmail: ⚙️ → <strong>Ver todas as configurações</strong> → aba <strong>Encaminhamento e POP/IMAP</strong>.</li>
+                  <li><strong>Adicionar um endereço de encaminhamento</strong> → cole o endereço acima → Avançar.</li>
+                  <li>O Gmail envia um <strong>código de confirmação</strong> pra esse endereço — ele aparece <strong>aqui embaixo</strong> em instantes. Use o código/link e confirme no Gmail.</li>
+                  <li>De volta ao Gmail: marque <strong>Encaminhar uma cópia</strong> para o endereço → <strong>Salvar alterações</strong>.</li>
+                  <li>(Opcional) Crie um <strong>filtro</strong> (ex.: assunto contém &quot;cotação&quot;/&quot;proposta&quot;) que encaminha só os e-mails de fornecedores.</li>
+                </ol>
+              ) : (
+                <ol className="list-decimal pl-4 space-y-1.5 text-xs text-muted-foreground">
+                  <li>Outlook: ⚙️ <strong>Configurações</strong> → <strong>Email</strong> → <strong>Regras</strong> → <strong>Adicionar nova regra</strong>.</li>
+                  <li>Condição: ex. <strong>assunto contém</strong> &quot;cotação&quot;/&quot;proposta&quot; (ou remetente = seus fornecedores).</li>
+                  <li>Ação: <strong>Encaminhar para</strong> → cole o endereço acima → <strong>Salvar</strong>.</li>
+                  <li>Alternativa: <strong>Email → Encaminhamento</strong> → habilitar pro endereço acima.</li>
+                </ol>
+              )}
+            </div>
+
+            {inboundConfirm && (
+              <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs space-y-1">
+                <div className="font-semibold text-amber-600 dark:text-amber-300">
+                  Confirmação do Gmail recebida — use no Gmail:
+                </div>
+                <pre className="whitespace-pre-wrap break-words text-muted-foreground max-h-40 overflow-auto">{inboundConfirm}</pre>
+              </div>
+            )}
           </div>
         ) : inboundEnabled ? (
           <div className="space-y-2">

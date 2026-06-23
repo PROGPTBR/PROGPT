@@ -63,6 +63,7 @@ export async function POST(req: Request) {
   }
 
   const { email_id, from, to, subject, attachments } = payload.data;
+  const fromParsed = parseFrom(from);
   const svc = getServerSupabase();
 
   // 2) Mapeia o alias de destino → usuário
@@ -79,6 +80,21 @@ export async function POST(req: Request) {
   }
   const userId = settingsRow.user_id as string;
 
+  // 2b) Confirmação de encaminhamento do Gmail (forwarding-noreply@google.com)
+  // cai aqui em vez de na caixa do usuário — guardamos o código/link pra exibir
+  // no painel, e NÃO criamos cotação.
+  if (fromParsed.email?.toLowerCase() === 'forwarding-noreply@google.com') {
+    const confirmText = await fetchReceivedEmailText(email_id);
+    const hint = [subject ?? 'Confirmação de encaminhamento do Gmail', confirmText.slice(0, 1500)]
+      .filter(Boolean)
+      .join('\n\n');
+    await svc
+      .from('comprador_settings')
+      .update({ inbound_confirm: hint, updated_at: new Date().toISOString() })
+      .eq('user_id', userId);
+    return NextResponse.json({ ok: true, gmail_confirmation: true });
+  }
+
   // 3) Idempotência — Resend re-entrega webhooks.
   const { data: dup } = await svc
     .from('comprador_quotes')
@@ -91,8 +107,6 @@ export async function POST(req: Request) {
   const bodyText = await fetchReceivedEmailText(email_id);
   const attachText = await fetchInboundAttachmentsText(email_id, attachments ?? []);
   const propostas = [bodyText, attachText].filter((s) => s && s.trim()).join('\n\n').trim();
-
-  const fromParsed = parseFrom(from);
 
   // 5) Cria a cotação (idempotência garantida pelo inbound_email_id)
   const { data: quote, error: insErr } = await svc

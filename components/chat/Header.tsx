@@ -11,7 +11,7 @@ type Props = {
 // On mobile this bar only carries the hamburger that opens the sidebar drawer.
 export function Header({ onOpenSidebar }: Props) {
   return (
-    <header className="md:hidden h-14 border-b border-border bg-card/40 backdrop-blur-md flex items-center gap-2 px-4 shrink-0">
+    <header className="dark md:hidden h-14 border-b border-border bg-[#0a0f1a]/95 text-foreground backdrop-blur-md flex items-center gap-2 px-4 shrink-0">
       {onOpenSidebar ? (
         <button
           type="button"
