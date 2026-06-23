@@ -2,6 +2,7 @@ import type { HomologacaoParams, TemplateRow } from './types';
 import type { RetrievedChunk } from '@/lib/rag/types';
 import type { CompanyData } from '@/lib/db/user-company';
 import { splitTemplateBody, renderPlaceholders } from './template-assembly';
+import { certidoesLinksMarkdown } from './certidoes-links';
 import {
   isFiscalEnabled,
   consultarCnpj,
@@ -262,9 +263,17 @@ ${renderedHead}
 
 ${formatChunks(chunks)}`;
 
+  // Certidões não saem por API gratuita — sempre oferecemos os links oficiais
+  // de emissão manual. O LLM deve reproduzi-los na seção de próximos passos.
+  const certidoesBlock = `## Links de emissão de certidões (inclua-os VERBATIM na seção de certidões/próximos passos)
+
+As certidões não foram consultadas automaticamente (não há API pública para isso). Inclua esta lista de links no relatório para o comprador emitir manualmente:
+
+${certidoesLinksMarkdown(classified.cnpjData?.endereco?.uf)}`;
+
   const instruction = `## Tarefa
 
-Gere agora o relatório de homologação do fornecedor seguindo o template e as regras. Use os dados fiscais como verdade de base; quando faltar dado, sinalize e oriente verificação manual.`;
+Gere agora o relatório de homologação do fornecedor seguindo o template e as regras. Use os dados fiscais como verdade de base; quando faltar dado, sinalize e oriente verificação manual. Na seção de certidões/próximos passos, inclua os links de emissão fornecidos acima (mantenha as URLs exatas).`;
 
   return {
     system: HOMOLOGACAO_SYSTEM_PROMPT,
@@ -272,6 +281,7 @@ Gere agora o relatório de homologação do fornecedor seguindo o template e as 
       headerBlock,
       fiscalDataBlock(classified),
       companyBlock,
+      certidoesBlock,
       templateBlock,
       contextBlock,
       instruction,

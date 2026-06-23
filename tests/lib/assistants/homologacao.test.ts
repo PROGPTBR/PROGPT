@@ -102,6 +102,9 @@ describe('buildHomologacaoPrompt', () => {
     expect(user).toContain('JARAGUA DO SUL');
     expect(user).toContain('FULANO DE TAL');
     expect(user).toContain('Quadro societário');
+    // Links de certidões oficiais (consulta manual) sempre presentes.
+    expect(user).toContain('CNDT');
+    expect(user).toMatch(/consulta-crf\.caixa\.gov\.br|FGTS/);
   });
 
   it('serviço desligado → bloco com checklist de verificação manual (fail-soft)', () => {
