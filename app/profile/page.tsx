@@ -1,6 +1,6 @@
 import { getServerSupabase } from '@/lib/db/supabase';
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Trash2 } from 'lucide-react';
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
 import { ProfileLogoUpload } from '@/components/profile/ProfileLogoUpload';
@@ -163,6 +163,25 @@ const statusLabel =
             </p>
           </div>
           <ProfileCategoriesList />
+        </section>
+
+        {/* Conta — ação destrutiva, discreta no fim do perfil (não mais
+            exposta na sidebar). */}
+        <section className="space-y-3 pt-6 border-t border-border">
+          <div>
+            <h2 className="text-foreground font-medium text-2xl">Conta</h2>
+            <p className="text-base text-muted-foreground mt-1 leading-relaxed">
+              Encerrar sua conta remove permanentemente seus dados (conversas,
+              execuções e perfil). Esta ação não pode ser desfeita.
+            </p>
+          </div>
+          <Link
+            href="/account/delete"
+            className="inline-flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/5 text-red-600 dark:text-red-400 hover:bg-red-500/10 hover:border-red-500/50 px-4 py-2.5 text-sm font-medium transition-colors"
+          >
+            <Trash2 className="h-4 w-4" aria-hidden="true" />
+            Excluir minha conta
+          </Link>
         </section>
       </main>
     </div>

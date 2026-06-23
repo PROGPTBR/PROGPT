@@ -12,6 +12,7 @@ import {
   FileCode,
   TrendingUp,
   BookOpen,
+  CreditCard,
   ArrowLeft,
 } from 'lucide-react';
 import { BrandLogo } from '@/components/brand/BrandLogo';
@@ -26,6 +27,7 @@ const ITEMS = [
   { href: '/admin/feedback', label: 'Feedback', Icon: MessageSquare },
   { href: '/admin/funnel', label: 'Funil', Icon: TrendingUp },
   { href: '/admin/costs', label: 'Custos', Icon: DollarSign },
+  { href: '/admin/billing', label: 'Faturamento', Icon: CreditCard },
 ];
 
 export function AdminSidebar() {

@@ -11,6 +11,7 @@ import { startTrace, flushAsync } from '@/lib/observability/langfuse';
 import { recordApiUsage } from '@/lib/observability/api-usage';
 import { withUser } from '@/lib/observability/user-context';
 import { getCurrentUser } from '@/lib/auth';
+import { hasAccess } from '@/lib/billing/subscription';
 import { checkChatRateLimit } from '@/lib/rate-limit';
 import { summarizeChatTitle } from '@/lib/chat-title';
 import { getServerSupabase } from '@/lib/db/supabase';
@@ -73,6 +74,19 @@ export async function POST(req: Request): Promise<Response> {
   const user = await getCurrentUser();
   if (!user) {
     return Response.json({ error: 'unauthorized' }, { status: 401 });
+  }
+
+  // Sub-projeto 36 — acesso ao bot exige trial válido OU assinatura ativa
+  // (admin sempre passa). Gate atrás de BILLING_ENFORCE pra não bloquear o
+  // site antes do Asaas/webhook estarem prontos. Ligar com BILLING_ENFORCE=1.
+  if (
+    process.env.BILLING_ENFORCE === '1' &&
+    !(await hasAccess(user.id))
+  ) {
+    return Response.json(
+      { error: 'no_access', reason: 'trial_or_subscription_required' },
+      { status: 402 },
+    );
   }
 
   const rl = await checkChatRateLimit();

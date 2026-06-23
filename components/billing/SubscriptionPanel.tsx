@@ -26,6 +26,10 @@ function StatusBadge({ status }: { status: Subscription['status'] }) {
       label: 'Aguardando pagamento',
       cls: 'border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300',
     },
+    trialing: {
+      label: 'Período de teste (3 dias)',
+      cls: 'border-brand/40 bg-brand/10 text-brand',
+    },
     active: {
       label: 'Ativa',
       cls: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
@@ -91,7 +95,7 @@ export function SubscriptionPanel({ subscription }: Props) {
             <div>
               <div className="font-semibold">Upgrade pra Pro</div>
               <div className="text-sm text-muted-foreground">
-                R$ 99/mês · assistentes ilimitados · suporte por email
+                R$ 127,99/mês · assistentes ilimitados · suporte por email
               </div>
             </div>
           </div>

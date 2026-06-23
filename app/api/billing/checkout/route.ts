@@ -8,6 +8,7 @@ import {
   AsaasError,
 } from '@/lib/billing/asaas';
 import { getSubscription } from '@/lib/billing/subscription';
+import { getBillingSettings } from '@/lib/billing/settings';
 import { isValidCpf, formatCpf } from '@/lib/validators/cpf';
 
 export const runtime = 'nodejs';
@@ -31,7 +32,6 @@ const Body = z.object({
   professionalRequirement: z.string().trim().max(255).optional(),
 });
 
-const PRO_PRICE = 99.0;
 const PENDING_GRACE_MS = 60 * 60 * 1000; // 1h
 
 function originFrom(req: Request): string {
@@ -39,13 +39,12 @@ function originFrom(req: Request): string {
   return `${url.protocol}//${url.host}`;
 }
 
-function nextDueDate(): string {
-  // Asaas exige YYYY-MM-DD na timezone America/Sao_Paulo. Setamos
-  // tomorrow no horário local pra evitar criar charge "hoje" que pode
-  // confundir billing cycle.
+/** Data da 1ª cobrança (YYYY-MM-DD) = hoje + trialDays. Antes disso o cliente
+ *  usa os dias grátis com o cartão já cadastrado. */
+function firstChargeDate(trialDays: number): { date: string; iso: string } {
   const d = new Date();
-  d.setDate(d.getDate() + 1);
-  return d.toISOString().slice(0, 10);
+  d.setDate(d.getDate() + Math.max(0, trialDays));
+  return { date: d.toISOString().slice(0, 10), iso: d.toISOString() };
 }
 
 export async function POST(req: Request) {
@@ -142,16 +141,22 @@ if (existing) {
     }
   }
 
-  // Cria Asaas subscription
+  // Config administrável (preço + dias de trial)
+  const settings = await getBillingSettings();
+  const charge = firstChargeDate(settings.trialDays);
+  const priceLabel = `R$ ${settings.planPrice.toFixed(2).replace('.', ',')}`;
+
+  // Cria Asaas subscription — cartão obrigatório (trial), 1ª cobrança só
+  // após os dias grátis (nextDueDate = hoje + trialDays).
   let subscriptionResult;
   try {
     subscriptionResult = await createAsaasSubscription({
       customerId: asaasCustomerId,
-      value: PRO_PRICE,
+      value: settings.planPrice,
       cycle: 'MONTHLY',
-      billingType: 'UNDEFINED', // user escolhe no checkout
-      description: 'PROGPT Pro · R$ 99/mês',
-      nextDueDate: nextDueDate(),
+      billingType: 'CREDIT_CARD', // cartão pra cadastrar e cobrar pós-trial
+      description: `PROGPT Pro · ${priceLabel}/mês (${settings.trialDays} dias grátis)`,
+      nextDueDate: charge.date,
       callback: {
         successUrl: `${originFrom(req)}/account/billing?success=1`,
         autoRedirect: true,
@@ -162,16 +167,19 @@ if (existing) {
     return NextResponse.json({ error: 'billing_provider_error' }, { status: 502 });
   }
 
-  // Persist subscription row (upsert — se existing.id, atualiza; senão insert)
+  // Persist subscription row. status='pending' até o webhook do Asaas
+  // confirmar o cadastro do cartão → vira 'trialing' (acesso liberado até
+  // trial_end). trial_end já é gravado aqui = data da 1ª cobrança.
   const subRow = {
     user_id: user.id,
     asaas_customer_id: asaasCustomerId,
     asaas_subscription_id: subscriptionResult.id,
     status: 'pending' as const,
     plan: 'pro',
-    payment_method: null,
+    payment_method: 'credit_card' as const,
     current_period_start: null,
     current_period_end: null,
+    trial_end: charge.iso,
     cancel_at_period_end: false,
     cancelled_at: null,
     updated_at: new Date().toISOString(),

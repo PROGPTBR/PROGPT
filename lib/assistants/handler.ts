@@ -125,6 +125,19 @@ export function buildAssistantHandler<
     const user = await getCurrentUser();
     if (!user) return Response.json({ error: 'unauthorized' }, { status: 401 });
 
+    // Sub-projeto 36 — acesso (trial válido / assinatura ativa / admin) é
+    // obrigatório pra rodar qualquer assistente. Gate atrás de
+    // BILLING_ENFORCE (ligar com '1' quando o Asaas/webhook estiverem prontos).
+    if (process.env.BILLING_ENFORCE === '1') {
+      const { hasAccess } = await import('@/lib/billing/subscription');
+      if (!(await hasAccess(user.id))) {
+        return Response.json(
+          { error: 'no_access', reason: 'trial_or_subscription_required' },
+          { status: 402 },
+        );
+      }
+    }
+
     // Paywall: sub-projeto 27. Free tier = 1 execução lifetime por assistant_type.
     const { canUseAssistant } = await import('@/lib/billing/quota');
     if (!(await canUseAssistant(user.id, config.type))) {

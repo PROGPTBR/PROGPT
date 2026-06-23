@@ -9,11 +9,12 @@ export type Subscription = {
   user_id: string;
   asaas_customer_id: string | null;
   asaas_subscription_id: string | null;
-  status: 'pending' | 'active' | 'past_due' | 'cancelled' | 'expired';
+  status: 'pending' | 'trialing' | 'active' | 'past_due' | 'cancelled' | 'expired';
   plan: string;
   payment_method: 'credit_card' | 'pix' | 'boleto' | null;
   current_period_start: string | null;
   current_period_end: string | null;
+  trial_end: string | null;
   cancel_at_period_end: boolean;
   cancelled_at: string | null;
   created_at: string;
@@ -41,24 +42,74 @@ export async function getSubscription(userId: string): Promise<Subscription | nu
   return (data as Subscription) ?? null;
 }
 
+/**
+ * Uma assinatura concede acesso quando:
+ *  - status 'active' (paga), OU
+ *  - status 'trialing' e ainda dentro do `trial_end` (3 dias grátis), OU
+ *  - status 'past_due' mas ainda dentro do período já pago (grace).
+ */
+export function subscriptionGrantsAccess(sub: Subscription): boolean {
+  const now = new Date();
+  if (sub.status === 'active') return true;
+  if (sub.status === 'trialing') {
+    return !!sub.trial_end && new Date(sub.trial_end) > now;
+  }
+  if (sub.status === 'past_due') {
+    return !!sub.current_period_end && new Date(sub.current_period_end) > now;
+  }
+  return false;
+}
+
 export async function getActiveSubscription(
   userId: string,
 ): Promise<Subscription | null> {
   const sub = await getSubscription(userId);
   if (!sub) return null;
+  return subscriptionGrantsAccess(sub) ? sub : null;
+}
 
-  if (sub.status === 'active') return sub;
+export type AccessState = {
+  hasAccess: boolean;
+  status: Subscription['status'] | 'none';
+  trialEnd: string | null;
+  isTrial: boolean;
+  isAdmin: boolean;
+};
 
-  if (sub.status === 'past_due') {
-    if (
-      sub.current_period_end &&
-      new Date(sub.current_period_end) > new Date()
-    ) {
-      return sub;
-    }
+/**
+ * Estado de acesso consolidado pra gatear o bot/assistentes e montar a UI
+ * de "trial expirado". Admin sempre tem acesso.
+ */
+export async function getAccessState(userId: string): Promise<AccessState> {
+  const sb = getServerSupabase();
+  const { data: profile } = await sb
+    .from('profiles')
+    .select('role')
+    .eq('id', userId)
+    .maybeSingle();
+
+  if ((profile as { role?: string } | null)?.role === 'admin') {
+    return { hasAccess: true, status: 'active', trialEnd: null, isTrial: false, isAdmin: true };
   }
 
-  return null;
+  const sub = await getSubscription(userId);
+  if (!sub) {
+    return { hasAccess: false, status: 'none', trialEnd: null, isTrial: false, isAdmin: false };
+  }
+
+  const granted = subscriptionGrantsAccess(sub);
+  return {
+    hasAccess: granted,
+    status: sub.status,
+    trialEnd: sub.trial_end,
+    isTrial: sub.status === 'trialing' && granted,
+    isAdmin: false,
+  };
+}
+
+/** Gate booleano simples — admin OU assinatura/trial válidos. */
+export async function hasAccess(userId: string): Promise<boolean> {
+  return (await getAccessState(userId)).hasAccess;
 }
 
 // ============================

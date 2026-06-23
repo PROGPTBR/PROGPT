@@ -76,7 +76,7 @@ export function Sidebar({
   // ---- Collapsed: thin icon rail ----------------------------------------
   if (collapsed) {
     return (
-      <aside className="w-16 shrink-0 border-r border-border bg-card/60 backdrop-blur-md flex flex-col h-full transition-[width] duration-300">
+      <aside className="dark w-16 shrink-0 border-r border-border bg-card text-foreground backdrop-blur-md flex flex-col h-full transition-[width] duration-300">
         <div className="flex flex-col items-center gap-1 py-4 border-b border-border">
           <button
             type="button"
@@ -123,7 +123,7 @@ export function Sidebar({
 
   // ---- Expanded: full sidebar -------------------------------------------
   return (
-    <aside className="w-72 shrink-0 border-r border-border bg-card/60 backdrop-blur-md flex flex-col h-full transition-[width] duration-300">
+    <aside className="dark w-72 shrink-0 border-r border-border bg-card text-foreground backdrop-blur-md flex flex-col h-full transition-[width] duration-300">
       <div className="flex items-center justify-between gap-2 px-4 py-4 border-b border-border">
         <Link href="/" className="inline-flex items-center min-w-0 shrink">
           <BrandLogo size="lg" priority />

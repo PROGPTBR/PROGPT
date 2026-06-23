@@ -17,10 +17,12 @@
   /* Light theme (opt-in via the toggle). Clean, airy — white surfaces,
      deep-navy text, the 2B Supply blue as the accent. */
   :root {
-    --background: 210 40% 98%; /* #f7fafc off-white */
+    /* Soft slate base (não branco puro) — cards brancos destacam com sombra,
+       um look mais profissional/menos estourado. */
+    --background: 214 30% 92%; /* #e6ebf1 slate suave */
     --foreground: 222 47% 11%;
 
-    --card: 0 0% 100%; /* white elevated surface */
+    --card: 0 0% 100%; /* card branco "flutua" sobre o slate */
     --card-foreground: 222 47% 11%;
 
     --popover: 0 0% 100%;
@@ -29,20 +31,20 @@
     --primary: 204 84% 45%; /* #1283d4 brand blue — readable on white */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 94%;
+    --secondary: 214 28% 89%;
     --secondary-foreground: 222 47% 11%;
 
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 40%;
+    --muted: 214 28% 90%;
+    --muted-foreground: 215 16% 38%;
 
-    --accent: 204 90% 95%; /* faint blue tint for hovers */
+    --accent: 204 70% 90%; /* faint blue tint for hovers */
     --accent-foreground: 222 47% 11%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 214 32% 88%;
-    --input: 214 32% 86%;
+    --border: 214 22% 83%;
+    --input: 214 22% 84%;
     --ring: 204 84% 45%;
 
     --radius: 0.625rem;
@@ -179,4 +181,37 @@
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(217 24% 32%);
   background-clip: padding-box;
+}
+
+/* Swipe-up — chevrons subindo em sequência (acento moderno de movimento). */
+@keyframes swipe-up {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  40% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+}
+.swipe-chevron {
+  animation: swipe-up 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+.swipe-chevron:nth-of-type(1) {
+  animation-delay: 0s;
+}
+.swipe-chevron:nth-of-type(2) {
+  animation-delay: 0.25s;
+}
+.swipe-chevron:nth-of-type(3) {
+  animation-delay: 0.5s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .swipe-chevron {
+    animation: none;
+    opacity: 0.55;
+  }
 }

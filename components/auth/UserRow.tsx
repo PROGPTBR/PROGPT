@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { CreditCard, LogOut, Moon, Shield, Sun, Trash2, UserCircle } from 'lucide-react';
+import { CreditCard, LogOut, Moon, Shield, Sun, UserCircle } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { supabaseBrowser } from '@/lib/db/supabase-browser';
 
@@ -104,13 +104,6 @@ export function UserRow({ collapsed = false }: { collapsed?: boolean }) {
       >
         <CreditCard className="h-4 w-4" aria-hidden="true" />
         <span>Assinatura</span>
-      </Link>
-      <Link
-        href="/account/delete"
-        className="flex items-center gap-2 px-4 py-2.5 text-sm text-muted-foreground hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400 transition-colors"
-      >
-        <Trash2 className="h-4 w-4" aria-hidden="true" />
-        <span>Excluir minha conta</span>
       </Link>
       <div className="flex items-center gap-3 p-4 border-t border-border">
         <div className="h-8 w-8 rounded-full bg-brand-gradient text-black flex items-center justify-center text-xs font-semibold shrink-0">
