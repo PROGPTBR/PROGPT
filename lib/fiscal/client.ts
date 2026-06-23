@@ -37,11 +37,14 @@ export function isFiscalEnabled(): boolean {
 }
 
 function getBaseUrl(): string {
-  const url = process.env.FISCAL_API_URL?.trim();
-  if (!url) {
+  const raw = process.env.FISCAL_API_URL?.trim();
+  if (!raw) {
     throw new FiscalError('FISCAL_API_URL env var missing', 0, null);
   }
-  return url.replace(/\/+$/, ''); // sem barra final
+  // Tolera valor SEM esquema (ex.: "fiscal.up.railway.app") — default https.
+  // Sem isso o fetch falha com "Failed to parse URL".
+  const withScheme = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+  return withScheme.replace(/\/+$/, ''); // sem barra final
 }
 
 /** Só dígitos — o serviço aceita CNPJ formatado ou não, mas normalizamos. */

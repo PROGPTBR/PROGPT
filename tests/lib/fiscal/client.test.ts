@@ -59,6 +59,18 @@ describe('fiscal client — chamadas tipadas', () => {
     expect(url).toBe('http://fiscal.local:8000/v1/cnpj/00000000000191');
   });
 
+  it('tolera FISCAL_API_URL sem esquema (default https://)', async () => {
+    vi.stubEnv('FISCAL_API_URL', 'mcp-fiscal.up.railway.app');
+    const fetchSpy = vi
+      .fn()
+      .mockResolvedValue(json({ cnpj: '00000000000191', razao_social: 'X' }));
+    vi.stubGlobal('fetch', fetchSpy);
+
+    await consultarCnpj('00000000000191');
+    const [url] = fetchSpy.mock.calls[0]! as [string];
+    expect(url).toBe('https://mcp-fiscal.up.railway.app/v1/cnpj/00000000000191');
+  });
+
   it('riskScoreSupplier adiciona ?estrito=true quando estrito', async () => {
     vi.stubEnv('FISCAL_API_URL', 'http://fiscal.local:8000');
     const fetchSpy = vi.fn().mockResolvedValue(
