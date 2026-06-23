@@ -66,7 +66,9 @@ export type ApiOperation =
   | 'assistant-homologacao-generate'
   | 'assistant-homologacao-reputacao'
   | 'assistant-pesquisa-precos-generate'
-  | 'govdata-catmat-pick';
+  | 'govdata-catmat-pick'
+  | 'comprador-analyze'
+  | 'comprador-draft-reply';
 
 export type RecordUsageInput = {
   provider: ApiProvider;
