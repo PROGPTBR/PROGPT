@@ -296,6 +296,7 @@ SOURCE_SUPABASE_URL=           # sub-projeto 32 — Supabase do app-fonte de pro
 SOURCE_SUPABASE_SERVICE_ROLE_KEY= # sub-projeto 32 — service-role do projeto fonte. SÓ pra `npm run prompts:import` local; NUNCA no Railway nem commitada
 FISCAL_API_URL=                # sub-projeto 36 (fase 0) — URL do serviço REST mcp-fiscal-brasil (Docker no Railway, porta 8000; aceita sem https:// → cliente prefixa). Vazio => features fiscais desligadas (fail-soft). Ver docs/product/fiscal-api-contract.md
 PORTAL_TRANSPARENCIA_TOKEN=    # sub-projeto 36 — token grátis da API do Portal da Transparência (CGU) p/ sanções CEIS/CNEP na homologação. Vazio => bloco de sanções off (fail-soft). Cadastro: portaldatransparencia.gov.br/api-de-dados/cadastrar-email
+HOMOLOGACAO_WEBSEARCH=         # sub-projeto 36 — due diligence reputacional na homologação via web search da OpenAI (Responses API tool `web_search`). On por padrão (usa OPENAI_API_KEY); custa por homologação. Setar 'false' desliga
 ```
 
 ## Comandos

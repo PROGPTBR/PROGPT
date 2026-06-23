@@ -17,6 +17,7 @@ import type {
   TaxRegimeComparison,
 } from '@/lib/fiscal/types';
 import { consultarSancoes, type SancoesResult } from '@/lib/fiscal/sancoes';
+import { buscarReputacao, type ReputacaoResult } from '@/lib/fiscal/reputacao';
 
 // Sub-projeto 36 (fase 1) — Homologação / Qualificação de Fornecedor.
 //
@@ -34,6 +35,7 @@ export type HomologacaoClassified = {
   compliance: ComplianceReport | null;
   regimes: TaxRegimeComparison | null;
   sancoes: SancoesResult | null; // CEIS/CNEP (Portal da Transparência)
+  reputacao: ReputacaoResult | null; // due diligence reputacional (busca web)
   error?: string;
 };
 
@@ -49,6 +51,7 @@ export async function fetchHomologacaoData(
     compliance: null,
     regimes: null,
     sancoes: null,
+    reputacao: null,
   };
   // Sanções (CEIS/CNEP) é um serviço SEPARADO (Portal da Transparência) com
   // sua própria env; roda mesmo que o serviço fiscal esteja off, e é fail-soft.
@@ -56,6 +59,10 @@ export async function fetchHomologacaoData(
 
   if (!base.enabled) {
     base.sancoes = await sancoesP;
+    base.reputacao = await buscarReputacao({
+      razaoSocial: params.fornecedorNome || params.cnpj,
+      cnpj: params.cnpj,
+    });
     return base;
   }
 
@@ -69,6 +76,11 @@ export async function fetchHomologacaoData(
   if (riskR.status === 'fulfilled') base.risk = riskR.value;
   if (compR.status === 'fulfilled') base.compliance = compR.value;
   base.sancoes = await sancoesP;
+  // Reputacional usa a razão social oficial (melhor termo de busca) quando há.
+  base.reputacao = await buscarReputacao({
+    razaoSocial: base.cnpjData?.razao_social || params.fornecedorNome || params.cnpj,
+    cnpj: params.cnpj,
+  });
 
   // regime tributário só quando o usuário informou setor + faturamento.
   if (params.setor && typeof params.faturamentoAnualBRL === 'number') {
@@ -113,7 +125,8 @@ export const HOMOLOGACAO_SYSTEM_PROMPT = `Você é um especialista sênior em St
 4. **Profundidade sênior**: amarre cada recomendação a um critério objetivo. Evite generalidades vazias.
 5. **Fundamente** boas práticas de homologação na base de conhecimento (qualificação de fornecedores, due diligence, gestão de risco de suprimento) — sem citar autores/IDs/colchetes.
 6. **Sem preâmbulo conversacional**; comece pelo título. Markdown limpo, tabelas markdown, **bold** nos valores críticos.
-7. **Sanções são impeditivas**: se houver achado em CEIS/CNEP (sanção/inidoneidade), a recomendação final NÃO pode ser "aprovar" — trate como bloqueio/recusa até análise jurídica, independentemente do score fiscal.`;
+7. **Sanções são impeditivas**: se houver achado em CEIS/CNEP (sanção/inidoneidade), a recomendação final NÃO pode ser "aprovar" — trate como bloqueio/recusa até análise jurídica, independentemente do score fiscal.
+8. **Reputacional é só indicativo**: o bloco de due diligence reputacional vem de busca web (não-oficial). Reproduza-o numa seção própria com o aviso de que é indicativo; ele pode levantar pontos de aprofundamento, mas NÃO altera sozinho a recomendação cadastral/fiscal.`;
 
 const RISK_LABEL: Record<string, string> = {
   baixo: 'Baixo',
@@ -260,6 +273,15 @@ function sancoesBlock(s: SancoesResult | null): string {
 ${rows.join('\n')}`;
 }
 
+function reputacaoBlock(r: ReputacaoResult | null): string {
+  if (!r || !r.enabled || !r.available || !r.resumo) return '';
+  return `## Due diligence reputacional (INDICATIVO — não-oficial, busca web)
+
+> ⚠️ Sinais coletados por busca na web. **NÃO são fonte oficial** e não substituem a verificação documental. Use apenas como alerta para aprofundamento humano; **não rebaixe nem eleve a recomendação fiscal/cadastral só com base nisto**.
+
+${r.resumo}`;
+}
+
 export function buildHomologacaoPrompt(
   params: HomologacaoParams,
   classified: HomologacaoClassified,
@@ -322,6 +344,7 @@ Gere agora o relatório de homologação do fornecedor seguindo o template e as 
       headerBlock,
       fiscalDataBlock(classified),
       sancoesBlock(classified.sancoes),
+      reputacaoBlock(classified.reputacao),
       companyBlock,
       certidoesBlock,
       templateBlock,
