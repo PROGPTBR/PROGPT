@@ -108,7 +108,8 @@ function ChatRootMounted() {
       <Sheet open={drawerOpen} onOpenChange={(open) => setDrawerOpen(open)}>
         <SheetContent
           side="left"
-          className="p-0 w-72 bg-background border-border"
+          showCloseButton={false}
+          className="p-0 w-[17rem] max-w-[85vw] bg-background border-border"
         >
           <Sidebar
             sessions={sessionsApi.sessions}
