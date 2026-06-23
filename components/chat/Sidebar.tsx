@@ -8,6 +8,7 @@ import {
   Sparkles,
   Pencil,
   BookOpen,
+  ShoppingCart,
   PanelLeftClose,
   PanelLeftOpen,
 } from 'lucide-react';
@@ -99,6 +100,14 @@ export function Sidebar({
         </div>
         <nav className="flex flex-col items-center gap-1 py-3">
           <Link
+            href="/assistants/comprador"
+            title="Robô Comprador"
+            aria-label="Robô Comprador"
+            className="h-9 w-9 rounded-lg flex items-center justify-center bg-brand-gradient-soft border border-brand/40 text-brand hover:brightness-110 transition-all"
+          >
+            <ShoppingCart className="h-5 w-5" aria-hidden="true" />
+          </Link>
+          <Link
             href="/assistants"
             title="Assistentes"
             aria-label="Assistentes"
@@ -151,6 +160,16 @@ export function Sidebar({
           )}
         </div>
       </div>
+      <Link
+        href="/assistants/comprador"
+        className="group flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b border-border border-l-2 border-l-brand bg-brand-gradient-soft text-foreground hover:brightness-110 transition-all"
+      >
+        <ShoppingCart className="h-4 w-4 text-brand" aria-hidden="true" />
+        <span>Robô Comprador</span>
+        <span className="ml-auto text-[10px] font-bold uppercase tracking-wide rounded bg-brand/20 text-brand px-1.5 py-0.5">
+          novo
+        </span>
+      </Link>
       <Link
         href="/assistants"
         className="group flex items-center gap-2 px-4 py-3 text-sm font-medium border-b border-border text-brand hover:bg-brand/10 transition-colors"
