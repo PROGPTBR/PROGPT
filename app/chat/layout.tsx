@@ -21,27 +21,35 @@ export default async function ChatLayout({
     redirect('/login');
   }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select(
-      `
-      created_at,
-      selected_plan,
-      subscription_status
+ const { data: profile } = await supabase
+  .from('profiles')
+  .select(
     `
-    )
-    .eq('id', user.id)
-    .single();
+    created_at,
+    plan,
+    selected_plan,
+    subscription_status
+  `
+  )
+  .eq('id', user.id)
+  .single();
+ 
 
   if (!profile) {
     redirect('/login');
   }
 
   // PF e PJ liberados
-  const paidPlan =
-    profile.selected_plan === 'pf' ||
-    profile.selected_plan === 'pj';
+const currentPlan =
+  profile.plan || profile.selected_plan;
 
+const paidPlan =
+  currentPlan === 'pf' ||
+  currentPlan === 'pf-99' ||
+  currentPlan === 'pj' ||
+  currentPlan === 'pj-consulte';
+
+  
   // Assinatura ativa liberada
   const activeSubscription =
     profile.subscription_status === 'ACTIVE';
@@ -57,6 +65,7 @@ export default async function ChatLayout({
     diffDays > 3 &&
     !paidPlan &&
     !activeSubscription;
+
 
   if (trialExpired) {
   redirect('/planos?expired=true');
