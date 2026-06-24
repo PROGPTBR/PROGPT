@@ -158,7 +158,10 @@ if (existing) {
       description: `PROGPT Pro · ${priceLabel}/mês (${settings.trialDays} dias grátis)`,
       nextDueDate: charge.date,
       callback: {
-        successUrl: `${originFrom(req)}/account/billing?success=1`,
+        // Volta do hosted checkout do Asaas → /assinar/concluido confirma o
+        // trial (marca 'trialing') mesmo antes do webhook chegar, e manda o
+        // usuário direto pro /chat já liberado.
+        successUrl: `${originFrom(req)}/assinar/concluido`,
         autoRedirect: true,
       },
     });

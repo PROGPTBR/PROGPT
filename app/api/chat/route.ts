@@ -76,12 +76,12 @@ export async function POST(req: Request): Promise<Response> {
     return Response.json({ error: 'unauthorized' }, { status: 401 });
   }
 
-  // Sub-projeto 36 — acesso ao bot exige trial válido OU assinatura ativa
-  // (admin sempre passa). Gate atrás de BILLING_ENFORCE pra não bloquear o
-  // site antes do Asaas/webhook estarem prontos. Ligar com BILLING_ENFORCE=1.
+  // Sub-projeto 36.1 — acesso ao bot exige trial válido OU assinatura ativa.
+  // Admin e contas antigas (grandfathered, ver hasAccess) sempre passam.
+  // Ligado por padrão; kill-switch BILLING_ENFORCE=0 desliga em emergência.
   if (
-    process.env.BILLING_ENFORCE === '1' &&
-    !(await hasAccess(user.id))
+    process.env.BILLING_ENFORCE !== '0' &&
+    !(await hasAccess(user.id, user.created_at))
   ) {
     return Response.json(
       { error: 'no_access', reason: 'trial_or_subscription_required' },

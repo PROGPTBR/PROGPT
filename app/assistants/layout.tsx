@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ArrowLeft, History } from 'lucide-react';
 import { requireUser, NotAuthenticated } from '@/lib/auth';
+import { hasAccess } from '@/lib/billing/subscription';
 import { redirect } from 'next/navigation';
 import { Header } from '../login/header';
 
@@ -11,12 +12,15 @@ export default async function AssistantsLayout({
 }: {
   children: React.ReactNode;
 }) {
+  let user;
   try {
-    await requireUser();
+    user = await requireUser();
   } catch (err) {
     if (err instanceof NotAuthenticated) redirect('/login?next=/assistants');
     throw err;
   }
+  // Novos usuários só usam os assistentes após cadastrar o cartão (trial).
+  if (!(await hasAccess(user.id, user.created_at))) redirect('/assinar');
   return (
     <>
       <Header />
