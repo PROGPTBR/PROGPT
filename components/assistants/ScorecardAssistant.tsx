@@ -1,17 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import { BarChart3 } from 'lucide-react';
 import { ScorecardForm, type ScorecardFormValues } from './ScorecardForm';
 import { ScorecardResult } from './ScorecardResult';
 import { RfpChatPanel } from './RfpChatPanel';
-import { AssistantEntryChoice } from './AssistantEntryChoice';
+import { DownloadTemplateButton } from './DownloadTemplateButton';
 import { handlePaywallResponse } from '@/lib/billing/handle-paywall';
 
-type Phase = 'choice' | 'form' | 'generating' | 'done';
+type Phase = 'form' | 'generating' | 'done';
 
 export function ScorecardAssistant() {
-  const [phase, setPhase] = useState<Phase>('choice');
+  const [phase, setPhase] = useState<Phase>('form');
   const [output, setOutput] = useState('');
   const [runId, setRunId] = useState<string | null>(null);
   const [scorecardName, setScorecardName] = useState('');
@@ -91,39 +90,33 @@ export function ScorecardAssistant() {
   }
 
   function handleReset() {
-    setPhase('choice');
+    setPhase('form');
     setOutput('');
     setRunId(null);
     setError(null);
   }
 
-  if (phase === 'choice') {
-    return (
-      <AssistantEntryChoice
-        title="Supplier Scorecard"
-        subtitle="Avalie e ranqueie fornecedores por critérios ponderados. Defina os critérios e pesos, insira as notas por fornecedor e o assistente gera ranking, faixas (Estratégico / Desenvolvimento / Saída) e plano de ação — pronto para .docx e .xlsx."
-        templateHref="/templates/scorecard-template.xlsx"
-        templateFilename="Scorecard-template.xlsx"
-        templateFormat=".xlsx · planilha"
-        templateDescription="Template com abas de critérios, fornecedores e notas. Preencha offline e importe aqui para gerar o relatório automaticamente."
-        assistedDescription="Configure critérios com pesos, insira notas por fornecedor (0–10) e defina os thresholds de faixa. O sistema calcula o score ponderado, gera ranking + plano de ação por faixa e exporta .docx e .xlsx."
-        AssistedIcon={BarChart3}
-        onAssistedClick={() => setPhase('form')}
-      />
-    );
-  }
-
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Supplier Scorecard <span className="text-brand">.</span>
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
-          Configure critérios com pesos, insira notas por fornecedor (0–10) e defina os
-          thresholds de faixa. O sistema calcula o score ponderado, gera ranking com faixas
-          Estratégico / Desenvolvimento / Saída e plano de ação — pronto para .docx e .xlsx.
-        </p>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Supplier Scorecard <span className="text-brand">.</span>
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
+            Configure critérios com pesos, insira notas por fornecedor (0–10) e defina os
+            thresholds de faixa. O sistema calcula o score ponderado, gera ranking com faixas
+            Estratégico / Desenvolvimento / Saída e plano de ação — pronto para .docx e .xlsx.
+          </p>
+        </div>
+        {phase === 'form' && (
+          <DownloadTemplateButton
+            href="/templates/scorecard-template.xlsx"
+            filename="Scorecard-template.xlsx"
+            format=".xlsx"
+            description="Template com abas de critérios, fornecedores e notas. Preencha offline e importe aqui para gerar o relatório automaticamente."
+          />
+        )}
       </div>
 
       {error && (

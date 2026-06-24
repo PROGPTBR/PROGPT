@@ -1,23 +1,21 @@
 'use client';
 
 import { useState } from 'react';
-import { LayoutGrid } from 'lucide-react';
 import { KraljicForm, type KraljicFormValues } from './KraljicForm';
 import { KraljicResult } from './KraljicResult';
 import { RfpChatPanel } from './RfpChatPanel';
-import { AssistantEntryChoice } from './AssistantEntryChoice';
+import { DownloadTemplateButton } from './DownloadTemplateButton';
 import { handlePaywallResponse } from '@/lib/billing/handle-paywall';
 
-type Phase = 'choice' | 'form' | 'generating' | 'done';
+type Phase = 'form' | 'generating' | 'done';
 
-// Sub-projeto 27 — extends RfpAssistant's shape with a 'choice' entry
-// step: choice → form → generating → done. On done we also mount
+// Sub-projeto 27 — form → generating → done. On done we also mount
 // RfpChatPanel (assistant-type-agnostic chat) so the user can refine
 // the narrative — and "Aplicar à análise" patches the head via the
 // shared /api/assistants/runs/[id]/apply endpoint.
 
 export function KraljicAssistant() {
-  const [phase, setPhase] = useState<Phase>('choice');
+  const [phase, setPhase] = useState<Phase>('form');
   const [output, setOutput] = useState('');
   const [runId, setRunId] = useState<string | null>(null);
   const [portfolioName, setPortfolioName] = useState('');
@@ -119,39 +117,33 @@ export function KraljicAssistant() {
   }
 
   function handleReset() {
-    setPhase('choice');
+    setPhase('form');
     setOutput('');
     setRunId(null);
     setError(null);
   }
 
-  if (phase === 'choice') {
-    return (
-      <AssistantEntryChoice
-        title="Assistente Kraljic"
-        subtitle="Escolha como quer trabalhar: baixar o template do Procurement Garage para classificar offline, ou usar o formulário guiado e deixar o assistente gerar a matriz + plano de ação."
-        templateHref="/templates/kraljic-template.xlsx"
-        templateFilename="Kraljic-template.xlsx"
-        templateFormat=".xlsx · planilha"
-        templateDescription="Template Procurement Garage com sheets de instruções, dados, scoring agregado e matriz 2×2. Você lista até 30 categorias e o Excel calcula os quadrantes automaticamente."
-        assistedDescription="Liste suas categorias com spend + 7 sub-scores. O sistema classifica cada item, gera relatório executivo, plano de ação por quadrante e gráfico bubble 2×2 — pronto para .docx e .xlsx."
-        AssistedIcon={LayoutGrid}
-        onAssistedClick={() => setPhase('form')}
-      />
-    );
-  }
-
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Assistente Kraljic <span className="text-brand">.</span>
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
-          Liste suas categorias com spend + 7 sub-scores. O sistema classifica cada item na
-          Matriz de Kraljic e gera relatório executivo, plano de ação por quadrante e gráfico
-          bubble 2×2 — pronto para .docx e .xlsx.
-        </p>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Assistente Kraljic <span className="text-brand">.</span>
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
+            Liste suas categorias com spend + 7 sub-scores. O sistema classifica cada item na
+            Matriz de Kraljic e gera relatório executivo, plano de ação por quadrante e gráfico
+            bubble 2×2 — pronto para .docx e .xlsx.
+          </p>
+        </div>
+        {phase === 'form' && (
+          <DownloadTemplateButton
+            href="/templates/kraljic-template.xlsx"
+            filename="Kraljic-template.xlsx"
+            format=".xlsx"
+            description="Template Procurement Garage com sheets de instruções, dados, scoring agregado e matriz 2×2. Você lista até 30 categorias e o Excel calcula os quadrantes automaticamente."
+          />
+        )}
       </div>
 
       {error && (

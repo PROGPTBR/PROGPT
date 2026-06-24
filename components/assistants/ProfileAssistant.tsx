@@ -1,22 +1,21 @@
 'use client';
 
 import { useState } from 'react';
-import { FileText } from 'lucide-react';
 import { ProfileForm, type ProfileFormValues } from './ProfileForm';
 import { ProfileResult } from './ProfileResult';
 import { RfpChatPanel } from './RfpChatPanel';
-import { AssistantEntryChoice } from './AssistantEntryChoice';
+import { DownloadTemplateButton } from './DownloadTemplateButton';
 import { handlePaywallResponse } from '@/lib/billing/handle-paywall';
 
 // Sub-projeto 33 — Profile (Perfil da Categoria) assistant.
 //
 // State machine mirrors the other 5 assistants:
-//   choice → form → generating → done
+//   form → generating → done (entrada direta)
 
-type Phase = 'choice' | 'form' | 'generating' | 'done';
+type Phase = 'form' | 'generating' | 'done';
 
 export function ProfileAssistant() {
-  const [phase, setPhase] = useState<Phase>('choice');
+  const [phase, setPhase] = useState<Phase>('form');
   const [output, setOutput] = useState('');
   const [runId, setRunId] = useState<string | null>(null);
   const [nomeCategoria, setNomeCategoria] = useState('');
@@ -93,38 +92,32 @@ export function ProfileAssistant() {
   }
 
   function handleReset() {
-    setPhase('choice');
+    setPhase('form');
     setOutput('');
     setRunId(null);
     setError(null);
   }
 
-  if (phase === 'choice') {
-    return (
-      <AssistantEntryChoice
-        title="Assistente Perfil"
-        subtitle="Caracterize uma categoria de compra antes de partir para análise de spend, mercado ou sourcing. Escolha como quer trabalhar."
-        templateHref="/templates/profile-template.md"
-        templateFilename="Perfil-Categoria-referencia.md"
-        templateFormat=".md · referência"
-        templateDescription="Roteiro de Perfil da Categoria baseado em Monczka + O'Brien — 15 campos em 5 blocos. Use offline como guia para preencher o form ou para preparar a entrevista com stakeholders."
-        assistedDescription="Preencha o form guiado (15 campos) ou faça upload de um Perfil em PDF/DOCX que você já tenha — o sistema extrai os campos automaticamente. O assistente gera o documento estruturado com persona sênior, fundamentado na base de conhecimento."
-        AssistedIcon={FileText}
-        onAssistedClick={() => setPhase('form')}
-      />
-    );
-  }
-
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Assistente Perfil <span className="text-brand">.</span>
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
-          Perfil da Categoria (Strategic Sourcing Step 1) — caracterização
-          estruturada que alimenta os próximos passos (ABC, Kraljic, Porter, RFP).
-        </p>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Assistente Perfil <span className="text-brand">.</span>
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
+            Perfil da Categoria (Strategic Sourcing Step 1) — caracterização
+            estruturada que alimenta os próximos passos (ABC, Kraljic, Porter, RFP).
+          </p>
+        </div>
+        {phase === 'form' && (
+          <DownloadTemplateButton
+            href="/templates/profile-template.md"
+            filename="Perfil-Categoria-referencia.md"
+            format=".md"
+            description="Roteiro de Perfil da Categoria baseado em Monczka + O'Brien — 15 campos em 5 blocos. Use offline como guia para preencher o form ou para preparar a entrevista com stakeholders."
+          />
+        )}
       </div>
 
       {error && (
