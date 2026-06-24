@@ -7,12 +7,14 @@ import { toast } from 'sonner';
 import {
   ArrowDownRight,
   ArrowUpRight,
+  Maximize2,
   Minus,
   RefreshCw,
   Sparkles,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sparkline } from './Sparkline';
+import { IndicadorDetailDialog, type DetailCard } from './IndicadorDetailDialog';
 
 type IndicadorTipo = 'taxa' | 'indice' | 'cambio';
 type Tendencia = 'up' | 'down' | 'flat';
@@ -50,15 +52,23 @@ function tendStyle(t: Tendencia): { Icon: typeof Minus; cls: string; label: stri
   return { Icon: Minus, cls: 'text-muted-foreground', label: 'estável' };
 }
 
-function IndicadorCardView({ c }: { c: Card }) {
+function IndicadorCardView({ c, onOpen }: { c: Card; onOpen: () => void }) {
   const { big, suffix } = valorLabel(c);
   const t = tendStyle(c.tendencia);
   return (
-    <div className="rounded-lg border border-border bg-card p-4 flex flex-col gap-2">
+    <button
+      type="button"
+      onClick={onOpen}
+      title={`Ver série histórica de ${c.nome}`}
+      className="group text-left rounded-lg border border-border bg-card p-4 flex flex-col gap-2 transition-all hover:border-brand/50 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-brand/40"
+    >
       <div className="flex items-center justify-between">
         <span className="text-sm font-medium text-foreground">{c.nome}</span>
-        <span className={`inline-flex items-center gap-0.5 text-[11px] ${t.cls}`} title={t.label}>
-          <t.Icon className="h-3.5 w-3.5" />
+        <span className="inline-flex items-center gap-1">
+          <span className={`inline-flex items-center text-[11px] ${t.cls}`} title={t.label}>
+            <t.Icon className="h-3.5 w-3.5" />
+          </span>
+          <Maximize2 className="h-3 w-3 text-muted-foreground/50 group-hover:text-brand transition-colors" />
         </span>
       </div>
       <div className="flex items-baseline gap-1.5">
@@ -72,7 +82,7 @@ function IndicadorCardView({ c }: { c: Card }) {
         {c.serieLabel} · em {c.data}
       </div>
       <p className="text-xs text-muted-foreground leading-snug">{c.descricao}</p>
-    </div>
+    </button>
   );
 }
 
@@ -82,6 +92,7 @@ export function IndicadoresDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [leitura, setLeitura] = useState('');
   const [leituraLoading, setLeituraLoading] = useState(false);
+  const [selected, setSelected] = useState<DetailCard | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -168,10 +179,24 @@ export function IndicadoresDashboard() {
       {painel?.cards && painel.cards.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {painel.cards.map((c) => (
-            <IndicadorCardView key={c.key} c={c} />
+            <IndicadorCardView
+              key={c.key}
+              c={c}
+              onOpen={() =>
+                setSelected({
+                  key: c.key,
+                  nome: c.nome,
+                  unidade: c.unidade,
+                  serieLabel: c.serieLabel,
+                  descricao: c.descricao,
+                })
+              }
+            />
           ))}
         </div>
       )}
+
+      <IndicadorDetailDialog card={selected} onClose={() => setSelected(null)} />
 
       {(leituraLoading || leitura) && (
         <div className="rounded-lg border border-brand/30 bg-brand/[0.03] p-5">
