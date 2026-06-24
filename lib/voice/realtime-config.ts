@@ -74,6 +74,20 @@ export const FISCAL_TOOL = {
   },
 };
 
+export const INDICADORES_TOOL_NAME = 'consultar_indicadores_economicos';
+
+// Tool de indicadores econômicos (sub-projeto 37 fase 3) — BACEN.
+export const INDICADORES_TOOL = {
+  type: 'function' as const,
+  name: INDICADORES_TOOL_NAME,
+  description:
+    'Consulta os indicadores econômicos brasileiros atuais no Banco Central: taxa Selic (meta), IPCA acumulado em 12 meses e câmbio do dólar. Chame quando o usuário perguntar sobre juros, Selic, inflação, IPCA, índice de preços, dólar/câmbio, reajuste contratual ou correção monetária.',
+  parameters: {
+    type: 'object',
+    properties: {},
+  },
+};
+
 // Persona falada — adaptada do SYSTEM_PROMPT do chat (lib/rag/prompt-builder.ts)
 // pro runtime de voz. NÃO compartilha bytes com o original (runtime diferente,
 // sem prefix cache de chat): aqui a regra de ouro é resposta CURTA e FALADA.
@@ -94,6 +108,9 @@ export function buildVoiceInstructions(): string {
 
 # Consulta fiscal por CNPJ
 Quando o usuário pedir para validar, verificar, homologar ou consultar um CNPJ ou a situação de um fornecedor, chame a ferramenta ${FISCAL_TOOL_NAME} com o CNPJ e relate de forma curta e falada a situação cadastral e o risco. Se a consulta não retornar dados, diga que não conseguiu consultar agora.
+
+# Indicadores econômicos
+Quando o usuário perguntar sobre Selic, juros, inflação, IPCA, dólar/câmbio, reajuste contratual ou correção monetária, chame a ferramenta ${INDICADORES_TOOL_NAME} (sem argumentos) e relate os números atuais de forma curta e falada. Use-os para fundamentar conversas sobre reajuste de preços e custo.
 
 # Documentos anexados
 Quando o usuário anexar um documento (contrato, proposta, planilha), o conteúdo entra na conversa como texto. Use-o como contexto primário pra perguntas sobre o documento.
@@ -118,7 +135,7 @@ export function buildClientSecretRequest(voice: VoiceName = DEFAULT_VOICE) {
       type: 'realtime',
       model: REALTIME_MODEL,
       instructions: buildVoiceInstructions(),
-      tools: [SEARCH_TOOL, FISCAL_TOOL],
+      tools: [SEARCH_TOOL, FISCAL_TOOL, INDICADORES_TOOL],
       tool_choice: 'auto',
       audio: {
         input: {

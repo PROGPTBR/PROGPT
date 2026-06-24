@@ -35,9 +35,11 @@ describe('realtime-config', () => {
     expect(req.session.model).toBe(REALTIME_MODEL);
     expect(REALTIME_MODEL).toBe('gpt-realtime-mini');
     expect(req.session.audio.input.transcription.language).toBe('pt');
-    // SEARCH_TOOL + FISCAL_TOOL (sub-projeto 36 fase 4)
-    expect(req.session.tools).toHaveLength(2);
-    expect(req.session.tools.map((t) => t.name)).toContain('consultar_dados_fiscais');
+    // SEARCH_TOOL + FISCAL_TOOL + INDICADORES_TOOL (sub-projetos 36 fase 4, 37 fase 3)
+    expect(req.session.tools).toHaveLength(3);
+    const toolNames = req.session.tools.map((t) => t.name);
+    expect(toolNames).toContain('consultar_dados_fiscais');
+    expect(toolNames).toContain('consultar_indicadores_economicos');
   });
 
   it('reconhecimento de fala: transcribe moderno + prompt de jargão + noise reduction + semantic VAD', () => {
