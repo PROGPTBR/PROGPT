@@ -29,3 +29,10 @@ export async function cached<T>(
 export function clearGovDataCache(): void {
   store.clear();
 }
+
+/** Invalida as entradas cujo key começa com `prefix` (force-refresh por feature). */
+export function clearGovDataCacheByPrefix(prefix: string): void {
+  for (const key of store.keys()) {
+    if (key.startsWith(prefix)) store.delete(key);
+  }
+}

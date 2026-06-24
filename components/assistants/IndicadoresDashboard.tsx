@@ -94,11 +94,13 @@ export function IndicadoresDashboard() {
   const [leituraLoading, setLeituraLoading] = useState(false);
   const [selected, setSelected] = useState<DetailCard | null>(null);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (force = false) => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/govdata/indicadores', { cache: 'no-store' });
+      const res = await fetch(`/api/govdata/indicadores${force ? '?refresh=1' : ''}`, {
+        cache: 'no-store',
+      });
       if (res.status === 429) throw new Error('Muitas consultas — aguarde um instante.');
       if (!res.ok) throw new Error(`status ${res.status}`);
       const data = (await res.json()) as Painel;
@@ -147,7 +149,7 @@ export function IndicadoresDashboard() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={load} disabled={loading}>
+          <Button variant="outline" size="sm" onClick={() => load(true)} disabled={loading}>
             <RefreshCw className={`h-3.5 w-3.5 mr-1 ${loading ? 'animate-spin' : ''}`} />
             Atualizar
           </Button>
