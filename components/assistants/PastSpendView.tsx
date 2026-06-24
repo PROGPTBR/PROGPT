@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { ArrowLeft, FileDown, FileText } from 'lucide-react';
+import { ArrowLeft, FileDown, FileText, LayoutDashboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { RfpChatPanel } from './RfpChatPanel';
 
@@ -29,7 +29,12 @@ export function PastSpendView({ runId, initialOutput, analysisName }: Props) {
 
       <div className="flex items-center justify-between flex-wrap gap-3">
         <h1 className="text-xl font-semibold tracking-tight">{analysisName}</h1>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <Link href={`/assistants/spend_analysis/${runId}/dashboard`}>
+            <Button size="sm">
+              <LayoutDashboard className="mr-1 h-4 w-4" /> Dashboard
+            </Button>
+          </Link>
           <a href={`/api/assistants/runs/${runId}/xlsx`}>
             <Button variant="outline" size="sm">
               <FileDown className="mr-1 h-4 w-4" /> Excel
