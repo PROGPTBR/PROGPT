@@ -8,6 +8,7 @@ import {
   Coins,
   FileText,
   Layers,
+  LineChart,
   MessageCircle,
   ShieldCheck,
   Star,
@@ -34,7 +35,8 @@ export type AssistantToolType =
   | 'profile'
   | 'negotiation'
   | 'homologacao'
-  | 'pesquisa_precos';
+  | 'pesquisa_precos'
+  | 'indicadores';
 
 type Meta = {
   title: string;
@@ -103,6 +105,12 @@ const META: Record<AssistantToolType, Meta> = {
       'Descreva os itens e ele busca o preço de referência nas compras públicas (CATMAT / Painel de Preços) — mediana, faixa e fontes para ancorar RFP, custo e negociação.',
     Icon: Coins,
   },
+  indicadores: {
+    title: 'Indicadores Econômicos',
+    blurb:
+      'Painel ao vivo do Banco Central (Selic, CDI, IPCA, IGP-M, dólar, euro) com gráfico e leitura para compras — custo de capital, reajuste contratual e câmbio.',
+    Icon: LineChart,
+  },
 };
 
 type Props = {
@@ -155,6 +163,7 @@ const VALID_TYPES = new Set<AssistantToolType>([
   'negotiation',
   'homologacao',
   'pesquisa_precos',
+  'indicadores',
 ]);
 
 // Server- and client-callable detector. Procura o PRIMEIRO `/assistants/<type>`
@@ -172,7 +181,7 @@ export function detectAssistantToolCTA(text: string): AssistantToolType | null {
 // Tipos cujo caminho cru removemos do texto exibido (o card assume o CTA).
 // Inclui `suppliers` (caminho válido) pra não deixar o path feio na frase.
 const STRIP_TYPES =
-  'rfp|kraljic|porter|abc|financial|scorecard|profile|negotiation|homologacao|pesquisa_precos|suppliers';
+  'rfp|kraljic|porter|abc|financial|scorecard|profile|negotiation|homologacao|pesquisa_precos|indicadores|suppliers';
 // "...em /assistants/rfp" → remove a preposição + o caminho, deixando a frase
 // natural ("use a ferramenta dedicada — ela gera...").
 const STRIP_PREP_RE = new RegExp(
