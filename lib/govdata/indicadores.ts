@@ -301,6 +301,35 @@ function toIso(ddmmyyyy: string): string {
   return m ? `${m[3]}-${m[2]}-${m[1]}` : ddmmyyyy;
 }
 
+// ── Série histórica por indicador (detalhe/gráfico/export) ───────────────────
+
+export type IndicadorKey = IndicadorCard['key'];
+
+/** Metadados por chave (fonte única do código SGS + rótulo da série). */
+export const INDICADOR_META: Record<
+  IndicadorKey,
+  { codigo: number; nome: string; unidade: string }
+> = {
+  selic: { codigo: SGS.SELIC_META, nome: 'Selic (meta)', unidade: '% a.a.' },
+  cdi: { codigo: SGS.CDI, nome: 'CDI', unidade: '% a.a.' },
+  ipca: { codigo: SGS.IPCA_MENSAL, nome: 'IPCA (variação mensal)', unidade: '%' },
+  igpm: { codigo: SGS.IGPM_MENSAL, nome: 'IGP-M (variação mensal)', unidade: '%' },
+  usd: { codigo: SGS.CAMBIO_USD, nome: 'Dólar (venda)', unidade: 'R$' },
+  eur: { codigo: SGS.CAMBIO_EUR, nome: 'Euro (venda)', unidade: 'R$' },
+};
+
+export function isIndicadorKey(k: string): k is IndicadorKey {
+  return Object.prototype.hasOwnProperty.call(INDICADOR_META, k);
+}
+
+/** Série histórica de um indicador (por chave) numa janela de `meses`. Fail-soft. */
+export async function serieIndicador(
+  key: IndicadorKey,
+  meses: number,
+): Promise<PontoSerie[]> {
+  return serieRangeNum(INDICADOR_META[key].codigo, meses);
+}
+
 const BR = (n: number, frac = 2) =>
   n.toLocaleString('pt-BR', { minimumFractionDigits: frac, maximumFractionDigits: frac });
 
