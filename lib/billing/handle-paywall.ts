@@ -19,6 +19,7 @@ const TYPE_LABELS: Record<string, string> = {
   abc: 'curva ABC',
   profile: 'perfil de categoria',
   negotiation: 'simulação de negociação',
+  spend_analysis: 'análise de gastos',
 };
 
 /**

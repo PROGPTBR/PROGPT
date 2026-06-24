@@ -11,6 +11,7 @@ import { RfpDocumentPreview } from './previews/RfpDocumentPreview';
 import { PorterForcesPreview } from './previews/PorterForcesPreview';
 import { FinancialScorePreview } from './previews/FinancialScorePreview';
 import { AbcCurvePreview } from './previews/AbcCurvePreview';
+import { SpendAnalysisPreview } from './previews/SpendAnalysisPreview';
 import { SuppliersPreview } from './previews/SuppliersPreview';
 import { NegotiationPreview } from './previews/NegotiationPreview';
 import { ScorecardPreview } from './previews/ScorecardPreview';
@@ -53,6 +54,20 @@ const SPOTLIGHTS: SpotlightAssistant[] = [
       '.docx + .xlsx multi-sheet + chart',
     ],
     Preview: AbcCurvePreview,
+  },
+  {
+    step: 1,
+    stepCategory: 'Análise',
+    href: '/assistants/spend_analysis',
+    title: 'Análise de Gastos',
+    short:
+      'Da nota fiscal à estratégia: sobe um lote de invoices (PDF ou planilha), extrai cada nota, classifica e gera KPIs + plano de strategic sourcing.',
+    bullets: [
+      'Upload de invoices em PDF + planilha (XLSX/CSV)',
+      'Extração por IA: PO, país, moeda, total, prazo, categoria',
+      'Base classificada + KPIs + Pareto (.xlsx/.docx na fase 2)',
+    ],
+    Preview: SpendAnalysisPreview,
   },
   {
     step: 2,
