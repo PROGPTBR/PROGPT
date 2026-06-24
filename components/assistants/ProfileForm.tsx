@@ -237,25 +237,12 @@ export function ProfileForm({
       onSubmit={handleSubmit}
       className="space-y-6 rounded-md border border-border bg-card p-6 max-w-5xl"
     >
-      <div>
-        <label className="text-xs font-medium block mb-1">Template</label>
-        <select
-          value={templateId}
-          onChange={(e) => setTemplateId(e.target.value)}
-          disabled={loadingTemplates}
-          className="w-full rounded-md border border-input bg-background p-2 text-sm"
-        >
-          {loadingTemplates && <option value="">Carregando…</option>}
-          {!loadingTemplates && templates.length === 0 && (
-            <option value="">(nenhum template publicado)</option>
-          )}
-          {templates.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.name}
-            </option>
-          ))}
-        </select>
-      </div>
+      {/* Template auto-selecionado (único) — dropdown removido; só avisa se faltar. */}
+      {!loadingTemplates && templates.length === 0 && (
+        <p className="text-[11px] text-destructive">
+          Nenhum template publicado. Peça à administração para criar um em /admin/templates.
+        </p>
+      )}
 
       {/* ── Upload extract ──────────────────────────────────────────── */}
       <div className="rounded-md border border-dashed border-border bg-background/40 p-4">

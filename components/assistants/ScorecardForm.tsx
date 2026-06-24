@@ -300,32 +300,13 @@ export function ScorecardForm({ onSubmit }: { onSubmit: (v: ScorecardFormValues)
     <form className="space-y-6 max-w-5xl" onSubmit={handleSubmit}>
       {/* ── Header fields ────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div>
-          <label className="text-xs font-medium block mb-1">
-            Template <span className="text-destructive">*</span>
-          </label>
-          {loadingTemplates ? (
-            <div className="text-xs text-muted-foreground">Carregando…</div>
-          ) : templates.length === 0 ? (
-            <div className="rounded-md border border-amber-300 bg-amber-50 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200 text-xs p-3">
-              Nenhum template Scorecard disponível. Peça à administração para criar em
-              /admin/templates.
-            </div>
-          ) : (
-            <select
-              value={templateId}
-              onChange={(e) => setTemplateId(e.target.value)}
-              className="w-full h-9 rounded-md border border-input bg-background px-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
-            >
-              {templates.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name}
-                  {t.description ? ` — ${t.description.slice(0, 50)}` : ''}
-                </option>
-              ))}
-            </select>
-          )}
-        </div>
+        {/* Template auto-selecionado (único) — dropdown removido; só avisa se faltar. */}
+        {!loadingTemplates && templates.length === 0 && (
+          <div className="sm:col-span-3 rounded-md border border-amber-300 bg-amber-50 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200 text-xs p-3">
+            Nenhum template Scorecard disponível. Peça à administração para criar em
+            /admin/templates.
+          </div>
+        )}
         <div>
           <label className="text-xs font-medium block mb-1">
             Nome do scorecard <span className="text-destructive">*</span>
