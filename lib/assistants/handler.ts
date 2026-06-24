@@ -125,12 +125,12 @@ export function buildAssistantHandler<
     const user = await getCurrentUser();
     if (!user) return Response.json({ error: 'unauthorized' }, { status: 401 });
 
-    // Sub-projeto 36 — acesso (trial válido / assinatura ativa / admin) é
-    // obrigatório pra rodar qualquer assistente. Gate atrás de
-    // BILLING_ENFORCE (ligar com '1' quando o Asaas/webhook estiverem prontos).
-    if (process.env.BILLING_ENFORCE === '1') {
+    // Sub-projeto 36.1 — acesso (trial válido / assinatura ativa / admin /
+    // conta antiga grandfathered) é obrigatório pra rodar qualquer assistente.
+    // Ligado por padrão; kill-switch BILLING_ENFORCE=0 desliga em emergência.
+    if (process.env.BILLING_ENFORCE !== '0') {
       const { hasAccess } = await import('@/lib/billing/subscription');
-      if (!(await hasAccess(user.id))) {
+      if (!(await hasAccess(user.id, user.created_at))) {
         return Response.json(
           { error: 'no_access', reason: 'trial_or_subscription_required' },
           { status: 402 },

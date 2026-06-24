@@ -107,8 +107,26 @@ export async function getAccessState(userId: string): Promise<AccessState> {
   };
 }
 
-/** Gate booleano simples — admin OU assinatura/trial válidos. */
-export async function hasAccess(userId: string): Promise<boolean> {
+// Sub-projeto 36.1 — a partir desta data, NOVOS usuários precisam cadastrar
+// cartão (trial). Contas criadas antes são "grandfathered" (acesso sem cartão),
+// pra não quebrar quem já usa. Override via env BILLING_CARD_REQUIRED_FROM.
+export const CARD_REQUIRED_FROM = new Date(
+  process.env.BILLING_CARD_REQUIRED_FROM ?? '2026-06-23T00:00:00Z',
+);
+
+export function isGrandfathered(createdAt: string | null | undefined): boolean {
+  if (!createdAt) return false;
+  const d = new Date(createdAt);
+  return Number.isFinite(d.getTime()) && d < CARD_REQUIRED_FROM;
+}
+
+/**
+ * Gate booleano — admin, conta antiga (grandfathered) OU assinatura/trial
+ * válidos. Passe `createdAt` (de getCurrentUser) pra liberar contas antigas
+ * sem cartão; sem ele, só admin/assinatura passam.
+ */
+export async function hasAccess(userId: string, createdAt?: string | null): Promise<boolean> {
+  if (isGrandfathered(createdAt)) return true;
   return (await getAccessState(userId)).hasAccess;
 }
 
