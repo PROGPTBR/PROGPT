@@ -9,6 +9,7 @@ import {
   ArrowLeft,
   FileSpreadsheet,
   FileText,
+  LayoutDashboard,
   Loader2,
   Receipt,
   Sparkles,
@@ -72,7 +73,17 @@ export function SpendAssistant() {
       }
     }
     if (errs.length) toast.error('Alguns arquivos foram ignorados', { description: errs.join(' · ') });
-    if (newPdfs.length) setPdfs((prev) => [...prev, ...newPdfs].slice(0, SPEND_MAX_INVOICES));
+    if (newPdfs.length) {
+      setPdfs((prev) => {
+        const merged = [...prev, ...newPdfs];
+        if (merged.length > SPEND_MAX_INVOICES) {
+          toast.warning(`Limite de ${SPEND_MAX_INVOICES} notas por análise`, {
+            description: `${merged.length - SPEND_MAX_INVOICES} PDF(s) acima do limite foram ignorados. Para lotes maiores, divida em mais de uma análise.`,
+          });
+        }
+        return merged.slice(0, SPEND_MAX_INVOICES);
+      });
+    }
     if (newSheet) setSheet(newSheet);
   }
 
@@ -284,6 +295,15 @@ export function SpendAssistant() {
             </label>
           </div>
 
+          {/* Banner de limite */}
+          <div className="flex items-start gap-2 rounded-md border border-brand/30 bg-brand/[0.04] px-3 py-2 text-xs text-muted-foreground">
+            <Receipt className="mt-0.5 h-4 w-4 flex-shrink-0 text-brand" />
+            <span>
+              <strong className="text-foreground">Limite por análise: até {SPEND_MAX_INVOICES} notas fiscais</strong>, 15 MB por PDF.
+              Lotes grandes (centenas) podem levar vários minutos. Para mais de {SPEND_MAX_INVOICES} notas, divida em análises separadas.
+            </span>
+          </div>
+
           {/* Dropzone */}
           <div
             onDragOver={(e) => {
@@ -319,6 +339,18 @@ export function SpendAssistant() {
 
           {(pdfs.length > 0 || sheet) && (
             <div className="space-y-1.5">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">Arquivos selecionados</span>
+                <span
+                  className={
+                    pdfs.length >= SPEND_MAX_INVOICES
+                      ? 'font-medium text-amber-600'
+                      : 'text-muted-foreground'
+                  }
+                >
+                  {pdfs.length} / {SPEND_MAX_INVOICES} notas (PDF){sheet ? ' + 1 planilha' : ''}
+                </span>
+              </div>
               {sheet && (
                 <FileChip
                   icon={<FileSpreadsheet className="h-4 w-4 text-emerald-500" />}
@@ -380,9 +412,14 @@ export function SpendAssistant() {
         <div className="space-y-4">
           <div className="flex items-center justify-between flex-wrap gap-2">
             <span className="text-sm font-medium text-emerald-600">Análise concluída</span>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               {runIdRef.current && (
                 <>
+                  <Link href={`/assistants/spend_analysis/${runIdRef.current}/dashboard`}>
+                    <Button size="sm">
+                      <LayoutDashboard className="mr-1 h-4 w-4" /> Abrir dashboard
+                    </Button>
+                  </Link>
                   <a href={`/api/assistants/runs/${runIdRef.current}/xlsx`}>
                     <Button variant="outline" size="sm">Excel</Button>
                   </a>

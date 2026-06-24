@@ -25,10 +25,9 @@ export function rowToCubeInvoice(r: SpendInvoiceRow): CubeInvoice {
   };
 }
 
-export function buildCubeFromRows(
-  rows: SpendInvoiceRow[],
-  referenceCurrency: string,
-): SpendCube {
+/** Linhas que entram nos totais: usáveis (done/needs_review) e não-duplicadas.
+ *  Mesma regra do cube — usada pelo dashboard interativo. */
+export function survivingRows(rows: SpendInvoiceRow[]): SpendInvoiceRow[] {
   const usable = rows.filter((r) => isUsableRow(r.status));
   const { duplicateIds } = dedupeInvoices(
     usable.map((r) => ({
@@ -37,6 +36,12 @@ export function buildCubeFromRows(
       supplierNormalized: r.supplier_normalized || normalizeSupplier(r.supplier),
     })),
   );
-  const cubeRows = usable.filter((r) => !duplicateIds.has(r.id)).map(rowToCubeInvoice);
-  return computeSpendCube(cubeRows, referenceCurrency);
+  return usable.filter((r) => !duplicateIds.has(r.id));
+}
+
+export function buildCubeFromRows(
+  rows: SpendInvoiceRow[],
+  referenceCurrency: string,
+): SpendCube {
+  return computeSpendCube(survivingRows(rows).map(rowToCubeInvoice), referenceCurrency);
 }
