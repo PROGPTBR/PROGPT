@@ -1,17 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import { Calculator } from 'lucide-react';
 import { FinancialForm, type FinancialFormValues } from './FinancialForm';
 import { FinancialResult } from './FinancialResult';
 import { RfpChatPanel } from './RfpChatPanel';
-import { AssistantEntryChoice } from './AssistantEntryChoice';
+import { DownloadTemplateButton } from './DownloadTemplateButton';
 import { handlePaywallResponse } from '@/lib/billing/handle-paywall';
 
-type Phase = 'choice' | 'form' | 'generating' | 'done';
+type Phase = 'form' | 'generating' | 'done';
 
 export function FinancialAssistant() {
-  const [phase, setPhase] = useState<Phase>('choice');
+  const [phase, setPhase] = useState<Phase>('form');
   const [output, setOutput] = useState('');
   const [runId, setRunId] = useState<string | null>(null);
   const [supplierName, setSupplierName] = useState('');
@@ -100,39 +99,33 @@ export function FinancialAssistant() {
   }
 
   function handleReset() {
-    setPhase('choice');
+    setPhase('form');
     setOutput('');
     setRunId(null);
     setError(null);
   }
 
-  if (phase === 'choice') {
-    return (
-      <AssistantEntryChoice
-        title="Análise Financeira"
-        subtitle="Avalie a saúde financeira de um fornecedor antes de contratar. 12 indicadores canônicos, score determinístico 0-100, recomendação de compra e termos de pagamento sugeridos."
-        templateHref="/templates/financial-template.md"
-        templateFilename="Financial-Health-Analyzer-referencia.md"
-        templateFormat=".md · referência"
-        templateDescription="Guia com a fórmula de score (4 pilares: Liquidez 30%, Dívida/EBITDA 30%, Margem EBITDA 20%, ROE 20%) e os 12 indicadores. Use offline como checklist de due diligence."
-        assistedDescription="Suba o Balanço Patrimonial + DRE (PDF) ou preencha os 12 indicadores manualmente. O assistente calcula o score determinístico, gera relatório bancário com recomendação buy/caution/do_not_buy e termos de pagamento sugeridos."
-        AssistedIcon={Calculator}
-        onAssistedClick={() => setPhase('form')}
-      />
-    );
-  }
-
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Análise Financeira <span className="text-brand">.</span>
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
-          Score 0-100 calculado a partir dos 4 pilares ponderados (Liquidez,
-          Dívida/EBITDA, Margem EBITDA, ROE). LLM gera relatório bancário
-          com recomendação de compra, risco de falência e termos de pagamento.
-        </p>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Análise Financeira <span className="text-brand">.</span>
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
+            Score 0-100 calculado a partir dos 4 pilares ponderados (Liquidez,
+            Dívida/EBITDA, Margem EBITDA, ROE). LLM gera relatório bancário
+            com recomendação de compra, risco de falência e termos de pagamento.
+          </p>
+        </div>
+        {phase === 'form' && (
+          <DownloadTemplateButton
+            href="/templates/financial-template.md"
+            filename="Financial-Health-Analyzer-referencia.md"
+            format=".md"
+            description="Guia com a fórmula de score (4 pilares: Liquidez 30%, Dívida/EBITDA 30%, Margem EBITDA 20%, ROE 20%) e os 12 indicadores. Use offline como checklist de due diligence."
+          />
+        )}
       </div>
 
       {error && (

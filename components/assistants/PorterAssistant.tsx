@@ -1,18 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import { Building2 } from 'lucide-react';
 import { PorterForm, type PorterFormValues } from './PorterForm';
 import { PorterResult } from './PorterResult';
 import { RfpChatPanel } from './RfpChatPanel';
-import { AssistantEntryChoice } from './AssistantEntryChoice';
+import { DownloadTemplateButton } from './DownloadTemplateButton';
 import { handlePaywallResponse } from '@/lib/billing/handle-paywall';
 
 // Sub-projeto 29 — Assistente das 5 Forças de Porter.
 //
 // State machine mirrors RFP/Kraljic:
-//   choice    — entry screen (download primer OR start guided form)
-//   form      — user filling out categoria/segmento/etc
+//   form      — user filling out categoria/segmento/etc (entrada direta)
 //   generating — streaming response from /api/assistants/porter
 //   done      — output complete + downloadable
 //
@@ -20,10 +18,10 @@ import { handlePaywallResponse } from '@/lib/billing/handle-paywall';
 // so the user can refine the analysis — refine.ts dispatches by
 // assistant_type and routes to buildPorterRefineSystem.
 
-type Phase = 'choice' | 'form' | 'generating' | 'done';
+type Phase = 'form' | 'generating' | 'done';
 
 export function PorterAssistant() {
-  const [phase, setPhase] = useState<Phase>('choice');
+  const [phase, setPhase] = useState<Phase>('form');
   const [output, setOutput] = useState('');
   const [runId, setRunId] = useState<string | null>(null);
   const [categoria, setCategoria] = useState('');
@@ -114,39 +112,33 @@ export function PorterAssistant() {
   }
 
   function handleReset() {
-    setPhase('choice');
+    setPhase('form');
     setOutput('');
     setRunId(null);
     setError(null);
   }
 
-  if (phase === 'choice') {
-    return (
-      <AssistantEntryChoice
-        title="Assistente Porter"
-        subtitle="Escolha como quer trabalhar: baixar o framework de referência (PDF) para preencher offline, ou usar o formulário guiado e deixar o assistente gerar a análise."
-        templateHref="/templates/porter-template.md"
-        templateFilename="Porter-5-forcas-referencia.md"
-        templateFormat=".md · referência"
-        templateDescription="Framework canônico das 5 Forças de Porter (1979) com drivers por força e checklist de classificação. Use offline como roteiro de análise manual."
-        assistedDescription="Informe categoria, segmento, escopo e observações. O assistente gera a análise completa das 5 forças (rivalidade, novos entrantes, substitutos, poder dos fornecedores, poder dos compradores) com fundamentação na base canônica e recomendações para o comprador."
-        AssistedIcon={Building2}
-        onAssistedClick={() => setPhase('form')}
-      />
-    );
-  }
-
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Assistente Porter <span className="text-brand">.</span>
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
-          Análise das 5 Forças de Porter (1979) para uma categoria. Classifica
-          a intensidade de cada força (baixa/média/alta) com drivers concretos
-          e traduz para implicações práticas no sourcing.
-        </p>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Assistente Porter <span className="text-brand">.</span>
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
+            Análise das 5 Forças de Porter (1979) para uma categoria. Classifica
+            a intensidade de cada força (baixa/média/alta) com drivers concretos
+            e traduz para implicações práticas no sourcing.
+          </p>
+        </div>
+        {phase === 'form' && (
+          <DownloadTemplateButton
+            href="/templates/porter-template.md"
+            filename="Porter-5-forcas-referencia.md"
+            format=".md"
+            description="Framework canônico das 5 Forças de Porter (1979) com drivers por força e checklist de classificação. Use offline como roteiro de análise manual."
+          />
+        )}
       </div>
 
       {error && (

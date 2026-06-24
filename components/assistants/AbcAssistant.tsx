@@ -1,25 +1,23 @@
 'use client';
 
 import { useState } from 'react';
-import { BarChart3 } from 'lucide-react';
 import { AbcForm, type AbcFormValues } from './AbcForm';
 import { AbcResult } from './AbcResult';
 import { RfpChatPanel } from './RfpChatPanel';
-import { AssistantEntryChoice } from './AssistantEntryChoice';
+import { DownloadTemplateButton } from './DownloadTemplateButton';
 import { handlePaywallResponse } from '@/lib/billing/handle-paywall';
 
 // Sub-projeto 31 — Assistente de Análise ABC (Curva de Pareto).
 //
 // State machine mirrors RFP/Kraljic/Porter/Financial:
-//   choice    — entry screen (download template OR start guided form)
-//   form      — upload xlsx/csv + nome da análise + observações
+//   form      — upload xlsx/csv + nome da análise + observações (entrada direta)
 //   generating — streaming response from /api/assistants/abc
 //   done      — output complete + downloadable (.docx + .xlsx + chart)
 
-type Phase = 'choice' | 'form' | 'generating' | 'done';
+type Phase = 'form' | 'generating' | 'done';
 
 export function AbcAssistant() {
-  const [phase, setPhase] = useState<Phase>('choice');
+  const [phase, setPhase] = useState<Phase>('form');
   const [output, setOutput] = useState('');
   const [runId, setRunId] = useState<string | null>(null);
   const [analysisName, setAnalysisName] = useState('');
@@ -105,39 +103,33 @@ export function AbcAssistant() {
   }
 
   function handleReset() {
-    setPhase('choice');
+    setPhase('form');
     setOutput('');
     setRunId(null);
     setError(null);
   }
 
-  if (phase === 'choice') {
-    return (
-      <AssistantEntryChoice
-        title="Assistente ABC"
-        subtitle="Escolha como quer trabalhar: baixar o template do Procurement Garage para classificar offline, ou usar o formulário guiado e deixar o assistente classificar os itens + gerar relatório com curva de Pareto."
-        templateHref="/templates/abc-template.xls"
-        templateFilename="Exercicio-Curva-ABC.xls"
-        templateFormat=".xls · planilha"
-        templateDescription="Template Procurement Garage com colunas para nome, fornecedor, quantidade, preço unitário e cálculo automático de spend acumulado. Use offline para preencher e depois fazer upload aqui."
-        assistedDescription="Faça upload da planilha de spend (XLSX, XLS ou CSV). O sistema classifica cada item nas classes A/B/C usando a lei de Pareto (80/95% cumulativo), gera relatório executivo, plano de ação por classe e gráfico da curva — pronto para .docx e .xlsx."
-        AssistedIcon={BarChart3}
-        onAssistedClick={() => setPhase('form')}
-      />
-    );
-  }
-
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Assistente ABC <span className="text-brand">.</span>
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
-          Análise ABC (Curva de Pareto) de spend. Suba sua planilha de pedidos ou
-          itens com valor — o sistema ranqueia, classifica em A/B/C pelos cortes
-          80/95% cumulativo e gera plano de ação por classe.
-        </p>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Assistente ABC <span className="text-brand">.</span>
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
+            Análise ABC (Curva de Pareto) de spend. Suba sua planilha de pedidos ou
+            itens com valor — o sistema ranqueia, classifica em A/B/C pelos cortes
+            80/95% cumulativo e gera plano de ação por classe.
+          </p>
+        </div>
+        {phase === 'form' && (
+          <DownloadTemplateButton
+            href="/templates/abc-template.xls"
+            filename="Exercicio-Curva-ABC.xls"
+            format=".xls"
+            description="Template Procurement Garage com colunas para nome, fornecedor, quantidade, preço unitário e cálculo automático de spend acumulado. Preencha offline e faça upload aqui."
+          />
+        )}
       </div>
 
       {error && (
