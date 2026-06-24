@@ -226,6 +226,112 @@ export async function buscarCatmat(texto: string): Promise<CatmatMatch | null> {
   }
 }
 
+// ── Sugestão de itens do catálogo (autocomplete CATMAT) ──────────────────────
+// O catálogo NÃO tem busca textual (ver docs/product/govdata-api-contract.md),
+// então navegamos Classe → PDM via LLM (2 picks, em vez dos 3 do buscarCatmat) e
+// devolvemos os itens REAIS do PDM pro usuário escolher. Tira o pick mais
+// arriscado (o do item, hoje às cegas) e entrega a desambiguação pro humano —
+// quem escolhe trava o codigoItem e o preço sai sem mismatch.
+
+export interface CatmatSuggestion {
+  codigoItem: number;
+  descricaoItem: string;
+}
+
+export interface CatmatSuggestResult {
+  codigoClasse: number;
+  nomeClasse: string;
+  codigoPdm: number;
+  nomePdm: string;
+  itens: CatmatSuggestion[];
+}
+
+/** Normaliza pra comparação: minúsculas, sem acento, tokens alfanuméricos ≥2. */
+function tokenize(s: string): string[] {
+  return s
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .split(/[^a-z0-9]+/)
+    .filter((t) => t.length >= 2);
+}
+
+/**
+ * Rank local (sem custo de LLM) dos itens do PDM pela sobreposição de tokens com
+ * o texto digitado. Coloca os mais aderentes no topo; empate desempata pela
+ * descrição mais curta (costuma ser a forma canônica). Itens sem match ficam ao
+ * final (o PDM ainda pode estar certo — o usuário varre). Retorna até `limit`.
+ */
+export function rankByRelevance(
+  texto: string,
+  itens: CatmatSuggestion[],
+  limit: number,
+): CatmatSuggestion[] {
+  const q = tokenize(texto);
+  const scored = itens.map((item, idx) => {
+    const toks = new Set(tokenize(item.descricaoItem));
+    const score = q.reduce((acc, t) => acc + (toks.has(t) ? 1 : 0), 0);
+    return { item, idx, score, len: item.descricaoItem.length };
+  });
+  scored.sort((a, b) => {
+    if (b.score !== a.score) return b.score - a.score;
+    if (a.len !== b.len) return a.len - b.len;
+    return a.idx - b.idx; // estável
+  });
+  return scored.slice(0, limit).map((s) => s.item);
+}
+
+/**
+ * Sugere itens do catálogo CATMAT para uma descrição livre: LLM escolhe a Classe
+ * e o PDM, e devolvemos os itens daquele PDM rankeados localmente. Fail-soft:
+ * qualquer falha (LLM, API, govdata off, nada encaixa) retorna null e o form
+ * apenas não mostra sugestões (o auto-resolve no submit segue como rede).
+ */
+export async function suggestCatmatItems(
+  texto: string,
+  opts: { limit?: number } = {},
+): Promise<CatmatSuggestResult | null> {
+  const limpo = texto.trim();
+  if (limpo.length < 3) return null;
+  const limit = opts.limit ?? 15;
+  try {
+    const classes = await listClasses();
+    const pickClasse = await llmPick(
+      limpo,
+      'classe',
+      classes.map((c) => ({ codigo: c.codigoClasse, nome: c.nomeClasse })),
+    );
+    if (!pickClasse?.codigo) return null;
+    const classe = classes.find((c) => c.codigoClasse === pickClasse.codigo)!;
+
+    const pdms = await listPdms(classe.codigoClasse);
+    const pickPdm = await llmPick(
+      limpo,
+      'PDM',
+      pdms.map((p) => ({ codigo: p.codigoPdm, nome: p.nomePdm })),
+    );
+    if (!pickPdm?.codigo) return null;
+    const pdm = pdms.find((p) => p.codigoPdm === pickPdm.codigo)!;
+
+    const itens = await listItemsByPdm(pdm.codigoPdm);
+    if (itens.length === 0) return null;
+
+    return {
+      codigoClasse: classe.codigoClasse,
+      nomeClasse: classe.nomeClasse,
+      codigoPdm: pdm.codigoPdm,
+      nomePdm: pdm.nomePdm,
+      itens: rankByRelevance(
+        limpo,
+        itens.map((i) => ({ codigoItem: i.codigoItem, descricaoItem: i.descricaoItem })),
+        limit,
+      ),
+    };
+  } catch {
+    return null;
+  }
+}
+
 // ── Preço de referência (preços praticados do item) ──────────────────────────
 
 interface RawPreco {
