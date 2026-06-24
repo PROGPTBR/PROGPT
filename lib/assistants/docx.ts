@@ -320,6 +320,7 @@ export async function mdToDocxBuffer(
     kraljicChartPng?: Buffer;
     abcChartPng?: Buffer;
     scorecardChartPng?: Buffer;
+    spendChartPng?: Buffer;
   } = {},
 ): Promise<Buffer> {
   // Strip the literal logo-placeholder line — handled by the cover page.
@@ -436,6 +437,28 @@ export async function mdToDocxBuffer(
           }),
         );
         (body as { __scorecardInserted?: boolean }).__scorecardInserted = true;
+      }
+      // Spend Analysis: insere o Pareto após o primeiro heading "Top
+      // fornecedores" / "Pareto". One-shot guard.
+      if (
+        opts.spendChartPng &&
+        /top fornecedores|pareto/i.test(h2[1]!.trim()) &&
+        !(body as { __spendInserted?: boolean }).__spendInserted
+      ) {
+        body.push(
+          new Paragraph({
+            alignment: AlignmentType.CENTER,
+            children: [
+              new ImageRun({
+                data: opts.spendChartPng,
+                transformation: { width: 600, height: 340 },
+                type: 'png',
+              }),
+            ],
+            spacing: { after: 200 },
+          }),
+        );
+        (body as { __spendInserted?: boolean }).__spendInserted = true;
       }
       continue;
     }

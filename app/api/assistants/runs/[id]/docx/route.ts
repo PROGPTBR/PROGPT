@@ -20,6 +20,10 @@ import { classifyAbc } from '@/lib/assistants/abc';
 import { renderAbcChartPng } from '@/lib/assistants/abc-chart';
 import { scoreSuppliers } from '@/lib/assistants/scorecard';
 import { renderScorecardChartPng } from '@/lib/assistants/scorecard-chart';
+import { renderSpendParetoPng } from '@/lib/assistants/spend-chart';
+import { listInvoicesByRun } from '@/lib/spend/db';
+import { buildCubeFromRows } from '@/lib/spend/from-rows';
+import type { SpendAnalysisParams } from '@/lib/assistants/types';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -49,6 +53,7 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
   let kraljicChartPng: Buffer | undefined;
   let abcChartPng: Buffer | undefined;
   let scorecardChartPng: Buffer | undefined;
+  let spendChartPng: Buffer | undefined;
 
   if (run.assistant_type === 'kraljic') {
     const kp = run.params as KraljicParams;
@@ -90,6 +95,17 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
       scorecardChartPng = await renderScorecardChartPng(scoreSuppliers(sp), sp.thresholds);
     } catch (err) {
       console.warn('[docx] scorecard chart render failed:', err);
+    }
+  } else if (run.assistant_type === 'spend_analysis') {
+    const sp = run.params as SpendAnalysisParams;
+    titleSafe = `Análise de Gastos - ${sp.analysisName}`.slice(0, 120);
+    categoryForCover = sp.period ? `Análise de gastos ${sp.period}` : 'Análise de gastos (Spend Analysis)';
+    try {
+      const rows = await listInvoicesByRun(run.id);
+      const cube = buildCubeFromRows(rows, (sp.referenceCurrency ?? 'BRL').toUpperCase());
+      spendChartPng = await renderSpendParetoPng(cube);
+    } catch (err) {
+      console.warn('[docx] spend chart render failed:', err);
     }
   } else if (run.assistant_type === 'negotiation') {
     const np = run.params as NegotiationStrategyParams;
@@ -140,6 +156,7 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
     kraljicChartPng,
     abcChartPng,
     scorecardChartPng,
+    spendChartPng,
   });
 
   // Filename derived from run id (no PII), browser saves it as a .docx.

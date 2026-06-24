@@ -32,7 +32,8 @@ type AssistantTypeLocal =
   | 'negotiation'
   | 'scorecard'
   | 'homologacao'
-  | 'pesquisa_precos';
+  | 'pesquisa_precos'
+  | 'spend_analysis';
 
 type RunSummary = {
   id: string;
@@ -67,6 +68,8 @@ type RunSummary = {
     // Pesquisa de Preços
     titulo?: string;
     itens?: Array<{ descricao?: string }>;
+    // Spend Analysis (analysisName já declarado acima, no bloco ABC)
+    period?: string;
   };
   status: 'running' | 'done' | 'error';
   error_message: string | null;
@@ -103,6 +106,7 @@ const TYPE_LABELS: Record<AssistantTypeLocal | 'all', string> = {
   scorecard: 'Scorecard',
   homologacao: 'Homologação',
   pesquisa_precos: 'Pesquisa de Preços',
+  spend_analysis: 'Gastos',
 };
 
 const TYPE_ORDER: Array<AssistantTypeLocal | 'all'> = [
@@ -117,6 +121,7 @@ const TYPE_ORDER: Array<AssistantTypeLocal | 'all'> = [
   'scorecard',
   'homologacao',
   'pesquisa_precos',
+  'spend_analysis',
 ];
 
 export function RfpHistoryList() {
@@ -387,7 +392,10 @@ export function RfpHistoryList() {
             const isScorecard = r.assistant_type === 'scorecard';
             const isHomologacao = r.assistant_type === 'homologacao';
             const isPesquisaPrecos = r.assistant_type === 'pesquisa_precos';
-            const scope = isKraljic
+            const isSpend = r.assistant_type === 'spend_analysis';
+            const scope = isSpend
+              ? (r.params.analysisName ?? '(análise sem nome)')
+              : isKraljic
               ? (r.params.portfolioName ?? '(portfólio sem nome)')
               : isPorter
                 ? (r.params.categoria ?? '(sem categoria)')
@@ -406,7 +414,9 @@ export function RfpHistoryList() {
                             : isPesquisaPrecos
                               ? (r.params.titulo ?? '(pesquisa sem título)')
                               : (r.params.scope ?? '(sem escopo)');
-            const category = isKraljic
+            const category = isSpend
+              ? (r.params.period || 'Análise de gastos')
+              : isKraljic
               ? `${r.params.items?.length ?? 0} item(ns)`
               : isPorter
                 ? (r.params.segmento || 'Análise de mercado')

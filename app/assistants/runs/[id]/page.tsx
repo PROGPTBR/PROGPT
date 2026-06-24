@@ -11,6 +11,7 @@ import { PastNegotiationView } from '@/components/assistants/PastNegotiationView
 import { PastScorecardView } from '@/components/assistants/PastScorecardView';
 import { PastHomologacaoView } from '@/components/assistants/PastHomologacaoView';
 import { PastPesquisaPrecosView } from '@/components/assistants/PastPesquisaPrecosView';
+import { PastSpendView } from '@/components/assistants/PastSpendView';
 import type {
   RfpParams,
   KraljicParams,
@@ -21,6 +22,7 @@ import type {
   ScorecardParams,
   HomologacaoParams,
   PesquisaPrecosParams,
+  SpendAnalysisParams,
   NegotiationStrategyParams,
   NegotiationStrategyResult,
   NegotiationTranscriptTurn,
@@ -107,6 +109,17 @@ export default async function AssistantRunDetailPage({
         runId={run.id}
         initialOutput={run.output_md}
         analysisName={ap.analysisName ?? '(análise sem nome)'}
+      />
+    );
+  }
+
+  if (run.assistant_type === 'spend_analysis') {
+    const sp = run.params as SpendAnalysisParams;
+    return (
+      <PastSpendView
+        runId={run.id}
+        initialOutput={run.output_md}
+        analysisName={sp.analysisName ?? '(análise sem nome)'}
       />
     );
   }

@@ -2,12 +2,16 @@ import { getServerSupabase } from '@/lib/db/supabase';
 import { updateRunOutput, failRun } from '@/lib/assistants/runs';
 import type { AssistantRunRow, SpendAnalysisParams } from '@/lib/assistants/types';
 import { downloadFromSpendBucket } from '@/lib/db/spend-storage';
+import { retrieve } from '@/lib/rag/retriever';
+import { rerank } from '@/lib/rag/reranker';
+import { getUserCompany } from '@/lib/db/user-company';
 import { extractInvoiceFromPdf } from './invoice-extract';
 import { classifyCategories } from './classify';
 import { normalizeSupplier, dedupeInvoices } from './normalize';
 import { buildFxResolver } from './fx';
-import { computeSpendCube } from './cube';
+import { buildCubeFromRows, isUsableRow as isUsable } from './from-rows';
 import { buildCubeSummaryMd } from './summary';
+import { buildSpendNarrativePrompt, generateSpendNarrative } from './narrative';
 import { mapWithConcurrency } from './concurrency';
 import {
   listInvoicesByRun,
@@ -15,7 +19,6 @@ import {
   updateInvoice,
   statusCountsForRun,
 } from './db';
-import type { CubeInvoice, SpendInvoiceRow } from './types';
 
 // Worker assíncrono do Spend Analysis (fire-and-forget, processo long-lived do
 // Railway). Espelha lib/ingest/pipeline.ts, mas escreve em spend_invoices +
@@ -24,24 +27,8 @@ import type { CubeInvoice, SpendInvoiceRow } from './types';
 // assistant_runs não tem coluna de progresso (derivada das contagens).
 
 const EXTRACT_CONCURRENCY = 5;
-
-function isUsable(status: string): boolean {
-  return status === 'done' || status === 'needs_review';
-}
-
-function rowToCubeInvoice(r: SpendInvoiceRow): CubeInvoice {
-  return {
-    supplier: r.supplier ?? '',
-    supplierNormalized: r.supplier_normalized || normalizeSupplier(r.supplier),
-    category: r.category || 'Outros',
-    country: r.country ?? '',
-    currency: r.currency ?? '',
-    total: r.total,
-    totalRef: r.total_ref,
-    poNumber: r.po_number,
-    invoiceDate: r.invoice_date,
-  };
-}
+const NARRATIVE_RAG_QUERY =
+  'strategic sourcing tail spend maverick spend cobertura de PO consolidação de fornecedores contrato guarda-chuva';
 
 export async function runSpendPipeline(runId: string): Promise<void> {
   const sb = getServerSupabase();
@@ -174,17 +161,32 @@ export async function runSpendPipeline(runId: string): Promise<void> {
       Object.assign(r, { total_ref: totalRef, fx_rate: fxRate, low_confidence: lowConf });
     }
 
-    // ── 5. Agregação (cube) — exclui duplicadas ──
-    const cubeRows = rows
-      .filter((r) => isUsable(r.status) && !duplicateIds.has(r.id))
-      .map(rowToCubeInvoice);
+    // ── 5. Agregação (cube) — exclui duplicadas (mesma regra do export) ──
     const ref = (params.referenceCurrency ?? 'BRL').toUpperCase();
-    const cube = computeSpendCube(cubeRows, ref);
+    const cube = buildCubeFromRows(rows, ref);
 
-    // ── 6. Resumo determinístico (a narrativa LLM entra na fase 3) ──
+    // ── 6. Resumo determinístico (KPIs/tabelas) ──
     const counts = await statusCountsForRun(runId);
-    const md = buildCubeSummaryMd(cube, params, counts);
-    await updateRunOutput(runId, md);
+    const summaryMd = buildCubeSummaryMd(cube, params, counts);
+
+    // ── 7. Narrativa LLM de strategic sourcing (fail-soft) ──
+    let narrativeMd = '';
+    try {
+      const candidates = await retrieve(NARRATIVE_RAG_QUERY);
+      const chunks = await rerank(NARRATIVE_RAG_QUERY, candidates, 6);
+      const company = await getUserCompany(run.user_id);
+      const topInvoices = rows
+        .filter((r) => isUsable(r.status) && !duplicateIds.has(r.id) && r.total_ref != null)
+        .sort((a, b) => (b.total_ref ?? 0) - (a.total_ref ?? 0))
+        .slice(0, 15);
+      const prompt = buildSpendNarrativePrompt({ cube, topInvoices, params, chunks, company });
+      narrativeMd = await generateSpendNarrative(prompt, run.user_id);
+    } catch (err) {
+      console.warn('[spend/pipeline] narrative failed (fail-soft):', err);
+    }
+
+    const finalMd = narrativeMd ? `${summaryMd}\n\n---\n\n${narrativeMd}` : summaryMd;
+    await updateRunOutput(runId, finalMd);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.warn(`[spend/pipeline] run ${runId} failed:`, msg);

@@ -378,11 +378,23 @@ export function SpendAssistant() {
 
       {phase === 'done' && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-2">
             <span className="text-sm font-medium text-emerald-600">Análise concluída</span>
-            <Button variant="outline" size="sm" onClick={reset}>
-              Nova análise
-            </Button>
+            <div className="flex items-center gap-2">
+              {runIdRef.current && (
+                <>
+                  <a href={`/api/assistants/runs/${runIdRef.current}/xlsx`}>
+                    <Button variant="outline" size="sm">Excel</Button>
+                  </a>
+                  <a href={`/api/assistants/runs/${runIdRef.current}/docx`}>
+                    <Button variant="outline" size="sm">Word</Button>
+                  </a>
+                </>
+              )}
+              <Button variant="outline" size="sm" onClick={reset}>
+                Nova análise
+              </Button>
+            </div>
           </div>
           <article className="prose prose-sm dark:prose-invert max-w-none rounded-lg border border-border bg-card p-5">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>{report}</ReactMarkdown>
