@@ -6,7 +6,11 @@ import {
   govHealthcheck,
   GovDataError,
 } from '@/lib/govdata/client';
-import { cached, clearGovDataCache } from '@/lib/govdata/cache';
+import {
+  cached,
+  clearGovDataCache,
+  clearGovDataCacheByPrefix,
+} from '@/lib/govdata/cache';
 
 // Fase 0 — cliente das APIs públicas de compras (PNCP/Compras/BACEN). Mesmo
 // padrão dos testes de lib/fiscal/client: stub global fetch + stubEnv (o cliente
@@ -160,5 +164,19 @@ describe('govdata cache', () => {
     await cached('k', f, 1000, 0);
     await cached('k', f, 1000, 2000); // depois do TTL
     expect(calls).toBe(2);
+  });
+
+  it('clearGovDataCacheByPrefix invalida só as chaves com o prefixo', async () => {
+    let bacen = 0;
+    let outro = 0;
+    const fb = () => Promise.resolve(++bacen);
+    const fo = () => Promise.resolve(++outro);
+    await cached('bacen-range:1:24', fb);
+    await cached('catmat:classes', fo);
+    clearGovDataCacheByPrefix('bacen');
+    await cached('bacen-range:1:24', fb); // re-busca (invalidado)
+    await cached('catmat:classes', fo); // ainda cacheado
+    expect(bacen).toBe(2);
+    expect(outro).toBe(1);
   });
 });

@@ -7,7 +7,10 @@ import { govGet } from './client';
 import { cached } from './cache';
 import type { BacenPonto } from './types';
 
-const TTL_6H = 6 * 60 * 60 * 1000; // indicadores mudam no máx. 1×/dia
+const TTL_6H = 6 * 60 * 60 * 1000; // indicadores "atuais" (voz): mudam no máx. 1×/dia
+// Painel/séries: TTL curto pra refletir o câmbio do dia (PTAX publica à tarde);
+// o botão "Atualizar" do dashboard força bypass deste cache (clearByPrefix).
+const TTL_PANEL = 60 * 60 * 1000; // 1h
 
 export const SGS = {
   SELIC_META: 432,
@@ -179,7 +182,7 @@ async function serieRangeNum(codigo: number, meses: number): Promise<PontoSerie[
           dataInicial: ddmmyyyy(ini),
           dataFinal: ddmmyyyy(fim),
         }),
-      TTL_6H,
+      TTL_PANEL,
     );
     return pts
       .map((p) => ({ data: p.data, valor: parseBacenNumber(p.valor) }))

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
 import { checkChatRateLimit } from '@/lib/rate-limit';
 import { isIndicadorKey, serieIndicador } from '@/lib/govdata/indicadores';
+import { clearGovDataCacheByPrefix } from '@/lib/govdata/cache';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -34,6 +35,9 @@ export async function GET(req: Request): Promise<Response> {
     return NextResponse.json({ error: 'invalid_key' }, { status: 400 });
   }
   const meses = clampMeses(url.searchParams.get('meses'));
+  if (url.searchParams.get('refresh') === '1') {
+    clearGovDataCacheByPrefix('bacen-range');
+  }
 
   const pontos = await serieIndicador(key, meses);
   return NextResponse.json({ key, meses, pontos });
