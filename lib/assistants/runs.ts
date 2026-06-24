@@ -13,6 +13,7 @@ import type {
   NegotiationStrategyResult,
   NegotiationScore,
   NegotiationTranscriptTurn,
+  SpendAnalysisParams,
 } from './types';
 
 // Service-role CRUD for assistant_runs. The API route owns the lifecycle:
@@ -31,7 +32,8 @@ export async function createRun(input: {
     | FinancialParams
     | AbcParams
     | ProfileParams
-    | NegotiationStrategyParams;
+    | NegotiationStrategyParams
+    | SpendAnalysisParams;
   traceId: string | null;
 }): Promise<AssistantRunRow | null> {
   const sb = getServerSupabase();
