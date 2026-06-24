@@ -1,11 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import {
-  ArrowRight,
-  Check,
-  History,
-} from 'lucide-react';
+import { ArrowRight, Check } from 'lucide-react';
 import { KraljicMatrixPreview } from './previews/KraljicMatrixPreview';
 import { RfpDocumentPreview } from './previews/RfpDocumentPreview';
 import { PorterForcesPreview } from './previews/PorterForcesPreview';
@@ -212,18 +208,11 @@ const SPOTLIGHTS: SpotlightAssistant[] = [
 export function AssistantsHub() {
   return (
     <div className="space-y-12">
-      {/* ───── Header ───── */}
-      <header className="flex items-center justify-between gap-4 flex-wrap">
+      {/* ───── Header (histórico vive no chrome do layout, sem duplicar aqui) ───── */}
+      <header>
         <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">
           Assistentes <span className="text-brand">.</span>
         </h1>
-        <Link
-          href="/assistants/history"
-          className="inline-flex items-center gap-1.5 text-sm rounded-full border border-border bg-muted hover:bg-accent text-muted-foreground hover:text-foreground px-4 h-9 transition-all duration-300 active:scale-95"
-        >
-          <History className="h-4 w-4" aria-hidden="true" />
-          Meu histórico
-        </Link>
       </header>
 
       {/* ───── Spotlight cards ───── */}
