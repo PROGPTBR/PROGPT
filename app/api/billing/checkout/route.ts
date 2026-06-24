@@ -34,7 +34,13 @@ const Body = z.object({
 
 const PENDING_GRACE_MS = 60 * 60 * 1000; // 1h
 
-function originFrom(req: Request): string {
+// Base da URL de retorno (callback) do Asaas. O Asaas EXIGE que o domínio do
+// successUrl seja o mesmo cadastrado em Minha Conta → Informações (o "site").
+// Por isso a origem do request (domínio do Railway) costuma não bater — use
+// APP_URL pra fixar o domínio aprovado no Asaas (ex.: https://app.2bsupply.com.br).
+function callbackBase(req: Request): string {
+  const envUrl = process.env.APP_URL?.trim();
+  if (envUrl) return envUrl.replace(/\/+$/, '');
   const url = new URL(req.url);
   return `${url.protocol}//${url.host}`;
 }
@@ -161,7 +167,7 @@ if (existing) {
         // Volta do hosted checkout do Asaas → /assinar/concluido confirma o
         // trial (marca 'trialing') mesmo antes do webhook chegar, e manda o
         // usuário direto pro /chat já liberado.
-        successUrl: `${originFrom(req)}/assinar/concluido`,
+        successUrl: `${callbackBase(req)}/assinar/concluido`,
         autoRedirect: true,
       },
     });
