@@ -187,25 +187,12 @@ export function PorterForm({
 
       {/* ── Top-level inputs ──────────────────────────────────────────── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="md:col-span-2">
-          <label className="text-xs font-medium block mb-1">Template</label>
-          <select
-            value={templateId}
-            onChange={(e) => setTemplateId(e.target.value)}
-            disabled={loadingTemplates}
-            className="w-full rounded-md border border-input bg-background p-2 text-sm"
-          >
-            {loadingTemplates && <option value="">Carregando…</option>}
-            {!loadingTemplates && templates.length === 0 && (
-              <option value="">(nenhum template publicado)</option>
-            )}
-            {templates.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name}
-              </option>
-            ))}
-          </select>
-        </div>
+        {/* Template auto-selecionado (único) — dropdown removido; só avisa se faltar. */}
+        {!loadingTemplates && templates.length === 0 && (
+          <p className="md:col-span-2 text-[11px] text-destructive">
+            Nenhum template publicado. Peça à administração para criar um em /admin/templates.
+          </p>
+        )}
 
         <div>
           <label className="text-xs font-medium block mb-1">
