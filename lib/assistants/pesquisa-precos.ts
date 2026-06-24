@@ -33,6 +33,22 @@ export type PesquisaPrecosClassified = {
   anyAvailable: boolean; // ao menos 1 item com preço
 };
 
+/** Constrói o CatmatMatch a partir do item escolhido pelo usuário no catálogo
+ *  (autocomplete). Confiança 1.0 — quem desambiguou foi o humano. */
+function lockedMatch(item: PesquisaPrecosParams['itens'][number]): CatmatMatch | null {
+  if (!item.codigoItem) return null;
+  return {
+    codigoItem: item.codigoItem,
+    descricaoItem: item.descricaoItemCatalogo ?? item.descricao,
+    codigoClasse: item.codigoClasse ?? 0,
+    nomeClasse: item.nomeClasse ?? '',
+    codigoPdm: item.codigoPdm ?? 0,
+    nomePdm: item.nomePdm ?? '',
+    confianca: 1,
+    rationale: 'selecionado pelo usuário no catálogo do governo',
+  };
+}
+
 export async function classifyPesquisaPrecos(
   params: PesquisaPrecosParams,
 ): Promise<PesquisaPrecosClassified> {
@@ -40,7 +56,11 @@ export async function classifyPesquisaPrecos(
   // Itens são independentes — resolve em paralelo (cap de 10 no schema).
   const itens = await Promise.all(
     params.itens.map(async (item): Promise<ItemResultado> => {
-      const match = await buscarCatmat(item.descricao);
+      // Se o usuário escolheu o item no catálogo (autocomplete), o código já vem
+      // travado — pula o auto-resolve por LLM e usa direto (zero mismatch).
+      const match = item.codigoItem
+        ? lockedMatch(item)
+        : await buscarCatmat(item.descricao);
       const preco = match ? await precoReferencia(match.codigoItem, { uf }) : null;
       return {
         descricao: item.descricao,

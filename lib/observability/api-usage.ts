@@ -67,6 +67,7 @@ export type ApiOperation =
   | 'assistant-homologacao-reputacao'
   | 'assistant-pesquisa-precos-generate'
   | 'govdata-catmat-pick'
+  | 'govdata-catmat-suggest'
   | 'comprador-analyze'
   | 'comprador-draft-reply'
   | 'assistant-indicadores-leitura'

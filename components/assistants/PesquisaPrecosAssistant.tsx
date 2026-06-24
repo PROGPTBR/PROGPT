@@ -20,6 +20,20 @@ function buildParams(v: PesquisaPrecosFormValues) {
           descricao: i.descricao.trim(),
           unidade: i.unidade.trim(),
           ...(Number.isFinite(q) && q > 0 ? { quantidade: q } : {}),
+          // Catálogo travado pelo usuário (autocomplete CATMAT) → backend pula o
+          // auto-resolve por LLM e usa o código direto.
+          ...(typeof i.codigoItem === 'number'
+            ? {
+                codigoItem: i.codigoItem,
+                ...(i.descricaoItemCatalogo
+                  ? { descricaoItemCatalogo: i.descricaoItemCatalogo }
+                  : {}),
+                ...(i.codigoClasse ? { codigoClasse: i.codigoClasse } : {}),
+                ...(i.nomeClasse ? { nomeClasse: i.nomeClasse } : {}),
+                ...(i.codigoPdm ? { codigoPdm: i.codigoPdm } : {}),
+                ...(i.nomePdm ? { nomePdm: i.nomePdm } : {}),
+              }
+            : {}),
         };
       }),
     notas: v.notas,

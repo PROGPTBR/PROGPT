@@ -858,6 +858,16 @@ export const PesquisaPrecosItemSchema = z.object({
   descricao: z.string().trim().min(2).max(300),
   unidade: z.string().trim().max(40).optional().default(''),
   quantidade: z.number().positive().max(1_000_000_000).optional(),
+  // Resolução de catálogo travada pelo usuário (autocomplete CATMAT). Quando
+  // `codigoItem` está presente, o classify pula `buscarCatmat` e usa este código
+  // direto — zero mismatch (quem desambiguou foi o humano). Tudo opcional: sem
+  // código, o item cai no auto-resolve por LLM como antes.
+  codigoItem: z.number().int().positive().optional(),
+  descricaoItemCatalogo: z.string().trim().max(300).optional(),
+  codigoClasse: z.number().int().positive().optional(),
+  nomeClasse: z.string().trim().max(200).optional(),
+  codigoPdm: z.number().int().positive().optional(),
+  nomePdm: z.string().trim().max(200).optional(),
 });
 export type PesquisaPrecosItem = z.infer<typeof PesquisaPrecosItemSchema>;
 
