@@ -46,7 +46,7 @@ function setup(opts: {
 async function fillAndSubmit(email: string, password: string) {
   const user = userEvent.setup();
   await user.type(screen.getByLabelText(/email/i), email);
-  await user.type(screen.getByLabelText(/senha/i), password);
+  await user.type(screen.getByLabelText('Senha'), password);
   // Sub-projeto 28 — checkbox de aceite obrigatório
   await user.click(screen.getByRole('checkbox', { name: /li e aceito/i }));
   // Espera o Turnstile emitir token (setTimeout 0)
@@ -95,7 +95,7 @@ describe('SignupForm', () => {
     render(<SignupForm />);
     await fillAndSubmit('novo@user.com', 'pw1234');
     await new Promise((r) => setTimeout(r, 10));
-    expect(push).toHaveBeenCalledWith('/chat');
+    expect(push).toHaveBeenCalledWith('/assinar');
   });
 
   it('shows "já existe" on 409 user_already_exists', async () => {
@@ -112,7 +112,7 @@ describe('SignupForm', () => {
     render(<SignupForm />);
     const user = userEvent.setup();
     await user.type(screen.getByLabelText(/email/i), 'a@b.com');
-    const pwField = screen.getByLabelText(/senha/i) as HTMLInputElement;
+    const pwField = screen.getByLabelText('Senha') as HTMLInputElement;
     pwField.removeAttribute('minLength');
     await user.type(pwField, 'pw123');
     // Terms checkbox precisa estar marcado pra habilitar o botão e
@@ -130,7 +130,7 @@ describe('SignupForm', () => {
     render(<SignupForm />);
     const user = userEvent.setup();
     await user.type(screen.getByLabelText(/email/i), 'a@b.com');
-    await user.type(screen.getByLabelText(/senha/i), 'pw1234');
+    await user.type(screen.getByLabelText('Senha'), 'pw1234');
     await new Promise((r) => setTimeout(r, 5));
     const button = screen.getByRole('button', { name: /cadastrar/i }) as HTMLButtonElement;
     expect(button.disabled).toBe(true);
@@ -143,6 +143,6 @@ describe('SignupForm', () => {
     const { SignupForm } = await import('@/components/auth/SignupForm');
     render(<SignupForm />);
     const link = screen.getByRole('link', { name: /j[áa] tenho conta/i });
-    expect(link.getAttribute('href')).toBe('/login?next=%2Fchat');
+    expect(link.getAttribute('href')).toBe('/login?next=%2Fassinar');
   });
 });

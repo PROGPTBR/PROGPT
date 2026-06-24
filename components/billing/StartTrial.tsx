@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, Check, CreditCard, Loader2, ShieldCheck } from 'lucide-react';
+import { ArrowRight, Check, CreditCard, Loader2, Lock, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { isValidCpf, formatCpf } from '@/lib/validators/cpf';
 
@@ -122,22 +122,41 @@ export function StartTrial({ priceLabel, trialDays, initial }: Props) {
 
   return (
     <div className="grid md:grid-cols-[1.05fr_1fr] gap-8 items-start">
-      {/* Lado esquerdo — proposta de valor */}
+      {/* Lado esquerdo — resumo do pedido */}
       <div className="space-y-6">
         <div className="inline-flex items-center gap-2 rounded-full border border-brand/30 bg-brand/5 px-4 py-1.5 text-xs font-medium text-brand">
           <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
           {trialDays} dias grátis · sem cobrança agora
         </div>
         <h1 className="text-3xl md:text-4xl font-semibold tracking-tight leading-[1.15]">
-          <span className="text-foreground">Cadastre seu cartão e </span>
+          <span className="text-foreground">Finalize e </span>
           <span className="text-brand-gradient">libere o PROGPT.</span>
         </h1>
-        <p className="text-base text-muted-foreground max-w-md">
-          Para começar seus {trialDays} dias grátis, precisamos de um cartão
-          cadastrado — <strong className="text-foreground">nada é cobrado agora</strong>.
-          A primeira cobrança de {priceLabel}/mês só acontece após o período, e
-          você pode cancelar antes sem pagar nada.
-        </p>
+
+        {/* Card de resumo do pedido — estilo checkout de grandes plataformas */}
+        <div className="rounded-2xl border border-border bg-card/60 p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-sm font-semibold text-foreground">PROGPT Pro</div>
+              <div className="text-xs text-muted-foreground">Assinatura mensal · cancele quando quiser</div>
+            </div>
+            <div className="text-right">
+              <div className="text-sm font-semibold text-foreground">{priceLabel}</div>
+              <div className="text-xs text-muted-foreground">/mês</div>
+            </div>
+          </div>
+          <div className="border-t border-border pt-4 space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Hoje ({trialDays} dias grátis)</span>
+              <span className="font-semibold text-emerald-600 dark:text-emerald-400">R$ 0,00</span>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Após o período</span>
+              <span className="text-foreground/80">{priceLabel}/mês</span>
+            </div>
+          </div>
+        </div>
+
         <ul className="space-y-3">
           {PERKS.map((p) => (
             <li key={p} className="flex items-start gap-3 text-sm">
@@ -152,12 +171,25 @@ export function StartTrial({ priceLabel, trialDays, initial }: Props) {
 
       {/* Lado direito — formulário */}
       <div className="rounded-3xl border border-border bg-card p-6 md:p-7 shadow-[0_24px_60px_-22px_rgba(14,141,225,0.4)]">
-        <div className="flex items-center gap-2 text-sm font-semibold text-foreground mb-1">
-          <CreditCard className="h-4 w-4 text-brand" aria-hidden="true" />
-          Seus dados
+        <div className="flex items-center justify-between mb-1">
+          <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+            <CreditCard className="h-4 w-4 text-brand" aria-hidden="true" />
+            Seus dados
+          </div>
+          <div className="flex items-center gap-1.5">
+            {['VISA', 'Master', 'Elo', 'Pix'].map((b) => (
+              <span
+                key={b}
+                className="rounded border border-border bg-muted/40 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-muted-foreground"
+              >
+                {b}
+              </span>
+            ))}
+          </div>
         </div>
         <p className="text-xs text-muted-foreground mb-5">
-          Usamos no cadastro seguro do Asaas. O CPF não fica salvo no PROGPT.
+          O cartão é cadastrado no ambiente seguro do Asaas. O CPF não fica
+          salvo no PROGPT.
         </p>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -249,10 +281,10 @@ export function StartTrial({ priceLabel, trialDays, initial }: Props) {
               </>
             )}
           </button>
-          <p className="text-[11px] text-muted-foreground text-center pt-2 border-t border-border">
-            Você será levado ao ambiente seguro do Asaas pra inserir o cartão.
-            Nenhum valor é cobrado durante os {trialDays} dias.
-          </p>
+          <div className="flex items-center justify-center gap-1.5 pt-2 border-t border-border text-[11px] text-muted-foreground">
+            <Lock className="h-3 w-3" aria-hidden="true" />
+            Pagamento criptografado e processado pelo Asaas · sem cobrança nos {trialDays} dias
+          </div>
         </form>
       </div>
     </div>
