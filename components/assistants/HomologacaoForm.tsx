@@ -113,25 +113,29 @@ export function HomologacaoForm({
         </Button>
       </div>
 
-      <div>
-        <label className="text-xs font-medium block mb-1">Template</label>
-        <select
-          value={templateId}
-          onChange={(e) => setTemplateId(e.target.value)}
-          disabled={loadingTemplates}
-          className="w-full rounded-md border border-input bg-background p-2 text-sm"
-        >
-          {loadingTemplates && <option value="">Carregando…</option>}
-          {!loadingTemplates && templates.length === 0 && (
-            <option value="">(nenhum template publicado)</option>
-          )}
-          {templates.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.name}
-            </option>
-          ))}
-        </select>
-      </div>
+      {/* Seletor só aparece quando há mais de um template; com um único
+          template (caso padrão) ele é auto-selecionado e o campo some. */}
+      {templates.length > 1 && (
+        <div>
+          <label className="text-xs font-medium block mb-1">Template</label>
+          <select
+            value={templateId}
+            onChange={(e) => setTemplateId(e.target.value)}
+            className="w-full rounded-md border border-input bg-background p-2 text-sm"
+          >
+            {templates.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+      {!loadingTemplates && templates.length === 0 && (
+        <p className="text-[11px] text-destructive">
+          Nenhum template publicado. Peça à administração para criar um em /admin/templates.
+        </p>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
