@@ -19,13 +19,11 @@ import { HomologacaoPreview } from './previews/HomologacaoPreview';
 import { PesquisaPrecosPreview } from './previews/PesquisaPrecosPreview';
 import { IndicadoresPreview } from './previews/IndicadoresPreview';
 
-// Hub layout — Spotlight + Roadmap.
+// Hub layout — header + spotlight cards.
 //
-// Section 1: header + macro progress bar (X/7 ativos)
-// Section 2: large spotlight cards for available assistants, each with
-//            a stylized SVG preview of the output
-// Section 3: compact 7-node roadmap strip (horizontal desktop, vertical
-//            mobile) showing the full sourcing pipeline + status
+// Cards grandes (com preview SVG do output) dos assistentes disponíveis. O
+// roadmap/progresso de Strategic Sourcing (barra de progresso, badge "Passo N"
+// e a tira de 7 passos) foi removido do layout em 2026-06-24.
 //
 // Perfil da Categoria foi removido do hub + chat (confundia usuários); a
 // página /assistants/profile e o "Iniciar de um Perfil" no RFP seguem ativos.
@@ -211,73 +209,24 @@ const SPOTLIGHTS: SpotlightAssistant[] = [
   },
 ];
 
-type RoadmapStep = {
-  n: number;
-  shortLabel: string;
-  fullName: string;
-  available: boolean;
-  href?: string;
-};
-
-const STEPS: RoadmapStep[] = [
-  { n: 1, shortLabel: 'Análise', fullName: 'Análise da Categoria', available: true, href: '/assistants/abc' },
-  { n: 2, shortLabel: 'Mercado', fullName: 'Visão do Mercado Fornecedor', available: true, href: '/assistants/porter' },
-  { n: 3, shortLabel: 'Estratégia', fullName: 'Estratégia de Sourcing', available: true, href: '/assistants/kraljic' },
-  { n: 4, shortLabel: 'Engajamento', fullName: 'Engajamento dos Fornecedores', available: true, href: '/assistants/rfp' },
-  { n: 5, shortLabel: 'Negociação', fullName: 'Negociação', available: true, href: '/assistants/negotiation' },
-  { n: 6, shortLabel: 'Contrato', fullName: 'Implementação do Contrato', available: true, href: '/assistants/financial' },
-  { n: 7, shortLabel: 'Controle', fullName: 'Controle e Melhoria Contínua', available: true, href: '/assistants/scorecard' },
-];
-
-const ACTIVE_COUNT = STEPS.filter((s) => s.available).length;
-const PROGRESS_PCT = Math.round((ACTIVE_COUNT / STEPS.length) * 100);
-
 export function AssistantsHub() {
   return (
     <div className="space-y-12">
-      {/* ───── Section 1: Header + progress ───── */}
-      <header className="space-y-5">
-        <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div>
-            <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">
-              Assistentes <span className="text-brand">.</span>
-            </h1>
-            <p className="text-sm text-muted-foreground mt-2">
-              {ACTIVE_COUNT} de {STEPS.length} passos do{' '}
-              <span className="text-brand font-medium">Strategic Sourcing</span>{' '}
-              com assistente ativo.
-            </p>
-          </div>
-          <Link
-            href="/assistants/history"
-            className="inline-flex items-center gap-1.5 text-sm rounded-full border border-border bg-muted hover:bg-accent text-muted-foreground hover:text-foreground px-4 h-9 transition-all duration-300 active:scale-95"
-          >
-            <History className="h-4 w-4" aria-hidden="true" />
-            Meu histórico
-          </Link>
-        </div>
-
-        {/* Progress bar */}
-        <div className="space-y-1.5">
-          <div className="h-1 w-full rounded-full bg-muted overflow-hidden">
-            <div
-              className="h-full bg-brand rounded-full transition-all duration-500 ease-out"
-              style={{ width: `${PROGRESS_PCT}%` }}
-              role="progressbar"
-              aria-valuenow={ACTIVE_COUNT}
-              aria-valuemin={0}
-              aria-valuemax={STEPS.length}
-              aria-label={`${ACTIVE_COUNT} de ${STEPS.length} passos ativos`}
-            />
-          </div>
-          <div className="flex justify-between text-[10px] text-muted-foreground font-medium tracking-wider uppercase">
-            <span>Roadmap do produto</span>
-            <span>{PROGRESS_PCT}%</span>
-          </div>
-        </div>
+      {/* ───── Header ───── */}
+      <header className="flex items-center justify-between gap-4 flex-wrap">
+        <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">
+          Assistentes <span className="text-brand">.</span>
+        </h1>
+        <Link
+          href="/assistants/history"
+          className="inline-flex items-center gap-1.5 text-sm rounded-full border border-border bg-muted hover:bg-accent text-muted-foreground hover:text-foreground px-4 h-9 transition-all duration-300 active:scale-95"
+        >
+          <History className="h-4 w-4" aria-hidden="true" />
+          Meu histórico
+        </Link>
       </header>
 
-      {/* ───── Section 2: Spotlight ───── */}
+      {/* ───── Spotlight cards ───── */}
       <section aria-label="Assistentes disponíveis">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {SPOTLIGHTS.map((a) => {
@@ -291,11 +240,6 @@ export function AssistantsHub() {
                 {/* Preview */}
                 <div className="rounded-xl bg-black/40 overflow-hidden aspect-[16/9] mb-5 ring-1 ring-white/5">
                   <Preview />
-                </div>
-
-                {/* Step badge */}
-                <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground mb-1.5">
-                  Passo {a.step} · {a.stepCategory}
                 </div>
 
                 {/* Title */}
@@ -338,113 +282,6 @@ export function AssistantsHub() {
         </div>
       </section>
 
-      {/* ───── Section 3: Roadmap strip ───── */}
-      <section aria-label="Roadmap dos 7 passos">
-        <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground mb-5">
-          No roadmap
-        </div>
-
-        {/* Desktop: horizontal strip */}
-        <div className="hidden md:block relative">
-          {/* Connecting line */}
-          <div
-            aria-hidden="true"
-            className="absolute top-5 left-[5%] right-[5%] h-px bg-muted"
-          />
-
-          <ol className="relative grid grid-cols-7 gap-1">
-            {STEPS.map((s) => {
-              const tooltip = s.available
-                ? `Disponível — ${s.fullName}`
-                : `Em breve — ${s.fullName}`;
-              const NodeWrapper: React.ElementType = s.available
-                ? Link
-                : 'div';
-              const wrapperProps = s.available
-                ? { href: s.href!, title: tooltip }
-                : { title: tooltip };
-              return (
-                <li key={s.n} className="flex flex-col items-center gap-2">
-                  <NodeWrapper
-                    {...wrapperProps}
-                    className={`relative flex items-center justify-center w-10 h-10 rounded-full text-xs font-semibold transition-all duration-300 ${
-                      s.available
-                        ? 'bg-brand/10 border-2 border-brand text-brand hover:bg-brand/20 hover:scale-110 cursor-pointer active:scale-95'
-                        : 'bg-muted/40 border border-border text-muted-foreground cursor-default'
-                    }`}
-                  >
-                    {s.n}
-                  </NodeWrapper>
-                  <div className="text-center">
-                    <div
-                      className={`text-[10px] font-medium ${
-                        s.available ? 'text-foreground' : 'text-muted-foreground'
-                      }`}
-                    >
-                      {s.shortLabel}
-                    </div>
-                    <div
-                      className={`mt-0.5 text-[9px] uppercase tracking-wider ${
-                        s.available ? 'text-brand' : 'text-muted-foreground'
-                      }`}
-                    >
-                      {s.available ? 'Disponível' : 'Em breve'}
-                    </div>
-                  </div>
-                </li>
-              );
-            })}
-          </ol>
-        </div>
-
-        {/* Mobile: vertical compact list */}
-        <ol className="md:hidden relative pl-8 space-y-3">
-          {/* Vertical dashed line */}
-          <div
-            aria-hidden="true"
-            className="absolute top-5 bottom-5 left-[19px] w-px border-l border-dashed border-border"
-          />
-          {STEPS.map((s) => {
-            const tooltip = s.available
-              ? `Disponível — ${s.fullName}`
-              : `Em breve — ${s.fullName}`;
-            const NodeWrapper: React.ElementType = s.available ? Link : 'div';
-            const wrapperProps = s.available
-              ? { href: s.href!, title: tooltip }
-              : { title: tooltip };
-            return (
-              <li key={s.n} className="relative flex items-center gap-3">
-                <NodeWrapper
-                  {...wrapperProps}
-                  className={`absolute -left-8 flex items-center justify-center w-8 h-8 rounded-full text-xs font-semibold transition-colors ${
-                    s.available
-                      ? 'bg-brand/10 border-2 border-brand text-brand active:scale-95'
-                      : 'bg-muted/40 border border-border text-muted-foreground'
-                  }`}
-                >
-                  {s.n}
-                </NodeWrapper>
-                <div className="flex items-center justify-between w-full">
-                  <div
-                    className={`text-sm ${
-                      s.available ? 'text-foreground' : 'text-muted-foreground'
-                    }`}
-                  >
-                    {s.fullName}
-                  </div>
-                  <span
-                    className={`text-[10px] uppercase tracking-wider ${
-                      s.available ? 'text-brand' : 'text-muted-foreground'
-                    }`}
-                  >
-                    {s.available ? 'Disponível' : 'Em breve'}
-                  </span>
-                </div>
-              </li>
-            );
-          })}
-        </ol>
-      </section>
     </div>
   );
 }
