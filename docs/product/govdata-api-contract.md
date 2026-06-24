@@ -59,11 +59,17 @@ Hierarquia: Grupo → Classe → PDM → Item.
 > Postgres, padrão `cnae_taxonomy`) ou navegação hierárquica guiada por LLM. **Decisão e
 > implementação na Fase 1.**
 
-### Contratos por fornecedor — Fase 2
-PNCP `/v1/contratos` traz `niFornecedor`/`nomeRazaoSocialFornecedor`/`valorGlobal`, mas filtra
-por **órgão** (não por fornecedor). Fonte de contratos POR fornecedor a fixar na Fase 2
-(Portal da Transparência endpoint de fornecedor — reusa `PORTAL_TRANSPARENCIA_TOKEN` — ou
-Compras dados abertos por `niFornecedor`).
+### Itens homologados por fornecedor (Fase 2 — `lib/govdata/fornecedor.ts`)
+PNCP `/v1/contratos` filtra por **órgão** (não por fornecedor), então usamos o módulo de
+**resultados** do Compras.gov.br, que aceita `niFornecedor` como filtro (token-free):
+`GET /modulo-contratacoes/3_consultarResultadoItensContratacoes_PNCP_14133?niFornecedor={cnpj}&dataResultadoPncpInicial={YYYY-MM-DD}&dataResultadoPncpFinal={YYYY-MM-DD}`.
+**Datas obrigatórias, formato `YYYY-MM-DD`, janela ≤ 365 dias.** `totalRegistros` = itens
+homologados (vencidos) no período. Cada item: `valorTotalHomologado`, `quantidadeHomologada`,
+`unidadeOrgaoUfSigla`, `orgaoEntidadeCnpj`, `nomeRazaoSocialFornecedor`, `porteFornecedorNome`,
+`situacaoCompraItemResultadoNome`. Validado ao vivo (CNPJ 49.506.420/0001-33 → 1313 itens, 69 órgãos,
+12 UFs). `valorTotalHomologado` às vezes 0 (SRP/registro) — somamos só os positivos, rotulado "amostra".
+Alternativa não usada: Portal da Transparência `/api-de-dados/contratos/cpf-cnpj` (purpose-built,
+mas exige `PORTAL_TRANSPARENCIA_TOKEN`, que está em espera).
 
 ## PNCP consulta — `https://pncp.gov.br/api/consulta`
 
