@@ -6,6 +6,7 @@ import {
   type FinancialAnalysis,
 } from '@/lib/assistants/financial';
 import { fetchFiscalSnapshot, type FiscalSnapshot } from '@/lib/fiscal/snapshot';
+import { indicadoresAtuais, type IndicadoresAtuais } from '@/lib/govdata/indicadores';
 
 export const runtime = 'nodejs';
 
@@ -16,6 +17,7 @@ export const runtime = 'nodejs';
 type FinancialClassified = {
   analysis: FinancialAnalysis;
   fiscal: FiscalSnapshot | null;
+  macro: IndicadoresAtuais | null;
 };
 
 export const POST = buildAssistantHandler<
@@ -34,11 +36,14 @@ export const POST = buildAssistantHandler<
       missingPillars: c.analysis.missingPillars,
       fiscalAvailable: c.fiscal?.available ?? false,
     }),
-    run: async (params) => ({
-      analysis: calculateFinancialScore(params.indicators),
-      // Snapshot fiscal é fail-soft (nunca lança) e só roda com CNPJ.
-      fiscal: params.cnpj ? await fetchFiscalSnapshot(params.cnpj) : null,
-    }),
+    run: async (params) => {
+      // Snapshot fiscal (só com CNPJ) + macro BACEN, ambos fail-soft e paralelos.
+      const [fiscal, macro] = await Promise.all([
+        params.cnpj ? fetchFiscalSnapshot(params.cnpj) : Promise.resolve(null),
+        indicadoresAtuais().catch(() => null),
+      ]);
+      return { analysis: calculateFinancialScore(params.indicators), fiscal, macro };
+    },
   },
   buildRetrievalQuery: (params) =>
     `análise financeira de fornecedor ${params.supplierName} risco de crédito EBITDA liquidez`,
@@ -51,6 +56,7 @@ export const POST = buildAssistantHandler<
       classified.analysis,
       company,
       classified.fiscal,
+      classified.macro,
     ),
   generateOp: 'assistant-financial-generate',
   generateMetadata: ({ classified }) => ({ score: classified.analysis.score }),

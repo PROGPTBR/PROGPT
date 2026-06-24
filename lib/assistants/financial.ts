@@ -9,6 +9,7 @@ import type {
 import { splitTemplateBody, renderPlaceholders } from './template-assembly';
 import type { CompanyData } from '@/lib/db/user-company';
 import type { FiscalSnapshot } from '@/lib/fiscal/snapshot';
+import { indicadoresMarkdown, type IndicadoresAtuais } from '@/lib/govdata/indicadores';
 
 // Sub-projeto 30 — Análise financeira determinística de fornecedor.
 //
@@ -272,6 +273,7 @@ export function buildFinancialPrompt(
   analysis: FinancialAnalysis,
   company: CompanyData | null = null,
   fiscal: FiscalSnapshot | null = null,
+  macro: IndicadoresAtuais | null = null,
 ): { system: string; user: string } {
   const companyBlock = company
     ? [
@@ -328,6 +330,9 @@ ${formatChunks(chunks)}`;
 
 Gere o relatório de análise financeira agora. Comece direto pelo título. Para cada um dos 4 pilares: explique o valor, dê benchmark típico (sem inventar), traduza em risco para o comprador. Inclua os outros 8 indicadores na seção "Demonstrativo resumido". Feche com recomendação de compra (buy/caution/do_not_buy), termos de pagamento sugeridos e classificação de risco de falência. Markdown limpo.`;
 
+  // Contexto macroeconômico (BACEN) — opcional, fail-soft. Vazio se indisponível.
+  const macroBlock = macro ? indicadoresMarkdown(macro) : '';
+
   return {
     system: FINANCIAL_SYSTEM_PROMPT,
     user: [
@@ -335,6 +340,7 @@ Gere o relatório de análise financeira agora. Comece direto pelo título. Para
       indicatorsBlock,
       analysisBlock,
       fiscalBlock(fiscal),
+      macroBlock,
       templateBlock,
       contextBlock,
       instruction,

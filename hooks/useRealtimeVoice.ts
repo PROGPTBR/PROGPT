@@ -7,7 +7,11 @@ import {
   addUsage,
   type RealtimeUsage,
 } from '@/lib/voice/event-reducer';
-import { SEARCH_TOOL_NAME, FISCAL_TOOL_NAME } from '@/lib/voice/realtime-config';
+import {
+  SEARCH_TOOL_NAME,
+  FISCAL_TOOL_NAME,
+  INDICADORES_TOOL_NAME,
+} from '@/lib/voice/realtime-config';
 
 // Sub-projeto 35 — sessão de voz realtime do chat.
 //
@@ -170,6 +174,23 @@ export function useRealtimeVoice(opts: {
           }
         } catch {
           /* fail-soft: a IA fala que não conseguiu consultar */
+        }
+      } else if (name === INDICADORES_TOOL_NAME) {
+        output = JSON.stringify({
+          resumo: 'Não consegui consultar os indicadores agora.',
+        });
+        try {
+          const res = await fetch('/api/chat/voice/indicadores', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({}),
+          });
+          if (res.ok) {
+            const data = (await res.json()) as { resumo: string };
+            output = JSON.stringify({ resumo: data.resumo });
+          }
+        } catch {
+          /* fail-soft */
         }
       }
       sendEvent({
