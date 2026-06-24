@@ -68,7 +68,8 @@ export type ApiOperation =
   | 'assistant-pesquisa-precos-generate'
   | 'govdata-catmat-pick'
   | 'comprador-analyze'
-  | 'comprador-draft-reply';
+  | 'comprador-draft-reply'
+  | 'assistant-indicadores-leitura';
 
 export type RecordUsageInput = {
   provider: ApiProvider;

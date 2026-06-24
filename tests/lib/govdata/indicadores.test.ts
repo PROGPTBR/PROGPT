@@ -1,5 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { accumulate12m, parseBacenNumber, resumoIndicadores } from '@/lib/govdata/indicadores';
+import {
+  accumulate12m,
+  parseBacenNumber,
+  resumoIndicadores,
+  tendencia,
+} from '@/lib/govdata/indicadores';
 import { clearGovDataCache } from '@/lib/govdata/cache';
 
 beforeEach(() => clearGovDataCache());
@@ -33,6 +38,21 @@ describe('accumulate12m (composição de variações mensais)', () => {
   });
   it('null quando faltam dados', () => {
     expect(accumulate12m([])).toBeNull();
+  });
+});
+
+describe('tendencia', () => {
+  it('up quando sobe, down quando cai, flat quando estável', () => {
+    expect(tendencia([10, 11, 12])).toBe('up');
+    expect(tendencia([12, 11, 10])).toBe('down');
+    expect(tendencia([10, 10, 10])).toBe('flat');
+  });
+  it('flat com menos de 2 pontos', () => {
+    expect(tendencia([5])).toBe('flat');
+    expect(tendencia([])).toBe('flat');
+  });
+  it('variação ínfima conta como flat', () => {
+    expect(tendencia([100, 100.05])).toBe('flat');
   });
 });
 

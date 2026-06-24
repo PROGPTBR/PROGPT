@@ -11,8 +11,11 @@ const TTL_6H = 6 * 60 * 60 * 1000; // indicadores mudam no máx. 1×/dia
 
 export const SGS = {
   SELIC_META: 432,
+  CDI: 4389, // CDI anualizado base 252 (% a.a.)
   IPCA_MENSAL: 433,
+  IGPM_MENSAL: 189,
   CAMBIO_USD: 1,
+  CAMBIO_EUR: 21619, // euro (venda)
 } as const;
 
 export interface Indicador {
@@ -115,6 +118,187 @@ export async function serie(codigo: number, meses: number): Promise<BacenPonto[]
   } catch {
     return [];
   }
+}
+
+// ── Painel de indicadores (dashboard) ───────────────────────────────────────
+
+export interface PontoSerie {
+  data: string;
+  valor: number;
+}
+
+export type IndicadorTipo = 'taxa' | 'indice' | 'cambio';
+
+export interface IndicadorCard {
+  key: 'selic' | 'cdi' | 'ipca' | 'igpm' | 'usd' | 'eur';
+  nome: string;
+  valor: number; // headline: nível atual (taxa/câmbio) ou acumulado 12m (índice)
+  unidade: string; // '% a.a.' | '% (12m)' | 'R$'
+  data: string;
+  tipo: IndicadorTipo;
+  descricao: string; // o que é, pra que serve em compras
+  serie: PontoSerie[]; // para o sparkline
+  serieLabel: string; // legenda do gráfico
+  tendencia: 'up' | 'down' | 'flat';
+}
+
+export interface PainelIndicadores {
+  disponivel: boolean;
+  atualizadoEm: string; // data mais recente entre os cards
+  cards: IndicadorCard[];
+}
+
+/** Tendência de uma série (último vs primeiro ponto). Pura/testável. */
+export function tendencia(valores: number[]): 'up' | 'down' | 'flat' {
+  if (valores.length < 2) return 'flat';
+  const a = valores[0]!;
+  const b = valores[valores.length - 1]!;
+  const delta = b - a;
+  const ref = Math.abs(a) || 1;
+  if (Math.abs(delta) / ref < 0.001) return 'flat';
+  return delta > 0 ? 'up' : 'down';
+}
+
+function ddmmyyyy(d: Date): string {
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()}`;
+}
+
+// Janela por intervalo de datas. `ultimos/N` é capado para séries diárias
+// (400 já em N=30); o range query (dataInicial/dataFinal) não tem esse limite.
+async function serieRangeNum(codigo: number, meses: number): Promise<PontoSerie[]> {
+  try {
+    const fim = new Date();
+    const ini = new Date(fim);
+    ini.setMonth(ini.getMonth() - meses);
+    const pts = await cached(
+      `bacen-range:${codigo}:${meses}`,
+      () =>
+        govGet<BacenPonto[]>('bacen', `/serie/bcdata.sgs.${codigo}/dados`, {
+          formato: 'json',
+          dataInicial: ddmmyyyy(ini),
+          dataFinal: ddmmyyyy(fim),
+        }),
+      TTL_6H,
+    );
+    return pts
+      .map((p) => ({ data: p.data, valor: parseBacenNumber(p.valor) }))
+      .filter((p): p is PontoSerie => p.valor != null);
+  } catch {
+    return [];
+  }
+}
+
+/** Card de nível (taxa/câmbio): valor = último ponto, série = janela de `meses`. */
+async function cardNivel(
+  key: IndicadorCard['key'],
+  codigo: number,
+  meses: number,
+  meta: { nome: string; unidade: string; tipo: IndicadorTipo; descricao: string; serieLabel: string },
+): Promise<IndicadorCard | null> {
+  const s = await serieRangeNum(codigo, meses);
+  if (s.length === 0) return null;
+  const last = s[s.length - 1]!;
+  return {
+    key,
+    nome: meta.nome,
+    valor: round2(last.valor),
+    unidade: meta.unidade,
+    data: last.data,
+    tipo: meta.tipo,
+    descricao: meta.descricao,
+    serie: s,
+    serieLabel: meta.serieLabel,
+    tendencia: tendencia(s.map((p) => p.valor)),
+  };
+}
+
+/** Card de índice (IPCA/IGP-M): valor = acumulado 12m, série = variação mensal. */
+async function cardInflacao(
+  key: IndicadorCard['key'],
+  codigo: number,
+  meta: { nome: string; descricao: string },
+): Promise<IndicadorCard | null> {
+  const s = await serieRangeNum(codigo, 18); // 18 meses de variação mensal
+  if (s.length === 0) return null;
+  const ultimos12 = s.slice(-12).map((p) => p.valor);
+  const acc = accumulate12m(ultimos12);
+  if (acc == null) return null;
+  return {
+    key,
+    nome: meta.nome,
+    valor: round2(acc),
+    unidade: '% (12m)',
+    data: s[s.length - 1]!.data,
+    tipo: 'indice',
+    descricao: meta.descricao,
+    serie: s,
+    serieLabel: 'variação mensal (%)',
+    tendencia: tendencia(s.slice(-6).map((p) => p.valor)),
+  };
+}
+
+/**
+ * Painel completo de indicadores econômicos (6 cards com série pra gráfico).
+ * Cada card é fail-soft (Promise.allSettled); o que falhar é omitido.
+ */
+export async function painelIndicadores(): Promise<PainelIndicadores> {
+  const NIVEL = 4; // janela em meses para as séries de nível (diárias)
+  const results = await Promise.allSettled([
+    cardNivel('selic', SGS.SELIC_META, NIVEL, {
+      nome: 'Selic (meta)',
+      unidade: '% a.a.',
+      tipo: 'taxa',
+      descricao: 'Taxa básica de juros (Copom). Baliza o custo de capital e o financiamento de fornecedores.',
+      serieLabel: '% a.a.',
+    }),
+    cardNivel('cdi', SGS.CDI, NIVEL, {
+      nome: 'CDI',
+      unidade: '% a.a.',
+      tipo: 'taxa',
+      descricao: 'Custo do dinheiro no interbancário (~Selic). Referência de aplicações e de juros embutidos em prazos.',
+      serieLabel: '% a.a.',
+    }),
+    cardInflacao('ipca', SGS.IPCA_MENSAL, {
+      nome: 'IPCA',
+      descricao: 'Inflação oficial ao consumidor. Corrige preços e mede o ganho/perda real de savings.',
+    }),
+    cardInflacao('igpm', SGS.IGPM_MENSAL, {
+      nome: 'IGP-M',
+      descricao: 'Índice geral de preços. Indexador clássico de reajuste contratual (aluguéis, contratos longos).',
+    }),
+    cardNivel('usd', SGS.CAMBIO_USD, NIVEL, {
+      nome: 'Dólar',
+      unidade: 'R$',
+      tipo: 'cambio',
+      descricao: 'Câmbio USD (venda). Impacta itens importados e cláusulas atreladas a moeda.',
+      serieLabel: 'R$',
+    }),
+    cardNivel('eur', SGS.CAMBIO_EUR, NIVEL, {
+      nome: 'Euro',
+      unidade: 'R$',
+      tipo: 'cambio',
+      descricao: 'Câmbio EUR (venda). Relevante para fornecedores e equipamentos europeus.',
+      serieLabel: 'R$',
+    }),
+  ]);
+
+  const cards = results
+    .map((r) => (r.status === 'fulfilled' ? r.value : null))
+    .filter((c): c is IndicadorCard => c != null);
+
+  // data mais recente entre os cards (dd/MM/yyyy → compara por chave ISO)
+  const atualizadoEm =
+    cards
+      .map((c) => c.data)
+      .sort((a, b) => toIso(b).localeCompare(toIso(a)))[0] ?? '';
+
+  return { disponivel: cards.length > 0, atualizadoEm, cards };
+}
+
+function toIso(ddmmyyyy: string): string {
+  const m = ddmmyyyy.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  return m ? `${m[3]}-${m[2]}-${m[1]}` : ddmmyyyy;
 }
 
 const BR = (n: number, frac = 2) =>

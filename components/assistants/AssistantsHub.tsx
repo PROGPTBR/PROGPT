@@ -16,6 +16,7 @@ import { NegotiationPreview } from './previews/NegotiationPreview';
 import { ScorecardPreview } from './previews/ScorecardPreview';
 import { HomologacaoPreview } from './previews/HomologacaoPreview';
 import { PesquisaPrecosPreview } from './previews/PesquisaPrecosPreview';
+import { IndicadoresPreview } from './previews/IndicadoresPreview';
 
 // Hub layout — Spotlight + Roadmap.
 //
@@ -178,6 +179,20 @@ const SPOTLIGHTS: SpotlightAssistant[] = [
       'Mapa de preços em .docx para RFP e negociação',
     ],
     Preview: PesquisaPrecosPreview,
+  },
+  {
+    step: 9,
+    stepCategory: 'Macro',
+    href: '/assistants/indicadores',
+    title: 'Indicadores Econômicos',
+    short:
+      'Painel ao vivo do Banco Central (Selic, CDI, IPCA, IGP-M, dólar, euro) com leitura para compras.',
+    bullets: [
+      'Selic, CDI, IPCA, IGP-M, dólar e euro com gráfico',
+      'Leitura macro orientada a custo e reajuste (IA)',
+      'Fonte: Banco Central (séries SGS), atualizado diariamente',
+    ],
+    Preview: IndicadoresPreview,
   },
 ];
 
