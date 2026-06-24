@@ -9,6 +9,7 @@ import {
   PORTER_EXAMPLES,
   HOMOLOGACAO_EXAMPLES,
   PESQUISA_PRECOS_EXAMPLES,
+  SPEND_ANALYSIS_EXAMPLES,
 } from '@/lib/assistants/examples';
 import {
   ProfileParamsSchema,
@@ -20,6 +21,7 @@ import {
   PorterParamsSchema,
   HomologacaoParamsSchema,
   PesquisaPrecosParamsSchema,
+  SpendAnalysisParamsSchema,
 } from '@/lib/assistants/types';
 
 // The whole point of the examples is that "Carregar exemplo" yields a form that
@@ -89,6 +91,13 @@ describe('assistant form examples', () => {
     expect(PESQUISA_PRECOS_EXAMPLES.length).toBeGreaterThan(0);
     for (const ex of PESQUISA_PRECOS_EXAMPLES) {
       expect(() => PesquisaPrecosParamsSchema.parse(ex.params), ex.id).not.toThrow();
+    }
+  });
+
+  it('spend_analysis examples exist and satisfy SpendAnalysisParamsSchema', () => {
+    expect(SPEND_ANALYSIS_EXAMPLES.length).toBeGreaterThan(0);
+    for (const ex of SPEND_ANALYSIS_EXAMPLES) {
+      expect(() => SpendAnalysisParamsSchema.parse(ex.params), ex.id).not.toThrow();
     }
   });
 });

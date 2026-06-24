@@ -19,7 +19,8 @@ export type AssistantType =
   | 'negotiation'
   | 'scorecard'
   | 'homologacao'
-  | 'pesquisa_precos';
+  | 'pesquisa_precos'
+  | 'spend_analysis';
 
 export const ASSISTANT_TYPES = [
   'rfp',
@@ -32,6 +33,7 @@ export const ASSISTANT_TYPES = [
   'scorecard',
   'homologacao',
   'pesquisa_precos',
+  'spend_analysis',
 ] as const;
 
 export type ThemeStatusRow = 'running' | 'done' | 'error';
@@ -731,7 +733,8 @@ export type AssistantRunRow = {
     | NegotiationStrategyParams
     | ScorecardParams
     | HomologacaoParams
-    | PesquisaPrecosParams;
+    | PesquisaPrecosParams
+    | SpendAnalysisParams;
   output_md: string | null;
   status: ThemeStatusRow;
   error_message: string | null;
@@ -876,3 +879,32 @@ export const PesquisaPrecosRequestSchema = z.object({
   params: PesquisaPrecosParamsSchema,
 });
 export type PesquisaPrecosRequest = z.infer<typeof PesquisaPrecosRequestSchema>;
+
+// ── Spend Analysis (Análise de Gastos) ───────────────────────────────────────
+// Da nota fiscal à estratégia: lote de invoices (PDF/planilha) → base
+// classificada + KPIs + strategic sourcing. Processamento assíncrono (job);
+// as notas vivem em `spend_invoices`. `params` carrega só a config da análise.
+export const SPEND_MAX_INVOICES = 500;
+export const SPEND_MAX_FILE_BYTES = 15 * 1024 * 1024; // 15 MB por PDF
+
+export const SpendAnalysisParamsSchema = z.object({
+  analysisName: z.string().trim().min(1).max(200),
+  period: z.string().trim().max(120).optional().default(''),
+  referenceCurrency: z
+    .string()
+    .trim()
+    .regex(/^[A-Za-z]{3}$/)
+    .optional()
+    .default('BRL'),
+  // 'ptax' = converte via cotação do BACEN pela data da nota; 'fixed' = taxas
+  // fixas informadas pelo usuário (uma por moeda).
+  fxMode: z.enum(['ptax', 'fixed']).optional().default('ptax'),
+  fxRates: z.record(z.string(), z.number().positive()).optional(),
+  notes: z.string().trim().max(2000).optional().default(''),
+});
+export type SpendAnalysisParams = z.infer<typeof SpendAnalysisParamsSchema>;
+
+export const SpendAnalysisCreateSchema = z.object({
+  params: SpendAnalysisParamsSchema,
+});
+export type SpendAnalysisCreate = z.infer<typeof SpendAnalysisCreateSchema>;

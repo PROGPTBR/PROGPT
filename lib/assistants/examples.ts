@@ -8,6 +8,7 @@ import type {
   PorterParams,
   HomologacaoParams,
   PesquisaPrecosParams,
+  SpendAnalysisParams,
 } from './types';
 import { PORTER_STATEMENTS } from './porter-statements';
 
@@ -283,6 +284,24 @@ export const PESQUISA_PRECOS_EXAMPLES: FormExample<PesquisaPrecosParams>[] = [
       ],
       notas:
         'Estimativa de preço de referência para abertura de processo de compra; ancorar RFP e meta de negociação.',
+    },
+  },
+];
+
+// Spend Analysis: o "exemplo" é só a config da análise — as invoices vêm por
+// upload (PDF/planilha), então o exemplo preenche o formulário e o usuário sobe
+// os arquivos. Multi-moeda com conversão automática via PTAX para BRL.
+export const SPEND_ANALYSIS_EXAMPLES: FormExample<SpendAnalysisParams>[] = [
+  {
+    id: 'carteira-global',
+    label: 'Carteira de invoices — multi-moeda',
+    params: {
+      analysisName: 'Análise de gastos — carteira de invoices 2025',
+      period: 'Ano fiscal 2025',
+      referenceCurrency: 'BRL',
+      fxMode: 'ptax',
+      notes:
+        'Lote de invoices em várias moedas (USD/EUR/BRL). Converter tudo para BRL pela cotação da data de cada nota; mapear cobertura de PO e tail spend para priorizar sourcing.',
     },
   },
 ];
