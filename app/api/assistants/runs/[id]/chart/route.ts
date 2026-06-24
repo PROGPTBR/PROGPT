@@ -7,7 +7,15 @@ import { classifyAbc } from '@/lib/assistants/abc';
 import { renderAbcChartPng } from '@/lib/assistants/abc-chart';
 import { scoreSuppliers } from '@/lib/assistants/scorecard';
 import { renderScorecardChartPng } from '@/lib/assistants/scorecard-chart';
-import type { KraljicParams, AbcParams, ScorecardParams } from '@/lib/assistants/types';
+import { renderSpendParetoPng } from '@/lib/assistants/spend-chart';
+import { listInvoicesByRun } from '@/lib/spend/db';
+import { buildCubeFromRows } from '@/lib/spend/from-rows';
+import type {
+  KraljicParams,
+  AbcParams,
+  ScorecardParams,
+  SpendAnalysisParams,
+} from '@/lib/assistants/types';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -43,6 +51,11 @@ export async function GET(
     } else if (run.assistant_type === 'scorecard') {
       const sp = run.params as unknown as ScorecardParams;
       buf = await renderScorecardChartPng(scoreSuppliers(sp), sp.thresholds);
+    } else if (run.assistant_type === 'spend_analysis') {
+      const sp = run.params as SpendAnalysisParams;
+      const rows = await listInvoicesByRun(run.id);
+      const cube = buildCubeFromRows(rows, (sp.referenceCurrency ?? 'BRL').toUpperCase());
+      buf = await renderSpendParetoPng(cube);
     } else {
       return new NextResponse('Not Found', { status: 404 });
     }

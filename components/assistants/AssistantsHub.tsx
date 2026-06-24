@@ -65,7 +65,7 @@ const SPOTLIGHTS: SpotlightAssistant[] = [
     bullets: [
       'Upload de invoices em PDF + planilha (XLSX/CSV)',
       'Extração por IA: PO, país, moeda, total, prazo, categoria',
-      'Base classificada + KPIs + Pareto (.xlsx/.docx na fase 2)',
+      'KPIs + Pareto + strategic sourcing (.xlsx + .docx)',
     ],
     Preview: SpendAnalysisPreview,
   },

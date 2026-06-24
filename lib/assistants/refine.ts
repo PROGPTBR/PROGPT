@@ -8,6 +8,7 @@ import type {
   AbcParams,
   ProfileParams,
   ScorecardParams,
+  SpendAnalysisParams,
 } from './types';
 
 // Sub-projeto 21 + 27 — Post-creation chat refinement.
@@ -351,6 +352,56 @@ ${baseBlock}
 </base>`;
 }
 
+// ── Spend Analysis refinement ────────────────────────────────────────────
+
+export const SPEND_REFINE_SYSTEM_PROMPT = `Você é um especialista sênior em strategic sourcing ajudando o usuário a aprofundar uma Análise de Gastos (spend analysis) que acabou de ser gerada a partir das invoices dele. Função: explicar os números, priorizar oportunidades de sourcing, detalhar cada recomendação (alavanca, sequência, riscos) e indicar próximos passos no funil (Kraljic, Pesquisa de Preços, RFP, Negociação).
+
+## Como responder
+1. **Seja específico ao relatório**. O relatório aparece entre \`<report>...</report>\` com os KPIs, as tabelas por categoria/fornecedor/país e as recomendações. Refira-se aos números e nomes reais ("o fornecedor X que concentra Y% do gasto", "a categoria Z na cauda longa").
+2. **NÃO invente** valores que não estão no relatório. Se o usuário pedir um número que não foi extraído, diga que não está na base e oriente como obter (ex.: reprocessar com mais invoices).
+3. **Profundidade sênior**: threshold concreto, alavanca de sourcing (catálogo, P-card, MSA+SOW, "No-PO no-pay", contrato de volume, hedge cambial), cadência e armadilha. Mapeie sinais → diagnóstico → ação.
+4. **Fundamente em teoria quando útil**. Há trechos da base entre \`<base>...</base>\` (tail spend, maverick spend, consolidação de fornecedores, gestão de capital de giro).
+5. **Aponte continuidade do funil**: cobertura de PO baixa → política de compras; fornecedor estratégico → Kraljic/Negociação; categoria com muito gasto → Pesquisa de Preços/RFP.
+6. **Markdown limpo**, sem preâmbulo.`;
+
+export function buildSpendRefineSystem(
+  reportMarkdown: string,
+  params: SpendAnalysisParams,
+  chunks: RetrievedChunk[],
+): string {
+  const paramsSummary = [
+    `Análise: ${params.analysisName}`,
+    params.period ? `Período: ${params.period}` : '',
+    `Moeda de referência: ${params.referenceCurrency ?? 'BRL'}`,
+    params.notes ? `Notas: ${params.notes}` : '',
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  const baseBlock =
+    chunks.length === 0
+      ? '(nenhum trecho relevante recuperado — responda com princípios gerais de strategic sourcing)'
+      : chunks.map((c) => `### ${c.articleTitle}\n\n${c.content.slice(0, 800)}`).join('\n\n---\n\n');
+
+  return `${SPEND_REFINE_SYSTEM_PROMPT}
+
+## Parâmetros da análise
+
+${paramsSummary}
+
+## Relatório de gastos (referência completa)
+
+<report>
+${reportMarkdown}
+</report>
+
+## Base de conhecimento
+
+<base>
+${baseBlock}
+</base>`;
+}
+
 // ── Profile refinement ───────────────────────────────────────────────────
 
 export const PROFILE_REFINE_SYSTEM_PROMPT = `Você é um especialista sênior em procurement ajudando o usuário a refinar um Perfil da Categoria (Strategic Sourcing Step 1) que acabou de ser gerado. Função: aprofundar a caracterização, sugerir sub-segmentos faltantes, propor stakeholders a incluir, alertar para restrições regulatórias plausíveis na categoria, e indicar como o Perfil orienta os próximos passos (ABC, Kraljic, Porter, RFP).
@@ -507,9 +558,13 @@ export function buildRefineSystemForType(
     | FinancialParams
     | AbcParams
     | ProfileParams
-    | ScorecardParams,
+    | ScorecardParams
+    | SpendAnalysisParams,
   chunks: RetrievedChunk[],
 ): string {
+  if (assistantType === 'spend_analysis') {
+    return buildSpendRefineSystem(outputMd, params as SpendAnalysisParams, chunks);
+  }
   if (assistantType === 'kraljic') {
     return buildKraljicRefineSystem(outputMd, params as KraljicParams, chunks);
   }

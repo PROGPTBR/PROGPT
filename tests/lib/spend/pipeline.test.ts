@@ -66,6 +66,15 @@ describe('runSpendPipeline — falha parcial', () => {
         })),
     }));
 
+    // narrativa: stub p/ não tocar a rede (retrieve/rerank/LLM)
+    vi.doMock('@/lib/rag/retriever', () => ({ retrieve: vi.fn().mockResolvedValue([]) }));
+    vi.doMock('@/lib/rag/reranker', () => ({ rerank: vi.fn().mockResolvedValue([]) }));
+    vi.doMock('@/lib/db/user-company', () => ({ getUserCompany: vi.fn().mockResolvedValue(null) }));
+    vi.doMock('@/lib/spend/narrative', () => ({
+      buildSpendNarrativePrompt: vi.fn().mockReturnValue({ system: '', user: '' }),
+      generateSpendNarrative: vi.fn().mockResolvedValue('## Recomendações'),
+    }));
+
     const updateInvoice = vi.fn().mockResolvedValue(undefined);
     const applyExtractedFields = vi.fn().mockResolvedValue(undefined);
     vi.doMock('@/lib/spend/db', () => ({
