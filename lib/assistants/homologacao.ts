@@ -18,6 +18,7 @@ import type {
 } from '@/lib/fiscal/types';
 import { consultarSancoes, type SancoesResult } from '@/lib/fiscal/sancoes';
 import { buscarReputacao, type ReputacaoResult } from '@/lib/fiscal/reputacao';
+import { historicoPublico, type HistoricoPublico } from '@/lib/govdata/fornecedor';
 
 // Sub-projeto 36 (fase 1) — Homologação / Qualificação de Fornecedor.
 //
@@ -36,6 +37,7 @@ export type HomologacaoClassified = {
   regimes: TaxRegimeComparison | null;
   sancoes: SancoesResult | null; // CEIS/CNEP (Portal da Transparência)
   reputacao: ReputacaoResult | null; // due diligence reputacional (busca web)
+  historicoPublico: HistoricoPublico | null; // contratos públicos (Compras.gov.br)
   error?: string;
 };
 
@@ -52,13 +54,16 @@ export async function fetchHomologacaoData(
     regimes: null,
     sancoes: null,
     reputacao: null,
+    historicoPublico: null,
   };
-  // Sanções (CEIS/CNEP) é um serviço SEPARADO (Portal da Transparência) com
-  // sua própria env; roda mesmo que o serviço fiscal esteja off, e é fail-soft.
+  // Sanções (CEIS/CNEP) e histórico público (Compras.gov.br) são serviços
+  // SEPARADOS do fiscal; rodam mesmo com o serviço fiscal off, e são fail-soft.
   const sancoesP = consultarSancoes(params.cnpj).catch(() => null);
+  const historicoP = historicoPublico(params.cnpj).catch(() => null);
 
   if (!base.enabled) {
     base.sancoes = await sancoesP;
+    base.historicoPublico = await historicoP;
     base.reputacao = await buscarReputacao({
       razaoSocial: params.fornecedorNome || params.cnpj,
       cnpj: params.cnpj,
@@ -76,6 +81,7 @@ export async function fetchHomologacaoData(
   if (riskR.status === 'fulfilled') base.risk = riskR.value;
   if (compR.status === 'fulfilled') base.compliance = compR.value;
   base.sancoes = await sancoesP;
+  base.historicoPublico = await historicoP;
   // Reputacional usa a razão social oficial (melhor termo de busca) quando há.
   base.reputacao = await buscarReputacao({
     razaoSocial: base.cnpjData?.razao_social || params.fornecedorNome || params.cnpj,
@@ -126,7 +132,8 @@ export const HOMOLOGACAO_SYSTEM_PROMPT = `Você é um especialista sênior em St
 5. **Fundamente** boas práticas de homologação na base de conhecimento (qualificação de fornecedores, due diligence, gestão de risco de suprimento) — sem citar autores/IDs/colchetes.
 6. **Sem preâmbulo conversacional**; comece pelo título. Markdown limpo, tabelas markdown, **bold** nos valores críticos.
 7. **Sanções são impeditivas**: se houver achado em CEIS/CNEP (sanção/inidoneidade), a recomendação final NÃO pode ser "aprovar" — trate como bloqueio/recusa até análise jurídica, independentemente do score fiscal.
-8. **Reputacional é só indicativo**: o bloco de due diligence reputacional vem de busca web (não-oficial). Reproduza-o numa seção própria com o aviso de que é indicativo; ele pode levantar pontos de aprofundamento, mas NÃO altera sozinho a recomendação cadastral/fiscal.`;
+8. **Reputacional é só indicativo**: o bloco de due diligence reputacional vem de busca web (não-oficial). Reproduza-o numa seção própria com o aviso de que é indicativo; ele pode levantar pontos de aprofundamento, mas NÃO altera sozinho a recomendação cadastral/fiscal.
+9. **Histórico de fornecimento público é sinal POSITIVO de capacidade/idoneidade**: se o fornecedor tem contratos/itens homologados em compras públicas federais (Lei 14.133), isso indica experiência operacional e que passou por habilitação em licitações — registre como ponto a favor na avaliação. **A ausência NÃO é demérito** (muitos bons fornecedores não atendem ao governo); nesse caso não comente negativamente.`;
 
 const RISK_LABEL: Record<string, string> = {
   baixo: 'Baixo',
@@ -273,6 +280,20 @@ function sancoesBlock(s: SancoesResult | null): string {
 ${rows.join('\n')}`;
 }
 
+function historicoPublicoBlock(h: HistoricoPublico | null): string {
+  if (!h || !h.consultado) return ''; // fail-soft: omite o bloco se não consultou
+  if (!h.forneceAoGoverno) {
+    return `## Histórico de fornecimento público (Compras.gov.br) — INPUT verificado
+
+Nenhum item homologado em compras públicas federais (Lei 14.133) para este CNPJ nos últimos 12 meses. **Isso NÃO é demérito** — apenas indica que o fornecedor não atuou (ou não venceu) no mercado público federal recente.`;
+  }
+  const ufsTxt = h.ufs.length ? ` em ${h.ufs.length} UF(s) (${h.ufs.slice(0, 8).join(', ')})` : '';
+  const valorTxt = h.valorAmostra > 0 ? ` Na amostra de ${h.amostra} itens, R$ ${h.valorAmostra.toLocaleString('pt-BR')} homologados.` : '';
+  return `## Histórico de fornecimento público (Compras.gov.br) — ✅ sinal POSITIVO (INPUT)
+
+Fornecedor com **${h.totalItens} item(ns) homologado(s)** em compras públicas federais (Lei 14.133) nos últimos 12 meses, atendendo **${h.nOrgaos} órgão(s)** distinto(s)${ufsTxt}.${valorTxt} Indica capacidade operacional comprovada e habilitação prévia em licitações — ponto a favor na homologação.`;
+}
+
 function reputacaoBlock(r: ReputacaoResult | null): string {
   if (!r || !r.enabled || !r.available || !r.resumo) return '';
   return `## Due diligence reputacional (INDICATIVO — não-oficial, busca web)
@@ -344,6 +365,7 @@ Gere agora o relatório de homologação do fornecedor seguindo o template e as 
       headerBlock,
       fiscalDataBlock(classified),
       sancoesBlock(classified.sancoes),
+      historicoPublicoBlock(classified.historicoPublico),
       reputacaoBlock(classified.reputacao),
       companyBlock,
       certidoesBlock,

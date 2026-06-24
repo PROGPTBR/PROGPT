@@ -90,6 +90,7 @@ describe('buildHomologacaoPrompt', () => {
         fontes_consultadas: ['BrasilAPI'],
       },
       regimes: null,
+      historicoPublico: null,
     };
     const { system, user } = buildHomologacaoPrompt(
       PARAMS,
@@ -127,6 +128,7 @@ describe('buildHomologacaoPrompt', () => {
       regimes: null,
       sancoes: null,
       reputacao: null,
+      historicoPublico: null,
     };
     const { user } = buildHomologacaoPrompt(PARAMS, classified, TEMPLATE, [], null);
     expect(user).toMatch(/não está configurado|verificação manual/i);
@@ -156,6 +158,7 @@ describe('buildHomologacaoPrompt', () => {
         ],
       },
       reputacao: null,
+      historicoPublico: null,
     };
     const { user } = buildHomologacaoPrompt(PARAMS, classified, TEMPLATE, [], null);
     expect(user).toMatch(/CRÍTICO|impeditivo/i);
