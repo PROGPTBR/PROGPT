@@ -3,8 +3,20 @@ import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+// Sub-projeto 36.2 — SignupForm card-first: coleta nome/CPF/e-mail (sem senha)
+// e POSTa /api/auth/start-trial, redirecionando pro checkout do Asaas. A conta
+// só é criada depois do cartão.
+
+const VALID_CPF = '11144477735'; // CPF válido (módulo 11) pra liberar o submit
+
 beforeEach(() => {
   vi.resetModules();
+  // window.location.href é setado no sucesso → mock navegável em jsdom.
+  Object.defineProperty(window, 'location', {
+    value: { href: '' },
+    writable: true,
+    configurable: true,
+  });
 });
 
 afterEach(() => {
@@ -12,137 +24,98 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-// Sub-projeto 25 — SignupForm agora chama /api/auth/signup proxy em vez de
-// auth.signUp direto. Stub do Turnstile widget pra que o teste consiga
-// "verificar" sem carregar a lib do Cloudflare.
-
 function setup(opts: {
   fetchResult?: { status: number; body?: Record<string, unknown> };
-  pushSpy?: ReturnType<typeof vi.fn>;
 }) {
-  const push = opts.pushSpy ?? vi.fn();
   const fetchSpy = vi.fn().mockResolvedValue({
     ok: (opts.fetchResult?.status ?? 200) < 400,
     status: opts.fetchResult?.status ?? 200,
     json: async () =>
-      opts.fetchResult?.body ?? { ok: true, checkEmail: true },
+      opts.fetchResult?.body ?? { checkoutUrl: 'https://asaas/checkout' },
   });
   vi.stubGlobal('fetch', fetchSpy);
   vi.doMock('next/navigation', () => ({
-    useRouter: () => ({ push, refresh: vi.fn() }),
     useSearchParams: () => new URLSearchParams(),
   }));
-  // Stub do Turnstile widget — auto-verifica com token fake.
   vi.doMock('@/components/auth/TurnstileWidget', () => ({
     TurnstileWidget: ({ onVerify }: { onVerify: (t: string) => void }) => {
-      // Emite o token assíncronamente pra simular o callback real.
       setTimeout(() => onVerify('test-token'), 0);
       return null;
     },
   }));
-  return { push, fetchSpy };
+  return { fetchSpy };
 }
 
-async function fillAndSubmit(email: string, password: string) {
+async function fillAndSubmit(opts?: { email?: string; cpf?: string; terms?: boolean }) {
   const user = userEvent.setup();
-  await user.type(screen.getByLabelText(/email/i), email);
-  await user.type(screen.getByLabelText('Senha'), password);
-  // Sub-projeto 28 — checkbox de aceite obrigatório
-  await user.click(screen.getByRole('checkbox', { name: /li e aceito/i }));
-  // Espera o Turnstile emitir token (setTimeout 0)
-  await new Promise((r) => setTimeout(r, 5));
-  await user.click(screen.getByRole('button', { name: /cadastrar/i }));
+  await user.type(screen.getByLabelText('Nome completo'), 'Fulano de Tal');
+  await user.type(screen.getByLabelText('Email'), opts?.email ?? 'novo@user.com');
+  await user.type(screen.getByLabelText('CPF'), opts?.cpf ?? VALID_CPF);
+  if (opts?.terms !== false) {
+    await user.click(screen.getByRole('checkbox', { name: /li e aceito/i }));
+  }
+  await new Promise((r) => setTimeout(r, 5)); // turnstile token
+  await user.click(screen.getByRole('button', { name: /cadastrar cart/i }));
 }
 
-describe('SignupForm', () => {
-  it('POSTs /api/auth/signup with email + password + captchaToken', async () => {
+describe('SignupForm (card-first)', () => {
+  it('POSTs /api/auth/start-trial com nome/email/cpf/captcha/terms', async () => {
     const { fetchSpy } = setup({});
     const { SignupForm } = await import('@/components/auth/SignupForm');
     render(<SignupForm />);
-    await fillAndSubmit('novo@user.com', 'pw1234');
+    await fillAndSubmit();
     expect(fetchSpy).toHaveBeenCalledWith(
-      '/api/auth/signup',
-      expect.objectContaining({
-        method: 'POST',
-        body: expect.stringContaining('novo@user.com'),
-      }),
+      '/api/auth/start-trial',
+      expect.objectContaining({ method: 'POST' }),
     );
     const body = JSON.parse((fetchSpy.mock.calls[0]?.[1] as RequestInit).body as string);
     expect(body).toMatchObject({
       email: 'novo@user.com',
-      password: 'pw1234',
+      name: 'Fulano de Tal',
       captchaToken: 'test-token',
       acceptedTerms: true,
     });
+    expect(body.cpf.replace(/\D/g, '')).toBe(VALID_CPF);
   });
 
-  it('shows the "check email" state when API returns checkEmail:true', async () => {
-    setup({ fetchResult: { status: 200, body: { ok: true, checkEmail: true } } });
+  it('redireciona pro checkout do Asaas no sucesso', async () => {
+    setup({ fetchResult: { status: 200, body: { checkoutUrl: 'https://asaas/checkout' } } });
     const { SignupForm } = await import('@/components/auth/SignupForm');
     render(<SignupForm />);
-    await fillAndSubmit('novo@user.com', 'pw1234');
-    expect(await screen.findByText(/confira seu email/i)).toBeTruthy();
-    expect(screen.getByText(/novo@user.com/)).toBeTruthy();
-  });
-
-  it('routes to next when API returns checkEmail:false (email confirmation OFF)', async () => {
-    const push = vi.fn();
-    setup({
-      fetchResult: { status: 200, body: { ok: true, checkEmail: false } },
-      pushSpy: push,
-    });
-    const { SignupForm } = await import('@/components/auth/SignupForm');
-    render(<SignupForm />);
-    await fillAndSubmit('novo@user.com', 'pw1234');
+    await fillAndSubmit();
     await new Promise((r) => setTimeout(r, 10));
-    expect(push).toHaveBeenCalledWith('/assinar');
+    expect(window.location.href).toBe('https://asaas/checkout');
   });
 
-  it('shows "já existe" on 409 user_already_exists', async () => {
+  it('mostra "já existe" no 409 user_already_exists', async () => {
     setup({ fetchResult: { status: 409, body: { error: 'user_already_exists' } } });
     const { SignupForm } = await import('@/components/auth/SignupForm');
     render(<SignupForm />);
-    await fillAndSubmit('a@b.com', 'pw1234');
+    await fillAndSubmit();
     expect(await screen.findByText(/j[áa] existe uma conta/i)).toBeTruthy();
   });
 
-  it('blocks submission with too-short password before hitting the network', async () => {
+  it('bloqueia submit sem aceitar os termos', async () => {
     const { fetchSpy } = setup({});
     const { SignupForm } = await import('@/components/auth/SignupForm');
     render(<SignupForm />);
-    const user = userEvent.setup();
-    await user.type(screen.getByLabelText(/email/i), 'a@b.com');
-    const pwField = screen.getByLabelText('Senha') as HTMLInputElement;
-    pwField.removeAttribute('minLength');
-    await user.type(pwField, 'pw123');
-    // Terms checkbox precisa estar marcado pra habilitar o botão e
-    // chegarmos no gate JS-side de password length.
-    await user.click(screen.getByRole('checkbox', { name: /li e aceito/i }));
-    await new Promise((r) => setTimeout(r, 5));
-    await user.click(screen.getByRole('button', { name: /cadastrar/i }));
+    await fillAndSubmit({ terms: false });
     expect(fetchSpy).not.toHaveBeenCalled();
-    expect(await screen.findByText(/pelo menos 6 caracteres/i)).toBeTruthy();
   });
 
-  it('blocks submission when terms checkbox is NOT checked', async () => {
+  it('bloqueia submit com CPF inválido', async () => {
     const { fetchSpy } = setup({});
     const { SignupForm } = await import('@/components/auth/SignupForm');
     render(<SignupForm />);
-    const user = userEvent.setup();
-    await user.type(screen.getByLabelText(/email/i), 'a@b.com');
-    await user.type(screen.getByLabelText('Senha'), 'pw1234');
-    await new Promise((r) => setTimeout(r, 5));
-    const button = screen.getByRole('button', { name: /cadastrar/i }) as HTMLButtonElement;
-    expect(button.disabled).toBe(true);
-    await user.click(button);
+    await fillAndSubmit({ cpf: '12345678900' }); // CPF inválido
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
-  it('renders a link back to /login that preserves the next= param', async () => {
+  it('renderiza link para /login', async () => {
     setup({});
     const { SignupForm } = await import('@/components/auth/SignupForm');
     render(<SignupForm />);
     const link = screen.getByRole('link', { name: /j[áa] tenho conta/i });
-    expect(link.getAttribute('href')).toBe('/login?next=%2Fassinar');
+    expect(link.getAttribute('href')).toBe('/login');
   });
 });
