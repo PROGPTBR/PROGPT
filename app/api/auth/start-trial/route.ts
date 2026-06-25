@@ -9,6 +9,7 @@ import {
   AsaasError,
 } from '@/lib/billing/asaas';
 import { getBillingSettings } from '@/lib/billing/settings';
+import { callbackBaseUrl } from '@/lib/billing/callback';
 import { isValidCpf, formatCpf } from '@/lib/validators/cpf';
 
 export const runtime = 'nodejs';
@@ -30,16 +31,6 @@ const Body = z.object({
   captchaToken: z.string().min(1).nullable().optional(),
   acceptedTerms: z.literal(true),
 });
-
-// Base do callback do Asaas — precisa ser o domínio aprovado no Asaas
-// (APP_URL, ex.: https://app.2bsupply.com.br). Cai na origem do request só
-// quando APP_URL não está setado.
-function callbackBase(req: Request): string {
-  const envUrl = process.env.APP_URL?.trim();
-  if (envUrl) return envUrl.replace(/\/+$/, '');
-  const url = new URL(req.url);
-  return `${url.protocol}//${url.host}`;
-}
 
 function firstChargeDate(trialDays: number): { date: string; iso: string } {
   const d = new Date();
@@ -118,7 +109,7 @@ export async function POST(req: Request) {
       description: `PROGPT Pro · ${priceLabel}/mês (${settings.trialDays} dias grátis)`,
       nextDueDate: charge.date,
       callback: {
-        successUrl: `${callbackBase(req)}/assinar/concluido?token=${token}`,
+        successUrl: `${callbackBaseUrl(req)}/assinar/concluido?token=${token}`,
         autoRedirect: true,
       },
     });

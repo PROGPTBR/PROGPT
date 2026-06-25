@@ -92,14 +92,16 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
           </ul>
         </aside>
 
-        {/* Coluna do formulário */}
-        <div className="relative flex items-center justify-center px-6 py-10">
+        {/* Coluna do formulário. flex-col + my-auto centraliza quando cabe e
+            deixa a página rolar (sem cortar o topo) quando o form é mais alto
+            que a viewport — caso do cadastro card-first. */}
+        <div className="relative flex flex-col px-6 py-10">
           {/* glow sutil da marca atrás do card */}
           <div
             aria-hidden="true"
             className="pointer-events-none absolute inset-0 brand-aura opacity-60"
           />
-          <div className="relative w-full max-w-md bg-card border border-border rounded-2xl p-8 shadow-xl dark:shadow-2xl dark:shadow-black/40">
+          <div className="relative my-auto mx-auto w-full max-w-md bg-card border border-border rounded-2xl p-8 shadow-xl dark:shadow-2xl dark:shadow-black/40">
             {children}
           </div>
         </div>
