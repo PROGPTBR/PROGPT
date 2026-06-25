@@ -78,13 +78,13 @@ describe('SignupForm (card-first)', () => {
     expect(body.cpf.replace(/\D/g, '')).toBe(VALID_CPF);
   });
 
-  it('redireciona pro checkout do Asaas no sucesso', async () => {
+  it('mostra confirmacao com botao pro checkout no sucesso', async () => {
     setup({ fetchResult: { status: 200, body: { checkoutUrl: 'https://asaas/checkout' } } });
     const { SignupForm } = await import('@/components/auth/SignupForm');
     render(<SignupForm />);
     await fillAndSubmit();
-    await new Promise((r) => setTimeout(r, 10));
-    expect(window.location.href).toBe('https://asaas/checkout');
+    const link = await screen.findByRole('link', { name: /cadastrar cart/i });
+    expect(link.getAttribute('href')).toBe('https://asaas/checkout');
   });
 
   it('mostra "já existe" no 409 user_already_exists', async () => {
