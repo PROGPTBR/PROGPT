@@ -12,13 +12,6 @@ import { createHash } from 'node:crypto';
 const TURNSTILE_VERIFY_URL =
   'https://challenges.cloudflare.com/turnstile/v0/siteverify';
 
-// Test keys públicas da Cloudflare — sempre passam ou sempre falham.
-// Pra testes locais sem setup de Cloudflare account.
-// Site key "1x00000000000000000000AA" + secret "1x0000000000000000000000000000000AA"
-// = always pass.
-// Ver https://developers.cloudflare.com/turnstile/troubleshooting/testing/
-const TEST_SECRET_ALWAYS_PASS = '1x0000000000000000000000000000000AA';
-
 /**
  * Verifica um token do Turnstile contra a API da Cloudflare. Retorna true só
  * se o token é válido e foi resolvido recentemente (Cloudflare expira em ~5
@@ -35,9 +28,13 @@ export async function verifyTurnstileToken(
   const env = process.env.APP_ENV ?? 'production';
   if (env === 'local' || env === 'ci') return true;
 
+  // Captcha DESLIGADO até a chave real ser configurada. Sem
+  // TURNSTILE_SECRET_KEY o widget também não aparece (ver TurnstileWidget) —
+  // pulamos a verificação. Setar a chave reativa o captcha automaticamente.
+  const secret = process.env.TURNSTILE_SECRET_KEY;
+  if (!secret) return true;
+
   if (!token) return false;
-  const secret = process.env.TURNSTILE_SECRET_KEY ?? TEST_SECRET_ALWAYS_PASS;
-  if (!secret) return false;
 
   try {
     const body = new URLSearchParams({ secret, response: token });
