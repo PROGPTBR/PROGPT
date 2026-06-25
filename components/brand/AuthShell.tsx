@@ -38,7 +38,7 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
       <main className="relative z-10 flex-1 grid lg:grid-cols-2 pt-[73px]">
         {/* Painel "Bem-vindo" — gradiente vivo da marca, cor constante nos dois
             temas (como os onboardings das grandes plataformas). */}
-        <aside className="relative hidden lg:flex flex-col justify-center gap-10 overflow-hidden bg-gradient-to-br from-[#0ed1e0] via-[#0e8de1] to-[#0a6fbf] px-12 xl:px-16 py-14 text-white">
+        <aside className="relative hidden lg:flex lg:self-start flex-col justify-start gap-8 overflow-hidden rounded-br-3xl bg-gradient-to-br from-[#0ed1e0] via-[#0e8de1] to-[#0a6fbf] px-12 xl:px-16 py-14 text-white">
           {/* Blobs orgânicos decorativos */}
           <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
             <div className="absolute -top-24 -right-16 h-80 w-80 rounded-full bg-white/15 blur-3xl" />
