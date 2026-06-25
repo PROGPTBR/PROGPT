@@ -150,16 +150,41 @@ export async function createAsaasSubscription(
     paymentLink?: string;
   }>('POST', '/subscriptions', body);
 
+  // IMPORTANTE: o `invoiceUrl` (página de checkout do cartão) vive na 1ª
+  // COBRANÇA da subscription, NÃO no objeto subscription (que vem sem ele). Por
+  // isso buscamos as cobranças e usamos o invoiceUrl da primeira. A cobrança é
+  // gerada de forma assíncrona, então tentamos algumas vezes.
+  let invoiceUrl = result.invoiceUrl ?? result.paymentLink ?? '';
+  if (!invoiceUrl) {
+    invoiceUrl = await fetchSubscriptionInvoiceUrl(result.id);
+  }
 
-  console.log('ASAAS RAW RESULT:', JSON.stringify(result, null, 2));
-
-  // Asaas retorna `invoiceUrl` pra primeira cobrança da subscription.
-  // Se vier null (caso raro), fallback pra paymentLink.
   return {
     id: result.id,
-    invoiceUrl: result.invoiceUrl ?? result.paymentLink ?? '',
+    invoiceUrl,
     paymentLink: result.paymentLink ?? null,
   };
+}
+
+/**
+ * Busca o `invoiceUrl` (checkout do cartão) da 1ª cobrança de uma subscription.
+ * A cobrança é criada async pelo Asaas — retry curto até aparecer.
+ */
+async function fetchSubscriptionInvoiceUrl(subscriptionId: string): Promise<string> {
+  for (let attempt = 0; attempt < 4; attempt++) {
+    try {
+      const pays = await asaasFetch<{ data?: Array<{ invoiceUrl?: string }> }>(
+        'GET',
+        `/subscriptions/${subscriptionId}/payments`,
+      );
+      const url = pays.data?.[0]?.invoiceUrl;
+      if (url) return url;
+    } catch (err) {
+      console.warn('[asaas] fetch subscription payments failed:', err);
+    }
+    if (attempt < 3) await new Promise((r) => setTimeout(r, 900));
+  }
+  return '';
 }
 
 /**
