@@ -9,6 +9,7 @@ import {
 } from '@/lib/billing/asaas';
 import { getSubscription } from '@/lib/billing/subscription';
 import { getBillingSettings } from '@/lib/billing/settings';
+import { callbackBaseUrl } from '@/lib/billing/callback';
 import { isValidCpf, formatCpf } from '@/lib/validators/cpf';
 
 export const runtime = 'nodejs';
@@ -33,17 +34,6 @@ const Body = z.object({
 });
 
 const PENDING_GRACE_MS = 60 * 60 * 1000; // 1h
-
-// Base da URL de retorno (callback) do Asaas. O Asaas EXIGE que o domínio do
-// successUrl seja o mesmo cadastrado em Minha Conta → Informações (o "site").
-// Por isso a origem do request (domínio do Railway) costuma não bater — use
-// APP_URL pra fixar o domínio aprovado no Asaas (ex.: https://app.2bsupply.com.br).
-function callbackBase(req: Request): string {
-  const envUrl = process.env.APP_URL?.trim();
-  if (envUrl) return envUrl.replace(/\/+$/, '');
-  const url = new URL(req.url);
-  return `${url.protocol}//${url.host}`;
-}
 
 /** Data da 1ª cobrança (YYYY-MM-DD) = hoje + trialDays. Antes disso o cliente
  *  usa os dias grátis com o cartão já cadastrado. */
@@ -167,7 +157,7 @@ if (existing) {
         // Volta do hosted checkout do Asaas → /assinar/concluido confirma o
         // trial (marca 'trialing') mesmo antes do webhook chegar, e manda o
         // usuário direto pro /chat já liberado.
-        successUrl: `${callbackBase(req)}/assinar/concluido`,
+        successUrl: `${callbackBaseUrl(req)}/assinar/concluido`,
         autoRedirect: true,
       },
     });
