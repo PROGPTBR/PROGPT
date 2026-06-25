@@ -48,11 +48,19 @@ export async function POST(req: Request) {
   const sb = getServerSupabase();
   // Fire-and-forget: não esperamos pelo erro do Supabase pra evitar leak
   // de existência de email via timing. Logamos internamente.
-  void sb.auth
-    .resetPasswordForEmail(parsed.email, {
-      redirectTo: `${originFrom(req)}/auth/callback?next=/reset-password`,
-      captchaToken: parsed.captchaToken ?? undefined,
-    })
+const redirectTo = `${originFrom(req)}/auth/callback?next=/reset-password`;
+
+console.log('==========================');
+console.log('RESET PASSWORD');
+console.log('Origin:', originFrom(req));
+console.log('RedirectTo:', redirectTo);
+console.log('==========================');
+
+void sb.auth
+  .resetPasswordForEmail(parsed.email, {
+    redirectTo,
+    captchaToken: parsed.captchaToken ?? undefined,
+  })
     .then(({ error }) => {
       if (error) {
         const msg = (error.message ?? '').toLowerCase();
