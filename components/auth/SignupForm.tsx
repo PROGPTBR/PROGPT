@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { ArrowRight, CreditCard, Loader2, ShieldCheck } from 'lucide-react';
+import { ArrowRight, Check, CreditCard, Loader2, ShieldCheck } from 'lucide-react';
 import { TurnstileWidget } from './TurnstileWidget';
 import { isValidCpf, formatCpf } from '@/lib/validators/cpf';
 
@@ -57,6 +57,7 @@ function friendlyError(code: string): string {
 type State =
   | { kind: 'idle' }
   | { kind: 'submitting' }
+  | { kind: 'ready'; checkoutUrl: string }
   | { kind: 'error'; message: string };
 
 export function SignupForm() {
@@ -71,6 +72,18 @@ export function SignupForm() {
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [state, setState] = useState<State>({ kind: 'idle' });
+
+  // Quando os dados são aceitos, mostramos uma tela de confirmação com botão
+  // explícito pro cartão + auto-redireciona como conveniência (fallback no
+  // botão caso o navegador bloqueie a navegação automática).
+  useEffect(() => {
+    if (state.kind !== 'ready') return;
+    const url = state.checkoutUrl;
+    const t = setTimeout(() => {
+      window.location.href = url;
+    }, 1800);
+    return () => clearTimeout(t);
+  }, [state]);
 
   const cpfClean = formatCpf(cpfInput);
   const cpfOk = isValidCpf(cpfClean);
@@ -116,8 +129,12 @@ export function SignupForm() {
         setState({ kind: 'error', message: friendlyError(body?.error ?? 'unknown') });
         return;
       }
-      // Redireciona pro checkout do Asaas (cartão). A conta nasce depois.
-      window.location.href = body.checkoutUrl;
+      if (!body.checkoutUrl) {
+        setState({ kind: 'error', message: friendlyError('billing_provider_error') });
+        return;
+      }
+      // Mostra a confirmação com botão pro cartão (e auto-redireciona).
+      setState({ kind: 'ready', checkoutUrl: body.checkoutUrl });
     } catch (err) {
       console.error(err);
       setState({ kind: 'error', message: 'Erro de rede. Tente novamente.' });
@@ -125,6 +142,39 @@ export function SignupForm() {
   }
 
   const errorMessage = state.kind === 'error' ? state.message : null;
+
+  // Dados aceitos → tela de confirmação com botão explícito pro cartão.
+  if (state.kind === 'ready') {
+    return (
+      <div className="space-y-6 text-center">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-brand/10">
+          <Check className="h-7 w-7 text-brand" aria-hidden="true" />
+        </div>
+        <div className="space-y-2">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+            Quase lá <span className="text-brand">.</span>
+          </h1>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Seus dados foram recebidos. Falta só{' '}
+            <strong className="text-foreground">cadastrar o cartão</strong> pra
+            liberar seus 3 dias grátis — <strong className="text-foreground">nada é cobrado agora</strong>.
+          </p>
+        </div>
+        <a
+          href={state.checkoutUrl}
+          className="w-full inline-flex items-center justify-center gap-2 bg-brand-gradient text-black h-12 rounded-full text-sm font-semibold brand-glow hover:brightness-110 active:scale-[0.98] transition-all"
+        >
+          <CreditCard className="h-4 w-4" aria-hidden="true" />
+          Cadastrar cartão e ativar
+          <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+        </a>
+        <p className="text-[11px] text-muted-foreground inline-flex items-center justify-center gap-1.5">
+          <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" />
+          Abrindo o pagamento seguro… se não abrir, clique no botão acima.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
