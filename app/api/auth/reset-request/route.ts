@@ -48,7 +48,16 @@ export async function POST(req: Request) {
   const sb = getServerSupabase();
   // Fire-and-forget: não esperamos pelo erro do Supabase pra evitar leak
   // de existência de email via timing. Logamos internamente.
-const redirectTo = `${originFrom(req)}/auth/callback?next=/reset-password`;
+const appUrl =
+  process.env.APP_URL ??
+  process.env.NEXT_PUBLIC_APP_URL;
+
+if (!appUrl) {
+  throw new Error('APP_URL não configurada.');
+}
+
+const redirectTo =
+  `${appUrl}/auth/callback?next=/reset-password`;
 
 console.log('==========================');
 console.log('RESET PASSWORD');
