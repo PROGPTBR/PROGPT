@@ -33,14 +33,21 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
 
   const appUrl =
-  process.env.NEXT_PUBLIC_APP_URL ?? new URL(req.url).origin;
+    process.env.APP_URL ??
+    process.env.NEXT_PUBLIC_APP_URL ??
+    new URL(req.url).origin;
+
+  console.log('APP_URL =', process.env.APP_URL);
+  console.log('NEXT_PUBLIC_APP_URL =', process.env.NEXT_PUBLIC_APP_URL);
+  console.log('appUrl =', appUrl);
+  console.log('req.url =', req.url);
 
   const token_hash = searchParams.get('token_hash');
   const type = searchParams.get('type') as EmailOtpType | null;
   const next = searchParams.get('next') ?? '/chat';
 
   if (!token_hash || !type) {
-    return NextResponse.redirect(`${appUrl}/login`);
+    return NextResponse.redirect(new URL('/login', appUrl));
   }
 
   const supabase = supabaseServer();
@@ -51,7 +58,11 @@ export async function GET(req: NextRequest) {
   });
 
   if (error) {
-    return NextResponse.redirect(`${origin}/login?error=invalid_token`);
+    console.error(error);
+
+    return NextResponse.redirect(
+      new URL('/login?error=invalid_token', appUrl)
+    );
   }
 
   if (type === 'signup' && data.user?.id && data.user.email) {
@@ -59,8 +70,12 @@ export async function GET(req: NextRequest) {
   }
 
   if (type === 'recovery') {
-    return NextResponse.redirect(`${appUrl}/reset-password`);
+    return NextResponse.redirect(
+      new URL('/reset-password', appUrl)
+    );
   }
 
-  return NextResponse.redirect(`${appUrl}${next}`);
+  return NextResponse.redirect(
+    new URL(next, appUrl)
+  );
 }
