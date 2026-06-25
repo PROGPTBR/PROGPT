@@ -30,14 +30,17 @@ async function maybeSendWelcome(userId: string, email: string) {
 }
 
 export async function GET(req: NextRequest) {
-  const { searchParams, origin } = new URL(req.url);
+  const { searchParams } = new URL(req.url);
+
+  const appUrl =
+  process.env.NEXT_PUBLIC_APP_URL ?? new URL(req.url).origin;
 
   const token_hash = searchParams.get('token_hash');
   const type = searchParams.get('type') as EmailOtpType | null;
   const next = searchParams.get('next') ?? '/chat';
 
   if (!token_hash || !type) {
-    return NextResponse.redirect(`${origin}/login`);
+    return NextResponse.redirect(`${appUrl}/login`);
   }
 
   const supabase = supabaseServer();
@@ -56,8 +59,8 @@ export async function GET(req: NextRequest) {
   }
 
   if (type === 'recovery') {
-    return NextResponse.redirect(`${origin}/reset-password`);
+    return NextResponse.redirect(`${appUrl}/reset-password`);
   }
 
-  return NextResponse.redirect(`${origin}${next}`);
+  return NextResponse.redirect(`${appUrl}${next}`);
 }
