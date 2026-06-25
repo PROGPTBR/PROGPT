@@ -158,14 +158,32 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'persist_failed' }, { status: 500 });
   }
   if (!sub) {
-    // Subscription nossa não encontrada — pode ter sido apagada via
-    // account-delete enquanto o webhook estava em retry. Marca
-    // processado e segue.
+    // Sub-projeto 36.2 — onboarding card-first: a assinatura local só nasce
+    // quando a conta é criada (após o cartão). Se o webhook de pagamento chega
+    // ANTES do retorno do checkout, finalizamos aqui (cria conta + sub +
+    // e-mail de senha). Idempotente via claim no pending_signups.
+    let finalized = false;
+    if (
+      PAID_EVENTS.includes(event.event) ||
+      TRIAL_START_EVENTS.includes(event.event)
+    ) {
+      try {
+        const { finalizePendingSignupByAsaasSub } = await import(
+          '@/lib/billing/onboarding'
+        );
+        const fin = await finalizePendingSignupByAsaasSub(asaasSubId);
+        finalized = fin.ok;
+      } catch (err) {
+        console.error('[billing/webhook] finalize pending signup failed:', err);
+      }
+    }
+    // Senão: subscription pode ter sido apagada via account-delete durante um
+    // retry. Marca processado e segue.
     await svc
       .from('billing_webhook_events')
       .update({ processed_at: new Date().toISOString() })
       .eq('asaas_event_id', event.id);
-    return NextResponse.json({ ok: true, orphan: true });
+    return NextResponse.json({ ok: true, finalized, orphan: !finalized });
   }
 
   // Compute new state

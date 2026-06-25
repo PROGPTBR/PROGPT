@@ -84,6 +84,27 @@ ${p(`Precisa de ajuda? Responda este email ou escreva pra <a href="mailto:${LEGA
   return { subject, html: shell(content, 'Sua conta no PROGPT está pronta.') };
 }
 
+// ─── 1b. Definir senha (onboarding card-first, pós cartão) ───────────────
+
+export function buildSetPasswordEmail(args: { name: string; link: string }): {
+  subject: string;
+  html: string;
+} {
+  const first = (args.name || '').trim().split(/\s+/)[0] || 'Olá';
+  const subject = 'Cartão cadastrado — defina sua senha e acesse o PROGPT';
+  const content = `
+${h(`Tudo certo, ${first}! 🎉`)}
+${p('Seu cartão foi cadastrado com sucesso e seus <strong>3 dias grátis</strong> já estão liberados — sem nenhuma cobrança agora.')}
+${p('Falta só um passo: defina sua senha para acessar a plataforma.')}
+<div style="text-align:center;margin:24px 0;">
+${button(args.link, 'Definir senha e acessar')}
+</div>
+${p('Por segurança, este link expira em 1 hora. Se expirar, use "Esqueci minha senha" na tela de login que reenviamos.')}
+${p(`Qualquer dúvida, responda este email ou escreva pra <a href="mailto:${LEGAL_CONTACT_EMAIL}" style="color:${BRAND_COLOR};">${LEGAL_CONTACT_EMAIL}</a>.`)}
+`;
+  return { subject, html: shell(content, 'Cartão cadastrado. Defina sua senha para acessar.') };
+}
+
 // ─── 2. Recibo de pagamento (pós PAYMENT_CONFIRMED) ──────────────────────
 
 export function buildPaymentConfirmedEmail(args: {
