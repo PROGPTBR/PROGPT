@@ -50,7 +50,7 @@ export async function POST(req: Request) {
   // de existência de email via timing. Logamos internamente.
   void sb.auth
     .resetPasswordForEmail(parsed.email, {
-      redirectTo: `${originFrom(req)}/reset-password`,
+      redirectTo: `${originFrom(req)}/auth/callback?next=/reset-password`,
       captchaToken: parsed.captchaToken ?? undefined,
     })
     .then(({ error }) => {
