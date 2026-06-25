@@ -1,6 +1,5 @@
-import { getServerSupabase } from '@/lib/db/supabase';
-import { sendEmail, getAppUrl } from '@/lib/email/client';
-import { buildSetPasswordEmail } from '@/lib/email/templates';
+import { getServerSupabase, getBrowserSupabase } from '@/lib/db/supabase';
+import { getAppUrl } from '@/lib/email/client';
 import { CURRENT_LEGAL_VERSION } from '@/lib/legal/constants';
 
 // Sub-projeto 36.2 — onboarding card-first.
@@ -114,24 +113,17 @@ async function finalize(pending: PendingSignup): Promise<FinalizeResult> {
     .update({ user_id: userId })
     .eq('id', pending.id);
 
-  // E-mail "defina sua senha" (link de recovery → /reset-password).
+  // E-mail "defina sua senha" via sistema NATIVO do Supabase (sem Resend).
+  // Dispara o fluxo de recovery → o link cai em /reset-password, onde o cliente
+  // define a senha e acessa. O texto é editável em Supabase → Authentication →
+  // Email Templates → "Reset Password". Requer /reset-password nas Redirect URLs.
   try {
-    const { data: linkData } = await svc.auth.admin.generateLink({
-      type: 'recovery',
-      email: pending.email,
-      options: { redirectTo: `${getAppUrl()}/reset-password` },
+    const anon = getBrowserSupabase();
+    const { error: mailErr } = await anon.auth.resetPasswordForEmail(pending.email, {
+      redirectTo: `${getAppUrl()}/reset-password`,
     });
-    const actionLink = (
-      linkData as { properties?: { action_link?: string } } | null
-    )?.properties?.action_link;
-    if (actionLink) {
-      const tpl = buildSetPasswordEmail({ name: pending.full_name, link: actionLink });
-      void sendEmail({
-        to: pending.email,
-        subject: tpl.subject,
-        html: tpl.html,
-        idempotencyKey: `setpw:${pending.id}`,
-      });
+    if (mailErr) {
+      console.error('[onboarding] reset-password email failed:', mailErr.message);
     }
   } catch (err) {
     console.error('[onboarding] set-password email failed:', err);
