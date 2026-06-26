@@ -44,12 +44,26 @@ export async function getSubscription(userId: string): Promise<Subscription | nu
 
 /**
  * Uma assinatura concede acesso quando:
+ *  - cancelada pelo usuário (`cancel_at_period_end`) mas ainda dentro do
+ *    período já contratado OU do trial (mantém o que foi prometido/pago), OU
  *  - status 'active' (paga), OU
  *  - status 'trialing' e ainda dentro do `trial_end` (3 dias grátis), OU
  *  - status 'past_due' mas ainda dentro do período já pago (grace).
  */
 export function subscriptionGrantsAccess(sub: Subscription): boolean {
   const now = new Date();
+
+  // Cancelamento agendado pelo próprio usuário. O Asaas não tem "cancelar no
+  // fim do ciclo": nosso /api/billing/cancel faz DELETE na hora, e o Asaas
+  // dispara SUBSCRIPTION_DELETED/PAYMENT_DELETED imediatamente → o webhook
+  // marca status='cancelled' na mesma hora. Sem este branch o usuário perderia
+  // o acesso instantaneamente, contradizendo a UI ("mantém o acesso até X") e,
+  // em quem já pagou o mês, removendo acesso já pago. Honramos até a data final.
+  if (sub.cancel_at_period_end) {
+    const until = sub.current_period_end ?? sub.trial_end;
+    return !!until && new Date(until) > now;
+  }
+
   if (sub.status === 'active') return true;
   if (sub.status === 'trialing') {
     return !!sub.trial_end && new Date(sub.trial_end) > now;
