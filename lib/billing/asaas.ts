@@ -24,12 +24,48 @@ export type AsaasSubscription = {
 
 export type CreateSubscriptionInput = {
   customerId: string;
+
   value: number;
-  cycle: 'MONTHLY' | 'YEARLY';
-  billingType: 'CREDIT_CARD' | 'PIX' | 'BOLETO' | 'UNDEFINED';
+
+  cycle: "MONTHLY" | "YEARLY";
+
+  billingType:
+    | "CREDIT_CARD"
+    | "PIX"
+    | "BOLETO"
+    | "UNDEFINED";
+
   description: string;
-  nextDueDate: string; // YYYY-MM-DD
-  callback?: { successUrl: string; autoRedirect: boolean };
+
+  nextDueDate: string;
+
+  callback?: {
+    successUrl: string;
+    autoRedirect: boolean;
+  };
+
+  creditCard?: {
+    holderName: string;
+    number: string;
+    expiryMonth: string;
+    expiryYear: string;
+    ccv: string;
+  };
+
+  creditCardHolderInfo?: {
+    name: string;
+    email: string;
+    cpfCnpj: string;
+
+    postalCode: string;
+    addressNumber: string;
+    addressComplement?: string;
+
+    phone: string;
+    mobilePhone?: string;
+
+     remoteIp: string;
+  };
 };
 
 export type CreateSubscriptionResult = {
@@ -61,6 +97,8 @@ async function getConfig() {
   }
   return { apiKey, apiUrl };
 }
+
+
 
 async function asaasFetch<T>(
   method: 'GET' | 'POST' | 'PUT' | 'DELETE',
@@ -109,10 +147,21 @@ if (!res.ok) {
  * Reutilizar `customerId` existente quando user já comprou antes —
  * checar `subscriptions.asaas_customer_id` no DB antes de chamar.
  */
-export async function createAsaasCustomer(input: {
+export async function createAsaasCustomer(
+  input: {
   name: string;
   email: string;
-  cpfCnpj: string; // só dígitos (use formatCpf)
+  cpfCnpj: string;
+
+  mobilePhone?: string;
+  phone?: string;
+  company?: string;
+
+  postalCode?: string;
+  address?: string;
+  addressNumber?: string;
+  province?: string;
+  city?: string;
 }): Promise<AsaasCustomer> {
   return asaasFetch<AsaasCustomer>('POST', '/customers', input);
 }
@@ -137,6 +186,8 @@ export async function createAsaasSubscription(
     billingType: input.billingType,
     description: input.description,
     nextDueDate: input.nextDueDate,
+    creditCard: input.creditCard,
+    creditCardHolderInfo: input.creditCardHolderInfo,
     ...(input.callback && {
       callback: {
         successUrl: input.callback.successUrl,
@@ -144,6 +195,12 @@ export async function createAsaasSubscription(
       },
     }),
   };
+
+console.log("========== BODY ENVIADO AO ASAAS ==========");
+console.log(JSON.stringify(body, null, 2));
+console.log("===========================================");
+
+
   const result = await asaasFetch<{
     id: string;
     invoiceUrl?: string;

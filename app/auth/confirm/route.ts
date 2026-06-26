@@ -50,20 +50,23 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(new URL('/login', appUrl));
   }
 
-  const supabase = supabaseServer();
+ const supabase = supabaseServer();
 
-  const { data, error } = await supabase.auth.verifyOtp({
-    token_hash,
-    type,
-  });
+const { data, error } = await supabase.auth.verifyOtp({
+  token_hash,
+  type,
+});
 
-  if (error) {
-    console.error(error);
+if (error) {
+  console.log('====================');
+  console.log('VERIFY OTP ERROR');
+  console.dir(error, { depth: null });
+  console.log('====================');
 
-    return NextResponse.redirect(
-      new URL('/login?error=invalid_token', appUrl)
-    );
-  }
+  return NextResponse.redirect(
+    new URL('/login?error=invalid_token', appUrl)
+  );
+}
 
   if (type === 'signup' && data.user?.id && data.user.email) {
     void maybeSendWelcome(data.user.id, data.user.email);

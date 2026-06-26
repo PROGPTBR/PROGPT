@@ -1,12 +1,12 @@
 import { Suspense } from 'react';
 import { AuthShell } from '@/components/brand/AuthShell';
-import { SignupForm } from '@/components/auth/SignupForm';
+import { SignupWizard } from '@/components/auth/SignupWizard';
 
 export default function SignupPage() {
   return (
     <AuthShell>
       <Suspense fallback={null}>
-        <SignupForm />
+        <SignupWizard />
       </Suspense>
     </AuthShell>
   );

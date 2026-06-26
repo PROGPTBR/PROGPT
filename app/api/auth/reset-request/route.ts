@@ -4,6 +4,7 @@ import { getServerSupabase } from '@/lib/db/supabase';
 import { verifyTurnstileToken, getClientIp, hashIp } from '@/lib/captcha';
 import { checkAnonRateLimit } from '@/lib/rate-limit';
 
+
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
@@ -48,28 +49,11 @@ export async function POST(req: Request) {
   const sb = getServerSupabase();
   // Fire-and-forget: não esperamos pelo erro do Supabase pra evitar leak
   // de existência de email via timing. Logamos internamente.
-const appUrl =
-  process.env.APP_URL ??
-  process.env.NEXT_PUBLIC_APP_URL;
-
-if (!appUrl) {
-  throw new Error('APP_URL não configurada.');
-}
-
-const redirectTo =
-  `${appUrl}/auth/callback?next=/reset-password`;
-
-console.log('==========================');
-console.log('RESET PASSWORD');
-console.log('Origin:', originFrom(req));
-console.log('RedirectTo:', redirectTo);
-console.log('==========================');
-
-void sb.auth
-  .resetPasswordForEmail(parsed.email, {
-    redirectTo,
-    captchaToken: parsed.captchaToken ?? undefined,
-  })
+  void sb.auth
+    .resetPasswordForEmail(parsed.email, {
+      redirectTo: `${originFrom(req)}/reset-password`,
+      captchaToken: parsed.captchaToken ?? undefined,
+    })
     .then(({ error }) => {
       if (error) {
         const msg = (error.message ?? '').toLowerCase();
