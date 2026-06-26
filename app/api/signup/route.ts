@@ -21,7 +21,6 @@ export async function POST(req: Request) {
 
 
 let userId: string | null = null;
-let customerId: string | null = null;
 
 
   try {
@@ -123,7 +122,6 @@ console.log(error);
       
       .eq("id", data.user.id);
 
-customerId = customer.id;
 
 const nextDueDate = new Date();
 nextDueDate.setDate(nextDueDate.getDate() + 3);

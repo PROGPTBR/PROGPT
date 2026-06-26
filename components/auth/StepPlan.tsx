@@ -1,6 +1,4 @@
-import type { SignupForm } from "./types";
 import { ShieldCheck, CheckCircle2 } from "lucide-react";
-import { INPUT_CLASS, LABEL_CLASS } from "./constants";
 
 const benefits = [
   "Acesso imediato à IA de Strategic Sourcing",
