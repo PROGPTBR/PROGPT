@@ -1,12 +1,12 @@
 import { ShieldCheck, CheckCircle2 } from "lucide-react";
 
-const benefits = [
-  "Acesso imediato à IA de Strategic Sourcing",
-  "8 Assistentes especializados",
-  "Documentos e templates ilimitados",
-  "Atualizações constantes",
-  "Cancele quando quiser",
-];
+//const benefits = [
+ // "Acesso imediato à IA de Strategic Sourcing",
+ // "8 Assistentes especializados",
+ // "Documentos e templates ilimitados",
+ // "Atualizações constantes",
+ // "Cancele quando quiser",
+//];
 
 export default function StepPlan() {
   return (
