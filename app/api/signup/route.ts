@@ -14,8 +14,6 @@ function originFrom(req: Request): string {
   return `${url.protocol}//${url.host}`;
 }
 
-let userId: string | null = null;
-let customerId: string | null = null;
 
 export async function POST(req: Request) {
   const supabase = getServerSupabase();
@@ -23,7 +21,6 @@ export async function POST(req: Request) {
 
 
   let userId: string | null = null;
-let customerId: string | null = null;
 
   try {
     
@@ -62,39 +59,6 @@ const { data, error } = await signup.auth.signUp({
 });
 
 
-if (!data.user) {
-  throw new Error("Usuário não foi criado.");
-}
-
-userId = data.user.id;
-
-
-if (!data.user) {
-  throw new Error("USER NULL");
-}
-
-console.log("========== SIGNUP ==========");
-console.log(data);
-console.log(error);
-
-if (!data.user) {
-  return NextResponse.json(
-    {
-      error: "Usuário não criado.",
-    },
-    { status: 400 }
-  );
-}
-
-if (!data.user) {
-  return NextResponse.json(
-    {
-      error: "Não foi possível criar o usuário.",
-    },
-    { status: 400 }
-  );
-}
-
 
 if (error) {
   const message = error.message.toLowerCase();
@@ -120,6 +84,17 @@ if (error) {
   );
 }
 
+if (!data.user) {
+  throw new Error("Usuário não foi criado.");
+}
+
+userId = data.user.id;
+
+console.log("========== SIGNUP ==========");
+console.log(data);
+console.log(error);
+
+
     const { error: profileError } = await supabase
       .from("profiles")
       .update({
@@ -134,6 +109,7 @@ if (error) {
       })
       
       .eq("id", data.user.id);
+let customerId: string | null = null;
 
 const customer = await createAsaasCustomer({
 
@@ -144,6 +120,7 @@ const customer = await createAsaasCustomer({
   mobilePhone: body.phone.replace(/\D/g, ""),
   company: body.companyName,
 });
+
 
 customerId = customer.id;
 
@@ -259,7 +236,7 @@ return NextResponse.json({
   subscription,
 });
 
-} catch (err: any) {
+} catch (err: unknown) {
   console.error("Erro no cadastro:", err);
 
   if (userId) {
@@ -278,8 +255,9 @@ return NextResponse.json({
   return NextResponse.json(
     {
       error:
-        err.message ??
-        "Não foi possível concluir o cadastro.",
+  err instanceof Error
+    ? err.message
+    : "Não foi possível concluir o cadastro.",
     },
     { status: 400 }
   );
