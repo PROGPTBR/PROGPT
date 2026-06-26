@@ -20,7 +20,9 @@ export async function POST(req: Request) {
   const signup = getSignupSupabase();
 
 
-  let userId: string | null = null;
+let userId: string | null = null;
+let customerId: string | null = null;
+
 
   try {
     
@@ -90,6 +92,17 @@ if (!data.user) {
 
 userId = data.user.id;
 
+const customer = await createAsaasCustomer({
+
+  name: body.fullName,
+  email: body.email,
+  cpfCnpj: body.cpf.replace(/\D/g, ""),
+
+  mobilePhone: body.phone.replace(/\D/g, ""),
+  company: body.companyName,
+});
+
+
 console.log("========== SIGNUP ==========");
 console.log(data);
 console.log(error);
@@ -109,18 +122,6 @@ console.log(error);
       })
       
       .eq("id", data.user.id);
-let customerId: string | null = null;
-
-const customer = await createAsaasCustomer({
-
-  name: body.fullName,
-  email: body.email,
-  cpfCnpj: body.cpf.replace(/\D/g, ""),
-
-  mobilePhone: body.phone.replace(/\D/g, ""),
-  company: body.companyName,
-});
-
 
 customerId = customer.id;
 
