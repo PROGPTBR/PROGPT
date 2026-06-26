@@ -8,6 +8,7 @@ import { BackButton } from '@/components/BackButton';
 import { ProfileLogoUpload } from '@/components/profile/ProfileLogoUpload';
 import { ProfileCompanyForm } from '@/components/profile/ProfileCompanyForm';
 import { ProfileCategoriesList } from '@/components/profile/ProfileCategoriesList';
+import { CancelSubscription } from '@/components/billing/CancelSubscription';
 
 export const dynamic = 'force-dynamic';
 
@@ -101,6 +102,22 @@ export default async function ProfilePage() {
                 </div>
               )}
             </div>
+
+            {subscription?.status === 'trialing' && !subscription?.cancel_at_period_end && (
+              <p className="text-xs text-muted-foreground">
+                Você pode cancelar a qualquer momento. Cancele antes do fim do
+                teste e <strong className="text-foreground">nenhum valor será cobrado</strong>.
+              </p>
+            )}
+
+            {/* Cancelamento self-service (CDC art. 49 — cancele quando quiser) */}
+            <CancelSubscription
+              status={subscription?.status ?? 'none'}
+              trialEnd={subscription?.trial_end ?? null}
+              currentPeriodEnd={subscription?.current_period_end ?? null}
+              cancelAtPeriodEnd={!!subscription?.cancel_at_period_end}
+            />
+
             <Link
               href="/account/billing"
               className="inline-flex items-center gap-1.5 text-sm font-medium text-brand hover:text-brand/80 transition-colors"

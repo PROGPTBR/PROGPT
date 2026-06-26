@@ -60,11 +60,16 @@ export async function POST() {
     return NextResponse.json({ error: 'persist_failed' }, { status: 500 });
   }
 
+  // Acesso mantido até o fim do período pago OU do trial (no trial não há
+  // current_period_end — usa trial_end). A cobrança programada do Asaas já
+  // foi cancelada acima, então não há cobrança.
+  const accessUntilIso = sub.current_period_end ?? sub.trial_end ?? null;
+
   // Sub-projeto 30 — email de confirmação de cancelamento.
   // Fire-and-forget; idempotency key inclui user.id+timestamp pra
   // permitir email se user reativar e cancelar de novo no mesmo dia.
-  if (user.email && sub.current_period_end) {
-    const accessUntil = new Date(sub.current_period_end).toLocaleDateString('pt-BR');
+  if (user.email && accessUntilIso) {
+    const accessUntil = new Date(accessUntilIso).toLocaleDateString('pt-BR');
     const tpl = buildSubscriptionCancelledEmail({
       email: user.email,
       accessUntil,
@@ -79,6 +84,6 @@ export async function POST() {
 
   return NextResponse.json({
     ok: true,
-    accessUntil: sub.current_period_end,
+    accessUntil: accessUntilIso,
   });
 }
