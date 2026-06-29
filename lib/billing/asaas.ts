@@ -293,3 +293,12 @@ export async function createAsaasPaymentLink(input: {
 
 
 export { AsaasError };
+
+export async function deleteAsaasCustomer(
+  customerId: string,
+): Promise<void> {
+  await asaasFetch(
+    "DELETE",
+    `/customers/${customerId}`,
+  );
+}

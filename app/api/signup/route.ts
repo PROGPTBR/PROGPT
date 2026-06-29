@@ -3,11 +3,17 @@ import {
   getServerSupabase,
   getSignupSupabase,
 } from "@/lib/db/supabase";
-import { createAsaasCustomer, createAsaasSubscription, } from "@/lib/billing/asaas";
+import { createAsaasCustomer, createAsaasSubscription, deleteAsaasCustomer, } from "@/lib/billing/asaas";
 import {
   verifyTurnstileToken,
   getClientIp,
 } from "@/lib/captcha";
+
+
+console.log("==================================");
+console.log("POST /api/signup");
+console.log(new Date().toISOString());
+console.log("==================================");
 
 function originFrom(req: Request): string {
   const url = new URL(req.url);
@@ -21,6 +27,7 @@ export async function POST(req: Request) {
 
 
 let userId: string | null = null;
+let customerId: string | null = null;
 
 
   try {
@@ -92,7 +99,6 @@ if (!data.user) {
 userId = data.user.id;
 
 const customer = await createAsaasCustomer({
-
   name: body.fullName,
   email: body.email,
   cpfCnpj: body.cpf.replace(/\D/g, ""),
@@ -101,6 +107,8 @@ const customer = await createAsaasCustomer({
   company: body.companyName,
 });
 
+// GUARDA O ID PARA O ROLLBACK
+customerId = customer.id;
 
 console.log("========== SIGNUP ==========");
 console.log(data);
@@ -235,12 +243,27 @@ return NextResponse.json({
   subscription,
 });
 
-} catch (err: unknown) {
+}catch (err: unknown) {
   console.error("Erro no cadastro:", err);
 
+  // Primeiro remove o cliente do Asaas
+  if (customerId) {
+    try {
+      await deleteAsaasCustomer(customerId);
+
+      console.log("Rollback Asaas realizado.");
+    } catch (rollbackError) {
+      console.error(
+        "Erro ao remover cliente Asaas:",
+        rollbackError
+      );
+    }
+  }
+
+  // Depois remove o usuário do Supabase
   if (userId) {
     try {
-      await getServerSupabase().auth.admin.deleteUser(userId);
+      await supabase.auth.admin.deleteUser(userId);
 
       console.log("Rollback Supabase realizado.");
     } catch (rollbackError) {
@@ -254,9 +277,9 @@ return NextResponse.json({
   return NextResponse.json(
     {
       error:
-  err instanceof Error
-    ? err.message
-    : "Não foi possível concluir o cadastro.",
+        err instanceof Error
+          ? err.message
+          : "Não foi possível concluir o cadastro.",
     },
     { status: 400 }
   );

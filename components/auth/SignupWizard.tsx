@@ -107,6 +107,9 @@ function validateStep2() {
 }
 
 const nextStep = async () => {
+ console.log("NEXT STEP", new Date().toISOString());
+ 
+  if (loading) return;
   setError("");
 
   if (step === 1) {
