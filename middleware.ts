@@ -34,6 +34,7 @@ export const config = {
     '/chat/:path*',
     '/admin/:path*',
     '/assistants/:path*',
+    '/proc2pay/:path*',
     '/profile/:path*',
     '/prompts/:path*',
   ],

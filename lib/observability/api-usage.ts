@@ -74,7 +74,14 @@ export type ApiOperation =
   | 'assistant-spend-extract'
   | 'assistant-spend-classify'
   | 'assistant-spend-generate'
-  | 'assistant-spend-refine';
+  | 'assistant-spend-refine'
+  | 'proc2pay-estrategia'
+  | 'proc2pay-selecao'
+  | 'proc2pay-rfp'
+  | 'proc2pay-propostas'
+  | 'proc2pay-equalizacao'
+  | 'proc2pay-negociacao'
+  | 'proc2pay-po';
 
 export type RecordUsageInput = {
   provider: ApiProvider;

@@ -81,9 +81,14 @@ export type Proc2PayContext = {
   escopo?: { resumo: string; criterios?: string[] };
   estrategia?: { quadranteKraljic?: string; postura?: string; runId?: string };
   fornecedores?: FornecedorRef[];
-  rfp?: { runId?: string; enviadoEm?: string };
+  rfp?: { runId?: string; enviadoEm?: string; documento?: string; geradoEm?: string };
   propostas?: Array<Record<string, unknown>>;
-  equalizacao?: { ranking?: Array<Record<string, unknown>>; vencedor?: FornecedorRef; runId?: string };
+  equalizacao?: {
+    ranking?: Array<Record<string, unknown>>;
+    vencedor?: FornecedorRef;
+    pontos_negociacao?: string[];
+    runId?: string;
+  };
   negociacao?: { acordo?: string; valorFinal?: number; runId?: string };
   aprovacao?: { decision: 'aprovado' | 'reprovado'; comment?: string };
   po?: { numero: string; valor?: number; fornecedor: FornecedorRef; enviadaEm?: string };
