@@ -77,8 +77,8 @@ describe('nextStage', () => {
   it('context vazio → próxima é a requisição', () => {
     expect(nextStage({})!.id).toBe('requisicao');
   });
-  it('após a requisição → estratégia', () => {
-    expect(nextStage({ requisicao: reqPayload })!.id).toBe('estrategia');
+  it('após a requisição → análise crítica', () => {
+    expect(nextStage({ requisicao: reqPayload })!.id).toBe('analise_critica');
   });
   it('trilho completo → null', () => {
     expect(nextStage(contextUpTo('emissao_po'))).toBeNull();
@@ -89,11 +89,21 @@ describe('canRunStage (gating sequencial)', () => {
   it('requisição pode rodar do zero', () => {
     expect(canRunStage('requisicao', {})).toBe(true);
   });
-  it('estratégia NÃO roda sem requisição', () => {
-    expect(canRunStage('estrategia', {})).toBe(false);
+  it('análise crítica NÃO roda sem requisição', () => {
+    expect(canRunStage('analise_critica', {})).toBe(false);
   });
-  it('estratégia roda com requisição feita', () => {
-    expect(canRunStage('estrategia', { requisicao: reqPayload })).toBe(true);
+  it('análise crítica roda com requisição feita', () => {
+    expect(canRunStage('analise_critica', { requisicao: reqPayload })).toBe(true);
+  });
+  it('estratégia NÃO roda só com requisição (precisa de análise + escopo antes)', () => {
+    expect(canRunStage('estrategia', { requisicao: reqPayload })).toBe(false);
+    expect(
+      canRunStage('estrategia', {
+        requisicao: reqPayload,
+        analise_critica: { ok: true, gaps: [] },
+        escopo: { resumo: 'x' },
+      }),
+    ).toBe(true);
   });
   it('emissão da PO só roda com tudo anterior completo', () => {
     expect(canRunStage('emissao_po', contextUpTo('aprovacao'))).toBe(true);

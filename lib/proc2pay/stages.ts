@@ -22,8 +22,8 @@ export const STAGES: Stage[] = [
     label: 'Análise crítica da requisição',
     executor: { kind: 'llm', ref: 'critique' },
     produces: 'analise_critica',
-    optional: true, // Fase 3 — não bloqueia o trilho do MVP
-    mvp: false,
+    optional: false,
+    mvp: true,
   },
   {
     id: 'validacao_escopo',
@@ -31,8 +31,8 @@ export const STAGES: Stage[] = [
     label: 'Validação técnica do escopo',
     executor: { kind: 'llm', ref: 'escopo' },
     produces: 'escopo',
-    optional: true, // Fase 3
-    mvp: false,
+    optional: false,
+    mvp: true,
   },
   {
     id: 'estrategia',
