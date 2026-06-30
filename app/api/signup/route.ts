@@ -34,7 +34,6 @@ console.log("==================================");
 let userId: string | null = null;
 let customerId: string | null = null;
 
-
   try {
     
     const body = await req.json();
@@ -56,6 +55,9 @@ if (!token) {
 
 
 const ip = getClientIp(req);
+
+console.log(`[${requestId}] Token: ${token?.substring(0, 30)}...`);
+console.log(`[${requestId}] IP: ${ip}`);
 
 const valid = await verifyTurnstileToken(token, ip);
 
@@ -116,14 +118,14 @@ console.log(`[${requestId}] ✅ Usuário criado`);
 console.log(`[${requestId}] User ID: ${userId}`);
 
 const customer = await createAsaasCustomer({
-  name: body.fullName,
-  email: body.email,
-  cpfCnpj: body.cpf.replace(/\D/g, ""),
-  mobilePhone: body.phone.replace(/\D/g, ""),
-  company: body.companyName,
+name: body.fullName,
+email: body.email,
+cpfCnpj: body.cpf.replace(/\D/g, ""),
+ mobilePhone: body.phone.replace(/\D/g, ""),
+company: body.companyName,
 });
 
-customerId = customer.id;
+ customerId = customer.id;
 
 console.log(`[${requestId}] ✅ Cliente criado no Asaas`);
 console.log(customer);
@@ -155,15 +157,15 @@ const nextDueDate = new Date();
 nextDueDate.setDate(nextDueDate.getDate() + 3);
 
 const nextDueDateString = nextDueDate
-  .toISOString()
-  .substring(0, 10);
+.toISOString()
+.substring(0, 10);
 
 const forwardedFor = req.headers.get("x-forwarded-for");
 
 const remoteIp =
-  forwardedFor?.split(",")[0]?.trim() ||
-  req.headers.get("x-real-ip") ||
-  "127.0.0.1";
+forwardedFor?.split(",")[0]?.trim() ||
+req.headers.get("x-real-ip") ||
+"127.0.0.1";
 
 const [month, year] = body.cardExpiry.split("/");
 
@@ -175,31 +177,26 @@ console.log(`[${requestId}] Valor: 197.99`);
 
 console.log("===== DADOS DO TITULAR =====");
 console.log({
-  postalCode: body.postalCode,
-  addressNumber: body.addressNumber,
-  addressComplement: body.addressComplement,
-  phone: body.phone,
+ postalCode: body.postalCode,
+ addressNumber: body.addressNumber,
+ addressComplement: body.addressComplement,
+ phone: body.phone,
 });
 
 const subscription = await createAsaasSubscription({
-  customerId: customer.id,
-
-  value: 197.99,
-
-  cycle: "MONTHLY",
-
-  billingType: "CREDIT_CARD",
-
-  description: "Plano PRO - APP 2BSUPPLY",
-
-  nextDueDate: nextDueDateString,
+customerId: customer.id,
+value: 197.99,
+cycle: "MONTHLY",
+billingType: "CREDIT_CARD",
+description: "Plano PRO - APP 2BSUPPLY",
+nextDueDate: nextDueDateString,
 
 creditCard: {
-  holderName: body.cardHolder,
-  number: body.cardNumber.replace(/\s/g, ""),
-  expiryMonth: month.padStart(2, "0"),
-  expiryYear: `20${year}`,
-  ccv: body.cardCvv,
+holderName: body.cardHolder,
+number: body.cardNumber.replace(/\s/g, ""),
+ expiryMonth: month.padStart(2, "0"),
+expiryYear: `20${year}`,
+ ccv: body.cardCvv,
 },
 
 creditCardHolderInfo: {
@@ -219,46 +216,11 @@ console.log(`[${requestId}] ✅ Assinatura criada`);
 console.log(subscription);
 
 
-/**
- *const ip =
- * req.headers.get("x-forwarded-for")?.split(",")[0] ||
- * req.headers.get("x-real-ip") ||
- * "127.0.0.1";
-
-
- * const token = await tokenizeCreditCard({
- * customer: customer.id,
-
- * holderName: body.cardHolder,
- * number: body.cardNumber.replace(/\s/g, ""),
-
-  * expiryMonth: body.cardExpiry.split("/")[0],
- * expiryYear: `20${body.cardExpiry.split("/")[1]}`,
-
-  * ccv: body.cardCvv,
-
-  * name: body.fullName,
-  * email: body.email,
-  * cpfCnpj: body.cpf.replace(/\D/g, ""),
-
-  * postalCode: body.postalCode.replace(/\D/g, ""),
-  * addressNumber: body.addressNumber,
-  * addressComplement: body.addressComplement,
-
-  * phone: body.phone.replace(/\D/g, ""),
-
-  * remoteIp: ip,
-  * }); 
-
-
-* console.log(token);
-*/
-
 
 const { error: asaasProfileError } = await supabase
   .from("profiles")
   .update({
-    asaas_customer_id: customer.id,
+  asaas_customer_id: customer.id,
     asaas_subscription_id: subscription.id,
   })
   .eq("id", data.user.id);
@@ -274,13 +236,13 @@ console.log(`[${requestId}] 🎉 Signup finalizado com sucesso`);
 return NextResponse.json({
   success: true,
   user: data.user,
-  subscription,
+  //subscription,
 });
 
 }catch (err: unknown) {
 
-  if (customerId) {
-  try {
+ if (customerId) {
+ try {
     await deleteAsaasCustomer(customerId);
 
    console.log(`[${requestId}] 🗑️ Rollback Asaas realizado.`);

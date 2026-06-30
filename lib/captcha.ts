@@ -51,8 +51,13 @@ export async function verifyTurnstileToken(
       console.warn('[captcha] siteverify HTTP', res.status);
       return false;
     }
-    const data = (await res.json()) as { success: boolean };
-    return data.success === true;
+ const data = await res.json();
+
+console.log("========== TURNSTILE ==========");
+console.log(JSON.stringify(data, null, 2));
+console.log("===============================");
+
+return data.success === true;
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.warn('[captcha] siteverify failed:', msg);

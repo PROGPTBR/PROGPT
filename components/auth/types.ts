@@ -25,6 +25,6 @@ export interface SignupForm {
     district: string;
     city: string;
     state: string;
-
-     turnstileToken: string | null;
+    turnstileToken: string | null;
+    personType: "pf" | "pj";
 }

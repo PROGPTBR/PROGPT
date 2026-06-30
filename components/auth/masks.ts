@@ -7,6 +7,18 @@ export function maskCpf(value: string) {
     .replace(/^(\d{3})\.(\d{3})\.(\d{3})(\d)/, "$1.$2.$3-$4");
 }
 
+export function maskCnpj(value: string) {
+  value = value.replace(/\D/g, "");
+
+  value = value.replace(/^(\d{2})(\d)/, "$1.$2");
+  value = value.replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3");
+  value = value.replace(/\.(\d{3})(\d)/, ".$1/$2");
+  value = value.replace(/(\d{4})(\d)/, "$1-$2");
+
+  return value.substring(0, 18);
+}
+
+
 export function maskPhone(value: string) {
   const numbers = value.replace(/\D/g, "").slice(0, 11);
 

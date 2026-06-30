@@ -1,8 +1,9 @@
 "use client";
-
 import { useRouter} from "next/navigation";
+import { CheckCircle2 } from "lucide-react";
 
-import { useState } from 'react';
+
+
 import type { SignupForm } from "./types";
 import NavigationButtons from "./NavigationButtons";
 import { ERROR_CLASS } from "./constants";
@@ -11,16 +12,21 @@ import StepAccount from './StepAccount';
 import StepProfile from './StepProfile';
 import StepPayment from './StepPayment';
 import { isValidCpf } from "@/lib/validators/cpf";
+import { isValidCnpj } from "@/lib/validators/cnpj";
 import StepPlan from "./StepPlan";
 
-
+import { useRef, useState } from 'react';
 
 export function SignupWizard() {
+  
+  
+const errorRef = useRef<HTMLDivElement>(null);
 
 const router = useRouter();
 
 const [loading, setLoading] = useState(false);
 const [step, setStep] = useState(1);
+
 const [form, setForm] = useState<SignupForm>({
   email: "",
   password: "",
@@ -49,11 +55,22 @@ const [form, setForm] = useState<SignupForm>({
   state: "",
 
   turnstileToken: null,
+  personType: "pf",
 });
 
   const [error, setError] = useState("");
-
   const [signupSuccess, setSignupSuccess] = useState(false);
+
+  const showError = (message: string) => {
+  setError(message);
+
+  setTimeout(() => {
+    errorRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+  }, 50);
+};
 
  function validateStep1() {
   if (!form.email.trim()) {
@@ -83,15 +100,23 @@ function validateStep2() {
     return "Informe seu nome completo.";
   }
 
-  if (!form.cpf.trim()) {
-    return "Informe seu CPF.";
-  }
+if (!form.cpf.trim()) {
+  return form.personType === "pj"
+    ? "Informe seu CNPJ."
+    : "Informe seu CPF.";
+}
 
-  const cpf = form.cpf.replace(/\D/g, "");
+const documento = form.cpf.replace(/\D/g, "");
 
-  if (!isValidCpf(cpf)) {
+if (form.personType === "pf") {
+  if (!isValidCpf(documento)) {
     return "Informe um CPF válido.";
   }
+} else {
+  if (!isValidCnpj(documento)) {
+    return "Informe um CNPJ válido.";
+  }
+}
 
   if (!form.phone.trim()) {
     return "Informe seu telefone.";
@@ -136,23 +161,23 @@ const nextStep = async () => {
   if (loading) return;
   setError("");
 
-  if (step === 1) {
-    const validation = validateStep1();
+if (step === 1) {
+  const validation = validateStep1();
 
-    if (validation) {
-      setError(validation);
-      return;
-    }
+  if (validation) {
+    showError(validation);
+    return;
   }
+}
 
-  if (step === 2) {
-    const validation = validateStep2();
+if (step === 2) {
+  const validation = validateStep2();
 
-    if (validation) {
-      setError(validation);
-      return;
-    }
+  if (validation) {
+    showError(validation);
+    return;
   }
+}
 
   if (step < 4) {
     setStep((s) => s + 1);
@@ -200,29 +225,23 @@ const nextStep = async () => {
 if (signupSuccess) {
   return (
     <div className="mx-auto max-w-md rounded-xl border bg-card p-8 text-center shadow-sm">
-      <div className="mb-6 text-5xl">🎉</div>
+     <div className="mb-2 flex justify-center">
+  <CheckCircle2 className="h-14 w-14 text-emerald-500" />
+</div>
 
-     <h2 className="text-2xl font-bold">
+     <h2 className="text-2xl font-bold text-white">
   Cadastro realizado com sucesso!
 </h2>
 
-<p className="mt-4 text-muted-foreground">
-  Sua conta foi criada com sucesso.
+<p className="mt-4 text-white">
+  Enviamos um e-mail de confirmação.
 </p>
 
-<p className="mt-2 text-muted-foreground">
-  Utilize o e-mail <strong>{form.email}</strong> para acessar a plataforma.
-</p>
 
 <p className="mt-4 text-sm text-muted-foreground">
-  Clique no botão abaixo para ir para a tela de login.
+ Clique no botão do e-mail para ativar sua conta.
 </p>
-      <button
-        onClick={() => router.push(`/login?email=${encodeURIComponent(form.email)}`)}
-        className="mt-8 w-full rounded-lg bg-primary px-4 py-3 font-medium text-primary-foreground transition hover:opacity-90"
-      >
-        Ir para o Login
-      </button>
+
     </div>
   );
 }
@@ -235,7 +254,7 @@ if (signupSuccess) {
             <SignupStepper step={step} />
 
             {step === 1 && <StepAccount form={form} setForm={setForm} />}
-            {error && ( <div className={`${ERROR_CLASS} mt-4`}>  {error} </div> )}
+            {error && ( <div ref={errorRef} className={`${ERROR_CLASS} mt-4`}>  {error} </div> )}
             {step === 2 && ( <StepProfile form={form} setForm={setForm} /> )}
             {step === 3 && ( <StepPlan /> )}
             {step === 4 && ( <StepPayment form={form}  setForm={setForm} /> )}
