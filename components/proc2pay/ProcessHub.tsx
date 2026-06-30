@@ -82,7 +82,7 @@ export function ProcessHub({
         <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-gradient text-black brand-glow">
           <Workflow className="h-5 w-5" aria-hidden="true" />
         </div>
-        <div>
+        <div className="flex-1">
           <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">
             Proc2Pay <span className="text-brand">.</span>
           </h1>
@@ -90,6 +90,12 @@ export function ProcessHub({
             Da requisição ao envio da ordem de compra — um fluxo só, com os assistentes encadeados.
           </p>
         </div>
+        <Link
+          href="/proc2pay/exemplo"
+          className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-border bg-background hover:bg-accent text-sm font-medium h-9 px-4 transition-colors"
+        >
+          Ver exemplo
+        </Link>
       </div>
 
       {/* Novo processo */}

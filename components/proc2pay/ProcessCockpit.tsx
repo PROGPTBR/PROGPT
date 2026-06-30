@@ -14,9 +14,11 @@ const MVP_STAGES = STAGES.filter((s) => s.mvp);
 export function ProcessCockpit({
   initialProcess,
   initialStageRuns,
+  example = false,
 }: {
   initialProcess: Proc2PayProcess;
   initialStageRuns: Proc2PayStageRun[];
+  example?: boolean;
 }) {
   const [process, setProcess] = useState(initialProcess);
   const [stageRuns, setStageRuns] = useState(initialStageRuns);
@@ -95,6 +97,13 @@ export function ProcessCockpit({
       <Link href="/proc2pay" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="h-4 w-4" /> Processos
       </Link>
+
+      {example && (
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/[0.06] px-4 py-3 text-sm text-amber-700 dark:text-amber-300">
+          <strong>Exemplo</strong> — este é um processo de demonstração já concluído, para você ver o fluxo de ponta a ponta.{' '}
+          <Link href="/proc2pay" className="underline hover:no-underline">Abra um processo real</Link>.
+        </div>
+      )}
 
       <div className="flex items-start justify-between gap-3">
         <div>
@@ -181,7 +190,7 @@ export function ProcessCockpit({
 
               {/* Artefato da etapa */}
               {artifact && (
-                <details className="mt-3 group" open={done && runnableNext(stage, process)}>
+                <details className="mt-3 group" open={example || (done && runnableNext(stage, process))}>
                   <summary className="cursor-pointer text-sm text-brand hover:text-brand/80">Ver resultado</summary>
                   <div className="prose prose-sm dark:prose-invert max-w-none mt-2 rounded-lg border border-border bg-background p-3">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>{artifact}</ReactMarkdown>
