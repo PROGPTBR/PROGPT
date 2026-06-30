@@ -81,7 +81,8 @@ export type ApiOperation =
   | 'proc2pay-propostas'
   | 'proc2pay-equalizacao'
   | 'proc2pay-negociacao'
-  | 'proc2pay-po';
+  | 'proc2pay-po'
+  | 'proc2pay-intake';
 
 export type RecordUsageInput = {
   provider: ApiProvider;

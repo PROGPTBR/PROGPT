@@ -25,6 +25,8 @@ export function ProcessHub({
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(initialProcesses.length === 0);
+  const [mode, setMode] = useState<'form' | 'email'>('email');
+  const [emailText, setEmailText] = useState('');
   const [busy, setBusy] = useState(false);
   const [solicitante, setSolicitante] = useState('');
   const [categoria, setCategoria] = useState('');
@@ -34,6 +36,38 @@ export function ProcessHub({
 
   function setItem(i: number, patch: Partial<ItemRow>) {
     setItens((rows) => rows.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
+  }
+
+  async function handleFromEmail() {
+    if (!emailText.trim()) {
+      toast.error('Cole o texto do e-mail da produção.');
+      return;
+    }
+    setBusy(true);
+    try {
+      const res = await fetch('/api/proc2pay/processes/from-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: emailText }),
+      });
+      if (res.status === 402) {
+        toast.error('O Proc2Pay é um recurso Pro.', {
+          action: { label: 'Ver planos', onClick: () => router.push('/pricing') },
+        });
+        setBusy(false);
+        return;
+      }
+      if (!res.ok) {
+        toast.error('Não foi possível abrir o processo. Tente novamente.');
+        setBusy(false);
+        return;
+      }
+      const { process } = await res.json();
+      router.push(`/proc2pay/${process.id}`);
+    } catch {
+      toast.error('Erro de rede. Tente novamente.');
+      setBusy(false);
+    }
   }
 
   async function handleCreate() {
@@ -120,6 +154,47 @@ export function ProcessHub({
                 O Proc2Pay é um recurso <strong>Pro</strong>. Você pode preencher, mas a abertura exige assinatura ativa.
               </div>
             )}
+
+            {/* Seletor de modo de entrada */}
+            <div className="inline-flex rounded-full border border-border p-0.5 text-sm">
+              <button
+                type="button"
+                onClick={() => setMode('email')}
+                className={`rounded-full px-3 py-1 transition-colors ${mode === 'email' ? 'bg-brand text-white' : 'text-muted-foreground hover:text-foreground'}`}
+              >
+                Colar e-mail
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode('form')}
+                className={`rounded-full px-3 py-1 transition-colors ${mode === 'form' ? 'bg-brand text-white' : 'text-muted-foreground hover:text-foreground'}`}
+              >
+                Formulário
+              </button>
+            </div>
+
+            {mode === 'email' ? (
+              <div className="space-y-3">
+                <Field label="E-mail da produção">
+                  <textarea
+                    value={emailText}
+                    onChange={(e) => setEmailText(e.target.value)}
+                    rows={7}
+                    className={inputCls}
+                    placeholder="Cole aqui o e-mail/solicitação da área. A IA estrutura a requisição (solicitante, itens, quantidades, prazo) automaticamente."
+                  />
+                </Field>
+                <button
+                  type="button"
+                  onClick={handleFromEmail}
+                  disabled={busy}
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-brand-gradient text-black font-medium h-10 px-5 text-sm brand-glow disabled:opacity-50"
+                >
+                  {busy ? <><Loader2 className="h-4 w-4 animate-spin" /> Estruturando…</> : <>Estruturar e abrir <ArrowRight className="h-4 w-4" /></>}
+                </button>
+              </div>
+            ) : (
+            <>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <Field label="Solicitante *">
                 <input value={solicitante} onChange={(e) => setSolicitante(e.target.value)} className={inputCls} placeholder="Produção / Manutenção" />
@@ -165,6 +240,8 @@ export function ProcessHub({
             >
               {busy ? <><Loader2 className="h-4 w-4 animate-spin" /> Abrindo…</> : <>Abrir processo <ArrowRight className="h-4 w-4" /></>}
             </button>
+            </>
+            )}
           </div>
         )}
       </section>
