@@ -103,6 +103,30 @@ function validateStep2() {
     return "Informe um telefone válido.";
   }
 
+  if (!form.postalCode.trim()) {
+    return "Informe o CEP.";
+  }
+
+  if (!form.street.trim()) {
+    return "Informe um CEP válido.";
+  }
+
+  if (!form.addressNumber.trim()) {
+    return "Informe o número do endereço.";
+  }
+
+  if (!form.district.trim()) {
+  return "Informe um CEP válido.";
+}
+
+if (!form.city.trim()) {
+  return "Informe um CEP válido.";
+}
+
+if (!form.state.trim()) {
+  return "Informe um CEP válido.";
+}
+
   return "";
 }
 

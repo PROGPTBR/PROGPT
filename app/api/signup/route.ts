@@ -10,10 +10,6 @@ import {
 } from "@/lib/captcha";
 
 
-console.log("==================================");
-console.log("POST /api/signup");
-console.log(new Date().toISOString());
-console.log("==================================");
 
 function originFrom(req: Request): string {
   const url = new URL(req.url);
@@ -22,6 +18,15 @@ function originFrom(req: Request): string {
 
 
 export async function POST(req: Request) {
+
+const requestId = crypto.randomUUID();
+
+console.log("==================================");
+console.log(`[${requestId}] POST /api/signup`);
+console.log(new Date().toISOString());
+console.log("==================================");
+
+
   const supabase = getServerSupabase();
   const signup = getSignupSupabase();
 
@@ -34,6 +39,9 @@ let customerId: string | null = null;
     
     const body = await req.json();
 
+console.log(`[${requestId}] Email: ${body.email}`);
+console.log(`[${requestId}] Nome: ${body.fullName}`);
+
     const token = body.turnstileToken;
 
 if (!token) {
@@ -43,7 +51,9 @@ if (!token) {
     },
     { status: 400 }
   );
+  
 }
+
 
 const ip = getClientIp(req);
 
@@ -57,6 +67,9 @@ if (!valid) {
     { status: 400 }
   );
 }
+console.log(`[${requestId}] ✅ Captcha validado`);
+
+
 const { data, error } = await signup.auth.signUp({
   email: body.email,
   password: body.password,
@@ -65,7 +78,6 @@ const { data, error } = await signup.auth.signUp({
     captchaToken: body.turnstileToken,
   },
 });
-
 
 
 if (error) {
@@ -92,27 +104,29 @@ if (error) {
   );
 }
 
+console.log(`[${requestId}] ✅ Signup Supabase executado`);
+
 if (!data.user) {
   throw new Error("Usuário não foi criado.");
 }
 
 userId = data.user.id;
 
+console.log(`[${requestId}] ✅ Usuário criado`);
+console.log(`[${requestId}] User ID: ${userId}`);
+
 const customer = await createAsaasCustomer({
   name: body.fullName,
   email: body.email,
   cpfCnpj: body.cpf.replace(/\D/g, ""),
-
   mobilePhone: body.phone.replace(/\D/g, ""),
   company: body.companyName,
 });
 
-// GUARDA O ID PARA O ROLLBACK
 customerId = customer.id;
 
-console.log("========== SIGNUP ==========");
-console.log(data);
-console.log(error);
+console.log(`[${requestId}] ✅ Cliente criado no Asaas`);
+console.log(customer);
 
 
     const { error: profileError } = await supabase
@@ -129,6 +143,12 @@ console.log(error);
       })
       
       .eq("id", data.user.id);
+
+if (profileError) {
+  throw profileError;
+}
+
+console.log(`[${requestId}] ✅ Profile atualizado`);
 
 
 const nextDueDate = new Date();
@@ -147,10 +167,19 @@ const remoteIp =
 
 const [month, year] = body.cardExpiry.split("/");
 
-console.log("cardExpiry:", body.cardExpiry);
-console.log("month:", month);
-console.log("year:", year);
 
+console.log(`[${requestId}] Criando assinatura...`);
+console.log(`[${requestId}] Vencimento: ${nextDueDateString}`);
+console.log(`[${requestId}] Valor: 197.99`);
+
+
+console.log("===== DADOS DO TITULAR =====");
+console.log({
+  postalCode: body.postalCode,
+  addressNumber: body.addressNumber,
+  addressComplement: body.addressComplement,
+  phone: body.phone,
+});
 
 const subscription = await createAsaasSubscription({
   customerId: customer.id,
@@ -186,6 +215,7 @@ creditCardHolderInfo: {
 },
 });
 
+console.log(`[${requestId}] ✅ Assinatura criada`);
 console.log(subscription);
 
 
@@ -225,7 +255,7 @@ console.log(subscription);
 */
 
 
-await supabase
+const { error: asaasProfileError } = await supabase
   .from("profiles")
   .update({
     asaas_customer_id: customer.id,
@@ -233,10 +263,14 @@ await supabase
   })
   .eq("id", data.user.id);
 
-    if (profileError) {
-      console.error(profileError);
-    }
+if (asaasProfileError) {
+  throw asaasProfileError;
+}
 
+console.log(`[${requestId}] ✅ IDs do Asaas gravados no Supabase`);
+
+console.log(`[${requestId}] 🎉 Signup finalizado com sucesso`);
+    
 return NextResponse.json({
   success: true,
   user: data.user,
@@ -244,44 +278,53 @@ return NextResponse.json({
 });
 
 }catch (err: unknown) {
-  console.error("Erro no cadastro:", err);
 
-  // Primeiro remove o cliente do Asaas
   if (customerId) {
-    try {
-      await deleteAsaasCustomer(customerId);
+  try {
+    await deleteAsaasCustomer(customerId);
 
-      console.log("Rollback Asaas realizado.");
-    } catch (rollbackError) {
-      console.error(
-        "Erro ao remover cliente Asaas:",
-        rollbackError
-      );
-    }
+   console.log(`[${requestId}] 🗑️ Rollback Asaas realizado.`);
+  } catch (rollbackError) {
+    console.error(
+      "Erro ao remover cliente Asaas:",
+      rollbackError
+    );
+  }
+}
+
+if (userId) {
+  try {
+    await supabase.auth.admin.deleteUser(userId);
+
+    console.log(`[${requestId}] 🗑️ Rollback Supabase realizado.`);
+  } catch (rollbackError) {
+    console.error(
+      "Erro ao remover usuário:",
+      rollbackError
+    );
+  }
+}
+
+  console.error("############################");
+  console.error("ERRO NO SIGNUP");
+  console.error(err);
+
+  if (err instanceof Error) {
+    console.error(err.message);
+    console.error(err.stack);
   }
 
-  // Depois remove o usuário do Supabase
-  if (userId) {
-    try {
-      await supabase.auth.admin.deleteUser(userId);
-
-      console.log("Rollback Supabase realizado.");
-    } catch (rollbackError) {
-      console.error(
-        "Erro ao remover usuário:",
-        rollbackError
-      );
-    }
-  }
+  console.error("############################");
 
   return NextResponse.json(
     {
-      error:
-        err instanceof Error
-          ? err.message
-          : "Não foi possível concluir o cadastro.",
+      error: err instanceof Error
+        ? err.message
+        : "Erro interno",
     },
-    { status: 400 }
+    {
+      status:500,
+    }
   );
 }
 }
