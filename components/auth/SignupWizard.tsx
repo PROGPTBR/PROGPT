@@ -1,5 +1,4 @@
 "use client";
-import { useRouter} from "next/navigation";
 import { CheckCircle2 } from "lucide-react";
 
 
@@ -22,7 +21,6 @@ export function SignupWizard() {
   
 const errorRef = useRef<HTMLDivElement>(null);
 
-const router = useRouter();
 
 const [loading, setLoading] = useState(false);
 const [step, setStep] = useState(1);
