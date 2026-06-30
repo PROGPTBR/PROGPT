@@ -286,6 +286,51 @@ async function emissaoPo(ctx: Proc2PayContext): Promise<ExecResult> {
   };
 }
 
+// --- Etapa 14: Follow-up da entrega -----------------------------------------
+async function followUp(ctx: Proc2PayContext): Promise<ExecResult> {
+  const fornecedor = ctx.po?.fornecedor?.nome ?? ctx.equalizacao?.vencedor?.nome ?? '(fornecedor)';
+  const schema = NarrativeSchema.extend({
+    marcos: z
+      .array(z.object({ marco: z.string(), prazo: z.string().optional(), status: z.string().default('pendente') }))
+      .describe('Marcos de acompanhamento da entrega (confirmação da PO, produção, expedição, recebimento).'),
+  });
+  const r = await runObject(
+    `${PERSONA}\nMonte o plano de follow-up da entrega da PO: marcos a acompanhar (confirmação do pedido, prazo de produção, expedição, recebimento e conferência), riscos e quando cobrar o fornecedor.`,
+    `Fornecedor: ${fornecedor}\nPO: ${ctx.po?.numero ?? '(n/d)'}\nAcordo: ${ctx.negociacao?.acordo ?? '(n/d)'}\nRequisição:\n${reqResumo(ctx.requisicao)}\n\nGere o plano de follow-up com marcos e cadência de cobrança.`,
+    schema,
+    'proc2pay-followup',
+  );
+  return {
+    output: r.object.marcos,
+    artifactMd: r.object.markdown,
+    usage: r.usage,
+    model: r.model,
+    operation: r.operation,
+  };
+}
+
+// --- Etapa 15: Avaliação do fornecedor --------------------------------------
+async function avaliacaoFornecedor(ctx: Proc2PayContext): Promise<ExecResult> {
+  const fornecedor = ctx.po?.fornecedor?.nome ?? ctx.equalizacao?.vencedor?.nome ?? '(fornecedor)';
+  const schema = NarrativeSchema.extend({
+    score: z.number().min(0).max(100).describe('Score consolidado de desempenho do fornecedor (0-100).'),
+    recomendacao: z.string().describe('Manter / desenvolver / substituir, com 1 frase de justificativa.'),
+  });
+  const r = await runObject(
+    `${PERSONA}\nAvalie o fornecedor ao fim do processo (Supplier Scorecard): pontue qualidade, prazo/cumprimento, preço/competitividade e atendimento, consolide num score 0-100 e recomende postura SRM (manter/desenvolver/substituir). Baseie-se no que ocorreu no processo.`,
+    `Fornecedor: ${fornecedor}\nEqualização/decisão: ${JSON.stringify(ctx.equalizacao ?? {})}\nNegociação: ${ctx.negociacao?.acordo ?? '(n/d)'}\nPO: ${ctx.po?.numero ?? '(n/d)'}\n\nGere a avaliação com critérios pontuados, o score e a recomendação.`,
+    schema,
+    'proc2pay-avaliacao',
+  );
+  return {
+    output: { score: r.object.score, resumo: r.object.recomendacao },
+    artifactMd: r.object.markdown,
+    usage: r.usage,
+    model: r.model,
+    operation: r.operation,
+  };
+}
+
 /**
  * Dispatcher: executa a etapa pelo id. `aprovacao` é tratada fora (route de
  * approve); `requisicao` é feita na criação do processo.
@@ -314,6 +359,10 @@ export async function executeStage(
       return negociacao(ctx, payload);
     case 'emissao_po':
       return emissaoPo(ctx);
+    case 'follow_up':
+      return followUp(ctx);
+    case 'avaliacao':
+      return avaliacaoFornecedor(ctx);
     default:
       throw new Error(`Proc2Pay: etapa "${stage}" não é executável por aqui.`);
   }
