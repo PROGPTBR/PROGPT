@@ -19,9 +19,11 @@ const STATE_BADGE: Record<string, string> = {
 export function ProcessHub({
   initialProcesses,
   isPro,
+  inboundAlias = null,
 }: {
   initialProcesses: Proc2PayProcess[];
   isPro: boolean;
+  inboundAlias?: string | null;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(initialProcesses.length === 0);
@@ -184,6 +186,13 @@ export function ProcessHub({
                     placeholder="Cole aqui o e-mail/solicitação da área. A IA estrutura a requisição (solicitante, itens, quantidades, prazo) automaticamente."
                   />
                 </Field>
+                {inboundAlias && (
+                  <p className="text-xs text-muted-foreground">
+                    Ou encaminhe a solicitação para{' '}
+                    <code className="rounded bg-muted px-1.5 py-0.5 text-foreground">{inboundAlias}</code>{' '}
+                    — o processo abre sozinho.
+                  </p>
+                )}
                 <button
                   type="button"
                   onClick={handleFromEmail}

@@ -25,9 +25,12 @@ export async function createProcess(input: {
   titulo?: string;
   origem?: 'email' | 'manual' | 'exemplo';
   isExample?: boolean;
+  inboundEmailId?: string; // idempotência do webhook (guardado no context)
 }): Promise<Proc2PayProcess | null> {
   const sb = getServerSupabase();
   const titulo = input.titulo?.trim() || input.requisicao.descricao?.slice(0, 80) || 'Processo de compra';
+  const context: Record<string, unknown> = { requisicao: input.requisicao };
+  if (input.inboundEmailId) context.inbound_email_id = input.inboundEmailId;
   const row = {
     user_id: input.userId,
     numero: genNumero(),
@@ -36,7 +39,7 @@ export async function createProcess(input: {
     state: 'em_andamento' as const,
     origem: input.origem ?? 'manual',
     requisicao: input.requisicao,
-    context: { requisicao: input.requisicao } as Proc2PayContext,
+    context: context as Proc2PayContext,
     is_example: input.isExample ?? false,
   };
   const { data, error } = await sb.from('proc2pay_processes').insert(row).select().single();
@@ -45,6 +48,21 @@ export async function createProcess(input: {
     return null;
   }
   return data as Proc2PayProcess;
+}
+
+/** Dedup do webhook: já existe processo criado por este e-mail recebido? */
+export async function processExistsForInboundEmail(
+  userId: string,
+  emailId: string,
+): Promise<boolean> {
+  const sb = getServerSupabase();
+  const { data } = await sb
+    .from('proc2pay_processes')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('context->>inbound_email_id', emailId)
+    .maybeSingle();
+  return !!data;
 }
 
 export async function getProcessForOwner(
