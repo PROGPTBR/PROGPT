@@ -80,6 +80,49 @@ async function runObject<T extends z.ZodTypeAny>(
   };
 }
 
+// --- Etapa 4: Análise crítica da requisição ---------------------------------
+async function analiseCritica(ctx: Proc2PayContext): Promise<ExecResult> {
+  const schema = NarrativeSchema.extend({
+    ok: z.boolean().describe('true se a requisição está pronta para seguir; false se há lacunas críticas.'),
+    gaps: z.array(z.string()).describe('Lacunas/ambiguidades a resolver (especificação, quantidade, prazo, norma).'),
+  });
+  const r = await runObject(
+    `${PERSONA}\nFaça a análise crítica da requisição de compra ANTES de cotar: cheque clareza do escopo, especificações técnicas, quantidades/unidades, prazo, normas aplicáveis e justificativa. Aponte lacunas que atrapalhariam a cotação. Seja construtivo.`,
+    `Requisição:\n${reqResumo(ctx.requisicao)}\n\nAnalise criticamente e liste o que falta/ajustar antes de seguir para a estratégia de compra.`,
+    schema,
+    'proc2pay-critica',
+  );
+  return {
+    output: { ok: r.object.ok, gaps: r.object.gaps },
+    artifactMd: r.object.markdown,
+    usage: r.usage,
+    model: r.model,
+    operation: r.operation,
+  };
+}
+
+// --- Etapa 5: Validação técnica do escopo -----------------------------------
+async function validacaoEscopo(ctx: Proc2PayContext): Promise<ExecResult> {
+  const schema = NarrativeSchema.extend({
+    resumo: z.string().describe('Escopo técnico consolidado, claro para o fornecedor.'),
+    criterios: z.array(z.string()).describe('Critérios técnicos de aceitação/avaliação.'),
+  });
+  const gaps = ctx.analise_critica?.gaps?.length ? `Lacunas apontadas:\n${ctx.analise_critica.gaps.map((g) => `- ${g}`).join('\n')}` : '';
+  const r = await runObject(
+    `${PERSONA}\nConsolide e valide o escopo técnico da compra: descreva o objeto de forma inequívoca para o fornecedor, normas/especificações, e os critérios técnicos de aceitação. Resolva (ou explicite) as lacunas da análise crítica.`,
+    `Requisição:\n${reqResumo(ctx.requisicao)}\n${gaps}\n\nProduza o escopo técnico consolidado + critérios de aceitação.`,
+    schema,
+    'proc2pay-escopo',
+  );
+  return {
+    output: { resumo: r.object.resumo, criterios: r.object.criterios },
+    artifactMd: r.object.markdown,
+    usage: r.usage,
+    model: r.model,
+    operation: r.operation,
+  };
+}
+
 // --- Etapa 6: Estratégia (Kraljic) ------------------------------------------
 async function estrategia(ctx: Proc2PayContext): Promise<ExecResult> {
   const schema = NarrativeSchema.extend({
@@ -253,6 +296,10 @@ export async function executeStage(
   payload?: StagePayload,
 ): Promise<ExecResult> {
   switch (stage) {
+    case 'analise_critica':
+      return analiseCritica(ctx);
+    case 'validacao_escopo':
+      return validacaoEscopo(ctx);
     case 'estrategia':
       return estrategia(ctx);
     case 'selecao_fornecedores':

@@ -65,11 +65,12 @@ describe('runStage', () => {
   });
 
   it('executa a etapa e faz o handoff (saveStageResult concluido)', async () => {
+    // análise crítica é a 1ª etapa executável (roda só com a requisição)
     const { saveStageResult } = mockDeps();
-    const r = await run({ userId: 'u1', process: baseProcess(), stage: 'estrategia' });
+    const r = await run({ userId: 'u1', process: baseProcess(), stage: 'analise_critica' });
     expect(r.ok).toBe(true);
     expect(saveStageResult).toHaveBeenCalledWith(
-      expect.objectContaining({ stage: 'estrategia', status: 'concluido' }),
+      expect.objectContaining({ stage: 'analise_critica', status: 'concluido' }),
     );
   });
 
@@ -77,7 +78,7 @@ describe('runStage', () => {
     const { saveStageResult } = mockDeps({
       exec: vi.fn().mockRejectedValue(new Error('sem propostas')),
     });
-    const r = await run({ userId: 'u1', process: baseProcess(), stage: 'estrategia' });
+    const r = await run({ userId: 'u1', process: baseProcess(), stage: 'analise_critica' });
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.code).toBe('exec_failed');
     expect(saveStageResult).toHaveBeenCalledWith(
@@ -89,6 +90,8 @@ describe('runStage', () => {
     // context com tudo até negociacao + aprovacao completos
     const fullCtx = {
       requisicao: { solicitante: 'P', descricao: 'x', itens: [] },
+      analise_critica: { ok: true, gaps: [] },
+      escopo: { resumo: 'x' },
       estrategia: { postura: 'x' },
       fornecedores: [{ nome: 'A' }],
       rfp: { documento: 'x' },

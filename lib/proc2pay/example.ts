@@ -19,6 +19,24 @@ const REQ = {
 };
 
 const ARTIFACTS: Record<string, string> = {
+  analise_critica: `## Análise crítica da requisição
+
+**Pronta para seguir** — com 2 ajustes recomendados.
+
+- ✅ Item, quantidade e prazo claros (parada em 30 dias).
+- ⚠️ Faltou a **classe de pressão** explícita das válvulas de 1.1/2" (assumido cl.150 por simetria — confirmar).
+- ⚠️ Exigir **certificado de material 3.1** no critério (item de vapor, segurança).`,
+
+  validacao_escopo: `## Validação técnica do escopo
+
+**Objeto:** válvulas de esfera, corpo inox 316, classe 150, para linha de vapor — 10× 2" + 6× 1.1/2".
+
+### Critérios técnicos de aceitação
+- Material com **certificado 3.1** (EN 10204).
+- Vedação compatível com vapor saturado.
+- Rastreabilidade de lote.
+- Atendimento à norma da planta para linha de vapor.`,
+
   estrategia: `## Estratégia de compra — Matriz de Kraljic
 
 **Quadrante: Gargalo (bottleneck).** Baixo impacto no resultado financeiro, porém **alto risco de suprimento** (item técnico, inox 316, prazo crítico de parada).
@@ -103,6 +121,8 @@ _PO gerada pelo Proc2Pay — enviar ao fornecedor por e-mail para confirmação.
 };
 
 const STAGE_OUTPUTS: Partial<Record<StageId, unknown>> = {
+  analise_critica: { ok: true, gaps: ['Confirmar classe de pressão da válvula 1.1/2"', 'Exigir certificado 3.1'] },
+  validacao_escopo: { resumo: 'Válvulas esfera inox 316 cl.150 p/ vapor', criterios: ['Certificado 3.1', 'Rastreabilidade de lote'] },
   estrategia: { quadranteKraljic: 'gargalo', postura: 'Garantir fornecimento com 2+ fontes' },
   selecao_fornecedores: [
     { nome: 'Válvulas Industriais SA', homologado: true },
@@ -119,6 +139,8 @@ const STAGE_OUTPUTS: Partial<Record<StageId, unknown>> = {
 
 const ORDER: StageId[] = [
   'requisicao',
+  'analise_critica',
+  'validacao_escopo',
   'estrategia',
   'selecao_fornecedores',
   'rfq_rfp',
@@ -173,6 +195,8 @@ export function buildExampleProcess(): {
 function stageProduces(stage: StageId): string {
   const m: Record<string, string> = {
     requisicao: 'requisicao',
+    analise_critica: 'analise_critica',
+    validacao_escopo: 'escopo',
     estrategia: 'estrategia',
     selecao_fornecedores: 'fornecedores',
     rfq_rfp: 'rfp',
