@@ -104,6 +104,28 @@ TecVal Componentes     — R$ 2.640/un (2") · R$ 1.980/un (1.1/2") · frete FOB
 
 > Dentro do orçamento (R$ 48k) e prazo da parada. Fornecedor homologado. Liberar emissão da PO.`,
 
+  follow_up: `## Follow-up da entrega
+
+| Marco | Prazo | Status |
+|---|---|---|
+| Confirmação da PO pelo fornecedor | D+1 | ✅ confirmado |
+| Produção / separação | D+8 | em andamento |
+| Expedição (com certificado 3.1) | D+12 | pendente |
+| Recebimento e conferência | D+15 | pendente |
+
+**Cadência:** cobrar status a cada 3 dias úteis; alertar Manutenção se a expedição passar de D+13 (risco para a parada).`,
+
+  avaliacao: `## Avaliação do fornecedor — Válvulas Industriais SA
+
+| Critério | Nota |
+|---|---|
+| Qualidade / conformidade | 9 |
+| Prazo / cumprimento | 8 |
+| Preço / competitividade | 7 |
+| Atendimento | 9 |
+
+**Score consolidado: 84/100 — Estratégico (manter/desenvolver).** Cumpriu prazo da parada com certificação correta; candidato a acordo de disponibilidade para itens de caldeira.`,
+
   emissao_po: `## Pedido de Compra — PO-2026-000482
 
 **Fornecedor:** Válvulas Industriais SA
@@ -135,6 +157,11 @@ const STAGE_OUTPUTS: Partial<Record<StageId, unknown>> = {
   negociacao: { acordo: '15 dias úteis, 28 ddl, -2%' },
   aprovacao: { decision: 'aprovado' },
   emissao_po: { numero: 'PO-2026-000482', valor: 40278, fornecedor: { nome: 'Válvulas Industriais SA' } },
+  follow_up: [
+    { marco: 'Confirmação da PO', status: 'confirmado' },
+    { marco: 'Expedição', status: 'pendente' },
+  ],
+  avaliacao: { score: 84, resumo: 'Estratégico — manter/desenvolver' },
 };
 
 const ORDER: StageId[] = [
@@ -149,6 +176,8 @@ const ORDER: StageId[] = [
   'negociacao',
   'aprovacao',
   'emissao_po',
+  'follow_up',
+  'avaliacao',
 ];
 
 export function buildExampleProcess(): {
@@ -205,6 +234,8 @@ function stageProduces(stage: StageId): string {
     negociacao: 'negociacao',
     aprovacao: 'aprovacao',
     emissao_po: 'po',
+    follow_up: 'entregas',
+    avaliacao: 'avaliacao',
   };
   return m[stage] ?? stage;
 }
