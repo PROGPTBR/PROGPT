@@ -26,6 +26,9 @@ export function TurnstileWidget({ onVerify }: Props) {
   const siteKey =
     process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? TEST_SITE_KEY_ALWAYS_PASS;
 
+console.log("NEXT_PUBLIC_TURNSTILE_SITE_KEY =", process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
+console.log("SITE KEY USADA =", siteKey);
+
   return (
     <Turnstile
       ref={ref}
