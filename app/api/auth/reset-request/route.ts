@@ -46,31 +46,37 @@ export async function POST(req: Request) {
     );
   }
 
-  const sb = getServerSupabase();
-  // Fire-and-forget: não esperamos pelo erro do Supabase pra evitar leak
-  // de existência de email via timing. Logamos internamente.
-  void sb.auth
-    //.resetPasswordForEmail(parsed.email, {
-    //  redirectTo: `${originFrom(req)}/reset-password`,
-    //  captchaToken: parsed.captchaToken ?? undefined,
- //   })
- await sb.auth.resetPasswordForEmail(parsed.email, {
-  redirectTo: "https://google.com",
-})
-    .then(({ error }) => {
-      if (error) {
-        const msg = (error.message ?? '').toLowerCase();
-        // Só log de erros estruturais; "email not found" é esperado
-        // (anti-enum) e não polui o log.
-        if (!msg.includes('not found') && !msg.includes('invalid')) {
-          console.warn('[reset-request] supabase error:', error.message);
-        }
+const sb = getServerSupabase();
+
+// Fire-and-forget: não esperamos pelo erro do Supabase pra evitar leak
+// de existência de email via timing. Logamos internamente.
+
+const redirectTo = `${originFrom(req)}/reset-password`;
+
+console.log("====================================");
+console.log("[RESET PASSWORD]");
+console.log("Origin:", originFrom(req));
+console.log("RedirectTo:", redirectTo);
+console.log("====================================");
+
+void sb.auth
+  .resetPasswordForEmail(parsed.email, {
+    redirectTo,
+    captchaToken: parsed.captchaToken ?? undefined,
+  })
+  .then(({ error }) => {
+    if (error) {
+      const msg = (error.message ?? "").toLowerCase();
+
+      if (!msg.includes("not found") && !msg.includes("invalid")) {
+        console.warn("[reset-request] supabase error:", error.message);
       }
-    })
-    .catch((err) => {
-      const m = err instanceof Error ? err.message : String(err);
-      console.warn('[reset-request] swallowed:', m);
-    });
+    }
+  })
+  .catch((err) => {
+    const m = err instanceof Error ? err.message : String(err);
+    console.warn("[reset-request] swallowed:", m);
+  });
 
   // Resposta genérica imediata (sempre 200).
   return NextResponse.json({ ok: true });
