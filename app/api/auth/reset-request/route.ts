@@ -50,10 +50,13 @@ export async function POST(req: Request) {
   // Fire-and-forget: não esperamos pelo erro do Supabase pra evitar leak
   // de existência de email via timing. Logamos internamente.
   void sb.auth
-    .resetPasswordForEmail(parsed.email, {
-      redirectTo: `${originFrom(req)}/reset-password`,
-      captchaToken: parsed.captchaToken ?? undefined,
-    })
+    //.resetPasswordForEmail(parsed.email, {
+    //  redirectTo: `${originFrom(req)}/reset-password`,
+    //  captchaToken: parsed.captchaToken ?? undefined,
+ //   })
+ await sb.auth.resetPasswordForEmail(parsed.email, {
+  redirectTo: "https://google.com",
+})
     .then(({ error }) => {
       if (error) {
         const msg = (error.message ?? '').toLowerCase();
