@@ -48,10 +48,12 @@ describe('STAGES config', () => {
     expect(MVP_TRACK.every((s) => s.mvp && !s.optional)).toBe(true);
   });
 
-  it('14/15 são opcionais e fora do MVP', () => {
+  it('14/15 são opcionais (não bloqueiam o trilho) mas aparecem no cockpit (mvp)', () => {
     expect(getStage('follow_up').optional).toBe(true);
     expect(getStage('avaliacao').optional).toBe(true);
-    expect(getStage('follow_up').mvp).toBe(false);
+    expect(getStage('follow_up').mvp).toBe(true);
+    // não entram no trilho obrigatório
+    expect(MVP_TRACK.some((s) => s.id === 'follow_up')).toBe(false);
   });
 
   it('getStage lança em etapa desconhecida', () => {
@@ -109,9 +111,9 @@ describe('canRunStage (gating sequencial)', () => {
     expect(canRunStage('emissao_po', contextUpTo('aprovacao'))).toBe(true);
     expect(canRunStage('emissao_po', contextUpTo('negociacao'))).toBe(false);
   });
-  it('etapa opcional (avaliação) roda assim que há requisição', () => {
-    expect(canRunStage('avaliacao', {})).toBe(false);
-    expect(canRunStage('avaliacao', { requisicao: reqPayload })).toBe(true);
+  it('cauda opcional (avaliação) só roda depois do trilho completo (PO emitida)', () => {
+    expect(canRunStage('avaliacao', { requisicao: reqPayload })).toBe(false);
+    expect(canRunStage('avaliacao', contextUpTo('emissao_po'))).toBe(true);
   });
 });
 

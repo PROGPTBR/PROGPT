@@ -112,8 +112,8 @@ export const STAGES: Stage[] = [
     label: 'Follow-up da entrega',
     executor: { kind: 'llm', ref: 'followup' },
     produces: 'entregas',
-    optional: true,
-    mvp: false,
+    optional: true, // não bloqueia o trilho; destrava após a PO
+    mvp: true,
   },
   {
     id: 'avaliacao',
@@ -121,8 +121,8 @@ export const STAGES: Stage[] = [
     label: 'Avaliação do fornecedor',
     executor: { kind: 'assistant', assistant: 'scorecard' },
     produces: 'avaliacao',
-    optional: true,
-    mvp: false,
+    optional: true, // não bloqueia o trilho; destrava após a PO
+    mvp: true,
   },
 ];
 
@@ -169,8 +169,9 @@ export function nextStage(context: Proc2PayContext): Stage | null {
 export function canRunStage(id: StageId, context: Proc2PayContext): boolean {
   const stage = getStage(id);
   if (stage.optional || !stage.mvp) {
-    // Opcionais exigem só que a requisição exista.
-    return isStageComplete('requisicao', context);
+    // Cauda opcional (follow-up, avaliação): destrava quando o trilho
+    // obrigatório terminou (PO emitida).
+    return isTrackComplete(context);
   }
   const idx = MVP_TRACK.findIndex((s) => s.id === id);
   if (idx < 0) return false;
