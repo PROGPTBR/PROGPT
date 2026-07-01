@@ -53,9 +53,14 @@ export async function verifyTurnstileToken(
     }
  const data = await res.json();
 
-console.log("========== TURNSTILE ==========");
-console.log(JSON.stringify(data, null, 2));
-console.log("===============================");
+
+console.log("================================");
+console.log("[TURNSTILE]");
+console.log("APP_ENV:", process.env.APP_ENV);
+console.log("Secret exists:", !!process.env.TURNSTILE_SECRET_KEY);
+console.log("Token exists:", !!token);
+console.log("Response:", JSON.stringify(data, null, 2));
+console.log("================================");
 
 return data.success === true;
   } catch (err) {
