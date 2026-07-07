@@ -25,6 +25,7 @@ export default async function ChatLayout({
   .from('profiles')
   .select(
     `
+    role,
     created_at,
     plan,
     selected_plan,
@@ -33,10 +34,16 @@ export default async function ChatLayout({
   )
   .eq('id', user.id)
   .single();
- 
+
 
   if (!profile) {
     redirect('/login');
+  }
+
+  // Admin sempre tem acesso (mesmo sem plano/assinatura) — espelha o bypass
+  // de getAccessState/isPro em lib/billing/subscription.ts.
+  if (profile.role === 'admin') {
+    return <>{children}</>;
   }
 
   // PF e PJ liberados
