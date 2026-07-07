@@ -11,7 +11,7 @@ export default function SignupStepper({ step }: SignupStepperProps) {
       </p>
 
       <h1 className="mt-2 text-3xl font-bold">
-        Crie sua conta
+        Crie sua conta <span className="text-brand">.</span>
       </h1>
 
       <p className="mt-2 text-muted-foreground">

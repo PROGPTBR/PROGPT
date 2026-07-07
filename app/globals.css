@@ -182,7 +182,92 @@
   background: hsl(217 24% 32%);
   background-clip: padding-box;
 }
+.conteudo-entrada{
+  margin-bottom: 40px;
+}
+.titulo-entrada{
+    font-size: 40px;
+    font-weight: 900;
+    text-transform: uppercase;
+    color: #ffffff;
+    line-height: 1em;
+    margin-bottom: 20px;
+}
+.titulo-entrada span{
+  -webkit-text-stroke: 0 !important;
+    background: linear-gradient(90deg, rgba(14, 209, 224, 1) 50%, rgba(50, 155, 255, 1) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 
+}
+.subtitulo-entrada{
+    font-size: 17px;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+}
+.subtitulo-entrada strong{
+  margin-right:6px;
+}
+
+aside {
+    position: relative;
+    overflow: hidden;
+}
+
+aside::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: url("/imagens/imagem-de-fundo-entrada-chatsupply-1.jpg");
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    opacity: 0.3;
+    filter: brightness(150%);
+}
+
+aside > * {
+    position: relative;
+    z-index: 1;
+}
+
+.imagem-entrada-01{
+    border: 3px solid #12161d;
+    border-radius: 5px;
+    width: 70%;
+    margin: 0 auto;
+}
+.imagem-entrada-02{
+    will-change: transform;
+    transform: translate3d(0px, -1.42044%, 0px) scale3d(1, 1, 1) rotateX(0deg) rotateY(0deg) rotateZ(0deg) skew(0deg, 0deg);
+    transform-style: preserve-3d;
+    -webkit-backdrop-filter: blur(6px) blur(5px);
+    backdrop-filter: blur(6px) blur(5px);
+    width: 25%;
+    max-width: 368px;
+    position: absolute;
+    inset: auto auto 39% 7%
+}
+.imagem-entrada-03{
+    opacity: 1;
+    will-change: transform;
+    transform: translate3d(0px, 0.13614%, 0px) scale3d(1, 1, 1) rotateX(0deg) rotateY(0deg) rotateZ(0deg) skew(0deg, 0deg);
+    transform-style: preserve-3d;
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    width: 28%;
+    max-width: 428px;
+    position: absolute;
+    inset: auto 5% 13% auto
+}
+.imagem-entrada-02 img,.imagem-entrada-03 img{
+  background: black;
+  border-radius: 10px;
+  filter: brightness(150%);
+}
+.lg\:grid-cols-1-2 {
+  grid-template-columns: 1.4fr 1fr;
+}
 /* Swipe-up — chevrons subindo em sequência (acento moderno de movimento). */
 @keyframes swipe-up {
   0% {

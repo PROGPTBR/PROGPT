@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
 import { supabaseBrowser } from '@/lib/db/supabase-browser';
 
+
 function friendlyError(error: { message: string; code?: string } | null): string | null {
   if (!error) return null;
   if (error.message?.toLowerCase().includes('invalid login credentials')) {
@@ -15,7 +16,7 @@ function friendlyError(error: { message: string; code?: string } | null): string
 }
 
 const INPUT_CLASS =
-  'w-full rounded-lg bg-muted/40 border border-input px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 transition-colors';
+  'w-full rounded-lg bg-muted/40 border border-input px-4 py-3.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 transition-colors';
 const LABEL_CLASS =
   'block text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5';
 const SUBMIT_CLASS =
@@ -51,7 +52,7 @@ export function LoginForm() {
   return (
     <div className="space-y-6">
       <div className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+        <h1 className="text-3xl font-semibold tracking-tight text-foreground">
           Entrar <span className="text-brand">.</span>
         </h1>
         <p className="text-sm text-muted-foreground">
@@ -70,7 +71,7 @@ export function LoginForm() {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className={INPUT_CLASS}
+            className={INPUT_CLASS}  placeholder="Digite seu e-mail"
           />
         </div>
         <div>
@@ -85,7 +86,7 @@ export function LoginForm() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className={`${INPUT_CLASS} pr-11`}
+              className={`${INPUT_CLASS} pr-11`} 
             />
             <button
               type="button"

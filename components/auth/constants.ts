@@ -1,7 +1,7 @@
 export const INPUT_CLASS = 
  "w-full rounded-lg bg-muted/40 border border-input px-4 py-3.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 transition-colors";
 ;
-export const LABEL_CLASS = "block text-sm font-medium text-foreground mb-2";
+export const LABEL_CLASS = "block text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5";
 
 export const ERROR_CLASS = "rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive";
 

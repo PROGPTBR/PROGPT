@@ -47,36 +47,36 @@ export default async function ChatLayout({
   }
 
   // PF e PJ liberados
-const currentPlan =
-  profile.plan || profile.selected_plan;
+//const currentPlan =
+  // profile.plan || profile.selected_plan;
 
-const paidPlan =
-  currentPlan === 'pf' ||
-  currentPlan === 'pf-99' ||
-  currentPlan === 'pj' ||
-  currentPlan === 'pj-consulte';
+// const paidPlan =
+ // currentPlan === 'pf' ||
+ // currentPlan === 'pf-99' ||
+//  currentPlan === 'pj' ||
+ // currentPlan === 'pj-consulte';
 
   
   // Assinatura ativa liberada
-  const activeSubscription =
-    profile.subscription_status === 'ACTIVE';
+  //const activeSubscription =
+   // profile.subscription_status === 'ACTIVE';
 
-  const createdAt = new Date(profile.created_at);
-  const now = new Date();
+//  const createdAt = new Date(profile.created_at);
+//  const now = new Date();
 
-  const diffDays =
-    (now.getTime() - createdAt.getTime()) /
-    (1000 * 60 * 60 * 24);
+//  const diffDays =
+ //   (now.getTime() - createdAt.getTime()) /
+  //  (1000 * 60 * 60 * 24);
 
-  const trialExpired =
-    diffDays > 3 &&
-    !paidPlan &&
-    !activeSubscription;
+ // const trialExpired =
+  //  diffDays > 3 &&
+ //   !paidPlan &&
+  //  !activeSubscription;
 
 
-  if (trialExpired) {
-  redirect('/planos?expired=true');
-}
+//if (trialExpired) {
+ // redirect('/planos?expired=true');
+//}
 
   return <>{children}</>;
 }

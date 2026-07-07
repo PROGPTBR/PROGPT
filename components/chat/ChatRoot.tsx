@@ -65,25 +65,38 @@ function ChatRootMounted() {
       return null;
     }
   });
+
+
+
   const decidedRef = useRef(false);
 
   // Prompt vindo da biblioteca deve SEMPRE cair numa conversa nova/vazia: se a
   // atual já tem histórico, abre uma nova; se já está vazia, reaproveita.
-  useEffect(() => {
-    if (decidedRef.current) return;
-    if (!pendingPrefill) return;
-    if (!sessionsApi.currentId) return; // espera hidratar
-    decidedRef.current = true;
-    const cur = sessionsApi.current;
-    if (cur && cur.messages.length > 0) {
-      void sessionsApi.createNew();
-    }
-  }, [pendingPrefill, sessionsApi.currentId, sessionsApi.current, sessionsApi.createNew]);
 
-  if (!sessionsApi.currentId) {
-    return <div className="h-screen bg-background" />;
+ // Prompt vindo da biblioteca deve SEMPRE cair numa conversa nova/vazia:
+// se a atual já tem histórico, abre uma nova; se já está vazia, reaproveita.
+
+const {
+  current,
+  currentId,
+  createNew,
+} = sessionsApi;
+
+useEffect(() => {
+  if (decidedRef.current) return;
+  if (!pendingPrefill) return;
+  if (!currentId) return;
+
+  decidedRef.current = true;
+
+  if (current && current.messages.length > 0) {
+    void createNew();
   }
+}, [pendingPrefill, currentId, current, createNew]);
 
+if (!currentId) {
+  return <div className="h-screen bg-background" />;
+}
   // Só prefila a sessão-alvo (a nova/vazia). A conversa antiga (com mensagens)
   // nunca recebe o prefill.
   const prefillForSession =

@@ -56,32 +56,39 @@ export function ArticleDetail({ article, onDeleted, onUpdated }: Props) {
   const [titleDraft, setTitleDraft] = useState(article?.title ?? '');
   const [savingPatch, setSavingPatch] = useState(false);
 
-  useEffect(() => {
-    setTitleDraft(article?.title ?? '');
-    setEditingTitle(false);
-  }, [article?.id]);
+useEffect(() => {
+  setTitleDraft(article?.title ?? '');
+  setEditingTitle(false);
+}, [article?.id, article?.title]);
 
-  useEffect(() => {
-    if (!article) {
-      setChunks([]);
-      return;
-    }
-    let cancelled = false;
-    setLoading(true);
-    (async () => {
-      const { data } = await supabaseBrowser()
-        .from('chunks')
-        .select('id, ord, content, metadata')
-        .eq('article_id', article.id)
-        .order('ord', { ascending: true });
-      if (cancelled) return;
-      setChunks((data ?? []) as Chunk[]);
-      setLoading(false);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [article?.id]);
+const articleId = article?.id;
+
+useEffect(() => {
+  if (!articleId) {
+    setChunks([]);
+    return;
+  }
+
+  let cancelled = false;
+  setLoading(true);
+
+  (async () => {
+    const { data } = await supabaseBrowser()
+      .from('chunks')
+      .select('id, ord, content, metadata')
+      .eq('article_id', articleId)
+      .order('ord', { ascending: true });
+
+    if (cancelled) return;
+
+    setChunks((data ?? []) as Chunk[]);
+    setLoading(false);
+  })();
+
+  return () => {
+    cancelled = true;
+  };
+}, [articleId]);
 
   async function patchArticle(patch: { title?: string; theme?: string }) {
     if (!article) return;

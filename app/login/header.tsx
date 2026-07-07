@@ -87,7 +87,7 @@ export function Header() {
             className="inline-flex items-center justify-center gap-2 bg-brand-gradient text-black px-4 sm:px-5 h-9 rounded-full text-sm font-semibold hover:brightness-110 active:scale-95 transition-all duration-300"
           >
             <MessageSquare className="h-4 w-4" aria-hidden="true" />
-            <span className="hidden sm:inline">Ir para o chat</span>
+            <span className="hidden sm:inline">Voltar para o chat</span>
             <span className="sm:hidden">Chat</span>
           </Link>
         ) : (

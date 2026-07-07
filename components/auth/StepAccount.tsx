@@ -12,6 +12,7 @@ type StepAccountProps = {
 };
 
 export default function StepAccount({
+
   form,
   setForm,
 }: StepAccountProps) {
@@ -27,7 +28,7 @@ const [errorMessage, setErrorMessage] = useState<string | null>(null);
         htmlFor="signup-email"
         className={LABEL_CLASS}
       >
-        E-mail
+        Email
       </label>
 
       <input
@@ -57,6 +58,8 @@ const [errorMessage, setErrorMessage] = useState<string | null>(null);
         onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value, })) }
         className={INPUT_CLASS}
       />
+ 
+
     </div>
 
     <div>
