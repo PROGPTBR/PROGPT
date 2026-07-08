@@ -14,7 +14,6 @@ import {
   type NegotiationTranscriptTurn,
 } from '@/lib/assistants/types';
 import { buildPersonaSystem } from '@/lib/assistants/negotiation/prompt-persona';
-import { canTakeNegotiationTurn, FREE_NEGOTIATION_TURN_CAP } from '@/lib/billing/quota';
 import { recordApiUsage } from '@/lib/observability/api-usage';
 import { startTrace, flushAsync } from '@/lib/observability/langfuse';
 import { withUser } from '@/lib/observability/user-context';
@@ -75,23 +74,10 @@ async function negotiateBody(
     return NextResponse.json({ error: 'not_found' }, { status: 404 });
   }
 
-  // Cap de turnos free: a run já é entitled (criada via /strategy paywall),
-  // mas o free não pode rodar turnos de simulador ilimitadamente. Conta os
-  // turnos do usuário no histórico enviado; Pro é ilimitado. Roda antes da
-  // geração pra não gastar chamada LLM num turno bloqueado.
-  const userTurns = parsed.data.messages.filter((m) => m.role === 'user').length;
-  if (!(await canTakeNegotiationTurn(user.id, userTurns))) {
-    return NextResponse.json(
-      {
-        error: 'paywall',
-        plan: 'free',
-        assistant_type: 'negotiation',
-        reason: 'turn_cap',
-        cap: FREE_NEGOTIATION_TURN_CAP,
-      },
-      { status: 402 },
-    );
-  }
+  // Acesso liberado a todo usuário logado (decisão 2026-07-07: cartão no
+  // cadastro ⇒ sem bloqueio de pagamento in-app). Cap de turnos do free tier
+  // removido — ver git. O rate-limit (checkChatRateLimit acima) segue como
+  // backstop de abuso do simulador.
 
   // Extrair setup do params.simulator
   const rawParams = run.params as NegotiationStrategyParams & {

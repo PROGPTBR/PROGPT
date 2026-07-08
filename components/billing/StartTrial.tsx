@@ -23,12 +23,13 @@ type Props = {
 };
 
 function maskCPF(value: string) {
-  return value
-    .replace(/\D/g, '')
-    .replace(/(\d{3})(\d)/, '$1.$2')
-    .replace(/(\d{3})(\d)/, '$1.$2')
-    .replace(/(\d{3})(\d{1,2})$/, '$1-$2')
-    .slice(0, 14);
+  // Limita a 11 dígitos ANTES de mascarar — senão o usuário conseguia digitar
+  // um 12º dígito (ex.: "115.269.760001") e o CPF nunca ficava válido.
+  const numbers = value.replace(/\D/g, '').slice(0, 11);
+  return numbers
+    .replace(/^(\d{3})(\d)/, '$1.$2')
+    .replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3')
+    .replace(/^(\d{3})\.(\d{3})\.(\d{3})(\d)/, '$1.$2.$3-$4');
 }
 
 function maskPhone(value: string) {
