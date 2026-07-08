@@ -7,50 +7,52 @@ import { Header } from '../login/header';
 
 import {
   ArrowRight,
-  Zap,
+  Search,
   Eye,
   ShieldCheck,
   Database,
   Clock,
-  Layers,
+  Mic,
 } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
 const BENEFITS = [
   {
-    icon: Layers,
-    title: 'Retrieval híbrido',
-    blurb: 'Vetorial + lexical FTS + Cohere rerank — nunca só cosine.',
+    icon: Search,
+    title: 'Busca inteligente',
+    blurb:
+      'A IA encontra respostas com mais precisão, cruzando contexto, palavras-chave e relevância do conteúdo.',
   },
   {
     icon: ShieldCheck,
     title: 'Sem alucinação',
     blurb:
-      'Respostas fundamentadas na base. Sem fonte, o bot diz. Sem IDs ou citações falsas no texto.',
+      'Nada de resposta inventada. Se a informação não estiver na base, o bot avisa de forma transparente.',
   },
   {
     icon: Eye,
     title: 'PDF multimodal',
     blurb:
-      'Tabelas e figuras viram chunks dedicados. Captions e estrutura preservadas.',
+      'A IA entende textos, tabelas, figuras e gráficos dos PDFs, preservando o contexto da informação.',
   },
   {
     icon: Database,
     title: 'Biblioteca curada',
     blurb:
-      'Admin controla taxonomia, classifica candidatos, promove temas canônicos quando estabilizam.',
+      'Seu time constrói uma base viva, organizada por temas, prioridades e conteúdos estratégicos.',
   },
   {
     icon: Clock,
     title: 'Histórico persistente',
     blurb:
-      'Cada conversa e cada RFP/análise fica salva — recuperável a qualquer momento.',
+      'Tudo que foi conversado, analisado ou solicitado fica salvo para consulta futura.',
   },
   {
-    icon: Zap,
-    title: 'Streaming nativo',
-    blurb: 'Resposta começa em < 3s via SSE. Sem tela em branco esperando.',
+    icon: Mic,
+    title: 'Pedidos por áudio',
+    blurb:
+      'O comprador fala com a IA por áudio on-line e recebe respostas rápidas, sem ficar esperando no escuro.',
   },
 ];
 
@@ -71,7 +73,7 @@ const FEATURE_CARDS = [
   {
     title: 'Chat especialista',
     blurb:
-      'Centenas de artigos canônicos (Kraljic, Porter, Monczka, Cousins) viraram a memória do seu time. Pergunte como faria para um colega sênior.',
+      'Uma das melhores bases de conhecimento do mercado de IA em Suprimentos agora trabalha junto com o seu time. Reunimos centenas de processos e referências importantes, como Kraljic, Porter, Lean Six Sigma, PMI, dentre outras fontes, para criar uma inteligência capaz de responder como um especialista sênior da área de Suprimentos. Basta perguntar sua dúvida de forma simples, como você perguntaria a um colega experiente.',
     image:
       'https://images.unsplash.com/photo-1568667256549-094345857637?w=800&h=600&q=80&auto=format&fit=crop',
     alt: 'Biblioteca em espiral repleta de livros — base de conhecimento curada',
@@ -79,15 +81,15 @@ const FEATURE_CARDS = [
   {
     title: '7 assistentes que executam',
     blurb:
-      'Perfil de Categoria, ABC, Porter, Busca de Fornecedores, Kraljic, RFP, Negociação, Análise Financeira — cada passo do Strategic Sourcing com um assistente próprio que entrega o artefato pronto em .docx/.xlsx.',
+      'Diversos assistentes já desenvolvidos que podem trabalhar para você de maneira automática.',
     image:
       'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=800&h=600&q=80&auto=format&fit=crop',
     alt: 'Documentos financeiros e calculadora — artefatos prontos para usar',
   },
   {
-    title: 'Base curada',
+    title: 'Base checada por centenas de especialistas de Suprimentos',
     blurb:
-      'Retrieval híbrido (vetorial + lexical + rerank) com gate de relevância — sem alucinação, sem citação fake. Quando não tem fonte na base, o bot diz.',
+      'Uma das melhores bases de IA em Suprimentos, criada com fontes confiáveis e selecionadas. O Chat busca as respostas com precisão, evita informações inventadas e não cria citações falsas. Quando não encontra uma fonte segura, ele simplesmente informa.',
     image:
       'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=800&h=600&q=80&auto=format&fit=crop',
     alt: 'Mão assinando um contrato — fundamentação documentada',
