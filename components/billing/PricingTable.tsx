@@ -51,6 +51,10 @@ const FEATURE_ACRONYMS = new Set([
 ]);
 
 function formatFeature(raw: string): string {
+  // Frases escritas por humano (contêm espaço) passam intactas — só as
+  // keywords curtas (chat_ilimitado, rfp, export_pdf) recebem a transformação
+  // de capitalização/siglas. Sem isso, "requisitos de TI" viraria "ti".
+  if (raw.includes(' ')) return raw;
   return raw
     .split(/[_\s]+/)
     .filter(Boolean)
@@ -209,6 +213,14 @@ export function PricingTable({
                   </li>
                 ))}
               </ul>
+
+              {plan.slug === 'pj-consulte' && (
+                <p className="pt-4 text-xs leading-relaxed text-muted-foreground/90 italic">
+                  Neste plano, a IA deixa de ser uma ferramenta genérica e passa
+                  a atuar como uma solução corporativa, conectada aos processos,
+                  regras, documentos e desafios reais da empresa.
+                </p>
+              )}
 
               <div className="pt-7">
                 {isCurrent ? (
