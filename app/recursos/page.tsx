@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
@@ -56,16 +57,75 @@ const BENEFITS = [
   },
 ];
 
+// Showcase interativo de ferramentas — clicar na aba troca a tela + descrição.
+// IMAGENS SÃO PLACEHOLDERS (Unsplash): trocar pelos prints reais de cada
+// assistente quando disponíveis (decisão gestor 2026-07-08).
 const USE_CASES = [
   {
-    id: 'kraljic',
-    label: 'Estratégia · Kraljic',
-    title:
-      'Classifique 30 categorias em 5 minutos e receba um plano de ação por quadrante.',
-    href: '/assistants/kraljic',
+    id: 'rfi-rfq',
+    tab: 'RFI/RFQ',
+    label: 'RFI/RFQ · Cotação inteligente',
+    desc: 'Crie solicitações de cotação, compare fornecedores e organize propostas em poucos minutos.',
+    href: '/assistants/rfp',
+    soon: false,
+    image:
+      'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=1200&h=800&q=80&auto=format&fit=crop',
+    alt: 'Documentos e cotações — RFI/RFQ (placeholder)',
+  },
+  {
+    id: 'abc',
+    tab: 'Curva ABC',
+    label: 'Curva ABC · Análise de gastos',
+    desc: 'Classifique itens, fornecedores ou categorias por impacto financeiro e foque no que realmente pesa no resultado.',
+    href: '/assistants/abc',
+    soon: false,
     image:
       'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200&h=800&q=80&auto=format&fit=crop',
-    alt: 'Dashboard de analytics com gráficos — visualização de portfólio',
+    alt: 'Dashboard de analytics — Curva ABC (placeholder)',
+  },
+  {
+    id: 'tco',
+    tab: 'TCO Online',
+    label: 'TCO Online · Custo total de compra',
+    desc: 'Calcule o custo real da compra, incluindo preço, frete, impostos, riscos e condições comerciais.',
+    href: null,
+    soon: true,
+    image:
+      'https://images.unsplash.com/photo-1554224154-26032ffc0d07?w=1200&h=800&q=80&auto=format&fit=crop',
+    alt: 'Calculadora e planilhas — TCO (placeholder)',
+  },
+  {
+    id: 'pedidos',
+    tab: 'Pedidos',
+    label: 'Pedidos · Acompanhamento inteligente',
+    desc: 'Monitore pedidos em aberto, prazos, atrasos e pontos críticos antes que virem urgência.',
+    href: null,
+    soon: true,
+    image:
+      'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=1200&h=800&q=80&auto=format&fit=crop',
+    alt: 'Painel de acompanhamento de pedidos (placeholder)',
+  },
+  {
+    id: 'negociacao',
+    tab: 'Negociação',
+    label: 'Negociação · Analista em tempo real',
+    desc: 'Receba apoio durante a negociação com argumentos, riscos, concessões e próximos passos.',
+    href: null,
+    soon: true,
+    image:
+      'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=1200&h=800&q=80&auto=format&fit=crop',
+    alt: 'Reunião de negociação (placeholder)',
+  },
+  {
+    id: 'should-cost',
+    tab: 'Should Cost',
+    label: 'Should Cost · Preço justo',
+    desc: 'Estime quanto um item deveria custar e use como referência para negociar com base em dados.',
+    href: null,
+    soon: true,
+    image:
+      'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1200&h=800&q=80&auto=format&fit=crop',
+    alt: 'Gráficos de custo — Should Cost (placeholder)',
   },
 ];
 
@@ -98,6 +158,8 @@ const FEATURE_CARDS = [
 
 export default function PricingPage() {
 const router = useRouter();
+const [activeTab, setActiveTab] = useState('rfi-rfq');
+const activeCase = USE_CASES.find((u) => u.id === activeTab) ?? USE_CASES[0]!;
 
   return (
     <>
@@ -196,26 +258,32 @@ const router = useRouter();
 
           <div className="reveal">
             <div className="flex space-x-6 border-b border-border mb-10 overflow-x-auto whitespace-nowrap pb-px">
-              <button className="text-foreground border-b-2 border-brand pb-3 px-1 text-sm font-medium">
-                Estratégia · Kraljic
-              </button>
-              <button className="text-muted-foreground hover:text-muted-foreground border-b-2 border-transparent pb-3 px-1 text-sm font-medium transition-colors">
-                RFP / RFQ
-              </button>
-              <button className="text-muted-foreground hover:text-muted-foreground border-b-2 border-transparent pb-3 px-1 text-sm font-medium transition-colors">
-                Análise de portfólio
-              </button>
-              <button className="text-muted-foreground hover:text-muted-foreground border-b-2 border-transparent pb-3 px-1 text-sm font-medium transition-colors">
-                Negociação <span className="ml-1 text-xs text-muted-foreground">(em breve)</span>
-              </button>
+              {USE_CASES.map((uc) => (
+                <button
+                  key={uc.id}
+                  type="button"
+                  onClick={() => setActiveTab(uc.id)}
+                  className={`border-b-2 pb-3 px-1 text-sm font-medium transition-colors ${
+                    activeTab === uc.id
+                      ? 'text-foreground border-brand'
+                      : 'text-muted-foreground hover:text-foreground border-transparent'
+                  }`}
+                >
+                  {uc.tab}
+                  {uc.soon && (
+                    <span className="ml-1 text-xs text-muted-foreground">(em breve)</span>
+                  )}
+                </button>
+              ))}
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
               <div className="rounded-2xl overflow-hidden bg-card aspect-video relative">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={USE_CASES[0]!.image}
-                  alt={USE_CASES[0]!.alt}
+                  key={activeCase.image}
+                  src={activeCase.image}
+                  alt={activeCase.alt}
                   className="w-full h-full object-cover"
                 />
                 <div
@@ -225,18 +293,24 @@ const router = useRouter();
               </div>
               <div className="lg:pl-8">
                 <span className="text-sm text-brand mb-4 block font-medium">
-                  {USE_CASES[0]!.label}
+                  {activeCase.label}
                 </span>
                 <h3 className="text-3xl font-medium text-foreground mb-6 leading-tight">
-                  {USE_CASES[0]!.title}
+                  {activeCase.desc}
                 </h3>
-                <Link
-                  href={USE_CASES[0]!.href}
-                  className="inline-flex items-center justify-center gap-2 bg-brand-gradient text-black px-6 py-2.5 rounded-full text-sm font-medium hover:bg-brand/90 active:scale-95 transition-all duration-300"
-                >
-                  Conhecer o assistente
-                  <ArrowRight className="w-4 h-4" aria-hidden="true" />
-                </Link>
+                {activeCase.soon ? (
+                  <span className="inline-flex items-center gap-2 rounded-full border border-border bg-muted/40 px-4 py-2 text-sm font-medium text-muted-foreground">
+                    Em breve
+                  </span>
+                ) : (
+                  <Link
+                    href={activeCase.href!}
+                    className="inline-flex items-center justify-center gap-2 bg-brand-gradient text-black px-6 py-2.5 rounded-full text-sm font-medium hover:bg-brand/90 active:scale-95 transition-all duration-300"
+                  >
+                    Conhecer o assistente
+                    <ArrowRight className="w-4 h-4" aria-hidden="true" />
+                  </Link>
+                )}
               </div>
             </div>
           </div>
