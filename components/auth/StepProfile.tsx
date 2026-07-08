@@ -3,6 +3,8 @@ import { User, Building2 } from "lucide-react";
 import type { SignupForm } from "./types";
 import { maskCpf, maskCnpj, maskPhone, formatCep } from "./masks";
 import { buscarCep } from "./viaCep";
+import { isValidCpf } from "@/lib/validators/cpf";
+import { isValidCnpj } from "@/lib/validators/cnpj";
 
 type StepProfileProps = {
   form: SignupForm;
@@ -13,6 +15,15 @@ export default function StepProfile({
   form,
   setForm,
 }: StepProfileProps) {
+  // Feedback inline de documento: só mostra o erro quando o usuário já digitou
+  // todos os dígitos (11 CPF / 14 CNPJ) e o checksum falha — evita "piscar"
+  // inválido no meio da digitação. O bloqueio de submit fica no validateStep2.
+  const docDigits = form.cpf.replace(/\D/g, "");
+  const isPj = form.personType === "pj";
+  const docComplete = isPj ? docDigits.length === 14 : docDigits.length === 11;
+  const docInvalid =
+    docComplete && !(isPj ? isValidCnpj(docDigits) : isValidCpf(docDigits));
+
   return (
 
     <div className="space-y-6 mt-4">
@@ -101,6 +112,7 @@ Dados cadastrais
   <input
     className={INPUT_CLASS}
     type="text"
+    inputMode="numeric"
     placeholder={
       form.personType === "pj"
         ? "00.000.000/0000-00"
@@ -117,6 +129,13 @@ Dados cadastrais
       }))
     }
   />
+  {docInvalid && (
+    <p className="mt-1 text-xs text-amber-500">
+      {isPj
+        ? "CNPJ inválido — verifique os dígitos."
+        : "CPF inválido — verifique os dígitos."}
+    </p>
+  )}
 </div>
 
       <div>
