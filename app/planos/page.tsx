@@ -1,8 +1,8 @@
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import { Header } from '../login/header';
-import { getCurrentUser, getProfile } from '@/lib/auth';
-import { isPro, getUserPlan } from '@/lib/billing/subscription';
+import { getCurrentUser } from '@/lib/auth';
 import { PricingTable } from '@/components/billing/PricingTable';
 import { getPlans } from '@/lib/billing/planos';
 
@@ -17,17 +17,16 @@ export default async function PricingPage({
 }) {
   const user = await getCurrentUser();
 
-  const pro = user
-    ? await isPro(user.id)
-    : false;
+  // Novo fluxo (cartão no cadastro): quem está logado já é cliente — a página
+  // de planos só faz sentido para visitante não-logado. Logado ⇒ vai pro app.
+  if (user) {
+    redirect('/chat');
+  }
 
-  const userPlanSlug = user
-    ? await getUserPlan(user.id)
-    : null;
-
-  const profile = user
-    ? await getProfile(user.id)
-    : null;
+  // Daqui pra baixo só chega visitante anônimo (o redirect acima cobre logado).
+  const pro = false;
+  const userPlanSlug = null;
+  const profile = null;
 
   const plans = await getPlans();
 

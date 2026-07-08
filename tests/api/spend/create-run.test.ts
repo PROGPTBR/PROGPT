@@ -39,12 +39,14 @@ describe('POST /api/assistants/spend_analysis/create-run', () => {
     expect((await POST(body({ analysisName: 'X' }))).status).toBe(401);
   });
 
-  it('402 paywall quando free quota esgotada', async () => {
+  // Decisão 2026-07-07: logado = acesso total (cartão no cadastro, sem
+  // bloqueio in-app). O paywall/quota do free tier foi removido do create-run.
+  it('200 mesmo com quota "esgotada" (paywall removido)', async () => {
     setup({ canUse: false });
     const { POST } = await import('@/app/api/assistants/spend_analysis/create-run/route');
-    const res = await POST(body({ analysisName: 'X' }));
-    expect(res.status).toBe(402);
-    expect(((await res.json()) as { error: string }).error).toBe('paywall');
+    const res = await POST(body({ analysisName: 'Análise X', referenceCurrency: 'BRL' }));
+    expect(res.status).toBe(200);
+    expect(((await res.json()) as { runId: string }).runId).toBe('run-1');
   });
 
   it('400 corpo inválido (sem analysisName)', async () => {

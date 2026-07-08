@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { ArrowLeft, History } from 'lucide-react';
 import { requireUser, NotAuthenticated } from '@/lib/auth';
-import { hasAccess } from '@/lib/billing/subscription';
 import { redirect } from 'next/navigation';
 import { Header } from '../login/header';
 
@@ -12,15 +11,15 @@ export default async function AssistantsLayout({
 }: {
   children: React.ReactNode;
 }) {
-  let user;
   try {
-    user = await requireUser();
+    await requireUser();
   } catch (err) {
     if (err instanceof NotAuthenticated) redirect('/login?next=/assistants');
     throw err;
   }
-  // Novos usuários só usam os assistentes após cadastrar o cartão (trial).
-  if (!(await hasAccess(user.id, user.created_at))) redirect('/assinar');
+  // Acesso liberado a todo usuário logado (decisão 2026-07-07: cartão no
+  // cadastro ⇒ sem bloqueio de pagamento in-app; cobrança fica no Asaas).
+  // Gate antigo (hasAccess → /assinar) removido — ver git para reabilitar.
   return (
     <>
       <Header />

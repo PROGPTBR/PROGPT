@@ -11,7 +11,6 @@ import { startTrace, flushAsync } from '@/lib/observability/langfuse';
 import { recordApiUsage } from '@/lib/observability/api-usage';
 import { withUser } from '@/lib/observability/user-context';
 import { getCurrentUser } from '@/lib/auth';
-import { hasAccess } from '@/lib/billing/subscription';
 import { checkChatRateLimit } from '@/lib/rate-limit';
 import { summarizeChatTitle } from '@/lib/chat-title';
 import { getServerSupabase } from '@/lib/db/supabase';
@@ -76,18 +75,9 @@ export async function POST(req: Request): Promise<Response> {
     return Response.json({ error: 'unauthorized' }, { status: 401 });
   }
 
-  // Sub-projeto 36.1 — acesso ao bot exige trial válido OU assinatura ativa.
-  // Admin e contas antigas (grandfathered, ver hasAccess) sempre passam.
-  // Ligado por padrão; kill-switch BILLING_ENFORCE=0 desliga em emergência.
-  if (
-    process.env.BILLING_ENFORCE !== '0' &&
-    !(await hasAccess(user.id, user.created_at))
-  ) {
-    return Response.json(
-      { error: 'no_access', reason: 'trial_or_subscription_required' },
-      { status: 402 },
-    );
-  }
+  // Acesso liberado a todo usuário logado (decisão 2026-07-07: cartão no
+  // cadastro ⇒ sem bloqueio de pagamento in-app; cobrança fica no Asaas).
+  // Gate antigo (hasAccess → 402 no_access) removido — ver git para reabilitar.
 
   const rl = await checkChatRateLimit();
   if (!rl.allowed) {

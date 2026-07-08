@@ -125,27 +125,11 @@ export function buildAssistantHandler<
     const user = await getCurrentUser();
     if (!user) return Response.json({ error: 'unauthorized' }, { status: 401 });
 
-    // Sub-projeto 36.1 — acesso (trial válido / assinatura ativa / admin /
-    // conta antiga grandfathered) é obrigatório pra rodar qualquer assistente.
-    // Ligado por padrão; kill-switch BILLING_ENFORCE=0 desliga em emergência.
-    if (process.env.BILLING_ENFORCE !== '0') {
-      const { hasAccess } = await import('@/lib/billing/subscription');
-      if (!(await hasAccess(user.id, user.created_at))) {
-        return Response.json(
-          { error: 'no_access', reason: 'trial_or_subscription_required' },
-          { status: 402 },
-        );
-      }
-    }
-
-    // Paywall: sub-projeto 27. Free tier = 1 execução lifetime por assistant_type.
-    const { canUseAssistant } = await import('@/lib/billing/quota');
-    if (!(await canUseAssistant(user.id, config.type))) {
-      return Response.json(
-        { error: 'paywall', plan: 'free', assistant_type: config.type },
-        { status: 402 },
-      );
-    }
+    // Acesso liberado a todo usuário logado (decisão 2026-07-07: cartão no
+    // cadastro ⇒ sem bloqueio de pagamento in-app; cobrança fica no Asaas).
+    // Gates antigos (hasAccess → 402 no_access; canUseAssistant → 402 paywall
+    // do free tier) removidos — ver git para reabilitar. O rate-limit abaixo
+    // continua como backstop de abuso.
 
     const rl = await checkChatRateLimit();
     if (!rl.allowed) {

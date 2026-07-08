@@ -23,25 +23,9 @@ export async function POST(req: Request): Promise<Response> {
   const user = await getCurrentUser();
   if (!user) return Response.json({ error: 'unauthorized' }, { status: 401 });
 
-  // Acesso (trial/assinatura/admin), igual buildAssistantHandler.
-  if (process.env.BILLING_ENFORCE !== '0') {
-    const { hasAccess } = await import('@/lib/billing/subscription');
-    if (!(await hasAccess(user.id, user.created_at))) {
-      return Response.json(
-        { error: 'no_access', reason: 'trial_or_subscription_required' },
-        { status: 402 },
-      );
-    }
-  }
-
-  // Paywall: free = 1 execução lifetime por assistant_type.
-  const { canUseAssistant } = await import('@/lib/billing/quota');
-  if (!(await canUseAssistant(user.id, 'spend_analysis'))) {
-    return Response.json(
-      { error: 'paywall', plan: 'free', assistant_type: 'spend_analysis' },
-      { status: 402 },
-    );
-  }
+  // Acesso liberado a todo usuário logado (decisão 2026-07-07: cartão no
+  // cadastro ⇒ sem bloqueio de pagamento in-app; cobrança fica no Asaas).
+  // Gates antigos (hasAccess/canUseAssistant → 402) removidos — ver git.
 
   const rl = await checkChatRateLimit();
   if (!rl.allowed) {
