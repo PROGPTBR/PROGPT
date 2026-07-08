@@ -231,6 +231,39 @@ if (asaasProfileError) {
 
 console.log(`[${requestId}] ✅ IDs do Asaas gravados no Supabase`);
 
+// Cria a linha local em `subscriptions` — FONTE DE VERDADE do billing pra
+// paywall (isPro/canUseAssistant em lib/billing/subscription.ts) e pro webhook
+// do Asaas (que busca por asaas_subscription_id e vira status='active' quando
+// o pagamento é confirmado). Sem isto o cliente pagante é tratado como free
+// (1 execução lifetime por assistente) e o webhook cai no branch "orphan".
+// status='trialing' até o 1º pagamento (3 dias grátis).
+const trialEndIso = new Date(`${nextDueDateString}T00:00:00.000Z`).toISOString();
+const { error: subscriptionRowError } = await supabase
+  .from("subscriptions")
+  .upsert(
+    {
+      user_id: data.user.id,
+      asaas_customer_id: customer.id,
+      asaas_subscription_id: subscription.id,
+      status: "trialing",
+      plan: "pro",
+      payment_method: "credit_card",
+      current_period_start: null,
+      current_period_end: null,
+      trial_end: trialEndIso,
+      cancel_at_period_end: false,
+      cancelled_at: null,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "user_id" },
+  );
+
+if (subscriptionRowError) {
+  throw subscriptionRowError;
+}
+
+console.log(`[${requestId}] ✅ Assinatura local (trialing) criada`);
+
 console.log(`[${requestId}] 🎉 Signup finalizado com sucesso`);
     
 return NextResponse.json({
