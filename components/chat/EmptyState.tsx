@@ -10,8 +10,8 @@ import { OnboardingQuickStartCard } from './OnboardingQuickStartCard';
 // 2B Supply contact CTA — surfaces in the empty state as a "got value
 // from this? talk to us" handoff. tel: link for click-to-call on mobile;
 // desktop falls back to opening the OS dialer.
-const CONTACT_TEL_HREF = 'tel:+5521999792912';
-const CONTACT_PHONE_DISPLAY = '(21) 99979-2912';
+const CONTACT_TEL_HREF = 'tel:+5521995127272';
+const CONTACT_PHONE_DISPLAY = '(21) 99512-7272';
 
 type Props = {
   // Composer props piped through — we own the single Composer instance
@@ -117,7 +117,7 @@ export function EmptyState({
           </span>
           <span className="hidden sm:inline text-muted-foreground/40">·</span>
           <span className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground">
-            Fale com a <span className="text-brand">2B Supply</span>
+            Fale com a <span className="text-brand">2BSUPPLY</span>
           </span>
           <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand">
             <Phone className="h-3.5 w-3.5" aria-hidden="true" />

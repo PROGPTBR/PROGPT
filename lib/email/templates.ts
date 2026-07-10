@@ -37,7 +37,7 @@ ${preheader}
 <table role="presentation" width="560" cellpadding="0" cellspacing="0" border="0" style="background:${BG};border-radius:12px;overflow:hidden;max-width:560px;width:100%;">
 <tr><td style="padding:32px 32px 24px;border-bottom:1px solid #e5e7eb;">
 <div style="font-size:24px;font-weight:600;color:${TEXT_PRIMARY};">PROGPT<span style="color:${BRAND_COLOR};">.</span></div>
-<div style="font-size:12px;color:${TEXT_MUTED};margin-top:4px;">uma plataforma 2B Supply</div>
+<div style="font-size:12px;color:${TEXT_MUTED};margin-top:4px;">uma plataforma 2BSUPPLY</div>
 </td></tr>
 <tr><td style="padding:32px;">
 ${content}

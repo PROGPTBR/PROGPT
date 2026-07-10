@@ -199,7 +199,7 @@ const activeCase = USE_CASES.find((u) => u.id === activeTab) ?? USE_CASES[0]!;
                 className="w-1.5 h-1.5 rounded-full bg-brand"
               />
               <span className="text-sm text-muted-foreground font-medium">
-                PROGPT · uma plataforma 2B Supply
+                PROGPT · uma plataforma 2BSUPPLY
               </span>
             </div>
             <h2 className="text-4xl md:text-5xl font-medium tracking-tight max-w-4xl">
@@ -245,7 +245,7 @@ const activeCase = USE_CASES.find((u) => u.id === activeTab) ?? USE_CASES[0]!;
                 className="w-1.5 h-1.5 rounded-full bg-brand"
               />
               <span className="text-sm text-muted-foreground font-medium">
-                Casos de uso
+                Assistentes Estratégicos
               </span>
             </div>
 
@@ -304,10 +304,10 @@ const activeCase = USE_CASES.find((u) => u.id === activeTab) ?? USE_CASES[0]!;
                   </span>
                 ) : (
                   <Link
-                    href={activeCase.href!}
+                    href="/signup"
                     className="inline-flex items-center justify-center gap-2 bg-brand-gradient text-black px-6 py-2.5 rounded-full text-sm font-medium hover:bg-brand/90 active:scale-95 transition-all duration-300"
                   >
-                    Conhecer o assistente
+                    Faça sua inscrição e conheça o Assistente
                     <ArrowRight className="w-4 h-4" aria-hidden="true" />
                   </Link>
                 )}
@@ -327,7 +327,7 @@ const activeCase = USE_CASES.find((u) => u.id === activeTab) ?? USE_CASES[0]!;
                 className="w-1.5 h-1.5 rounded-full bg-brand"
               />
               <span className="text-sm text-muted-foreground font-medium">
-                Benefícios 
+                Benefícios estratégicos para Suprimentos
               </span>
             </div>
 
