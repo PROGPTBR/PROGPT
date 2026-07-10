@@ -4,6 +4,7 @@ import { ArrowLeft } from 'lucide-react';
 import { Header } from '../login/header';
 import { getCurrentUser } from '@/lib/auth';
 import { PricingTable } from '@/components/billing/PricingTable';
+import { CompanyInfo } from '@/components/legal/CompanyInfo';
 import { getPlans } from '@/lib/billing/planos';
 
 export const dynamic = 'force-dynamic';
@@ -73,6 +74,10 @@ export default async function PricingPage({
               trialExpired={trialExpired}
             />
           </section>
+
+          <footer className="mt-16 pt-8 border-t border-border">
+            <CompanyInfo />
+          </footer>
         </main>
       </div>
     </>

@@ -8,7 +8,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: 'PROGPT — IA de Procurement',
     short_name: 'PROGPT',
     description:
-      'Chat especialista + assistentes de Strategic Sourcing da 2B Supply.',
+      'Chat especialista + assistentes de Strategic Sourcing da 2BSUPPLY.',
     start_url: '/chat',
     scope: '/',
     display: 'standalone',

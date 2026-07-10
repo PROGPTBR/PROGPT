@@ -18,11 +18,11 @@ export const LEGAL_LAST_UPDATED = '28 de maio de 2026';
 export const PRODUCT_NAME = 'PROGPT';
 
 // Empresa responsável legal pelo produto.
-export const COMPANY_NAME = '2B Supply';
+export const COMPANY_NAME = '2BSUPPLY';
 export const COMPANY_CNPJ = '36.335.299/0001-82';
 
 // Contato comercial + DPO (LGPD). Único canal pra suporte, dúvidas
 // sobre termos, exercício de direitos LGPD, e contestações.
 export const LEGAL_CONTACT_EMAIL = 'comercial@2bsupply.com.br';
-export const LEGAL_CONTACT_PHONE = '+55 (21) 99979-2912';
-export const LEGAL_CONTACT_PHONE_TEL = '+5521999792912';
+export const LEGAL_CONTACT_PHONE = '+55 (21) 99512-7272';
+export const LEGAL_CONTACT_PHONE_TEL = '+5521995127272';

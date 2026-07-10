@@ -40,7 +40,7 @@ export function BrandLogo({
     >
       <Image
         src="/2bsupply-logo.png"
-        alt="2B Supply"
+        alt="2BSUPPLY"
         width={241}
         height={57}
         priority={priority}

@@ -685,7 +685,7 @@ function SettingsPanel({ onBack }: { onBack: () => void }) {
           value={s.signature}
           onChange={(e) => setS({ ...s, signature: e.target.value })}
           rows={3}
-          placeholder={'Atenciosamente,\nEquipe de Compras — 2B Supply'}
+          placeholder={'Atenciosamente,\nEquipe de Compras — 2BSUPPLY'}
         />
       </div>
 

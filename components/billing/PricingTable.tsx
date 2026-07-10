@@ -155,9 +155,6 @@ export function PricingTable({
           <span className="text-foreground">Comece grátis,</span>{' '}
           <span className="text-brand-gradient">faça upgrade quando precisar.</span>
         </h2>
-        <p className="text-base text-muted-foreground max-w-xl mx-auto">
-          3 dias grátis pra testar tudo. Sem amarras — cancele quando quiser.
-        </p>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start max-w-5xl mx-auto">
@@ -243,13 +240,13 @@ export function PricingTable({
                     </Link>
                   )
                 ) : plan.slug === 'pj-consulte' ? (
-                  <button
-                    type="button"
-                    className="inline-flex w-full items-center justify-center gap-2 bg-muted border border-border text-foreground py-2.5 rounded-full text-sm font-medium hover:bg-accent active:scale-95 transition-all duration-300"
+                  <a
+                    href="mailto:comercial@2bsupply.com.br?subject=Solicita%C3%A7%C3%A3o%20de%20proposta%20%E2%80%94%20Plano%20Empresas%20PROGPT&body=Ol%C3%A1%2C%20gostaria%20de%20solicitar%20uma%20proposta%20do%20Plano%20Empresas%20do%20PROGPT."
+                    className="inline-flex w-full items-center justify-center gap-2 bg-muted border border-border text-foreground py-2.5 rounded-full text-sm font-medium hover:bg-brand hover:text-black hover:border-brand active:scale-95 transition-all duration-300"
                   >
                     Solicitar proposta
                     <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-                  </button>
+                  </a>
                 ) : !authed ? (
                   <Link
                     href="/signup?next=/pricing"

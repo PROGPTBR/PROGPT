@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Header } from '@/app/login/header';
 import Image from "next/image";
+import { CompanyInfo } from '@/components/legal/CompanyInfo';
 
 // Layout das páginas de auth (login, signup, forgot, reset).
 // Split em 2 colunas: painel "Bem-vindo" com gradiente da marca (cor constante
@@ -135,7 +136,8 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
       </main>
 
       {/* Footer */}
-      <footer className="relative z-10 px-6 py-4 text-xs text-muted-foreground text-center space-y-2">
+      <footer className="relative z-10 px-6 py-6 text-xs text-muted-foreground text-center space-y-3">
+        <CompanyInfo />
         <div>
           PROGPT · uma plataforma{' '}
           <a
@@ -144,7 +146,7 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
             rel="noreferrer noopener"
             className="hover:text-brand transition-colors"
           >
-            2B Supply
+            2BSUPPLY
           </a>
         </div>
         <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[10px]">

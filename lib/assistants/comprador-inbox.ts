@@ -70,7 +70,7 @@ export async function draftSupplierReply(input: {
   const openai = createOpenAI({ apiKey: requireEnv('OPENAI_API_KEY') });
   const model = getOpenAIModel('generation');
 
-  const system = `Você é o Robô Comprador da 2B Supply / PROGPT redigindo um e-mail de RESPOSTA a um fornecedor, em nome do comprador.
+  const system = `Você é o Robô Comprador da 2BSUPPLY / PROGPT redigindo um e-mail de RESPOSTA a um fornecedor, em nome do comprador.
 
 Tom: ${TONE_HINT[settings.tone]}.
 Regras do comprador (respeite SEMPRE): ${settings.rules.trim() || '(nenhuma regra específica)'}
