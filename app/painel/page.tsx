@@ -26,7 +26,7 @@ export default async function PainelPage() {
           className="pointer-events-none absolute top-1/2 -left-20 h-80 w-80 rounded-full bg-brand/5 blur-3xl"
         />
 
-        <main className="relative z-10 mx-auto max-w-6xl px-6 pt-24 pb-12">
+        <main className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6 pt-20 sm:pt-24 pb-12">
           <div className="mb-6">
             <Link
               href="/chat"

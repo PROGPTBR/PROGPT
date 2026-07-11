@@ -52,17 +52,17 @@ export function UnifiedDashboard() {
     }).format(n);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       {/* Header */}
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div>
+      <header className="flex flex-wrap items-end justify-between gap-3 sm:gap-4">
+        <div className="min-w-0">
           <div className="flex items-center gap-2 text-brand">
             <LayoutDashboard className="h-5 w-5" aria-hidden="true" />
             <span className="text-xs font-medium uppercase tracking-wider">
               Painel unificado
             </span>
           </div>
-          <h1 className="mt-1 text-3xl md:text-4xl font-semibold tracking-tight">
+          <h1 className="mt-1 text-2xl sm:text-3xl md:text-4xl font-semibold tracking-tight break-words">
             {data?.company.name ? data.company.name : 'Seus dados'}{' '}
             <span className="text-brand">.</span>
           </h1>
@@ -195,19 +195,21 @@ function Kpi({
   icon?: React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-border bg-card p-4">
+    <div className="rounded-xl border border-border bg-card p-3 sm:p-4">
       <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-muted-foreground">
         {icon && <span className="text-brand">{icon}</span>}
-        {label}
+        <span className="truncate">{label}</span>
       </div>
-      <div className="mt-1 text-xl font-semibold tabular-nums">{value}</div>
+      <div className="mt-1 text-lg sm:text-xl font-semibold tabular-nums leading-tight break-words">
+        {value}
+      </div>
     </div>
   );
 }
 
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-border bg-card p-5">
+    <div className="rounded-xl border border-border bg-card p-4 sm:p-5">
       <h3 className="mb-4 text-sm font-medium">{title}</h3>
       {children}
     </div>
@@ -293,14 +295,22 @@ function ActivityChart({
 
   return (
     <div className="w-full">
-      <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-auto" preserveAspectRatio="none">
-        <path d={path((p) => p.sessions)} fill="none" className="text-brand" stroke="currentColor" strokeWidth="2" />
+      <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-36 sm:h-44" preserveAspectRatio="none">
+        <path
+          d={path((p) => p.sessions)}
+          fill="none"
+          className="text-brand"
+          stroke="currentColor"
+          strokeWidth="2"
+          vectorEffect="non-scaling-stroke"
+        />
         <path
           d={path((p) => p.runs)}
           fill="none"
           className="text-emerald-500"
           stroke="currentColor"
           strokeWidth="2"
+          vectorEffect="non-scaling-stroke"
         />
       </svg>
       <div className="flex justify-between text-[10px] text-muted-foreground">
@@ -330,9 +340,15 @@ function MonthlyLine({
   const area = `${line} L${x(n - 1).toFixed(1)},${h - pad.b} L${x(0).toFixed(1)},${h - pad.b} Z`;
   return (
     <div className="w-full text-brand">
-      <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-auto" preserveAspectRatio="none">
+      <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-40 sm:h-48" preserveAspectRatio="none">
         <path d={area} fill="currentColor" fillOpacity={0.1} stroke="none" />
-        <path d={line} fill="none" stroke="currentColor" strokeWidth="2" />
+        <path
+          d={line}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          vectorEffect="non-scaling-stroke"
+        />
         {points.map((p, i) => (
           <circle key={p.key} cx={x(i)} cy={y(p.totalRef)} r="2.5" fill="currentColor" />
         ))}
