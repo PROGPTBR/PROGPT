@@ -186,9 +186,9 @@ const activeCase = USE_CASES.find((u) => u.id === activeTab) ?? USE_CASES[0]!;
       <div className="min-h-screen bg-background text-foreground">
    
 
-        <main className="max-w-7xl mx-auto px-6 py-12">
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
 
-           <div className="max-w-7xl mx-auto px-6 py-16 flex items-center justify-between">
+           <div className="max-w-7xl mx-auto px-0 sm:px-6 py-6 sm:py-16 flex items-center justify-between">
     <button
   onClick={() => router.back()}
   className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-brand transition-colors"
@@ -208,7 +208,7 @@ const activeCase = USE_CASES.find((u) => u.id === activeTab) ?? USE_CASES[0]!;
  {/* ───── Intro · 3 cards ───── */}
         <section
           id="sobre"
-          className="px-6 md:px-12 max-w-7xl mx-auto relative z-10"
+          className="px-0 sm:px-6 md:px-12 max-w-7xl mx-auto relative z-10"
         >
           <div className="mb-16 reveal">
             <div className="flex items-center gap-2 mb-4">
@@ -220,7 +220,7 @@ const activeCase = USE_CASES.find((u) => u.id === activeTab) ?? USE_CASES[0]!;
                 PROGPT · uma plataforma 2BSUPPLY
               </span>
             </div>
-            <h2 className="text-4xl md:text-5xl font-medium tracking-tight max-w-4xl">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-medium tracking-tight max-w-4xl">
               <span className="text-foreground">Inteligência invisível</span>{' '}
               <span className="text-brand">
                 acelerando cada um dos 8 passos do Strategic Sourcing.
@@ -255,7 +255,7 @@ const activeCase = USE_CASES.find((u) => u.id === activeTab) ?? USE_CASES[0]!;
 {/* ───── Use cases (tabs simulado) ───── */}
         <section
           id="assistentes"
-          className="mt-10 py-24 px-6 md:px-12 max-w-7xl border-border"
+          className="mt-10 py-16 sm:py-24 px-0 sm:px-6 md:px-12 max-w-7xl border-border"
         >
                  <div className="flex items-center gap-2 mb-4">
               <div
@@ -268,7 +268,7 @@ const activeCase = USE_CASES.find((u) => u.id === activeTab) ?? USE_CASES[0]!;
             </div>
 
           <div className="mb-12 reveal">
-            <h2 className="text-4xl md:text-5xl font-medium tracking-tight max-w-4xl">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-medium tracking-tight max-w-4xl">
               <span className="text-foreground">Diferentes caminhos,</span>{' '}
               <span className="text-brand">guiados por um especialista silencioso.</span>
             </h2>
@@ -337,7 +337,7 @@ const activeCase = USE_CASES.find((u) => u.id === activeTab) ?? USE_CASES[0]!;
   {/* ───── Seção Benefícios ───── */}
     <section
           id="beneficios"
-          className="mt-10 px-6 md:px-12 max-w-7xl mx-auto border-border"
+          className="mt-10 px-0 sm:px-6 md:px-12 max-w-7xl mx-auto border-border"
         >
                <div className="flex items-center gap-2 mb-4">
               <div
@@ -349,7 +349,7 @@ const activeCase = USE_CASES.find((u) => u.id === activeTab) ?? USE_CASES[0]!;
               </span>
             </div>
 
-             <h2 className="mb-16 text-4xl md:text-5xl font-medium tracking-tight max-w-4xl">
+             <h2 className="mb-16 text-3xl sm:text-4xl md:text-5xl font-medium tracking-tight max-w-4xl">
               <span className="text-foreground">Poder invisível ao seu lado,</span>{' '}
               <span className="text-brand">
                 entregando resultados todos os dias.

@@ -41,8 +41,8 @@ export default async function PricingPage({
       <Header />
 
       <div className="min-h-screen bg-background text-foreground">
-        <main className="max-w-7xl mx-auto px-6 py-12">
-          <div className="max-w-7xl mx-auto px-6 py-16 flex items-center justify-between">
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
+          <div className="max-w-7xl mx-auto px-0 sm:px-6 py-6 sm:py-16 flex items-center justify-between">
             <Link
               href={user ? '/login' : '/'}
               className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-brand transition-colors"
@@ -63,7 +63,7 @@ export default async function PricingPage({
 
           <section
             id="planos"
-            className="px-6 md:px-12 max-w-7xl mx-auto border-border"
+            className="px-0 sm:px-6 md:px-12 max-w-7xl mx-auto border-border"
           >
             <PricingTable
               authed={!!user}

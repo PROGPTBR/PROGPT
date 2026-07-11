@@ -151,7 +151,7 @@ export function PricingTable({
           <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
           Planos PROGPT
         </div>
-        <h2 className="text-4xl md:text-5xl font-semibold tracking-tight max-w-3xl mx-auto leading-[1.15]">
+        <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight max-w-3xl mx-auto leading-[1.15]">
           <span className="text-foreground">Comece grátis,</span>{' '}
           <span className="text-brand-gradient">faça upgrade quando precisar.</span>
         </h2>

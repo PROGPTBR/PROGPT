@@ -74,8 +74,8 @@ export default function FaqPage() {
       <Header />
 
       <div className="min-h-screen bg-background text-foreground">
-        <main className="max-w-7xl mx-auto px-6 py-12">
-          <div className="max-w-7xl mx-auto px-6 py-16 flex items-center justify-between">
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
+          <div className="max-w-7xl mx-auto px-0 sm:px-6 py-6 sm:py-16 flex items-center justify-between">
             <button
               onClick={() => router.back()}
               className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-brand transition-colors"
@@ -94,10 +94,10 @@ export default function FaqPage() {
           {/* ───── FAQ ───── */}
           <section
             id="faq"
-            className="px-6 md:px-12 max-w-7xl mx-auto border-border"
+            className="px-0 sm:px-6 md:px-12 max-w-7xl mx-auto border-border"
           >
-            <div className="mb-16 reveal">
-              <h2 className="text-4xl md:text-5xl font-medium tracking-tight text-center">
+            <div className="mb-10 sm:mb-16 reveal">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-medium tracking-tight text-center">
                 <span className="text-foreground">Suas dúvidas,</span>{' '}
                 <span className="text-brand">respondidas com clareza.</span>
               </h2>
