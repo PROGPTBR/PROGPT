@@ -10,6 +10,7 @@ import {
   BookOpen,
   ShoppingCart,
   Workflow,
+  LayoutDashboard,
   PanelLeftClose,
   PanelLeftOpen,
 } from 'lucide-react';
@@ -177,6 +178,16 @@ export function Sidebar({
       >
         <ShoppingCart className="h-4 w-4 text-brand" aria-hidden="true" />
         <span>Robô Comprador</span>
+      </Link>
+      <Link
+        href="/painel"
+        className="group flex items-center gap-2 px-4 py-3 text-sm font-medium border-b border-border text-foreground hover:bg-accent transition-colors"
+      >
+        <LayoutDashboard className="h-4 w-4 text-brand" aria-hidden="true" />
+        <span>Painel</span>
+        <span className="ml-auto text-[10px] font-bold uppercase tracking-wide rounded bg-brand/20 text-brand px-1.5 py-0.5">
+          novo
+        </span>
       </Link>
       <Link
         href="/assistants"

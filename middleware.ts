@@ -37,5 +37,6 @@ export const config = {
     '/proc2pay/:path*',
     '/profile/:path*',
     '/prompts/:path*',
+    '/painel/:path*',
   ],
 };

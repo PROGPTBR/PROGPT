@@ -14,6 +14,7 @@ import { ScorecardPreview } from './previews/ScorecardPreview';
 import { HomologacaoPreview } from './previews/HomologacaoPreview';
 import { PesquisaPrecosPreview } from './previews/PesquisaPrecosPreview';
 import { IndicadoresPreview } from './previews/IndicadoresPreview';
+import { DashboardPreview } from './previews/DashboardPreview';
 
 // Hub layout — header + spotlight cards.
 //
@@ -35,6 +36,20 @@ type SpotlightAssistant = {
 };
 
 const SPOTLIGHTS: SpotlightAssistant[] = [
+  {
+    step: 0,
+    stepCategory: 'Visão geral',
+    href: '/painel',
+    title: 'Painel',
+    short:
+      'Dashboard moderna que reúne TODOS os seus dados num só lugar: conversas, execuções, gasto por categoria, top fornecedores e evolução mensal — atualizado em tempo real, sem planilha nem Power BI.',
+    bullets: [
+      'KPIs e gráficos interativos (SVG, tema claro/escuro)',
+      'Gasto por categoria, fornecedor e mês da Análise de Gastos',
+      'Atualiza sozinho conforme você usa a plataforma',
+    ],
+    Preview: DashboardPreview,
+  },
   {
     step: 1,
     stepCategory: 'Análise',
