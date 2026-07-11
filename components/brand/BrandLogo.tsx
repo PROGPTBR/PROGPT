@@ -11,15 +11,17 @@ import Image from 'next/image';
 
 type Size = 'sm' | 'md' | 'lg';
 
+// `md` é responsivo: menor no celular pra não espremer o header (ver a logo
+// grande no login mobile), voltando ao tamanho cheio no desktop.
 const HEIGHT_CLASS: Record<Size, string> = {
   sm: 'h-5',
-  md: 'h-10',
+  md: 'h-7 sm:h-9 md:h-10',
   lg: 'h-7',
 };
 
 const PAD_CLASS: Record<Size, string> = {
   sm: 'px-2 py-1',
-  md: 'px-2.5 py-1.5',
+  md: 'px-2 py-1 sm:px-2.5 sm:py-1.5',
   lg: 'px-3 py-1.5',
 };
 

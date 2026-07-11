@@ -44,7 +44,7 @@ export function Header() {
   return (
     <nav
       id="landing-navbar"
-      className="dark bg-[#0a0f1a]/85 fixed top-0 left-0 w-full z-50 transition-all duration-300 backdrop-blur-md border-b border-border py-4 px-6 md:px-12 flex justify-between items-center text-foreground"
+      className="dark bg-[#0a0f1a]/85 fixed top-0 left-0 w-full z-50 transition-all duration-300 backdrop-blur-md border-b border-border py-3 sm:py-4 px-4 sm:px-6 md:px-12 flex justify-between items-center gap-2 text-foreground"
     >
       <Link href="/" className="flex items-center">
         <BrandLogo size="md" priority />
