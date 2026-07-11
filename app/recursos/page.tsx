@@ -14,11 +14,18 @@ import {
   Database,
   Clock,
   Mic,
+  BarChart3,
 } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
 const BENEFITS = [
+  {
+    icon: BarChart3,
+    title: 'Dashboard moderna',
+    blurb:
+      'Um painel visual e interativo reúne TODOS os seus dados em tempo real — gasto por categoria, top fornecedores, evolução mensal e uso da plataforma. É a sua central de BI, sem precisar montar um Power BI.',
+  },
   {
     icon: Search,
     title: 'Busca inteligente',
@@ -61,6 +68,17 @@ const BENEFITS = [
 // IMAGENS SÃO PLACEHOLDERS (Unsplash): trocar pelos prints reais de cada
 // assistente quando disponíveis (decisão gestor 2026-07-08).
 const USE_CASES = [
+  {
+    id: 'dashboard',
+    tab: 'Dashboard',
+    label: 'Painel · Todos os seus dados',
+    desc: 'Uma dashboard moderna e interativa que mostra todos os seus dados em tempo real — gasto por categoria, top fornecedores, evolução mensal e uso da plataforma. Sem planilha, sem Power BI.',
+    href: '/painel',
+    soon: false,
+    image:
+      'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200&h=800&q=80&auto=format&fit=crop',
+    alt: 'Dashboard moderna com gráficos e KPIs (placeholder)',
+  },
   {
     id: 'rfi-rfq',
     tab: 'RFI/RFQ',
@@ -158,7 +176,7 @@ const FEATURE_CARDS = [
 
 export default function PricingPage() {
 const router = useRouter();
-const [activeTab, setActiveTab] = useState('rfi-rfq');
+const [activeTab, setActiveTab] = useState('dashboard');
 const activeCase = USE_CASES.find((u) => u.id === activeTab) ?? USE_CASES[0]!;
 
   return (
