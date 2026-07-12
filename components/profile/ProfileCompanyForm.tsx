@@ -423,21 +423,7 @@ export function ProfileCompanyForm() {
         <button
           type="submit"
           disabled={saving}
-          className="inline-flex items-center gap-2 bg-brand-gradient text-black px-6 h-10 rounded-full text-sm font-medium"
-        >
-          <Save className="h-4 w-4" />
-          {saving ? 'Salvando…' : 'Salvar dados'}
-        </button>
-      </div>
-
-{/* =========================
-          SAVE PROFILE
-      ========================= */}
-      <div className="flex justify-end pt-2 border-t border-border">
-        <button
-          type="submit"
-          disabled={saving}
-          className="inline-flex items-center justify-center gap-1.5 bg-brand text-black px-6 h-10 rounded-full text-sm font-medium hover:bg-brand/90 disabled:opacity-60 disabled:cursor-not-allowed active:scale-95 transition-all duration-300 mt-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          className="inline-flex items-center justify-center gap-1.5 bg-brand-gradient text-black px-6 h-10 rounded-full text-sm font-medium hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed active:scale-95 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           <Save className="h-4 w-4" aria-hidden="true" />
           {saving ? 'Salvando…' : 'Salvar dados'}

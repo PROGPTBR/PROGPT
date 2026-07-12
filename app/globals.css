@@ -265,8 +265,17 @@ aside > * {
   border-radius: 10px;
   filter: brightness(150%);
 }
+/* Mobile-first: coluna única (só o card do formulário aparece). O painel
+   "Bem-vindo" (<aside hidden lg:flex>) e a 2ª trilha do grid só existem a
+   partir de lg — senão o grid reserva 2 colunas no celular e espreme o card
+   na 1ª trilha (1.4fr ≈ 58% da largura), deixando espaço morto à direita. */
 .lg\:grid-cols-1-2 {
-  grid-template-columns: 1.4fr 1fr;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 1024px) {
+  .lg\:grid-cols-1-2 {
+    grid-template-columns: 1.4fr 1fr;
+  }
 }
 /* Swipe-up — chevrons subindo em sequência (acento moderno de movimento). */
 @keyframes swipe-up {
