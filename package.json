@@ -26,7 +26,7 @@
     "@marsidev/react-turnstile": "^1.5.2",
     "@napi-rs/canvas": "^1.0.0",
     "@supabase/ssr": "^0.5.2",
-    "@supabase/supabase-js": "^2.45.0",
+    "@supabase/supabase-js": "^2.110.3",
     "@types/pdf-parse": "^1.1.5",
     "ai": "^4.3.19",
     "class-variance-authority": "^0.7.1",

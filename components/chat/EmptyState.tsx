@@ -4,7 +4,6 @@ import { type FormEvent } from 'react';
 import Link from 'next/link';
 import { ArrowRight, Sparkles, Phone, BookOpen } from 'lucide-react';
 import { Composer, type ChatAttachment } from './Composer';
-import { AssistantLauncher } from './AssistantLauncher';
 import { OnboardingQuickStartCard } from './OnboardingQuickStartCard';
 
 // 2B Supply contact CTA — surfaces in the empty state as a "got value
@@ -79,14 +78,14 @@ export function EmptyState({
 
         {/* Assistant launcher — destaque dos 8 assistentes (feedback de
             usuário). Fica acima dos chat-starters porque a maior parte
-            do valor da plataforma está nos assistentes. */}
+            do valor da plataforma está nos assistentes. 
         <div className="w-full">
           <div className="text-xs uppercase tracking-wide text-muted-foreground mb-5 text-center">
             Vá direto pro assistente
           </div>
           <AssistantLauncher variant="hero" />
         </div>
-
+*/}
         {/* Descobrir — Biblioteca de Prompts (sub-projeto 32). Caminho de
             descoberta pros +100 prompts prontos de procurement. */}
         <Link

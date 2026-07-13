@@ -214,7 +214,7 @@ aside {
     overflow: hidden;
 }
 
-aside::before {
+aside.entrada::before {
     content: "";
     position: absolute;
     inset: 0;

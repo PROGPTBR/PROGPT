@@ -39,7 +39,7 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
       <main className="relative z-10 flex-1 grid lg:grid-cols-1-2 pt-[73px]">
         {/* Painel "Bem-vindo" — gradiente vivo da marca, cor constante nos dois
             temas (como os onboardings das grandes plataformas). */}
-        <aside className="justify-start relative hidden lg:flex flex-col gap-8 overflow-hidden  px-12 xl:px-16 py-14 text-white">
+        <aside className="entrada justify-start relative hidden lg:flex flex-col gap-8 overflow-hidden  px-12 xl:px-16 py-14 text-white">
           {/* Blobs orgânicos decorativos */}
       
 
@@ -66,23 +66,35 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
 
 <div className="relative text-center">
   <div className="imagem-entrada-01">
-     <Image
+  <Image
     src="/imagens/imagem-de-fundo-entrada-chatsupply-01.png"
-    alt="Descrição da imagem"
-/>
-  </div>
-  <div className="imagem-entrada-02">
-         <Image
+    alt=""
+    width={684}
+  height={407}
+    priority
+    className="object-contain"
+  />
+</div>
+
+<div className="imagem-entrada-02">
+  <Image
     src="/imagens/imagem-de-fundo-entrada-chatsupply-02.png"
-    alt="Descrição da imagem"
-/>
-  </div>
-  <div className="imagem-entrada-03">
-         <Image
+    alt=""
+   width={247}
+  height={147}
+    className="object-contain"
+  />
+</div>
+
+<div className="imagem-entrada-03">
+  <Image
     src="/imagens/imagem-de-fundo-entrada-chatsupply-03.png"
-    alt="Descrição da imagem"
-/>
-  </div>
+    alt=""
+    width={276}
+  height={164}
+    className="object-contain"
+  />
+</div>
   </div>
 
 </section>
