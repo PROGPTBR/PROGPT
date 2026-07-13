@@ -32,6 +32,7 @@ export async function middleware(req: NextRequest) {
 export const config = {
   matcher: [
     '/chat/:path*',
+    '/dashboard/:path*',
     '/admin/:path*',
     '/assistants/:path*',
     '/proc2pay/:path*',
