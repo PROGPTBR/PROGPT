@@ -11,6 +11,7 @@ import {
   ShoppingCart,
   Workflow,
   LayoutDashboard,
+  BarChart3,
   PanelLeftClose,
   PanelLeftOpen,
 } from 'lucide-react';
@@ -110,6 +111,14 @@ export function Sidebar({
             <ShoppingCart className="h-5 w-5" aria-hidden="true" />
           </Link>
           <Link
+            href="/dashboard"
+            title="Dashboard"
+            aria-label="Dashboard"
+            className="h-9 w-9 rounded-lg flex items-center justify-center text-brand hover:bg-brand/10 transition-colors"
+          >
+            <BarChart3 className="h-5 w-5" aria-hidden="true" />
+          </Link>
+          <Link
             href="/assistants"
             title="Assistentes"
             aria-label="Assistentes"
@@ -185,6 +194,16 @@ export function Sidebar({
       >
         <LayoutDashboard className="h-4 w-4 text-brand" aria-hidden="true" />
         <span>Painel</span>
+        <span className="ml-auto text-[10px] font-bold uppercase tracking-wide rounded bg-brand/20 text-brand px-1.5 py-0.5">
+          novo
+        </span>
+      </Link>
+      <Link
+        href="/dashboard"
+        className="group flex items-center gap-2 px-4 py-3 text-sm font-medium border-b border-border text-foreground hover:bg-accent transition-colors"
+      >
+        <BarChart3 className="h-4 w-4 text-brand" aria-hidden="true" />
+        <span>Dashboard</span>
         <span className="ml-auto text-[10px] font-bold uppercase tracking-wide rounded bg-brand/20 text-brand px-1.5 py-0.5">
           novo
         </span>
