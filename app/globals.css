@@ -309,3 +309,29 @@ aside > * {
     opacity: 0.55;
   }
 }
+
+/* Impressão / exportar PDF do Dashboard (apresentações). Esconde o chrome
+   (navbar, botões, links de navegação) e preserva as cores da marca nos
+   gráficos; evita que um painel seja cortado no meio entre páginas. */
+@media print {
+  #landing-navbar,
+  .print-hide {
+    display: none !important;
+  }
+  html,
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    background: #ffffff !important;
+  }
+  .dashboard-panel {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .print-cover {
+    display: block !important;
+  }
+  @page {
+    margin: 12mm;
+  }
+}

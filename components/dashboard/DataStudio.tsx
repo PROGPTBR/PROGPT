@@ -3,12 +3,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import {
-  Upload, Sparkles, X, RefreshCw, Filter, Search,
+  Upload, Sparkles, X, RefreshCw, Filter, Search, FileDown, CalendarRange,
   BarChart3, ChevronDown, Table2, LayoutDashboard, TrendingUp,
 } from 'lucide-react';
 import {
   buildDataset, planDashboard, autoKpis, groupBy, topN, timeSeries,
-  crosstab, scatterPairs, keyOf, coerceNumber,
+  crosstab, scatterPairs, keyOf, coerceNumber, coerceDate,
   looksLikeMoney, looksLikePercent,
   type Dataset, type Row, type Agg,
 } from '@/lib/dashboard/analyze';
@@ -24,6 +24,27 @@ const fmtOf = (name: string | null): Fmt =>
   !name ? 'number' : looksLikeMoney(name) ? 'currency' : looksLikePercent(name) ? 'percent' : 'number';
 
 const AGG_LABEL: Record<Agg, string> = { sum: 'Soma', mean: 'Média', count: 'Contagem', min: 'Mínimo', max: 'Máximo' };
+
+// Filtro de período (ancorado na data mais recente da planilha, não no "hoje"
+// do relógio — as planilhas costumam ser históricas). daysBack = quantos dias
+// antes da âncora entram no recorte.
+type RangeKey = 'all' | 'today' | '2d' | '7d' | '30d';
+const RANGES: Array<{ key: RangeKey; label: string; daysBack: number }> = [
+  { key: 'all', label: 'Tudo', daysBack: -1 },
+  { key: 'today', label: 'Hoje', daysBack: 0 },
+  { key: '2d', label: '2 dias', daysBack: 1 },
+  { key: '7d', label: '7 dias', daysBack: 6 },
+  { key: '30d', label: '30 dias', daysBack: 29 },
+];
+
+function isoMinusDays(iso: string, days: number): string {
+  const [y, m, d] = iso.split('-').map(Number);
+  const dt = new Date(y!, m! - 1, d! - days);
+  const yy = dt.getFullYear();
+  const mm = String(dt.getMonth() + 1).padStart(2, '0');
+  const dd = String(dt.getDate()).padStart(2, '0');
+  return `${yy}-${mm}-${dd}`;
+}
 
 export function DataStudio() {
   const [dataset, setDataset] = useState<Dataset | null>(null);
@@ -183,6 +204,7 @@ function StudioBody({
   const [dim2, setDim2] = useState<string | null>(plan.secondaryDimension);
   const [agg, setAgg] = useState<Agg>('sum');
   const [filters, setFilters] = useState<Record<string, string>>({});
+  const [range, setRange] = useState<RangeKey>('all');
 
   // Reset seleções ao trocar de planilha.
   useEffect(() => {
@@ -191,17 +213,37 @@ function StudioBody({
     setDim2(plan.secondaryDimension);
     setAgg('sum');
     setFilters({});
+    setRange('all');
   }, [plan]);
 
   const format = fmtOf(measure);
   const effectiveAgg: Agg = measure ? agg : 'count';
 
-  // Aplica slicers.
+  // Data mais recente da planilha = âncora do filtro de período.
+  const dateCol = plan.dateColumn;
+  const anchorDate = useMemo(
+    () => (dateCol ? dataset.columns.find((c) => c.name === dateCol)?.maxDate ?? null : null),
+    [dataset.columns, dateCol],
+  );
+  const rangeThreshold = useMemo(() => {
+    if (!anchorDate || range === 'all') return null;
+    const cfg = RANGES.find((r) => r.key === range);
+    return cfg ? isoMinusDays(anchorDate, cfg.daysBack) : null;
+  }, [anchorDate, range]);
+
+  // Aplica slicers + recorte de período.
   const rows = useMemo(() => {
     const active = Object.entries(filters).filter(([, v]) => v && v !== '__all__');
-    if (active.length === 0) return dataset.rows;
-    return dataset.rows.filter((r) => active.every(([col, val]) => keyOf(r[col]) === val));
-  }, [dataset.rows, filters]);
+    if (active.length === 0 && !rangeThreshold) return dataset.rows;
+    return dataset.rows.filter((r) => {
+      if (!active.every(([col, val]) => keyOf(r[col]) === val)) return false;
+      if (rangeThreshold && dateCol) {
+        const iso = coerceDate(r[dateCol]);
+        if (!iso || iso < rangeThreshold) return false;
+      }
+      return true;
+    });
+  }, [dataset.rows, filters, rangeThreshold, dateCol]);
 
   const kpis = useMemo(() => autoKpis({ rows, columns: dataset.columns }, plan), [rows, dataset.columns, plan]);
 
@@ -236,6 +278,16 @@ function StudioBody({
 
   return (
     <div className="space-y-5">
+      {/* Capa só na impressão / PDF */}
+      <div className="print-cover hidden mb-6 border-b border-border pb-4">
+        <div className="text-xs font-medium uppercase tracking-wider text-brand">PROGPT · Painel</div>
+        <div className="mt-1 text-2xl font-bold">{sourceName}</div>
+        <div className="mt-0.5 text-sm text-muted-foreground">
+          {rows.length.toLocaleString('pt-BR')} linhas
+          {rangeThreshold ? ` · período: ${RANGES.find((r) => r.key === range)?.label}` : ''}
+        </div>
+      </div>
+
       {/* Cabeçalho */}
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
@@ -251,7 +303,7 @@ function StudioBody({
             {dataset.columns.length} colunas · gerado automaticamente
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 print-hide">
           <input
             ref={inputRef}
             type="file"
@@ -264,6 +316,13 @@ function StudioBody({
             }}
           />
           <button
+            onClick={() => window.print()}
+            className="inline-flex items-center gap-1.5 rounded-full bg-brand-gradient text-black px-4 py-2 text-sm font-semibold hover:brightness-110 active:scale-95 transition-all"
+          >
+            <FileDown className="h-4 w-4" aria-hidden />
+            Exportar PDF
+          </button>
+          <button
             onClick={onReplace}
             className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-4 py-2 text-sm font-medium hover:border-brand/40 hover:text-brand transition-colors"
           >
@@ -273,45 +332,51 @@ function StudioBody({
         </div>
       </header>
 
-      {/* Controles (medida / dimensão / agregação) */}
-      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-card p-3">
-        <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground pr-1">
-          <BarChart3 className="h-3.5 w-3.5 text-brand" aria-hidden /> Analisar
-        </span>
-        {plan.measures.length > 0 && (
-          <FieldSelect label="Medida" value={measure ?? ''} onChange={(v) => setMeasure(v || null)} options={plan.measures} allowNone noneLabel="Contagem" />
-        )}
-        {measure && (
-          <FieldSelect label="Como" value={agg} onChange={(v) => setAgg(v as Agg)} options={['sum', 'mean', 'max', 'min']} render={(v) => AGG_LABEL[v as Agg]} />
-        )}
-        <FieldSelect label="Por" value={dim ?? ''} onChange={(v) => setDim(v || null)} options={plan.dimensions} />
-        {plan.dimensions.length > 1 && (
-          <FieldSelect label="Cruzar com" value={dim2 ?? ''} onChange={(v) => setDim2(v || null)} options={plan.dimensions.filter((d) => d !== dim)} allowNone noneLabel="—" />
-        )}
-      </div>
-
-      {/* Slicers */}
-      {slicerDims.length > 0 && (
+      {/* Barra de controles + filtros */}
+      <div className="print-hide rounded-2xl border border-border bg-card p-3 sm:p-4 space-y-3">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-            <Filter className="h-3.5 w-3.5 text-brand" aria-hidden /> Filtros
+          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground pr-1">
+            <BarChart3 className="h-3.5 w-3.5 text-brand" aria-hidden /> Analisar
           </span>
-          {slicerDims.map((d) => (
-            <Slicer
-              key={d}
-              label={d}
-              options={groupBy(dataset.rows, d, null).map((s) => s.key).slice(0, 60)}
-              value={filters[d] ?? '__all__'}
-              onChange={(v) => setFilters((f) => ({ ...f, [d]: v }))}
-            />
-          ))}
-          {Object.values(filters).some((v) => v && v !== '__all__') && (
-            <button onClick={() => setFilters({})} className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-destructive transition-colors">
-              <X className="h-3 w-3" aria-hidden /> Limpar
-            </button>
+          {plan.measures.length > 0 && (
+            <FieldSelect label="Medida" value={measure ?? ''} onChange={(v) => setMeasure(v || null)} options={plan.measures} allowNone noneLabel="Contagem" />
+          )}
+          {measure && (
+            <FieldSelect label="Como" value={agg} onChange={(v) => setAgg(v as Agg)} options={['sum', 'mean', 'max', 'min']} render={(v) => AGG_LABEL[v as Agg]} />
+          )}
+          <FieldSelect label="Por" value={dim ?? ''} onChange={(v) => setDim(v || null)} options={plan.dimensions} />
+          {plan.dimensions.length > 1 && (
+            <FieldSelect label="Cruzar com" value={dim2 ?? ''} onChange={(v) => setDim2(v || null)} options={plan.dimensions.filter((d) => d !== dim)} allowNone noneLabel="—" />
+          )}
+          {dateCol && anchorDate && (
+            <div className="ml-auto">
+              <RangeControl value={range} onChange={setRange} />
+            </div>
           )}
         </div>
-      )}
+
+        {slicerDims.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 border-t border-border/60 pt-3">
+            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+              <Filter className="h-3.5 w-3.5 text-brand" aria-hidden /> Filtros
+            </span>
+            {slicerDims.map((d) => (
+              <Slicer
+                key={d}
+                label={d}
+                options={groupBy(dataset.rows, d, null).map((s) => s.key).slice(0, 60)}
+                value={filters[d] ?? '__all__'}
+                onChange={(v) => setFilters((f) => ({ ...f, [d]: v }))}
+              />
+            ))}
+            {Object.values(filters).some((v) => v && v !== '__all__') && (
+              <button onClick={() => setFilters({})} className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-destructive transition-colors">
+                <X className="h-3 w-3" aria-hidden /> Limpar
+              </button>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* KPIs */}
       <section className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
@@ -385,20 +450,20 @@ function FieldSelect({
   render?: (v: string) => string;
 }) {
   return (
-    <label className="inline-flex items-center gap-1.5 rounded-lg bg-muted/50 pl-2.5 pr-1 py-1 text-xs">
+    <label className="group inline-flex items-center gap-1.5 rounded-full border border-border bg-background/60 pl-3 pr-2 py-1.5 text-xs shadow-sm transition-colors hover:border-brand/40 focus-within:border-brand/60">
       <span className="text-muted-foreground">{label}</span>
-      <div className="relative">
+      <div className="relative flex items-center">
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="appearance-none bg-transparent pr-5 py-0.5 font-medium text-foreground outline-none cursor-pointer max-w-[150px] truncate"
+          className="appearance-none bg-transparent pr-4 font-semibold text-foreground outline-none cursor-pointer max-w-[150px] truncate"
         >
           {allowNone && <option value="">{noneLabel ?? '—'}</option>}
           {options.map((o) => (
             <option key={o} value={o}>{render ? render(o) : o}</option>
           ))}
         </select>
-        <ChevronDown className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" aria-hidden />
+        <ChevronDown className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground group-hover:text-brand transition-colors" aria-hidden />
       </div>
     </label>
   );
@@ -414,22 +479,44 @@ function Slicer({
 }) {
   const active = value && value !== '__all__';
   return (
-    <label className={`inline-flex items-center gap-1.5 rounded-full border pl-3 pr-1 py-1 text-xs transition-colors ${active ? 'border-brand/50 bg-brand/10 text-brand' : 'border-border bg-card text-muted-foreground'}`}>
-      <span className="font-medium">{label}</span>
-      <div className="relative">
+    <label className={`group inline-flex items-center gap-1.5 rounded-full border pl-3 pr-2 py-1.5 text-xs shadow-sm transition-colors ${active ? 'border-brand/50 bg-brand/10' : 'border-border bg-background/60 hover:border-brand/40'}`}>
+      <span className={`font-medium ${active ? 'text-brand' : 'text-muted-foreground'}`}>{label}</span>
+      <div className="relative flex items-center">
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="appearance-none bg-transparent pr-5 py-0.5 font-medium outline-none cursor-pointer max-w-[130px] truncate text-foreground"
+          className="appearance-none bg-transparent pr-4 font-semibold outline-none cursor-pointer max-w-[130px] truncate text-foreground"
         >
           <option value="__all__">Todos</option>
           {options.map((o) => (
             <option key={o} value={o}>{o}</option>
           ))}
         </select>
-        <ChevronDown className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 h-3.5 w-3.5 opacity-70" aria-hidden />
+        <ChevronDown className={`pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 h-3.5 w-3.5 transition-colors ${active ? 'text-brand' : 'text-muted-foreground group-hover:text-brand'}`} aria-hidden />
       </div>
     </label>
+  );
+}
+
+// Segmented control do período (Tudo · Hoje · 2/7/30 dias) — pílula arredondada.
+function RangeControl({ value, onChange }: { value: RangeKey; onChange: (v: RangeKey) => void }) {
+  return (
+    <div className="inline-flex items-center gap-0.5 rounded-full border border-border bg-background/60 p-0.5 shadow-sm">
+      <CalendarRange className="ml-1.5 mr-0.5 h-3.5 w-3.5 text-brand" aria-hidden />
+      {RANGES.map((r) => (
+        <button
+          key={r.key}
+          onClick={() => onChange(r.key)}
+          className={`rounded-full px-2.5 py-1 text-xs font-medium transition-all ${
+            value === r.key
+              ? 'bg-brand-gradient text-black shadow-sm'
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          {r.label}
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -491,7 +578,7 @@ function DataTable({ dataset, rows }: { dataset: Dataset; rows: Row[] }) {
 
   return (
     <Panel title="Dados" subtitle={`${filtered.length.toLocaleString('pt-BR')} linhas`}>
-      <div className="mb-3 flex items-center gap-2">
+      <div className="mb-3 flex items-center gap-2 print-hide">
         <div className="relative flex-1 max-w-xs">
           <Search className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" aria-hidden />
           <input
@@ -538,7 +625,7 @@ function DataTable({ dataset, rows }: { dataset: Dataset; rows: Row[] }) {
       </div>
 
       {pageCount > 1 && (
-        <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
+        <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground print-hide">
           <span>Página {safePage + 1} de {pageCount}</span>
           <div className="flex gap-1">
             <button onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={safePage === 0} className="rounded-md border border-border px-2.5 py-1 hover:bg-muted disabled:opacity-40 transition-colors">Anterior</button>

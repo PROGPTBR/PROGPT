@@ -40,7 +40,7 @@ export function Panel({
   children: React.ReactNode;
 }) {
   return (
-    <div className={`rounded-2xl border border-border bg-card p-4 sm:p-5 shadow-sm ${className}`}>
+    <div className={`dashboard-panel rounded-2xl border border-border bg-card p-4 sm:p-5 shadow-sm ${className}`}>
       <div className="mb-3">
         <h3 className="text-sm font-semibold text-foreground">{title}</h3>
         {subtitle && <p className="text-[11px] text-muted-foreground mt-0.5">{subtitle}</p>}
