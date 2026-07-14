@@ -16,7 +16,7 @@ import { InviteUserDialog } from '@/components/admin/InviteUserDialog';
 type AdminUser = {
   id: string;
   email: string;
-  role: 'admin' | 'user';
+  role: 'admin' | 'user' | 'gestor';
   last_sign_in_at: string | null;
   session_count: number;
   created_at: string;
@@ -40,7 +40,7 @@ function formatRelative(iso: string | null): string {
   return new Date(iso).toLocaleDateString('pt-BR');
 }
 
-function RolePill({ role, pending }: { role: 'admin' | 'user'; pending: boolean }) {
+function RolePill({ role, pending }: { role: 'admin' | 'user' | 'gestor'; pending: boolean }) {
   if (pending) {
     return (
       <span className="inline-block px-2 py-0.5 rounded-full text-xs bg-amber-500/10 text-amber-700 dark:text-amber-300">
@@ -48,11 +48,13 @@ function RolePill({ role, pending }: { role: 'admin' | 'user'; pending: boolean 
       </span>
     );
   }
-  return role === 'admin' ? (
-    <span className="inline-block px-2 py-0.5 rounded-full text-xs bg-primary/10 text-primary">Admin</span>
-  ) : (
-    <span className="inline-block px-2 py-0.5 rounded-full text-xs bg-muted text-muted-foreground">Usuário</span>
-  );
+  if (role === 'admin') {
+    return <span className="inline-block px-2 py-0.5 rounded-full text-xs bg-primary/10 text-primary">Admin</span>;
+  }
+  if (role === 'gestor') {
+    return <span className="inline-block px-2 py-0.5 rounded-full text-xs bg-violet-500/10 text-violet-600 dark:text-violet-300">Gestor</span>;
+  }
+  return <span className="inline-block px-2 py-0.5 rounded-full text-xs bg-muted text-muted-foreground">Usuário</span>;
 }
 
 export function UsersTable({ users, currentUserId }: Props) {
@@ -60,7 +62,7 @@ export function UsersTable({ users, currentUserId }: Props) {
   const [inviteOpen, setInviteOpen] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
 
-  async function patchRole(user_id: string, role: 'admin' | 'user') {
+  async function patchRole(user_id: string, role: 'admin' | 'user' | 'gestor') {
     setBusy(user_id);
     try {
       const res = await fetch('/api/admin/users', {
@@ -140,12 +142,17 @@ export function UsersTable({ users, currentUserId }: Props) {
                             Reenviar convite
                           </DropdownMenuItem>
                         )}
-                        {!pending && u.role === 'user' && (
+                        {!pending && u.role !== 'admin' && (
                           <DropdownMenuItem onClick={() => patchRole(u.id, 'admin')}>
                             Promover a admin
                           </DropdownMenuItem>
                         )}
-                        {!pending && u.role === 'admin' && u.id !== currentUserId && (
+                        {!pending && u.role !== 'gestor' && (
+                          <DropdownMenuItem onClick={() => patchRole(u.id, 'gestor')}>
+                            {u.role === 'admin' ? 'Rebaixar a gestor' : 'Promover a gestor'}
+                          </DropdownMenuItem>
+                        )}
+                        {!pending && u.role !== 'user' && u.id !== currentUserId && (
                           <DropdownMenuItem onClick={() => patchRole(u.id, 'user')}>
                             Rebaixar a usuário
                           </DropdownMenuItem>
