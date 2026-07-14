@@ -219,6 +219,9 @@ export async function POST(req: Request): Promise<Response> {
             intent: rag.classification.intent,
             finish_reason: finishReason,
             env,
+            // Atribui o custo à sessão → dashboard "gastos por sessão"
+            // (/admin/monitor). O chat-generate é o custo dominante do turno.
+            session_id: parsed.sessionId ?? null,
           },
         });
         const aborted = finishReason === 'error';

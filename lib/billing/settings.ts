@@ -17,7 +17,7 @@ export async function getBillingSettings(): Promise<BillingSettings> {
   const fallback: BillingSettings = {
     apiKey: process.env.ASAAS_API_KEY ?? '',
     apiUrl: envUrl,
-    planPrice: 127.99,
+    planPrice: 197.99,
     trialDays: 3,
   };
 

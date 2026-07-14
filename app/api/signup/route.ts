@@ -4,6 +4,7 @@ import {
   getSignupSupabase,
 } from "@/lib/db/supabase";
 import { createAsaasCustomer, createAsaasSubscription, deleteAsaasCustomer, } from "@/lib/billing/asaas";
+import { getBillingSettings } from "@/lib/billing/settings";
 import {
   verifyTurnstileToken,
   getClientIp,
@@ -38,8 +39,9 @@ let customerId: string | null = null;
     
     const body = await req.json();
 
-console.log(`[${requestId}] Email: ${body.email}`);
-console.log(`[${requestId}] Nome: ${body.fullName}`);
+// LGPD (princípio nº 5): NÃO logar PII (email/nome/cartão/endereço). Apenas
+// marcadores de progresso não-identificáveis pra depurar o fluxo.
+console.log(`[${requestId}] payload recebido`);
 
     const token = body.turnstileToken;
 
@@ -55,9 +57,6 @@ if (!token) {
 
 
 const ip = getClientIp(req);
-
-console.log(`[${requestId}] Token: ${token?.substring(0, 30)}...`);
-console.log(`[${requestId}] IP: ${ip}`);
 
 const valid = await verifyTurnstileToken(token, ip);
 
@@ -127,8 +126,7 @@ company: body.companyName,
 
  customerId = customer.id;
 
-console.log(`[${requestId}] ✅ Cliente criado no Asaas`);
-console.log(customer);
+console.log(`[${requestId}] ✅ Cliente criado no Asaas (id ${customer.id})`);
 
 
     const { error: profileError } = await supabase
@@ -153,8 +151,12 @@ if (profileError) {
 console.log(`[${requestId}] ✅ Profile atualizado`);
 
 
+// Preço e trial vêm do painel /admin/billing (billing_settings), não mais
+// hardcoded — assim mudar o valor lá muda o que é cobrado de fato.
+const billing = await getBillingSettings();
+
 const nextDueDate = new Date();
-nextDueDate.setDate(nextDueDate.getDate() + 3);
+nextDueDate.setDate(nextDueDate.getDate() + billing.trialDays);
 
 const nextDueDateString = nextDueDate
 .toISOString()
@@ -170,22 +172,11 @@ req.headers.get("x-real-ip") ||
 const [month, year] = body.cardExpiry.split("/");
 
 
-console.log(`[${requestId}] Criando assinatura...`);
-console.log(`[${requestId}] Vencimento: ${nextDueDateString}`);
-console.log(`[${requestId}] Valor: 197.99`);
-
-
-console.log("===== DADOS DO TITULAR =====");
-console.log({
- postalCode: body.postalCode,
- addressNumber: body.addressNumber,
- addressComplement: body.addressComplement,
- phone: body.phone,
-});
+console.log(`[${requestId}] Criando assinatura (venc. ${nextDueDateString})...`);
 
 const subscription = await createAsaasSubscription({
 customerId: customer.id,
-value: 197.99,
+value: billing.planPrice,
 cycle: "MONTHLY",
 billingType: "CREDIT_CARD",
 description: "Plano PRO - APP 2BSUPPLY",
@@ -212,8 +203,7 @@ creditCardHolderInfo: {
 },
 });
 
-console.log(`[${requestId}] ✅ Assinatura criada`);
-console.log(subscription);
+console.log(`[${requestId}] ✅ Assinatura criada (id ${subscription.id})`);
 
 
 

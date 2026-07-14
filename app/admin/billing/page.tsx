@@ -1,10 +1,19 @@
+import { notFound } from 'next/navigation';
 import { getServerSupabase } from '@/lib/db/supabase';
+import { requireAdmin, NotAdmin } from '@/lib/auth';
 import { BillingAdmin } from '@/components/admin/BillingAdmin';
 
 export const dynamic = 'force-dynamic';
 
-// Sub-projeto 36 — painel de billing. O layout /admin já força requireAdmin.
+// Sub-projeto 36 — painel de billing. Faturamento é admin-only mesmo dentro do
+// admin (o layout agora deixa GESTOR entrar na área, mas billing não).
 export default async function AdminBillingPage() {
+  try {
+    await requireAdmin();
+  } catch (err) {
+    if (err instanceof NotAdmin) notFound();
+    throw err;
+  }
   const svc = getServerSupabase();
 
   const { data: settingsRow } = await svc
@@ -65,7 +74,7 @@ export default async function AdminBillingPage() {
     <BillingAdmin
       settings={{
         asaasApiUrl: s?.asaas_api_url ?? 'https://sandbox.asaas.com/api/v3',
-        planPrice: s?.plan_price != null ? Number(s.plan_price) : 127.99,
+        planPrice: s?.plan_price != null ? Number(s.plan_price) : 197.99,
         trialDays: s?.trial_days ?? 3,
         hasKey: !!key,
         maskedKey,

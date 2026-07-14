@@ -27,9 +27,9 @@ export function UserRow({ collapsed = false }: { collapsed?: boolean }) {
         .select('role')
         .eq('id', u.id)
         .maybeSingle();
-      setIsAdmin(
-        ((profile as { role?: string } | null)?.role ?? 'user') === 'admin',
-      );
+      // Staff (admin + gestor) veem o link da área admin.
+      const role = (profile as { role?: string } | null)?.role ?? 'user';
+      setIsAdmin(role === 'admin' || role === 'gestor');
     });
   }, []);
 

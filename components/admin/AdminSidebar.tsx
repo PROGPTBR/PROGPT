@@ -13,11 +13,14 @@ import {
   TrendingUp,
   BookOpen,
   CreditCard,
+  Activity,
   ArrowLeft,
 } from 'lucide-react';
 import { BrandLogo } from '@/components/brand/BrandLogo';
 
+// adminOnly: só admin vê (Gestor é "quase-admin", mas não mexe em faturamento).
 const ITEMS = [
+  { href: '/admin/monitor', label: 'Monitoramento', Icon: Activity },
   { href: '/admin/users', label: 'Usuários', Icon: Users },
   { href: '/admin/articles', label: 'Artigos', Icon: FileText },
   { href: '/admin/prompts', label: 'Prompts', Icon: BookOpen },
@@ -27,11 +30,12 @@ const ITEMS = [
   { href: '/admin/feedback', label: 'Feedback', Icon: MessageSquare },
   { href: '/admin/funnel', label: 'Funil', Icon: TrendingUp },
   { href: '/admin/costs', label: 'Custos', Icon: DollarSign },
-  { href: '/admin/billing', label: 'Faturamento', Icon: CreditCard },
+  { href: '/admin/billing', label: 'Faturamento', Icon: CreditCard, adminOnly: true },
 ];
 
-export function AdminSidebar() {
+export function AdminSidebar({ role = 'admin' }: { role?: 'admin' | 'gestor' }) {
   const pathname = usePathname();
+  const items = ITEMS.filter((it) => !it.adminOnly || role === 'admin');
   return (
     <aside className="w-56 shrink-0 border-r border-border bg-card/60 backdrop-blur-md flex flex-col h-screen sticky top-0">
       <div className="px-4 py-4 border-b border-border">
@@ -39,11 +43,11 @@ export function AdminSidebar() {
           <BrandLogo size="md" priority />
         </Link>
         <div className="text-[10px] font-medium uppercase tracking-wider text-brand">
-          Admin
+          {role === 'gestor' ? 'Gestor' : 'Admin'}
         </div>
       </div>
       <nav className="flex-1 p-2 space-y-0.5">
-        {ITEMS.map(({ href, label, Icon }) => {
+        {items.map(({ href, label, Icon }) => {
           const active =
             pathname === href || pathname?.startsWith(href + '/');
           return (

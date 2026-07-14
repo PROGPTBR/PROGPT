@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic';
 const InviteBody = z.object({ email: z.string().email() });
 const PatchBody = z.object({
   user_id: z.string().uuid(),
-  role: z.enum(['user', 'admin']),
+  role: z.enum(['user', 'admin', 'gestor']),
 });
 
 function originFrom(req: Request): string {
@@ -64,7 +64,9 @@ export async function PATCH(req: Request) {
   } catch {
     return NextResponse.json({ error: 'invalid_body' }, { status: 400 });
   }
-  if (parsed.user_id === admin.user.id && parsed.role === 'user') {
+  // Impede o admin de tirar o próprio admin (pra user OU gestor) e ficar sem
+  // ninguém com acesso a faturamento/papéis.
+  if (parsed.user_id === admin.user.id && parsed.role !== 'admin') {
     return NextResponse.json({ error: 'cannot_self_demote' }, { status: 400 });
   }
   const sb = supabaseServer();
