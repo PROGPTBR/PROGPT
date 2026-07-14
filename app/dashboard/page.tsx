@@ -28,7 +28,7 @@ export default async function DashboardPage() {
         />
 
         <main className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 pt-20 sm:pt-24 pb-12">
-          <div className="mb-6">
+          <div className="mb-6 print-hide">
             <Link
               href="/chat"
               className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
