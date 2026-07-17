@@ -47,8 +47,6 @@ export async function POST(req: Request) {
   let user;
   try {
     user = await requireUser();
-    console.log('USER ID:', user.id);
-    
   } catch (err) {
     if (err instanceof NotAuthenticated) {
       return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
@@ -71,7 +69,7 @@ if (!isValidCpf(cpf)) {
 
 const svc = getServerSupabase();
 
-const result = await svc
+const { error: profileErr } = await svc
   .from('profiles')
   .update({
     full_name: parsed.name,
@@ -79,12 +77,13 @@ const result = await svc
     phone: parsed.phone ?? null,
     professional_requirement: parsed.professionalRequirement ?? null,
   })
-  .eq('id', user.id)
-  .select();
+  .eq('id', user.id);
 
-console.log('PROFILE UPDATE RESULT:', result);
-
-
+if (profileErr) {
+  // Não bloqueia o checkout — a subscription é o que libera o acesso. Loga
+  // sem PII (só a mensagem do erro, nunca os dados do perfil).
+  console.warn('[billing/checkout] profile update failed:', profileErr.message);
+}
 
   // Race protection
   const existing = await getSubscription(user.id);
