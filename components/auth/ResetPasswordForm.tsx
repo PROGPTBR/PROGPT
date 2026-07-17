@@ -8,16 +8,49 @@ import { supabaseBrowser } from '@/lib/db/supabase-browser';
 export function ResetPasswordForm() {
   const router = useRouter();
   const [hasSession, setHasSession] = useState<boolean | null>(null);
+  const [linkError, setLinkError] = useState<string | null>(null);
   const [pwd, setPwd] = useState('');
   const [confirm, setConfirm] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const sb = supabaseBrowser();
-    sb.auth.getUser().then(({ data }) => {
-      setHasSession(!!data.user);
-    });
+    let active = true;
+    (async () => {
+      const sb = supabaseBrowser();
+
+      // O link de recuperação chega de formas diferentes conforme o flow do
+      // Supabase: (a) tokens no HASH `#access_token=...` (implícito — padrão
+      // hoje), (b) `?code=...` (PKCE), ou (c) erro `?error=/#error=` (link
+      // expirado/usado). Tratamos os três explicitamente e sem corrida.
+      const url = new URL(window.location.href);
+      const hash = new URLSearchParams(url.hash.replace(/^#/, ''));
+      const errDesc =
+        url.searchParams.get('error_description') || hash.get('error_description');
+      if (errDesc) {
+        if (active) setLinkError(errDesc.replace(/\+/g, ' '));
+        if (active) setHasSession(false);
+        return;
+      }
+
+      // PKCE: troca explícita do código (o detectSessionInUrl faria isso, mas
+      // ser explícito evita depender do timing e cobre variações de SDK).
+      const code = url.searchParams.get('code');
+      if (code) {
+        try { await sb.auth.exchangeCodeForSession(code); } catch { /* segue pro getSession */ }
+      }
+
+      // getSession() só resolve APÓS a inicialização do client (que consome o
+      // hash implícito) — evita o falso "link expirado" por corrida do getUser.
+      let session = (await sb.auth.getSession()).data.session;
+      if (!session) {
+        // pequena folga pro detectSessionInUrl terminar em navegadores lentos
+        await new Promise((r) => setTimeout(r, 250));
+        session = (await sb.auth.getSession()).data.session;
+      }
+      if (active) setHasSession(!!session);
+    })();
+    return () => { active = false; };
   }, []);
 
   if (hasSession === false) {
@@ -27,7 +60,9 @@ export function ResetPasswordForm() {
           Link expirado <span className="text-brand">.</span>
         </h1>
         <p className="text-sm text-muted-foreground leading-relaxed">
-          Sua sessão de recuperação não está mais ativa.
+          {linkError
+            ? 'Este link de recuperação expirou ou já foi usado. Solicite um novo.'
+            : 'Sua sessão de recuperação não está mais ativa. Abra o link direto do e-mail (sem copiar) e no mesmo navegador.'}
         </p>
         <Link
           href="/forgot-password"
