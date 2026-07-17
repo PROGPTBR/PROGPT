@@ -33,7 +33,9 @@ describe('realtime-config', () => {
     const req = buildClientSecretRequest();
     expect(req.expires_after).toEqual({ anchor: 'created_at', seconds: VOICE_SESSION_MAX_SECS });
     expect(req.session.model).toBe(REALTIME_MODEL);
-    expect(REALTIME_MODEL).toBe('gpt-realtime-mini');
+    // Upgrade 2026-07: gpt-realtime-2.1-mini (mesmo custo, melhor alfanumérico).
+    // Configurável por OPENAI_REALTIME_MODEL; sem env => este default.
+    expect(REALTIME_MODEL).toBe(process.env.OPENAI_REALTIME_MODEL || 'gpt-realtime-2.1-mini');
     expect(req.session.audio.input.transcription.language).toBe('pt');
     // SEARCH_TOOL + FISCAL_TOOL + INDICADORES_TOOL (sub-projetos 36 fase 4, 37 fase 3)
     expect(req.session.tools).toHaveLength(3);

@@ -184,11 +184,13 @@ const TTS_TEXT_INPUT_PER_M = 0.6;
 const TTS_AUDIO_PER_MIN = 0.015;
 const TTS_CHARS_PER_MIN = 600;
 
-// gpt-realtime-mini (sub-projeto 35, assistente de voz do chat) — tarifa do
-// lançamento 2025-10 (não listada na pricing page de 2026-06; gpt-realtime-2
-// full é $32/$64 áudio). USD por 1M tokens. O usage da sessão é reportado pelo
-// client com split por modalidade no metadata; sem split, o fallback trata
-// TUDO como áudio (a modalidade mais cara — sobre-fatura, nunca sub-fatura).
+// gpt-realtime-mini / gpt-realtime-2.1-mini (assistente de voz do chat) — a
+// tarifa mini é IDÊNTICA nos dois ($10/$20 áudio, $0.6/$2.4 texto, $0.3 cached
+// por 1M tokens — OpenAI docs 2026-07), então o upgrade pro 2.1-mini (2026-07)
+// não muda o custo. O flagship gpt-realtime-2.1 é $32/$64 áudio (não usado). USD
+// por 1M tokens. O usage da sessão é reportado pelo client com split por
+// modalidade no metadata; sem split, o fallback trata TUDO como áudio (a
+// modalidade mais cara — sobre-fatura, nunca sub-fatura).
 const REALTIME_MINI_AUDIO_IN_PER_M = 10;
 const REALTIME_MINI_AUDIO_OUT_PER_M = 20;
 const REALTIME_MINI_TEXT_IN_PER_M = 0.6;

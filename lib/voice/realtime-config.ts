@@ -1,11 +1,18 @@
 // Sub-projeto 35 — assistente de voz em tempo real no chat principal.
 //
-// Config da sessão OpenAI Realtime (gpt-realtime-mini, WebRTC direto do
-// browser com token efêmero). A base RAG entra por tool calling: a sessão
-// declara `buscar_base_conhecimento`; o browser executa a tool chamando
+// Config da sessão OpenAI Realtime (WebRTC direto do browser com token
+// efêmero). A base RAG entra por tool calling: a sessão declara
+// `buscar_base_conhecimento`; o browser executa a tool chamando
 // /api/chat/voice/retrieve e devolve os trechos como function_call_output.
-
-export const REALTIME_MODEL = 'gpt-realtime-mini';
+//
+// Modelo (2026-07): upgrade pra `gpt-realtime-2.1-mini` — geração mais nova
+// ("distilled reasoning", mais rápida) com MESMO preço do gpt-realtime-mini
+// ($10/$20 por 1M áudio) e MELHOR reconhecimento alfanumérico (crucial pra
+// CNPJ/valores/Selic falados). Só no SERVIDOR (mint + tracking); o cliente
+// recebe o `model` no retorno do /session. Configurável por env pra A/B ou
+// rollback sem deploy — vazio ⇒ default abaixo. Validado ao vivo (mint HTTP
+// 200 com as 6 vozes e a config atual). Rate card: sem mudança (mesma tarifa).
+export const REALTIME_MODEL = process.env.OPENAI_REALTIME_MODEL || 'gpt-realtime-2.1-mini';
 
 /** Duração máxima de uma sessão de voz (TTL do token efêmero + timer no client). */
 export const VOICE_SESSION_MAX_SECS = 600; // 10 min
