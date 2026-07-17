@@ -70,11 +70,13 @@ export async function GET(req: NextRequest) {
     void maybeSendWelcome(data.user.id, data.user.email);
   }
 
-  // Recuperação de senha: manda pra tela de redefinir (destino fixo — nunca
-  // redireciona pra fora, mesmo que o link traga outro next).
-  if (type === 'recovery') {
+  // Recuperação E convite: o usuário precisa DEFINIR uma senha → tela de
+  // redefinir (destino fixo — nunca redireciona pra fora, mesmo que o link
+  // traga outro next). Convidado chega sem senha; define ali.
+  if (type === 'recovery' || type === 'invite') {
     return NextResponse.redirect(new URL('/reset-password', appUrl));
   }
 
+  // Confirmação de cadastro (signup) e demais: usuário já tem senha → segue.
   return NextResponse.redirect(new URL(next, appUrl));
 }
