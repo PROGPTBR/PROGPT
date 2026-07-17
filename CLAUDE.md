@@ -295,6 +295,7 @@ OPENAI_MODEL=gpt-4o-mini   # default em código se vazio
 OPENAI_MODEL_GENERATION=gpt-5.4-mini  # sub-projeto 33 — tier de geração (chat + assistant generate/refine + extractors + negotiation). PROD = gpt-5.4-mini (setar no Railway). Vazio => cai em OPENAI_MODEL => gpt-4o-mini
 OPENAI_MODEL_MULTIMODAL=   # opcional — override do tier de parsing PDF na ingestão (multimodal-parse). Vazio => cai em OPENAI_MODEL
 OPENAI_MODEL_ROUTING=      # opcional — override do tier de roteamento (classify/condense/followups/title). Vazio => cai em OPENAI_MODEL. Manter barato (gpt-4o-mini)
+OPENAI_REALTIME_MODEL=     # 2026-07 — modelo do assistente de voz realtime (REALTIME_MODEL em lib/voice/realtime-config.ts). Vazio => gpt-realtime-2.1-mini (upgrade drop-in do gpt-realtime-mini: MESMO custo $10/$20 áudio, melhor reconhecimento alfanumérico). Só no servidor (mint+tracking); cliente recebe via /session. Flagship gpt-realtime-2.1 = ~3.2x, exige rate card
 VOYAGE_API_KEY=
 VOYAGE_MODEL=voyage-3-large
 COHERE_API_KEY=
