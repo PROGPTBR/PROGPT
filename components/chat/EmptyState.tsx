@@ -9,8 +9,8 @@ import { OnboardingQuickStartCard } from './OnboardingQuickStartCard';
 // 2B Supply contact CTA — surfaces in the empty state as a "got value
 // from this? talk to us" handoff. tel: link for click-to-call on mobile;
 // desktop falls back to opening the OS dialer.
-const CONTACT_TEL_HREF = 'tel:+5521995127272';
-const CONTACT_PHONE_DISPLAY = '(21) 99512-7272';
+const CONTACT_TEL_HREF = 'tel:+5521999702912';
+const CONTACT_PHONE_DISPLAY = '(21) 99970-2912';
 
 type Props = {
   // Composer props piped through — we own the single Composer instance

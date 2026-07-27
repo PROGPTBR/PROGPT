@@ -4,9 +4,11 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { BrandLogo } from '@/components/brand/BrandLogo';
-import { LogIn, Moon, Sun, UserPlus, MessageSquare } from 'lucide-react';
+import { LogIn, Moon, Sun, UserPlus, MessageSquare, Mail,  Phone } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { supabaseBrowser } from '@/lib/db/supabase-browser';
+import { LEGAL_CONTACT_EMAIL,  LEGAL_CONTACT_PHONE,  LEGAL_CONTACT_PHONE_TEL} from '@/lib/legal/constants';
+
 
 const NAV_LINKS = [
   { href: '/', label: 'Início' },
@@ -41,10 +43,34 @@ export function Header() {
 
   const isDark = !mounted || resolvedTheme !== 'light';
 
-  return (
+ 
+return (
+  <header className="fixed inset-x-0 top-0 z-50">
+
+<div className="flex h-8 items-center justify-end gap-8 bg-[#060b14] border-b border-border/50 px-6 md:px-12 text-xs text-muted-foreground">
+
+  <a
+    href={`mailto:${LEGAL_CONTACT_EMAIL}`}
+    className="inline-flex items-center gap-2 hover:text-white transition-colors"
+  >
+    <Mail className="h-3.5 w-3.5" />
+    <span>{LEGAL_CONTACT_EMAIL}</span>
+  </a>
+
+  <a
+    href={`tel:${LEGAL_CONTACT_PHONE_TEL}`}
+    className="inline-flex items-center gap-2 hover:text-white transition-colors"
+  >
+    <Phone className="h-3.5 w-3.5" />
+    <span>{LEGAL_CONTACT_PHONE}</span>
+  </a>
+
+</div>
+
+    {/* Menu */}
     <nav
       id="landing-navbar"
-      className="dark bg-[#0a0f1a]/85 fixed top-0 left-0 w-full z-50 transition-all duration-300 backdrop-blur-md border-b border-border py-3 sm:py-4 px-4 sm:px-6 md:px-12 flex justify-between items-center gap-2 text-foreground"
+      className="dark bg-[#0a0f1a]/85 w-full transition-all duration-300 backdrop-blur-md border-b border-border py-3 sm:py-4 px-4 sm:px-6 md:px-12 flex justify-between items-center gap-2 text-foreground"
     >
       <Link href="/" className="flex items-center">
         <BrandLogo size="md" priority />
@@ -111,5 +137,9 @@ export function Header() {
         )}
       </div>
     </nav>
-  );
+
+  </header>
+);
 }
+
+
