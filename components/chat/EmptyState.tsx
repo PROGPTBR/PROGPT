@@ -9,7 +9,7 @@ import { OnboardingQuickStartCard } from './OnboardingQuickStartCard';
 // 2B Supply contact CTA — surfaces in the empty state as a "got value
 // from this? talk to us" handoff. tel: link for click-to-call on mobile;
 // desktop falls back to opening the OS dialer.
-const CONTACT_TEL_HREF = 'https://wa.me/5521999792912';
+const CONTACT_TEL_HREF = '+5521999792912';
 const CONTACT_PHONE_DISPLAY = '(21) 99979-2912';
 
 type Props = {
