@@ -24,5 +24,5 @@ export const COMPANY_CNPJ = '36.335.299/0001-82';
 // Contato comercial + DPO (LGPD). Único canal pra suporte, dúvidas
 // sobre termos, exercício de direitos LGPD, e contestações.
 export const LEGAL_CONTACT_EMAIL = 'comercial@2bsupply.com.br';
-export const LEGAL_CONTACT_PHONE = '+55 (21) 99970-2912';
-export const LEGAL_CONTACT_PHONE_TEL = '+5521999702912';
+export const LEGAL_CONTACT_PHONE = '+55 (21) 99979-2912';
+export const LEGAL_CONTACT_PHONE_TEL = 'https://wa.me/5521999792912';
