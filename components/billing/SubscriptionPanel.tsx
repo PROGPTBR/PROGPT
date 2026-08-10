@@ -93,17 +93,18 @@ export function SubscriptionPanel({ subscription }: Props) {
           <div className="flex items-start gap-3">
             <Sparkles className="h-5 w-5 text-brand mt-0.5" aria-hidden />
             <div>
-              <div className="font-semibold">Upgrade pra Pro</div>
+              <div className="font-semibold">Upgrade Pro</div>
               <div className="text-sm text-muted-foreground">
-                R$ 127,99/mês · assistentes ilimitados · suporte por email
+                A partir de R$ 127,99/mês · assistentes ilimitados · suporte por email
               </div>
             </div>
           </div>
           <Link
-            href="/pricing"
-            className="block text-center w-full rounded-full bg-brand text-black hover:bg-brand/90 h-10 leading-10 text-sm font-semibold transition-colors"
-          >
+            href="/account/planos"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-brand-gradient text-black hover:brightness-110 brand-glow h-11 text-sm font-semibold transition-all active:scale-[0.98]"
+>
             Ver planos
+            <Sparkles className="h-4 w-4" aria-hidden="true" />
           </Link>
         </div>
       </div>

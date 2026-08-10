@@ -1,8 +1,7 @@
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import { Header } from '../login/header';
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUser, getProfile } from '@/lib/auth';
 import { PricingTable } from '@/components/billing/PricingTable';
 import { CompanyInfo } from '@/components/legal/CompanyInfo';
 import { getPlans } from '@/lib/billing/planos';
@@ -10,7 +9,7 @@ import { getPlans } from '@/lib/billing/planos';
 export const dynamic = 'force-dynamic';
 
 export default async function PricingPage({
-  searchParams
+  searchParams,
 }: {
   searchParams?: {
     expired?: string;
@@ -18,24 +17,17 @@ export default async function PricingPage({
 }) {
   const user = await getCurrentUser();
 
-  // Novo fluxo (cartão no cadastro): quem está logado já é cliente — a página
-  // de planos só faz sentido para visitante não-logado. Logado ⇒ vai pro app.
-  if (user) {
-    redirect('/chat');
-  }
-
-  // Daqui pra baixo só chega visitante anônimo (o redirect acima cobre logado).
-  const pro = false;
-  const userPlanSlug = null;
-  const profile = null;
+  const profile = user ? await getProfile(user.id) : null;
 
   const plans = await getPlans();
 
-  const trialExpired =
-    searchParams?.expired === 'true';
+  const trialExpired = searchParams?.expired === 'true';
 
-    console.log('TRIAL EXPIRED:', trialExpired);
-    
+  // Por enquanto, mantemos essas informações neutras.
+  // O PricingTable continua responsável pelo fluxo de checkout.
+  const isPro = false;
+  const userPlanSlug = null;
+
   return (
     <>
       <Header />
@@ -44,7 +36,7 @@ export default async function PricingPage({
         <main className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
           <div className="max-w-7xl mx-auto px-0 sm:px-6 py-6 sm:py-16 flex items-center justify-between">
             <Link
-              href={user ? '/login' : '/'}
+              href={user ? '/account/billing' : '/'}
               className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-brand transition-colors"
             >
               <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
@@ -67,7 +59,7 @@ export default async function PricingPage({
           >
             <PricingTable
               authed={!!user}
-              isPro={pro}
+              isPro={isPro}
               plans={plans}
               userPlanSlug={userPlanSlug}
               profile={profile}
