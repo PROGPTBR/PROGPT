@@ -1,11 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import { ArrowRight, Check, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { isValidCpf, formatCpf } from '@/lib/validators/cpf';
-import type { Subscription } from '@/lib/billing/subscription';
 
 type Plan = {
   id: string;
@@ -27,7 +25,6 @@ type Props = {
     phone?: string | null;
     professional_requirement?: string | null;
   } | null;
-  subscription: Subscription | null;
 };
 
 function fmtPrice(value: number) {
@@ -104,7 +101,6 @@ export function AccountPricingTable({
   plans,
   userPlanSlug,
   profile,
-  subscription,
 }: Props) {
   const [showCheckout, setShowCheckout] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
