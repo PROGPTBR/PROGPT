@@ -10,11 +10,21 @@ import { supabaseBrowser } from '@/lib/db/supabase-browser';
 import { LEGAL_CONTACT_EMAIL,  LEGAL_CONTACT_PHONE,  LEGAL_CONTACT_PHONE_TEL} from '@/lib/legal/constants';
 
 
-const NAV_LINKS = [
+// Deslogado: navegação da landing (marketing). Logado: navegação do APP — o
+// usuário autenticado circula pelas áreas internas, não pelas seções da
+// landing. O botão à direita continua levando ao chat.
+const PUBLIC_LINKS = [
   { href: '/', label: 'Início' },
   { href: '/recursos', label: 'Recursos' },
   { href: '/planos', label: 'Planos' },
   { href: '/faq', label: 'FAQ' },
+];
+
+const APP_LINKS = [
+  { href: '/assistants', label: 'Assistentes' },
+  { href: '/painel', label: 'Painel' },
+  { href: '/prompts', label: 'Prompts' },
+  { href: '/account/billing', label: 'Assinatura' },
 ];
 
 export function Header() {
@@ -42,6 +52,9 @@ export function Header() {
   }, []);
 
   const isDark = !mounted || resolvedTheme !== 'light';
+  // Enquanto o estado de auth carrega (authed === null) mostramos os links
+  // públicos (estado do SSR); ao confirmar login, troca para os do app.
+  const navLinks = authed ? APP_LINKS : PUBLIC_LINKS;
 
  
 return (
@@ -72,12 +85,12 @@ return (
       id="landing-navbar"
       className="dark bg-[#0a0f1a]/85 w-full transition-all duration-300 backdrop-blur-md border-b border-border py-3 sm:py-4 px-4 sm:px-6 md:px-12 flex justify-between items-center gap-2 text-foreground"
     >
-      <Link href="/" className="flex items-center">
+      <Link href={authed ? '/chat' : '/'} className="flex items-center">
         <BrandLogo size="md" priority />
       </Link>
 
       <div className="menu-topo hidden md:flex space-x-1 items-center text-sm font-medium text-muted-foreground">
-        {NAV_LINKS.map((link) => (
+        {navLinks.map((link) => (
           <Link
             key={link.href}
             href={link.href}
