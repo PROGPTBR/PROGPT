@@ -32,6 +32,17 @@ type Props = {
   onToggleCollapse?: () => void;
 };
 
+// Navegação principal — TODAS as opções compartilham o mesmo tratamento visual
+// (uma cor só). Padronizado a partir da barra flutuante do finance-insights-hub:
+// texto/ícone neutros, hover suave. Nada de texto azul, badge colorido ou seta
+// por item — isso é o que deixava a lateral "com muitas cores".
+const NAV_ITEMS = [
+  { href: '/painel', label: 'Painel', icon: LayoutDashboard },
+  { href: '/dashboard', label: 'Dashboard', icon: BarChart3 },
+  { href: '/assistants', label: 'Assistentes', icon: Sparkles },
+  { href: '/prompts', label: 'Biblioteca de Prompts', icon: BookOpen },
+] as const;
+
 function formatRelative(ts: number): string {
   const diffMs = Date.now() - ts;
   const min = Math.floor(diffMs / 60_000);
@@ -78,7 +89,7 @@ export function Sidebar({
   // ---- Collapsed: thin icon rail ----------------------------------------
   if (collapsed) {
     return (
-      <aside className="dark w-16 shrink-0 border-r border-border bg-card text-foreground backdrop-blur-md flex flex-col h-full transition-[width] duration-300">
+      <aside className="dark w-16 shrink-0 bg-card text-foreground backdrop-blur-md flex flex-col h-full transition-[width] duration-300 border-r border-border md:m-2 md:h-[calc(100vh-1rem)] md:rounded-2xl md:border md:shadow-panel dark:md:ring-1 dark:md:ring-white/10">
         <div className="flex flex-col items-center gap-1 py-4 border-b border-border">
           <button
             type="button"
@@ -100,30 +111,17 @@ export function Sidebar({
           </button>
         </div>
         <nav className="flex flex-col items-center gap-1 py-3">
-          <Link
-            href="/dashboard"
-            title="Dashboard"
-            aria-label="Dashboard"
-            className="h-9 w-9 rounded-lg flex items-center justify-center text-brand hover:bg-brand/10 transition-colors"
-          >
-            <BarChart3 className="h-5 w-5" aria-hidden="true" />
-          </Link>
-          <Link
-            href="/assistants"
-            title="Assistentes"
-            aria-label="Assistentes"
-            className="h-9 w-9 rounded-lg flex items-center justify-center text-brand hover:bg-brand/10 transition-colors"
-          >
-            <Sparkles className="h-5 w-5" aria-hidden="true" />
-          </Link>
-          <Link
-            href="/prompts"
-            title="Biblioteca de Prompts"
-            aria-label="Biblioteca de Prompts"
-            className="h-9 w-9 rounded-lg flex items-center justify-center text-brand hover:bg-brand/10 transition-colors"
-          >
-            <BookOpen className="h-5 w-5" aria-hidden="true" />
-          </Link>
+          {NAV_ITEMS.map(({ href, label, icon: Icon }) => (
+            <Link
+              key={href}
+              href={href}
+              title={label}
+              aria-label={label}
+              className="h-9 w-9 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+            >
+              <Icon className="h-5 w-5" aria-hidden="true" />
+            </Link>
+          ))}
         </nav>
         <div className="flex-1" />
         <UserRow collapsed />
@@ -133,7 +131,7 @@ export function Sidebar({
 
   // ---- Expanded: full sidebar -------------------------------------------
   return (
-    <aside className="dark w-72 shrink-0 border-r border-border bg-card text-foreground backdrop-blur-md flex flex-col h-full transition-[width] duration-300">
+    <aside className="dark w-72 shrink-0 bg-card text-foreground backdrop-blur-md flex flex-col h-full transition-[width] duration-300 border-r border-border md:m-2 md:h-[calc(100vh-1rem)] md:rounded-2xl md:border md:shadow-panel dark:md:ring-1 dark:md:ring-white/10 overflow-hidden">
       <div className="flex items-center justify-between gap-2 px-4 py-4 border-b border-border">
         <Link href="/" className="inline-flex items-center min-w-0 shrink">
           <BrandLogo size="lg" priority />
@@ -161,46 +159,21 @@ export function Sidebar({
           )}
         </div>
       </div>
-      <Link
-        href="/painel"
-        className="group flex items-center gap-2 px-4 py-3 text-sm font-medium border-b border-border text-foreground hover:bg-accent transition-colors"
-      >
-        <LayoutDashboard className="h-4 w-4 text-brand" aria-hidden="true" />
-        <span>Painel</span>
-        <span className="ml-auto text-[10px] font-bold uppercase tracking-wide rounded bg-brand/20 text-brand px-1.5 py-0.5">
-          novo
-        </span>
-      </Link>
-      <Link
-        href="/dashboard"
-        className="group flex items-center gap-2 px-4 py-3 text-sm font-medium border-b border-border text-foreground hover:bg-accent transition-colors"
-      >
-        <BarChart3 className="h-4 w-4 text-brand" aria-hidden="true" />
-        <span>Dashboard</span>
-        <span className="ml-auto text-[10px] font-bold uppercase tracking-wide rounded bg-brand/20 text-brand px-1.5 py-0.5">
-          novo
-        </span>
-      </Link>
-      <Link
-        href="/assistants"
-        className="group flex items-center gap-2 px-4 py-3 text-sm font-medium border-b border-border text-brand hover:bg-brand/10 transition-colors"
-      >
-        <Sparkles className="h-4 w-4" aria-hidden="true" />
-        <span>Assistentes</span>
-        <span className="ml-auto text-xs text-muted-foreground group-hover:text-brand/80 transition-colors">
-          →
-        </span>
-      </Link>
-      <Link
-        href="/prompts"
-        className="group flex items-center gap-2 px-4 py-3 text-sm font-medium border-b border-border text-brand hover:bg-brand/10 transition-colors"
-      >
-        <BookOpen className="h-4 w-4" aria-hidden="true" />
-        <span>Biblioteca de Prompts</span>
-        <span className="ml-auto text-xs text-muted-foreground group-hover:text-brand/80 transition-colors">
-          →
-        </span>
-      </Link>
+      <nav className="p-2 space-y-0.5 border-b border-border">
+        {NAV_ITEMS.map(({ href, label, icon: Icon }) => (
+          <Link
+            key={href}
+            href={href}
+            className="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-foreground/80 hover:bg-accent hover:text-foreground transition-colors"
+          >
+            <Icon
+              className="h-4 w-4 shrink-0 text-muted-foreground group-hover:text-foreground transition-colors"
+              aria-hidden="true"
+            />
+            <span className="truncate">{label}</span>
+          </Link>
+        ))}
+      </nav>
       <ScrollArea className="flex-1">
         <ul className="p-2 space-y-0.5">
           {sessions.map((s) => {
