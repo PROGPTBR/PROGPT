@@ -52,7 +52,9 @@ describe('UserRow', () => {
     render(<UserRow />);
     await screen.findByText('a@b.com');
     const user = userEvent.setup();
-    await user.click(screen.getByRole('button', { name: /sair/i }));
+    // Perfil/Admin/Assinatura/Sair vivem no menu aberto a partir do avatar.
+    await user.click(screen.getByRole('button', { name: /a@b\.com/i }));
+    await user.click(screen.getByRole('menuitem', { name: /sair/i }));
     expect(signOut).toHaveBeenCalledTimes(1);
     await new Promise((r) => setTimeout(r, 0));
     expect(refresh).toHaveBeenCalled();
