@@ -93,8 +93,18 @@ const config: Config = {
       },
       fontFamily: {
         sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],
-        // 2B Supply brand typeface — used on landing and any MD3-styled page.
-        outfit: ['var(--font-outfit)', 'system-ui', 'sans-serif'],
+        // `font-outfit` is kept as a back-compat alias so existing markup keeps
+        // working, but now resolves to Inter — the single typeface across the
+        // app, ported from the finance-insights-hub design language.
+        outfit: ['var(--font-inter)', 'system-ui', 'sans-serif'],
+      },
+      boxShadow: {
+        // Shadow-floated surfaces: the modern design language separates
+        // surfaces by shadow, not by a 1px hairline. Consumed by `.panel`.
+        panel:
+          '0 1px 2px rgb(6 12 24 / 0.06), 0 24px 48px -30px rgb(6 12 24 / 0.28)',
+        'card-hover':
+          '0 1px 2px rgb(14 141 225 / 0.08), 0 24px 44px -24px rgb(14 141 225 / 0.34)',
       },
       transitionTimingFunction: {
         // Material You's "Emphasized Decelerate" — confident, never bouncy.

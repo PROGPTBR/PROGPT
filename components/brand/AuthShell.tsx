@@ -1,155 +1,93 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Header } from '@/app/login/header';
-import Image from "next/image";
 import { CompanyInfo } from '@/components/legal/CompanyInfo';
 
 // Layout das páginas de auth (login, signup, forgot, reset).
-// Split em 2 colunas: painel "Bem-vindo" com gradiente da marca (cor constante
-// nos dois temas, estilo das grandes plataformas) + card do formulário no tema
-// da página. No mobile só o card aparece. Tema claro/escuro via header.
-
-// const HIGHLIGHTS = [
-  // {
-  //  Icon: Bot,
-   // title: 'Chat especialista',
-  //  text: 'Treinado em centenas de artigos de procurement (Kraljic, Porter, Monczka).',
-  //},
-  //{
-  //  Icon: Sparkles,
-  //  title: '8 assistentes que executam',
-   // text: 'RFP, Kraljic, Porter, Negociação, ABC, Financeiro, Scorecard e mais.',
-  //},
-  //{
-  //  Icon: FileSpreadsheet,
-   // title: 'Documentos prontos',
-   // text: 'Entregas em .docx e .xlsx, prontas pra usar com sua marca.',
-  //},
-  //{
-   // Icon: Clock,
-  //  title: '3 dias grátis',
-   // text: 'Teste tudo sem compromisso. Cancele quando quiser.',
-  //},
-//];
+//
+// Fundo atmosférico: a imagem "tech" original (imagem-de-fundo-entrada-...-1.jpg)
+// volta como fundo de TELA CHEIA, incorporada ao fundo do site — opacidade
+// baixa + um overlay do próprio `bg-background` que dissolve as bordas (sem
+// retângulo duro) + aura sutil da marca. Funciona nos dois temas (fica mais
+// forte no escuro, vira uma textura discreta no claro).
+//
+// Sobre esse fundo: à esquerda (desktop) a chamada + as screenshots reais do
+// sistema flutuam; à direita o card do formulário (`.panel`), estreito
+// (`max-w-md`) e centrado — corrige a tela de login larga demais.
 
 export function AuthShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative min-h-screen bg-background text-foreground font-outfit antialiased flex flex-col">
+    <div className="relative min-h-screen bg-background text-foreground font-sans antialiased flex flex-col">
+      {/* Fundo tecnológico incorporado em TODA a tela */}
+      <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-0">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/imagens/imagem-de-fundo-entrada-chatsupply-1.jpg"
+          alt=""
+          className="h-full w-full object-cover opacity-25 dark:opacity-[0.6]"
+        />
+        {/* Overlay uniforme e leve: dá contraste ao conteúdo sem apagar a
+            textura — a imagem tech permanece visível de ponta a ponta. */}
+        <div className="absolute inset-0 bg-background/60 dark:bg-background/45" />
+        <div className="absolute inset-0 brand-aura" />
+      </div>
+
       <Header />
 
-      <main className="relative z-10 flex-1 grid lg:grid-cols-1-2 pt-[73px]">
-        {/* Painel "Bem-vindo" — gradiente vivo da marca, cor constante nos dois
-            temas (como os onboardings das grandes plataformas). */}
-        <aside className="entrada relative flex flex-col justify-start gap-6 overflow-hidden px-5 py-8 text-white sm:px-8 sm:py-10 lg:gap-8 lg:px-12 lg:py-14 xl:px-16">
-          {/* Blobs orgânicos decorativos */}
-      
-
-          
-<section className="w-full">
-  {/* Vídeo de fundo
-  <video
-    className="video-entrada"
-    autoPlay
-    muted
-    loop
-    playsInline
-  >
-    <source src="/videos/background.mp4" type="video/mp4" />
-  </video>
-  */}
-
-  {/* Conteúdo */}
-  <div className="conteudo-entrada relative z-10 mx-auto w-full max-w-5xl px-2 text-center">
-    <span className="subtitulo-entrada inline-flex max-w-full flex-wrap justify-center text-center">
-      <strong>Transforme dados</strong>&nbsp;em decisões estratégicas com a
-    </span>
-
-    <h1 className="titulo-entrada mt-3">
-      <span>Inteligência Artificial</span>
-      <br />
-      para Suprimentos
-    </h1>
-  </div>
-
-  {/* Imagens */}
-  <div className="relative mx-auto mt-6 w-full max-w-5xl text-center sm:mt-8">
-    
-    <div className="imagem-entrada-01 mx-auto w-full max-w-[684px]">
-      <Image
-        src="/imagens/imagem-de-fundo-entrada-chatsupply-01.png"
-        alt=""
-        width={684}
-        height={407}
-        priority
-        className="h-auto w-full object-contain"
-      />
-    </div>
-
-    <div className="imagem-entrada-02">
-      <Image
-        src="/imagens/imagem-de-fundo-entrada-chatsupply-02.png"
-        alt=""
-        width={247}
-        height={147}
-        className="h-auto w-full object-contain"
-      />
-    </div>
-
-    <div className="imagem-entrada-03">
-      <Image
-        src="/imagens/imagem-de-fundo-entrada-chatsupply-03.png"
-        alt=""
-        width={276}
-        height={164}
-        className="h-auto w-full object-contain"
-      />
-    </div>
-
-  </div>
-</section>
-
-
-          {/* Centro — boas-vindas + pitch 
-          <div className="relative space-y-5 max-w-lg">
-            <h2 className="text-4xl xl:text-5xl font-bold tracking-tight leading-[1.1]">
-              Bem-vindo à IA de{' '}
-              <span className="underline decoration-white/40 decoration-4 underline-offset-4">
-                Strategic Sourcing
-              </span>
-              .
+      <main className="relative z-10 flex-1 grid lg:grid-cols-[1.15fr_1fr] pt-[73px]">
+        {/* ── Chamada + screenshots do sistema (transparente: o fundo tech
+              aparece por trás e unifica a tela) ── */}
+        <aside className="relative hidden lg:flex flex-col justify-center gap-12 px-12 xl:px-16 py-14">
+          <div className="relative max-w-lg">
+            <span className="block text-xs sm:text-sm font-medium uppercase tracking-wider text-muted-foreground">
+              Transforme dados em decisões estratégicas com a
+            </span>
+            <h2 className="mt-3 text-4xl xl:text-5xl font-bold leading-[1.05] tracking-tight">
+              <span className="text-brand-gradient">Inteligência Artificial</span>
+              <br />
+              <span className="text-foreground/80">para Suprimentos</span>
             </h2>
-            <p className="text-lg text-white/85">
-              Decisões de compras mais rápidas e fundamentadas — do diagnóstico
-              da categoria à negociação.
-            </p>
-          </div>*/}
+          </div>
 
-          {/* Base — highlights 
-          <ul className="relative space-y-4 max-w-lg">
-            //{HIGHLIGHTS.map(({ Icon, title, text }) => (
-              <li key={title} className="flex items-start gap-3.5">
-                <span className="mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/25">
-                  <Icon className="h-5 w-5" aria-hidden="true" />
-                </span>
-                <div>
-                  <div className="text-sm font-semibold">{title}</div>
-                  <div className="text-sm text-white/75">{text}</div>
-                </div>
-              </li>
-            ))}
-          </ul>*/}
+          {/* Screenshots reais — a principal + duas flutuantes */}
+          <div className="relative mx-auto w-full max-w-xl">
+            <div className="overflow-hidden rounded-xl border border-border shadow-2xl shadow-black/30 dark:shadow-black/50">
+              <Image
+                src="/imagens/imagem-de-fundo-entrada-chatsupply-01.png"
+                alt="Painel do PROGPT em uso"
+                width={684}
+                height={407}
+                priority
+                className="h-auto w-full"
+              />
+            </div>
+
+            <div className="absolute -bottom-6 left-2 w-[42%] overflow-hidden rounded-lg border border-border shadow-xl shadow-black/40 backdrop-blur-sm">
+              <Image
+                src="/imagens/imagem-de-fundo-entrada-chatsupply-02.png"
+                alt=""
+                width={247}
+                height={147}
+                className="h-auto w-full"
+              />
+            </div>
+
+            <div className="absolute -bottom-8 right-1 w-[44%] overflow-hidden rounded-lg border border-border shadow-xl shadow-black/40 backdrop-blur-sm">
+              <Image
+                src="/imagens/imagem-de-fundo-entrada-chatsupply-03.png"
+                alt=""
+                width={276}
+                height={164}
+                className="h-auto w-full"
+              />
+            </div>
+          </div>
         </aside>
 
-        {/* Coluna do formulário. flex-col + my-auto centraliza quando cabe e
-            deixa a página rolar (sem cortar o topo) quando o form é mais alto
-            que a viewport — caso do cadastro card-first. */}
-        <div className="relative flex flex-col px-4 sm:px-6 py-8 sm:py-10">
-          {/* glow sutil da marca atrás do card */}
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0"
-          />
-          <div className="relative my-auto mx-auto w-full max-w-lg bg-card border border-border rounded-2xl p-6 sm:p-8 shadow-xl dark:shadow-2xl dark:shadow-black/40">
-            {children}
+        {/* ── Coluna do formulário ── */}
+        <div className="relative flex items-center justify-center px-4 sm:px-6 py-10">
+          <div className="w-full max-w-md">
+            <div className="panel p-6 sm:p-8">{children}</div>
           </div>
         </div>
       </main>
