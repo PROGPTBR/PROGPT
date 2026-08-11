@@ -193,12 +193,7 @@
     line-height: 1em;
     margin-bottom: 20px;
 }
-@media (max-width: 767px) {
-  .titulo-entrada {
-    font-size: 25px;
-    line-height: 1.9rem;
-  }
-}
+
 .titulo-entrada span{
   -webkit-text-stroke: 0 !important;
     background: linear-gradient(90deg, rgba(14, 209, 224, 1) 50%, rgba(50, 155, 255, 1) 100%);
@@ -277,6 +272,18 @@ aside > * {
    na 1ª trilha (1.4fr ≈ 58% da largura), deixando espaço morto à direita. */
 .lg\:grid-cols-1-2 {
   grid-template-columns: 1fr;
+}
+@media (max-width: 767px) {
+  .titulo-entrada {
+    font-size: 25px;
+    line-height: 1.9rem;
+  }
+  .imagem-entrada-01{
+    width:100%;
+  }
+  .imagem-entrada-02,.imagem-entrada-03{
+    display:none
+  }
 }
 @media (min-width: 1024px) {
   .lg\:grid-cols-1-2 {
