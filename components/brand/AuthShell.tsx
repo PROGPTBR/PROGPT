@@ -39,66 +39,73 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
       <main className="relative z-10 flex-1 grid lg:grid-cols-1-2 pt-[73px]">
         {/* Painel "Bem-vindo" — gradiente vivo da marca, cor constante nos dois
             temas (como os onboardings das grandes plataformas). */}
-        <aside className="entrada justify-start relative hidden lg:flex flex-col gap-8 overflow-hidden  px-12 xl:px-16 py-14 text-white">
+        <aside className="entrada relative flex flex-col justify-start gap-6 overflow-hidden px-5 py-8 text-white sm:px-8 sm:py-10 lg:gap-8 lg:px-12 lg:py-14 xl:px-16">
           {/* Blobs orgânicos decorativos */}
       
 
           
-<section>
-
-  {/* Video
-  <video className="video-entrada" autoPlay muted  loop  playsInline>
+<section className="w-full">
+  {/* Vídeo de fundo
+  <video
+    className="video-entrada"
+    autoPlay
+    muted
+    loop
+    playsInline
+  >
     <source src="/videos/background.mp4" type="video/mp4" />
   </video>
-*/}
+  */}
 
-  <div className="relative text-center conteudo-entrada ">
-    <span className="inline-flex subtitulo-entrada">
-      <strong>Transforme dados</strong> em decisões estratégicas com a
+  {/* Conteúdo */}
+  <div className="conteudo-entrada relative z-10 mx-auto w-full max-w-5xl px-2 text-center">
+    <span className="subtitulo-entrada inline-flex max-w-full flex-wrap justify-center text-center">
+      <strong>Transforme dados</strong>&nbsp;em decisões estratégicas com a
     </span>
 
-    <h1 className="titulo-entrada">
+    <h1 className="titulo-entrada mt-3">
       <span>Inteligência Artificial</span>
       <br />
       para Suprimentos
     </h1>
   </div>
 
-<div className="relative text-center">
-  <div className="imagem-entrada-01">
-  <Image
-    src="/imagens/imagem-de-fundo-entrada-chatsupply-01.png"
-    alt=""
-    width={684}
-  height={407}
-    priority
-    className="object-contain"
-  />
-</div>
+  {/* Imagens */}
+  <div className="relative mx-auto mt-6 w-full max-w-5xl text-center sm:mt-8">
+    
+    <div className="imagem-entrada-01 mx-auto w-full max-w-[684px]">
+      <Image
+        src="/imagens/imagem-de-fundo-entrada-chatsupply-01.png"
+        alt=""
+        width={684}
+        height={407}
+        priority
+        className="h-auto w-full object-contain"
+      />
+    </div>
 
-<div className="imagem-entrada-02">
-  <Image
-    src="/imagens/imagem-de-fundo-entrada-chatsupply-02.png"
-    alt=""
-   width={247}
-  height={147}
-    className="object-contain"
-  />
-</div>
+    <div className="imagem-entrada-02">
+      <Image
+        src="/imagens/imagem-de-fundo-entrada-chatsupply-02.png"
+        alt=""
+        width={247}
+        height={147}
+        className="h-auto w-full object-contain"
+      />
+    </div>
 
-<div className="imagem-entrada-03">
-  <Image
-    src="/imagens/imagem-de-fundo-entrada-chatsupply-03.png"
-    alt=""
-    width={276}
-  height={164}
-    className="object-contain"
-  />
-</div>
+    <div className="imagem-entrada-03">
+      <Image
+        src="/imagens/imagem-de-fundo-entrada-chatsupply-03.png"
+        alt=""
+        width={276}
+        height={164}
+        className="h-auto w-full object-contain"
+      />
+    </div>
+
   </div>
-
 </section>
-
 
 
           {/* Centro — boas-vindas + pitch 
