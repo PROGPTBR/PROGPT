@@ -1,6 +1,5 @@
 import { Suspense } from 'react';
 import { redirect } from 'next/navigation';
-import { Header } from './header';
 import { AuthShell } from '@/components/brand/AuthShell';
 import { LoginForm } from '@/components/auth/LoginForm';
 import { getCurrentUser } from '@/lib/auth';
@@ -20,15 +19,11 @@ export default async function LoginPage({
   }
 
   return (
-    <>
-      <Header />
-
-      <AuthShell>
-        <Suspense fallback={null}>
-          <LoginForm />
-        </Suspense>
-      </AuthShell>
-    </>
+    <AuthShell>
+      <Suspense fallback={null}>
+        <LoginForm />
+      </Suspense>
+    </AuthShell>
   );
 }
 

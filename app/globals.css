@@ -17,12 +17,13 @@
   /* Light theme (opt-in via the toggle). Clean, airy — white surfaces,
      deep-navy text, the 2B Supply blue as the accent. */
   :root {
-    /* Soft slate base (não branco puro) — cards brancos destacam com sombra,
-       um look mais profissional/menos estourado. */
-    --background: 214 30% 92%; /* #e6ebf1 slate suave */
+    /* Clean neutral canvas (ported from the reference design language):
+       soft off-white background, pure-white cards that float on it by shadow
+       rather than a heavy border. Faint cool tint keeps it on-brand. */
+    --background: 210 22% 96%; /* #f2f4f6 soft neutral */
     --foreground: 222 47% 11%;
 
-    --card: 0 0% 100%; /* card branco "flutua" sobre o slate */
+    --card: 0 0% 100%; /* white card floats on the canvas via shadow */
     --card-foreground: 222 47% 11%;
 
     --popover: 0 0% 100%;
@@ -31,23 +32,28 @@
     --primary: 204 84% 45%; /* #1283d4 brand blue — readable on white */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 214 28% 89%;
+    --secondary: 210 20% 93%;
     --secondary-foreground: 222 47% 11%;
 
-    --muted: 214 28% 90%;
-    --muted-foreground: 215 16% 38%;
+    --muted: 210 20% 94%;
+    --muted-foreground: 215 16% 40%;
 
-    --accent: 204 70% 90%; /* faint blue tint for hovers */
+    --accent: 204 70% 92%; /* faint blue tint for hovers */
     --accent-foreground: 222 47% 11%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 214 22% 83%;
-    --input: 214 22% 84%;
+    --border: 214 20% 89%; /* hairline — surfaces separate by shadow, not line */
+    --input: 214 20% 87%;
     --ring: 204 84% 45%;
 
-    --radius: 0.625rem;
+    /* More generous default radius for the modern, rounded-surface look. */
+    --radius: 0.875rem;
+
+    /* Back-compat: legacy `var(--font-outfit)` references (SVG previews, etc.)
+       now resolve to Inter — the single typeface across the app. */
+    --font-outfit: var(--font-inter);
   }
 
   .dark {
@@ -86,8 +92,9 @@
   h4,
   h5,
   h6 {
-    font-family: var(--font-outfit);
+    font-family: var(--font-inter);
     font-weight: 600;
+    letter-spacing: -0.015em;
   }
 
   body {
@@ -146,6 +153,24 @@
       radial-gradient(50% 50% at 90% 10%, rgba(14, 141, 225, 0.10), transparent 70%);
   }
 
+  /* Panel — the core surface of the modern design language. Cards float on
+     the canvas by shadow (light) and gain a hairline back in dark, where the
+     shadow reads as depth rather than separation. Rounded 22px for the soft,
+     confident look ported from the reference. */
+  .panel {
+    background-color: hsl(var(--card));
+    border-radius: 1.375rem;
+    box-shadow:
+      0 1px 2px rgb(6 12 24 / 0.06),
+      0 24px 48px -30px rgb(6 12 24 / 0.28);
+  }
+  .dark .panel {
+    border: 1px solid hsl(var(--border));
+    box-shadow:
+      0 1px 2px rgb(0 0 0 / 0.3),
+      0 22px 46px -28px rgb(0 0 0 / 0.7);
+  }
+
   /* Landing top menu rounded hover (kept from original). */
   .menu-topo a {
     border-radius: 100px;
@@ -181,114 +206,6 @@
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(217 24% 32%);
   background-clip: padding-box;
-}
-.conteudo-entrada{
-  margin-bottom: 40px;
-}
-.titulo-entrada{
-    font-size: 40px;
-    font-weight: 900;
-    text-transform: uppercase;
-    color: #ffffff;
-    line-height: 1em;
-    margin-bottom: 20px;
-}
-
-.titulo-entrada span{
-  -webkit-text-stroke: 0 !important;
-    background: linear-gradient(90deg, rgba(14, 209, 224, 1) 50%, rgba(50, 155, 255, 1) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-
-}
-.subtitulo-entrada{
-    font-size: 17px;
-    text-transform: uppercase;
-    margin-bottom: 5px;
-}
-.subtitulo-entrada strong{
-  margin-right:6px;
-}
-
-aside {
-    position: relative;
-    overflow: hidden;
-}
-
-aside.entrada::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background-image: url("/imagens/imagem-de-fundo-entrada-chatsupply-1.jpg");
-    background-position: center;
-    background-repeat: no-repeat;
-    background-size: cover;
-    opacity: 0.3;
-    filter: brightness(150%);
-}
-
-aside > * {
-    position: relative;
-    z-index: 1;
-}
-
-.imagem-entrada-01{
-    border: 3px solid #12161d;
-    border-radius: 5px;
-    width: 70%;
-    margin: 0 auto;
-}
-.imagem-entrada-02{
-    will-change: transform;
-    transform: translate3d(0px, -1.42044%, 0px) scale3d(1, 1, 1) rotateX(0deg) rotateY(0deg) rotateZ(0deg) skew(0deg, 0deg);
-    transform-style: preserve-3d;
-    -webkit-backdrop-filter: blur(6px) blur(5px);
-    backdrop-filter: blur(6px) blur(5px);
-    width: 25%;
-    max-width: 368px;
-    position: absolute;
-    inset: auto auto 39% 7%
-}
-.imagem-entrada-03{
-    opacity: 1;
-    will-change: transform;
-    transform: translate3d(0px, 0.13614%, 0px) scale3d(1, 1, 1) rotateX(0deg) rotateY(0deg) rotateZ(0deg) skew(0deg, 0deg);
-    transform-style: preserve-3d;
-    -webkit-backdrop-filter: blur(6px);
-    backdrop-filter: blur(6px);
-    width: 28%;
-    max-width: 428px;
-    position: absolute;
-    inset: auto 5% 13% auto
-}
-.imagem-entrada-02 img,.imagem-entrada-03 img{
-  background: black;
-  border-radius: 10px;
-  filter: brightness(150%);
-}
-/* Mobile-first: coluna única (só o card do formulário aparece). O painel
-   "Bem-vindo" (<aside hidden lg:flex>) e a 2ª trilha do grid só existem a
-   partir de lg — senão o grid reserva 2 colunas no celular e espreme o card
-   na 1ª trilha (1.4fr ≈ 58% da largura), deixando espaço morto à direita. */
-.lg\:grid-cols-1-2 {
-  grid-template-columns: 1fr;
-}
-@media (max-width: 767px) {
-  .titulo-entrada {
-    font-size: 25px;
-    line-height: 1.9rem;
-  }
-  .imagem-entrada-01{
-    width:100%;
-  }
-  .imagem-entrada-02,.imagem-entrada-03{
-    display:none
-  }
-}
-@media (min-width: 1024px) {
-  .lg\:grid-cols-1-2 {
-    grid-template-columns: 1.4fr 1fr;
-  }
 }
 /* Swipe-up — chevrons subindo em sequência (acento moderno de movimento). */
 @keyframes swipe-up {
