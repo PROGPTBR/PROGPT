@@ -38,7 +38,7 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
         {/* ── Chamada + screenshots do sistema (transparente: o fundo tech
               aparece por trás e unifica a tela) ── */}
         <aside className="relative hidden lg:flex flex-col justify-center gap-12 px-12 xl:px-16 py-14">
-          <div className="relative max-w-lg">
+          <div className="relative mx-auto w-full max-w-xl text-center">
             <span className="block text-xs sm:text-sm font-medium uppercase tracking-wider text-muted-foreground">
               Transforme dados em decisões estratégicas com a
             </span>
