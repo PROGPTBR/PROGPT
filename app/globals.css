@@ -193,6 +193,12 @@
     line-height: 1em;
     margin-bottom: 20px;
 }
+@media (max-width: 767px) {
+  .titulo-entrada {
+    font-size: 25px;
+    line-height: 1.9rem;
+  }
+}
 .titulo-entrada span{
   -webkit-text-stroke: 0 !important;
     background: linear-gradient(90deg, rgba(14, 209, 224, 1) 50%, rgba(50, 155, 255, 1) 100%);
