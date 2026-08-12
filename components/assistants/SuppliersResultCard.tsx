@@ -3,19 +3,24 @@
 import { useState } from 'react';
 import {
   Building2,
+  CalendarClock,
   ChevronDown,
   ChevronUp,
   ExternalLink,
   Mail,
   MapPin,
   Phone,
+  Star,
   Users,
 } from 'lucide-react';
 import type { GroupedSupplier, SupplierResult } from '@/lib/suppliers/types';
 import type { FiscalBadge } from '@/lib/fiscal/snapshot';
+import { isPrimaryActivity, yearsInMarket } from '@/lib/suppliers/ranking';
 
 type Props = {
   group: GroupedSupplier;
+  /** CNAE que originou a busca — pra badge "atividade principal/secundária". */
+  cnae: string;
   fiscal?: FiscalBadge;
 };
 
@@ -109,13 +114,15 @@ function collectUfs(units: SupplierResult[]): string[] {
   return Array.from(set).sort();
 }
 
-export function SuppliersResultCard({ group, fiscal }: Props) {
+export function SuppliersResultCard({ group, cnae, fiscal }: Props) {
   const [expanded, setExpanded] = useState(false);
 
   const matriz = pickMatriz(group.units);
   const allCnaes = collectCnaes(group.units);
   const ufs = collectUfs(group.units);
   const isMultiUnit = group.units.length > 1;
+  const primaryMatch = isPrimaryActivity(group, cnae);
+  const anos = yearsInMarket(group.aberturaAno, new Date().getFullYear());
 
   const cap = formatCapital(matriz.capital_social);
   const googleQuery = encodeURIComponent(
@@ -143,6 +150,23 @@ export function SuppliersResultCard({ group, fiscal }: Props) {
           )}
         <div className="text-[11px] font-mono text-muted-foreground">
           CNPJ base {formatCnpjBasico(group.cnpjBasico)}
+        </div>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span
+            className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-medium border ${
+              primaryMatch
+                ? 'bg-brand/10 border-brand/30 text-brand'
+                : 'bg-muted/50 border-border text-muted-foreground'
+            }`}
+            title={
+              primaryMatch
+                ? 'O CNAE buscado é a atividade PRINCIPAL desta empresa'
+                : 'O CNAE buscado é uma atividade secundária desta empresa'
+            }
+          >
+            {primaryMatch && <Star className="h-2.5 w-2.5" aria-hidden="true" />}
+            {primaryMatch ? 'Atividade principal' : 'Atividade secundária'}
+          </span>
         </div>
         <FiscalSelo fiscal={fiscal} />
       </div>
@@ -189,6 +213,15 @@ export function SuppliersResultCard({ group, fiscal }: Props) {
           <div className="flex items-center gap-1.5 text-muted-foreground">
             <Building2 className="h-3 w-3 flex-shrink-0" aria-hidden="true" />
             <span>Capital social {cap}</span>
+          </div>
+        )}
+        {group.aberturaAno != null && (
+          <div className="flex items-center gap-1.5 text-muted-foreground">
+            <CalendarClock className="h-3 w-3 flex-shrink-0" aria-hidden="true" />
+            <span>
+              No mercado desde {group.aberturaAno}
+              {anos != null && anos >= 1 ? ` · ${anos} anos` : ''}
+            </span>
           </div>
         )}
       </div>
