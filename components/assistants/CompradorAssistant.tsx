@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { CompradorImportDialog } from '@/components/assistants/CompradorImportDialog';
+import { CompradorPriceChart } from '@/components/assistants/CompradorPriceChart';
 import type { CompradorResult } from '@/lib/assistants/comprador';
 
 const brl = (n: number) =>
@@ -401,9 +402,9 @@ function QuoteDetail({ id, onBack }: { id: string; onBack: () => void }) {
         <ArrowLeft className="h-4 w-4" /> Caixa de cotações
       </button>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
         {/* Análise */}
-        <div className="space-y-4">
+        <div className="space-y-4 lg:col-span-3">
           {a && (
             <>
               <div className="rounded-2xl border border-border bg-card p-5 space-y-2">
@@ -415,20 +416,57 @@ function QuoteDetail({ id, onBack }: { id: string; onBack: () => void }) {
                 </div>
               </div>
 
+              {/* Gráfico de balizamento de preços */}
+              {a.ranking?.length ? (
+                <CompradorPriceChart ranking={a.ranking} recommended={a.recomendacao_fornecedor} />
+              ) : null}
+
+              {/* Comparativo completo de condições comerciais */}
               <div className="rounded-2xl border border-border bg-card overflow-hidden">
-                <div className="px-4 py-2 border-b border-border text-xs font-medium text-muted-foreground">Ranking por TCO</div>
-                <table className="w-full text-left text-xs">
-                  <thead><tr className="text-muted-foreground border-b border-border"><th className="px-3 py-2">Fornecedor</th><th className="px-3 py-2">Prazo</th><th className="px-3 py-2 text-right">Custo total</th></tr></thead>
-                  <tbody>
-                    {a.ranking?.map((it, i) => (
-                      <tr key={i} className={'border-b border-border/50 ' + (it.fornecedor === a.recomendacao_fornecedor ? 'bg-brand/10' : '')}>
-                        <td className="px-3 py-2">{it.fornecedor}</td>
-                        <td className="px-3 py-2">{it.prazo_entrega}</td>
-                        <td className="px-3 py-2 text-right">{brl(it.custo_total)}</td>
+                <div className="px-4 py-2 border-b border-border text-xs font-medium text-muted-foreground">
+                  Balizamento de condições comerciais
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[640px] text-left text-xs">
+                    <thead>
+                      <tr className="text-muted-foreground border-b border-border">
+                        <th className="px-3 py-2 font-medium">Fornecedor</th>
+                        <th className="px-3 py-2 font-medium">Preço</th>
+                        <th className="px-3 py-2 font-medium">Frete</th>
+                        <th className="px-3 py-2 font-medium">Impostos</th>
+                        <th className="px-3 py-2 font-medium">Prazo</th>
+                        <th className="px-3 py-2 font-medium">Validade</th>
+                        <th className="px-3 py-2 font-medium">Pagamento</th>
+                        <th className="px-3 py-2 font-medium text-right">Custo total</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {a.ranking?.map((it, i) => {
+                        const rec = it.fornecedor === a.recomendacao_fornecedor;
+                        return (
+                          <tr
+                            key={i}
+                            className={'border-b border-border/50 align-top ' + (rec ? 'bg-brand/10' : '')}
+                          >
+                            <td className="px-3 py-2 font-medium">
+                              {it.fornecedor}
+                              {rec && <span className="ml-1 text-brand">★</span>}
+                            </td>
+                            <td className="px-3 py-2 text-muted-foreground">{it.preco}</td>
+                            <td className="px-3 py-2 text-muted-foreground">{it.frete}</td>
+                            <td className="px-3 py-2 text-muted-foreground">{it.impostos}</td>
+                            <td className="px-3 py-2 text-muted-foreground">{it.prazo_entrega}</td>
+                            <td className="px-3 py-2 text-muted-foreground">{it.validade}</td>
+                            <td className="px-3 py-2 text-muted-foreground">{it.condicao_pagamento}</td>
+                            <td className="px-3 py-2 text-right font-semibold tabular-nums">
+                              {brl(it.custo_total)}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
 
               {a.desvios_politica?.length ? (
@@ -449,7 +487,7 @@ function QuoteDetail({ id, onBack }: { id: string; onBack: () => void }) {
         </div>
 
         {/* Resposta ao fornecedor */}
-        <div className="space-y-4">
+        <div className="space-y-4 lg:col-span-2">
           <div className="rounded-2xl border border-brand/30 bg-brand-gradient-soft p-5 space-y-3">
             <div className="flex items-center gap-2">
               <Mail className="h-4 w-4 text-brand" />
