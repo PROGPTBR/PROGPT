@@ -1,5 +1,6 @@
 import { getReceitaSql } from './receita-db';
 import { getCnaeByCode } from './cnae-lookup';
+import { extractYear } from './ranking';
 import type {
   GroupedSupplier,
   SearchRequest,
@@ -26,6 +27,36 @@ import type {
 const DEFAULT_LIMIT = 50;
 const COUNT_CAP = 500; // cap defensivo de empresas distintas
 
+// Nomes candidatos da coluna de data de abertura na base `empresas` (a
+// tabela é operada por outro projeto; o nome pode variar entre dumps da
+// Receita). Detectado UMA vez via information_schema e cacheado — se nenhuma
+// existir, o tempo de mercado fica desligado (nunca quebra a query).
+const OPENING_COLUMN_CANDIDATES = [
+  'data_abertura',
+  'data_inicio_atividade',
+  'data_inicio_atividades',
+  'data_de_abertura',
+];
+let openingColumnCache: string | null | undefined;
+
+async function getOpeningColumn(
+  sql: ReturnType<typeof getReceitaSql>,
+): Promise<string | null> {
+  if (openingColumnCache !== undefined) return openingColumnCache;
+  try {
+    const rows = await sql<Array<{ column_name: string }>>`
+      select column_name from information_schema.columns
+      where table_name = 'empresas'
+        and column_name = any(${OPENING_COLUMN_CANDIDATES}::text[])
+      limit 1
+    `;
+    openingColumnCache = rows[0]?.column_name ?? null;
+  } catch {
+    openingColumnCache = null;
+  }
+  return openingColumnCache;
+}
+
 export async function searchSuppliers(
   params: SearchRequest,
 ): Promise<SearchResponse> {
@@ -33,15 +64,31 @@ export async function searchSuppliers(
   const sql = getReceitaSql();
 
   const ufFilter = ufs && ufs.length > 0 ? ufs : null;
+  const openCol = await getOpeningColumn(sql);
+
+  // Fragmentos condicionais pro tempo de mercado (só quando a coluna existe).
+  const openingSelect = openCol ? sql`, ${sql(openCol)} as abertura` : sql``;
+  const openingAgg = openCol ? sql`, min(abertura) as abertura_min` : sql``;
+  const openingOrder = openCol ? sql`min(abertura) asc nulls last,` : sql``;
 
   let groups: GroupedSupplier[] = [];
   let count = 0;
   try {
+    // ORDER BY = SCORE DE APTIDÃO (não mais só capital social):
+    //   +100  CNAE buscado é a ATIVIDADE PRINCIPAL de alguma unidade
+    //   + 40  tem contato (telefone/email) em alguma unidade
+    //   +0/10/20/30  porte (ME<EPP<DEMAIS)
+    // desempate: mais antiga primeiro (tempo de mercado), depois maior
+    // capital, depois razão social. Capital deixa de dominar o topo (jogava
+    // holding/empresa-de-fachada pra cima).
     const dbRows = await sql<RawGroupRow[]>`
       with matches as (
         select cnpj, razao_social, nome_fantasia, cnae_primario, cnaes_secundarios,
                porte, capital_social, faixa_funcionarios, uf, municipio,
-               telefone, email, ultima_atualizacao_rf
+               telefone, email, ultima_atualizacao_rf,
+               (cnae_primario = ${cnae}) as is_primary,
+               (telefone is not null or email is not null) as has_contact
+               ${openingSelect}
         from empresas
         where (cnae_primario = ${cnae}
                or ${cnae} = any(coalesce(cnaes_secundarios, array[]::varchar[])))
@@ -67,9 +114,16 @@ export async function searchSuppliers(
                )
                order by cnpj asc
              ) as units
+             ${openingAgg}
       from matches
       group by substring(cnpj from 1 for 8)
-      order by max(capital_social) desc nulls last,
+      order by (
+                 (case when bool_or(is_primary) then 100 else 0 end)
+                 + (case when bool_or(has_contact) then 40 else 0 end)
+                 + (max(case porte when 'DEMAIS' then 3 when 'EPP' then 2 when 'ME' then 1 else 0 end) * 10)
+               ) desc,
+               ${openingOrder}
+               max(capital_social) desc nulls last,
                min(razao_social) asc
       limit ${limit}
       offset ${offset}
@@ -78,6 +132,7 @@ export async function searchSuppliers(
     groups = dbRows.map((row) => ({
       cnpjBasico: row.cnpj_basico,
       units: row.units.map(normalizeRow),
+      aberturaAno: extractYear(row.abertura_min ?? null),
     }));
 
     // Distinct-company count com cap.
@@ -113,6 +168,7 @@ export async function searchSuppliers(
 type RawGroupRow = {
   cnpj_basico: string;
   units: RawEmpresaRow[];
+  abertura_min?: Date | string | null;
 };
 
 type RawEmpresaRow = {

@@ -69,6 +69,10 @@ export type SupplierResult = z.infer<typeof SupplierResultSchema>;
 export const GroupedSupplierSchema = z.object({
   cnpjBasico: z.string(),
   units: z.array(SupplierResultSchema).min(1),
+  // Ano de abertura mais antigo do grupo (tempo de mercado). Opcional — só
+  // vem preenchido quando a base `empresas` expõe a coluna de data de
+  // abertura (detectada em runtime; ver search.ts). null = desconhecido.
+  aberturaAno: z.number().int().nullable().optional(),
 });
 export type GroupedSupplier = z.infer<typeof GroupedSupplierSchema>;
 

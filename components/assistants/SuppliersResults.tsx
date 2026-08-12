@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import type { GroupedSupplier, SearchResponse, UF } from '@/lib/suppliers/types';
 import type { FiscalBadge } from '@/lib/fiscal/snapshot';
+import { passesFiscalFilter, type FiscalFilter } from '@/lib/suppliers/ranking';
 import { SuppliersResultCard } from './SuppliersResultCard';
 
 const ENRICH_CAP = 30;
@@ -72,15 +73,22 @@ export function SuppliersResults({
   const [sizeFilter, setSizeFilter] = useState<SizeFilter>('all');
   const [contactOnly, setContactOnly] = useState(false);
   const [fiscalMap, setFiscalMap] = useState<Map<string, FiscalBadge>>(new Map());
+  const [fiscalFilter, setFiscalFilter] = useState<FiscalFilter>({
+    onlyActive: false,
+    hideHighRisk: false,
+  });
   const [enriching, setEnriching] = useState(false);
+
+  const enriched = fiscalMap.size > 0;
 
   const filtered = useMemo(() => {
     return response.groups.filter((g) => {
       if (!groupHasSize(g, sizeFilter)) return false;
       if (contactOnly && !groupHasContact(g)) return false;
+      if (!passesFiscalFilter(fiscalMap.get(matrizCnpj(g)), fiscalFilter)) return false;
       return true;
     });
-  }, [response.groups, sizeFilter, contactOnly]);
+  }, [response.groups, sizeFilter, contactOnly, fiscalMap, fiscalFilter]);
 
   const totalLabel =
     response.total >= 500 ? '500+' : response.total.toString();
@@ -228,6 +236,34 @@ export function SuppliersResults({
             Com telefone ou email
           </label>
 
+          {enriched && (
+            <>
+              <div className="h-5 w-px bg-border" />
+              <label className="inline-flex items-center gap-2 text-xs text-foreground/80 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={fiscalFilter.onlyActive}
+                  onChange={(e) =>
+                    setFiscalFilter((f) => ({ ...f, onlyActive: e.target.checked }))
+                  }
+                  className="rounded border-border text-brand focus:ring-brand"
+                />
+                Só situação ATIVA
+              </label>
+              <label className="inline-flex items-center gap-2 text-xs text-foreground/80 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={fiscalFilter.hideHighRisk}
+                  onChange={(e) =>
+                    setFiscalFilter((f) => ({ ...f, hideHighRisk: e.target.checked }))
+                  }
+                  className="rounded border-border text-brand focus:ring-brand"
+                />
+                Esconder risco alto
+              </label>
+            </>
+          )}
+
           <div className="ml-auto text-xs text-muted-foreground">
             Mostrando {filtered.length} de {response.groups.length}
           </div>
@@ -249,6 +285,7 @@ export function SuppliersResults({
             <SuppliersResultCard
               key={g.cnpjBasico}
               group={g}
+              cnae={cnae}
               fiscal={fiscalMap.get(matrizCnpj(g))}
             />
           ))}
