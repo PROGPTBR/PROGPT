@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { BrandLogo } from '@/components/brand/BrandLogo';
+import { PricingTable } from '@/components/billing/PricingTable';
 import { isStandaloneDisplay } from '@/lib/pwa';
 import {
   ArrowRight,
@@ -176,17 +177,13 @@ type Plan = {
   features: string[];
 };
 
-function fmtPrice(value: number) {
-  return `R$ ${Number(value).toFixed(2).replace('.', ',')}`;
-}
-
-// Mesma ordenação do PricingTable de /planos (fonte da verdade dos planos).
-function orderPlans(plans: Plan[]): Plan[] {
-  const order: Record<string, number> = { free: 1, 'pf-99': 2, 'pj-consulte': 3 };
-  return [...plans].sort((a, b) => (order[a.slug] || 99) - (order[b.slug] || 99));
-}
-
-export function LandingClient({ plans }: { plans: Plan[] }) {
+export function LandingClient({
+  plans,
+  authed,
+}: {
+  plans: Plan[];
+  authed: boolean;
+}) {
   const router = useRouter();
   // Navegador (inclusive celular) ⇒ landing. App instalado (PWA) ⇒ vai
   // direto pro login; a própria /login manda pro /chat quem já está logado.
@@ -574,23 +571,12 @@ export function LandingClient({ plans }: { plans: Plan[] }) {
           </div>
         </section>
 
-        {/* ───── Planos ───── */}
+        {/* ───── Planos — MESMO componente da aba /planos (idêntico) ───── */}
         <section id="planos" className="py-24 px-6 md:px-12 max-w-7xl mx-auto border-t border-white/5">
-          <div className="mb-12 reveal">
-            <div className="flex items-center gap-2 mb-4">
-              <div aria-hidden="true" className="w-1.5 h-1.5 rounded-full bg-brand" />
-              <span className="text-sm text-gray-400 font-medium">Planos</span>
-            </div>
-            <h2 className="text-4xl md:text-5xl font-medium tracking-tight max-w-3xl">
-              <span className="text-white">Comece grátis,</span>{' '}
-              <span className="text-gray-500">faça upgrade quando precisar.</span>
-            </h2>
-          </div>
-
           {plans.length === 0 ? (
             // Fail-soft: se a tabela de planos não responder, o link pra /planos
-            // (que é a fonte da verdade) continua acessível.
-            <div className="reveal">
+            // (fonte da verdade) continua acessível.
+            <div className="reveal text-center">
               <Link
                 href="/planos"
                 className="inline-flex items-center justify-center gap-2 bg-brand text-black px-8 py-3 rounded-full text-sm font-medium hover:bg-brand/90 active:scale-95 transition-all duration-300"
@@ -600,87 +586,15 @@ export function LandingClient({ plans }: { plans: Plan[] }) {
               </Link>
             </div>
           ) : (
-            <div
-              className={`grid grid-cols-1 gap-6 reveal ${
-                orderPlans(plans).length >= 3 ? 'md:grid-cols-3' : 'md:grid-cols-2'
-              }`}
-            >
-              {orderPlans(plans).map((plan) => {
-                const isRecommended = plan.slug === 'pf-99';
-                const isEnterprise = plan.slug === 'pj-consulte';
-                const isFree = plan.slug === 'free';
-
-                const cta = isFree
-                  ? { href: '/signup', label: 'Criar conta grátis', solid: false }
-                  : isEnterprise
-                    ? {
-                        href: 'mailto:comercial@2bsupply.com.br?subject=Solicita%C3%A7%C3%A3o%20de%20proposta%20%E2%80%94%20Plano%20Empresas%20PROGPT',
-                        label: 'Solicitar proposta',
-                        solid: false,
-                      }
-                    : {
-                        href: '/signup?next=/pricing',
-                        label: 'Começar 3 dias grátis',
-                        solid: true,
-                      };
-
-                return (
-                  <div
-                    key={plan.id}
-                    className={`relative rounded-2xl p-8 flex flex-col ${
-                      isRecommended
-                        ? 'bg-[#1a1a1a] border-2 border-brand'
-                        : 'bg-[#111111] border border-white/5'
-                    }`}
-                  >
-                    {isRecommended && (
-                      <div className="absolute -top-3 left-8 bg-brand text-black text-[10px] uppercase tracking-wider font-semibold px-3 py-1 rounded-full">
-                        Mais popular
-                      </div>
-                    )}
-
-                    <div
-                      className={`text-xs uppercase tracking-wider mb-2 ${
-                        isRecommended ? 'text-brand' : 'text-gray-400'
-                      }`}
-                    >
-                      {plan.name}
-                    </div>
-
-                    <div className="flex items-baseline gap-1 mb-1">
-                      <div className="text-4xl font-medium text-white">
-                        {isEnterprise ? 'Sob consulta' : fmtPrice(plan.price)}
-                      </div>
-                      {plan.price > 0 && (
-                        <div className="text-sm text-gray-400">/{plan.interval}</div>
-                      )}
-                    </div>
-                    {plan.description && (
-                      <div className="text-xs text-gray-500 mb-6">{plan.description}</div>
-                    )}
-
-                    <ul className="space-y-2 text-sm text-gray-300 mb-8 flex-1">
-                      {plan.features?.map((feature) => (
-                        <li key={feature} className="flex gap-2">
-                          <span className="text-brand">✓</span> {feature}
-                        </li>
-                      ))}
-                    </ul>
-
-                    <Link
-                      href={cta.href}
-                      className={`inline-flex w-full items-center justify-center gap-2 py-2.5 rounded-full text-sm font-medium active:scale-95 transition-all duration-300 ${
-                        cta.solid
-                          ? 'bg-brand text-black hover:bg-brand/90'
-                          : 'bg-white/5 border border-white/10 text-white hover:bg-white/10'
-                      }`}
-                    >
-                      {cta.label}
-                      <ArrowRight className="w-4 h-4" aria-hidden="true" />
-                    </Link>
-                  </div>
-                );
-              })}
+            <div className="reveal">
+              <PricingTable
+                authed={authed}
+                isPro={false}
+                plans={plans}
+                userPlanSlug={null}
+                profile={null}
+                trialExpired={false}
+              />
             </div>
           )}
         </section>
