@@ -74,7 +74,7 @@ export function buildWelcomeEmail(args: { email: string }): {
   const subject = 'Bem-vindo ao PROGPT';
   const content = `
 ${h(`Bem-vindo, ${args.email.split('@')[0]} 👋`)}
-${p('Sua conta no PROGPT está pronta. Você já pode usar o chat ilimitadamente e tem 1 execução grátis de cada um dos 7 assistentes (lifetime) — RFP, Kraljic, Porter, ABC, Negociação, Análise Financeira e Perfil de Categoria.')}
+${p('Sua conta no PROGPT está pronta. Você já pode usar o chat ilimitadamente e tem 1 execução grátis de cada uma das dezenas de assistentes (lifetime) — RFP, Kraljic, Porter, ABC, Negociação, Análise Financeira e Perfil de Categoria.')}
 ${p('Comece pelo chat — pergunte como faria pra um colega sênior. Ou vá direto pra um assistente se quiser um artefato pronto em .docx/.xlsx.')}
 <div style="text-align:center;margin:24px 0;">
 ${button(`${getAppUrl()}/chat`, 'Abrir PROGPT')}
@@ -124,7 +124,7 @@ ${p(`Obrigado! Confirmamos o recebimento de <strong>R$ ${amount}</strong> refere
 <div><strong>Plano:</strong> Pro · R$ ${amount}/mês</div>
 <div style="margin-top:4px;"><strong>Próxima cobrança:</strong> ${args.nextDueDate}</div>
 </div>
-${p('Você tem acesso ilimitado aos 7 assistentes durante todo o ciclo. A nota fiscal será emitida pela Asaas (nosso processador de pagamento) e enviada separadamente.')}
+${p('Você tem acesso ilimitado às dezenas de assistentes durante todo o ciclo. A nota fiscal será emitida pela Asaas (nosso processador de pagamento) e enviada separadamente.')}
 <div style="text-align:center;margin:24px 0;">
 ${button(`${getAppUrl()}/account/billing`, 'Ver assinatura')}
 </div>
