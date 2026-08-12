@@ -7,6 +7,8 @@ import {
   ChevronDown,
   ChevronUp,
   ExternalLink,
+  FolderPlus,
+  FolderCheck,
   Mail,
   MapPin,
   Phone,
@@ -22,6 +24,10 @@ type Props = {
   /** CNAE que originou a busca — pra badge "atividade principal/secundária". */
   cnae: string;
   fiscal?: FiscalBadge;
+  /** Já está na "Minha base de fornecedores"? */
+  savedToBase?: boolean;
+  /** Salvar este fornecedor na base. */
+  onSaveToBase?: () => void;
 };
 
 const RISK_LABEL: Record<string, string> = {
@@ -114,7 +120,13 @@ function collectUfs(units: SupplierResult[]): string[] {
   return Array.from(set).sort();
 }
 
-export function SuppliersResultCard({ group, cnae, fiscal }: Props) {
+export function SuppliersResultCard({
+  group,
+  cnae,
+  fiscal,
+  savedToBase,
+  onSaveToBase,
+}: Props) {
   const [expanded, setExpanded] = useState(false);
 
   const matriz = pickMatriz(group.units);
@@ -136,11 +148,33 @@ export function SuppliersResultCard({ group, cnae, fiscal }: Props) {
           <h3 className="text-base font-semibold tracking-tight text-foreground line-clamp-2 leading-snug">
             {matriz.razao_social}
           </h3>
-          {matriz.porte && (
-            <span className="shrink-0 rounded-full bg-brand/10 border border-brand/30 px-2 py-0.5 text-[10px] font-medium text-brand">
-              {PORTE_LABEL[matriz.porte] ?? matriz.porte}
-            </span>
-          )}
+          <div className="flex shrink-0 items-center gap-1.5">
+            {matriz.porte && (
+              <span className="rounded-full bg-brand/10 border border-brand/30 px-2 py-0.5 text-[10px] font-medium text-brand">
+                {PORTE_LABEL[matriz.porte] ?? matriz.porte}
+              </span>
+            )}
+            {onSaveToBase && (
+              <button
+                type="button"
+                onClick={onSaveToBase}
+                disabled={savedToBase}
+                title={savedToBase ? 'Já está na sua base' : 'Salvar na minha base'}
+                aria-label={savedToBase ? 'Já está na sua base' : 'Salvar na minha base'}
+                className={`inline-flex h-7 w-7 items-center justify-center rounded-md border transition-colors ${
+                  savedToBase
+                    ? 'border-brand/30 bg-brand/10 text-brand cursor-default'
+                    : 'border-border text-muted-foreground hover:text-brand hover:bg-brand/10 hover:border-brand/30'
+                }`}
+              >
+                {savedToBase ? (
+                  <FolderCheck className="h-3.5 w-3.5" aria-hidden="true" />
+                ) : (
+                  <FolderPlus className="h-3.5 w-3.5" aria-hidden="true" />
+                )}
+              </button>
+            )}
+          </div>
         </div>
         {matriz.nome_fantasia &&
           matriz.nome_fantasia !== matriz.razao_social && (
