@@ -134,14 +134,36 @@ const BENEFITS = [
 ];
 
 const FAQS = [
-  'O que é o PROGPT?',
-  'Qual a diferença em relação ao ChatGPT genérico?',
-  'A base de conhecimento é da minha empresa ou compartilhada?',
-  'Quanto custa? Tem plano gratuito?',
-  'Como funcionam os assistentes (RFP, Kraljic, Negociação…)?',
-  'Posso baixar os artefatos em Word ou Excel?',
-  'Como cancelo a assinatura?',
+  {
+    q: 'O que é o PROGPT?',
+    a: 'O PROGPT é uma IA especializada em Suprimentos, criada para apoiar compradores, gestores e empresas em análises, cotações, contratos, negociação, estratégia de categorias e tomada de decisão.',
+  },
+  {
+    q: 'Qual a diferença em relação ao ChatGPT genérico?',
+    a: 'O ChatGPT genérico responde sobre vários assuntos. O PROGPT foi criado para Suprimentos. Ele entende compras, fornecedores, contratos, RFI, RFQ, Kraljic, TCO, Curva ABC, negociação e rotinas reais da área.',
+  },
+  {
+    q: 'A base de conhecimento é da minha empresa ou compartilhada?',
+    a: 'Depende do plano contratado. No plano individual, o usuário acessa a base padrão do PROGPT. No plano empresa, a IA pode trabalhar com documentos, políticas, processos e informações internas da própria contratante, conforme os requisitos de TI e compliance.',
+  },
+  {
+    q: 'Quanto custa? Tem plano gratuito?',
+    a: 'Sim. O PROGPT possui plano gratuito para uso inicial e planos pagos com mais recursos, mais mensagens, upload de arquivos, histórico, acesso aos assistentes e funcionalidades avançadas.',
+  },
+  {
+    q: 'Como funcionam os assistentes (RFP, Kraljic, Negociação…)?',
+    a: 'Cada assistente foi criado para uma necessidade específica de Suprimentos. Você escolhe o tema, como RFI/RFQ, Kraljic, Negociação, TCO, Curva ABC ou pedidos, informa os dados e recebe uma análise prática, estruturada e pronta para uso.',
+  },
+  {
+    q: 'Posso baixar os artefatos em Word ou Excel?',
+    a: 'Sim. O PROGPT pode gerar materiais prontos para uso, como análises, relatórios, comparativos, planos de ação, modelos de RFI/RFQ e planilhas, que podem ser baixados em Word ou Excel, conforme a funcionalidade disponível.',
+  },
+  {
+    q: 'Como cancelo a assinatura?',
+    a: 'O cancelamento pode ser solicitado de forma simples pelo canal de atendimento ou pela área de gestão da assinatura. Para pessoa física, o direito de arrependimento segue as regras previstas na legislação aplicável. Após esse prazo, o cliente também poderá cancelar a renovação da assinatura a qualquer momento.',
+  },
 ];
+
 
 type Plan = {
   id: string;
@@ -169,6 +191,7 @@ export function LandingClient({ plans }: { plans: Plan[] }) {
   // Navegador (inclusive celular) ⇒ landing. App instalado (PWA) ⇒ vai
   // direto pro login; a própria /login manda pro /chat quem já está logado.
   const [enteringApp, setEnteringApp] = useState(false);
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   useEffect(() => {
     if (!isStandaloneDisplay()) return;
@@ -662,51 +685,116 @@ export function LandingClient({ plans }: { plans: Plan[] }) {
           )}
         </section>
 
-        {/* ───── FAQ ───── */}
-        <section
-          id="faq"
-          className="py-24 px-6 md:px-12 max-w-7xl mx-auto border-t border-white/5"
-        >
-          <div className="mb-16 reveal">
-            <div className="flex items-center gap-2 mb-4">
-              <div aria-hidden="true" className="w-1.5 h-1.5 rounded-full bg-brand" />
-              <span className="text-sm text-gray-400 font-medium">FAQ</span>
-            </div>
-            <h2 className="text-4xl md:text-5xl font-medium tracking-tight">
-              <span className="text-white">Suas dúvidas,</span>{' '}
-              <span className="text-gray-500">respondidas com clareza.</span>
-            </h2>
-          </div>
+     {/* ───── FAQ ───── */}
+<section
+  id="faq"
+  className="py-24 px-6 md:px-12 max-w-7xl mx-auto border-t border-white/5"
+>
+  <div className="mb-16 reveal">
+    <div className="flex items-center gap-2 mb-4">
+      <div
+        aria-hidden="true"
+        className="w-1.5 h-1.5 rounded-full bg-brand"
+      />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-4 reveal">
-            <div className="space-y-4">
-              {FAQS.slice(0, 3).map((q) => (
-                <div
-                  key={q}
-                  className="border-b border-white/5 py-4 flex justify-between items-center cursor-pointer group"
-                >
-                  <span className="text-sm text-gray-300 group-hover:text-white transition-colors">
-                    {q}
-                  </span>
-                  <Plus className="w-4 h-4 text-gray-500 group-hover:text-brand transition-colors" aria-hidden="true" />
-                </div>
-              ))}
-            </div>
-            <div className="space-y-4">
-              {FAQS.slice(3).map((q) => (
-                <div
-                  key={q}
-                  className="border-b border-white/5 py-4 flex justify-between items-center cursor-pointer group"
-                >
-                  <span className="text-sm text-gray-300 group-hover:text-white transition-colors">
-                    {q}
-                  </span>
-                  <Plus className="w-4 h-4 text-gray-500 group-hover:text-brand transition-colors" aria-hidden="true" />
-                </div>
-              ))}
-            </div>
+      <span className="text-sm text-gray-400 font-medium">
+        FAQ
+      </span>
+    </div>
+
+    <h2 className="text-4xl md:text-5xl font-medium tracking-tight">
+      <span className="text-white">Suas dúvidas,</span>{' '}
+      <span className="text-gray-500">
+        respondidas com clareza.
+      </span>
+    </h2>
+  </div>
+
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-4 reveal">
+    <div className="space-y-4">
+      {FAQS.slice(0, 3).map((item, index) => {
+        const isOpen = openFaq === index;
+
+        return (
+          <div
+            key={item.q}
+            className="border-b border-white/5"
+          >
+            <button
+              type="button"
+              onClick={() =>
+                setOpenFaq(isOpen ? null : index)
+              }
+              className="w-full py-4 flex justify-between items-center text-left cursor-pointer group"
+              aria-expanded={isOpen}
+            >
+              <span className="text-sm text-gray-300 group-hover:text-white transition-colors">
+                {item.q}
+              </span>
+
+              <Plus
+                className={`w-4 h-4 text-gray-500 group-hover:text-brand transition-all duration-300 ${
+                  isOpen ? 'rotate-45 text-brand' : ''
+                }`}
+                aria-hidden="true"
+              />
+            </button>
+
+            {isOpen && (
+              <div className="pb-5 pr-8">
+                <p className="text-sm leading-6 text-gray-400">
+                  {item.a}
+                </p>
+              </div>
+            )}
           </div>
-        </section>
+        );
+      })}
+    </div>
+
+    <div className="space-y-4">
+      {FAQS.slice(3).map((item, index) => {
+        const faqIndex = index + 3;
+        const isOpen = openFaq === faqIndex;
+
+        return (
+          <div
+            key={item.q}
+            className="border-b border-white/5"
+          >
+            <button
+              type="button"
+              onClick={() =>
+                setOpenFaq(isOpen ? null : faqIndex)
+              }
+              className="w-full py-4 flex justify-between items-center text-left cursor-pointer group"
+              aria-expanded={isOpen}
+            >
+              <span className="text-sm text-gray-300 group-hover:text-white transition-colors">
+                {item.q}
+              </span>
+
+              <Plus
+                className={`w-4 h-4 text-gray-500 group-hover:text-brand transition-all duration-300 ${
+                  isOpen ? 'rotate-45 text-brand' : ''
+                }`}
+                aria-hidden="true"
+              />
+            </button>
+
+            {isOpen && (
+              <div className="pb-5 pr-8">
+                <p className="text-sm leading-6 text-gray-400">
+                  {item.a}
+                </p>
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  </div>
+</section>
 
         {/* ───── Final CTA ───── */}
         <section className="py-12 px-6 md:px-12 max-w-7xl mx-auto reveal">
