@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import Link from 'next/link';
 import { toast } from 'sonner';
 import {
   ArrowLeft,
@@ -8,13 +9,16 @@ import {
   BookmarkCheck,
   Download,
   Filter,
+  FolderOpen,
+  FolderPlus,
   Inbox,
   Loader2,
   ShieldCheck,
 } from 'lucide-react';
 import type { GroupedSupplier, SearchResponse, UF } from '@/lib/suppliers/types';
 import type { FiscalBadge } from '@/lib/fiscal/snapshot';
-import { passesFiscalFilter, type FiscalFilter } from '@/lib/suppliers/ranking';
+import { passesFiscalFilter, pickMatriz, type FiscalFilter } from '@/lib/suppliers/ranking';
+import { useSupplierBase, type SaveFromSearchInput } from '@/hooks/useSupplierBase';
 import { SuppliersResultCard } from './SuppliersResultCard';
 
 const ENRICH_CAP = 30;
@@ -78,8 +82,48 @@ export function SuppliersResults({
     hideHighRisk: false,
   });
   const [enriching, setEnriching] = useState(false);
+  const { saveFromSearch, savedBasicos } = useSupplierBase();
+  const [savingBase, setSavingBase] = useState(false);
 
   const enriched = fiscalMap.size > 0;
+
+  function toSaveInput(g: GroupedSupplier): SaveFromSearchInput {
+    const m = pickMatriz(g.units);
+    return {
+      cnpj: m.cnpj,
+      cnpjBasico: g.cnpjBasico,
+      razaoSocial: m.razao_social,
+      nomeFantasia: m.nome_fantasia,
+      cnae,
+      cnaeName: response.cnaeName ?? null,
+      uf: m.uf,
+      municipio: m.municipio,
+      telefone: m.telefone,
+      email: m.email,
+    };
+  }
+
+  async function saveOneToBase(g: GroupedSupplier) {
+    if (savedBasicos.has(g.cnpjBasico)) return;
+    const r = await saveFromSearch(toSaveInput(g));
+    if (r) toast.success(`${r.razaoSocial} salvo na base`);
+  }
+
+  async function saveAllToBase() {
+    const targets = filtered.filter((g) => !savedBasicos.has(g.cnpjBasico));
+    if (targets.length === 0) {
+      toast.message('Todos os visíveis já estão na base');
+      return;
+    }
+    setSavingBase(true);
+    let n = 0;
+    for (const g of targets) {
+      const r = await saveFromSearch(toSaveInput(g));
+      if (r) n++;
+    }
+    setSavingBase(false);
+    toast.success(`${n} ${n === 1 ? 'fornecedor salvo' : 'fornecedores salvos'} na base`);
+  }
 
   const filtered = useMemo(() => {
     return response.groups.filter((g) => {
@@ -130,14 +174,23 @@ export function SuppliersResults({
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <button
-          type="button"
-          onClick={onBack}
-          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
-          Nova busca
-        </button>
+        <div className="flex items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={onBack}
+            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
+            Nova busca
+          </button>
+          <Link
+            href="/fornecedores"
+            className="inline-flex items-center gap-1.5 text-xs text-brand hover:text-brand/80 transition-colors"
+          >
+            <FolderOpen className="h-3.5 w-3.5" aria-hidden="true" />
+            Minha base
+          </Link>
+        </div>
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="space-y-1">
             <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">
@@ -157,6 +210,20 @@ export function SuppliersResults({
           </div>
           {response.groups.length > 0 && (
             <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={saveAllToBase}
+                disabled={savingBase}
+                title="Salvar todos os fornecedores visíveis na sua base"
+                className="inline-flex items-center gap-2 rounded-full border border-border bg-card hover:bg-accent hover:border-brand/30 text-foreground px-5 h-10 text-sm font-medium transition-all duration-300 active:scale-95 disabled:opacity-60"
+              >
+                {savingBase ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+                ) : (
+                  <FolderPlus className="h-3.5 w-3.5" aria-hidden="true" />
+                )}
+                {savingBase ? 'Salvando…' : 'Salvar na base'}
+              </button>
               <button
                 type="button"
                 onClick={verificarFiscal}
@@ -287,6 +354,8 @@ export function SuppliersResults({
               group={g}
               cnae={cnae}
               fiscal={fiscalMap.get(matrizCnpj(g))}
+              savedToBase={savedBasicos.has(g.cnpjBasico)}
+              onSaveToBase={() => void saveOneToBase(g)}
             />
           ))}
         </div>

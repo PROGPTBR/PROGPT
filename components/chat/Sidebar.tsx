@@ -8,6 +8,7 @@ import {
   Sparkles,
   Pencil,
   BookOpen,
+  Building2,
   LayoutDashboard,
   BarChart3,
   PanelLeftClose,
@@ -40,6 +41,7 @@ const NAV_ITEMS = [
   { href: '/painel', label: 'Painel', icon: LayoutDashboard },
   { href: '/dashboard', label: 'Dashboard', icon: BarChart3 },
   { href: '/assistants', label: 'Assistentes', icon: Sparkles },
+  { href: '/fornecedores', label: 'Fornecedores', icon: Building2 },
   { href: '/prompts', label: 'Biblioteca de Prompts', icon: BookOpen },
 ] as const;
 
