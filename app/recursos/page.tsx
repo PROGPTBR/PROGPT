@@ -157,7 +157,7 @@ const FEATURE_CARDS = [
     alt: 'Biblioteca em espiral repleta de livros — base de conhecimento curada',
   },
   {
-    title: '7 assistentes que executam',
+    title: 'Dezenas de assistentes que executam',
     blurb:
       'Diversos assistentes já desenvolvidos que podem trabalhar para você de maneira automática.',
     image:

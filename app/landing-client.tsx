@@ -45,7 +45,7 @@ const FEATURE_CARDS = [
     alt: 'Biblioteca em espiral repleta de livros — base de conhecimento curada',
   },
   {
-    title: '7 assistentes que executam',
+    title: 'Dezenas de assistentes que executam',
     blurb:
       'Perfil de Categoria, ABC, Porter, Busca de Fornecedores, Kraljic, RFP, Negociação, Análise Financeira — cada passo do Strategic Sourcing com um assistente próprio que entrega o artefato pronto em .docx/.xlsx.',
     image:
@@ -138,7 +138,7 @@ const FAQS = [
   'Qual a diferença em relação ao ChatGPT genérico?',
   'A base de conhecimento é da minha empresa ou compartilhada?',
   'Quanto custa? Tem plano gratuito?',
-  'Como funcionam os 7 assistentes (RFP, Kraljic, Negociação…)?',
+  'Como funcionam os assistentes (RFP, Kraljic, Negociação…)?',
   'Posso baixar os artefatos em Word ou Excel?',
   'Como cancelo a assinatura?',
 ];

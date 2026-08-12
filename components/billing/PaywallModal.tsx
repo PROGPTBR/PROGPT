@@ -67,7 +67,7 @@ export function PaywallModal({ assistantType, onClose }: Props) {
             R$ 127,99<span className="text-sm font-normal text-muted-foreground">/mês</span>
           </div>
           <ul className="text-sm text-foreground/90 space-y-1 pt-1">
-            <li>✓ Todos os 7 assistentes ilimitados</li>
+            <li>✓ Todos os assistentes ilimitados</li>
             <li>✓ Geração ilimitada de .docx e .xlsx</li>
             <li>✓ Cancele quando quiser</li>
           </ul>

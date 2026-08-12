@@ -19,7 +19,7 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: 'PROGPT · IA de procurement pra gestores brasileiros',
   description:
-    'A IA de Strategic Sourcing da 2BSUPPLY: chat especialista + 7 assistentes (RFP, Kraljic, Porter, Negociação, ABC, Financeiro, Perfil) que entregam .docx e .xlsx prontos. Free pra sempre · Pro R$ 127,99/mês.',
+    'A IA de Strategic Sourcing da 2BSUPPLY: chat especialista + Dezenas de assistentes (RFP, Kraljic, Porter, Negociação, ABC, Financeiro, Perfil) que entregam .docx e .xlsx prontos. Free pra sempre · Pro R$ 127,99/mês.',
   manifest: '/manifest.webmanifest',
   applicationName: 'PROGPT',
   appleWebApp: {
