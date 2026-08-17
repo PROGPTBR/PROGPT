@@ -179,7 +179,6 @@
   .menu-topo a:active,
   .menu-topo a:visited,
   .menu-topo a:focus {
-    background: #c6c6c61f;
     border-radius: 100px;
     transition: background-color 0.3s ease, transform 0.3s ease;
   }

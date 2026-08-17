@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { Header } from '../login/header';
+import { CompanyInfo } from '@/components/legal/CompanyInfo';
 
 import {
   ArrowRight,
@@ -186,7 +187,7 @@ const activeCase = USE_CASES.find((u) => u.id === activeTab) ?? USE_CASES[0]!;
       <div className="min-h-screen bg-background text-foreground">
    
 
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 py-12 pt-20">
 
            <div className="max-w-7xl mx-auto px-0 sm:px-6 py-6 sm:py-16 flex items-center justify-between">
     <button
@@ -382,6 +383,9 @@ const activeCase = USE_CASES.find((u) => u.id === activeTab) ?? USE_CASES[0]!;
           </div>
         </section>
 
+  <footer className="mt-16 pt-8 border-t border-border">
+            <CompanyInfo />
+          </footer>
 
         </main>
       </div>

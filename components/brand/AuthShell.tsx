@@ -29,12 +29,12 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
         {/* Overlay uniforme e leve: dá contraste ao conteúdo sem apagar a
             textura — a imagem tech permanece visível de ponta a ponta. */}
         <div className="absolute inset-0 bg-background/60 dark:bg-background/45" />
-        <div className="absolute inset-0 brand-aura" />
+        <div className="absolute inset-0" />
       </div>
 
       <Header />
 
-      <main className="relative z-10 flex-1 grid lg:grid-cols-[1.15fr_1fr] pt-[73px]">
+      <main className="relative z-10 flex-1 grid lg:grid-cols-[1.15fr_1fr]">
         {/* ── Chamada + screenshots do sistema (transparente: o fundo tech
               aparece por trás e unifica a tela) ── */}
         <aside className="relative hidden lg:flex flex-col justify-center gap-12 px-12 xl:px-16 py-14">
@@ -93,7 +93,7 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
       </main>
 
       {/* Footer */}
-      <footer className="relative z-10 px-6 py-6 text-xs text-muted-foreground text-center space-y-3">
+      <footer className="relative z-10 px-6 py-6 text-xs text-muted-foreground text-center space-y-3 border-t border-border">
         <CompanyInfo />
         <div>
           PROGPT · uma plataforma{' '}

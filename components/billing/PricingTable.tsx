@@ -302,7 +302,7 @@ export function PricingTable({
 {plan.slug === 'pf-99' && (
   <div className="flex items-baseline justify-center gap-1.5 pt-5">
     <span className="text-sm text-muted-foreground">
-      Depois pague só
+      Depois pague apenas
     </span>
 
     <span className="text-foreground text-2xl font-bold tracking-tight">

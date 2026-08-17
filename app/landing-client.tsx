@@ -346,11 +346,9 @@ export function LandingClient({
                 Ver assistentes
               </a>
             </div>
-          </div>
-
-          <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center opacity-50 reveal reveal-delay-3">
+               <div className="flex items-center justify-center pt-20">
             <svg
-              className="w-5 h-5 mb-2 animate-bounce"
+              className="w-5 h-5 mb-2 mr-2 animate-bounce"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -365,14 +363,17 @@ export function LandingClient({
             </svg>
             <span className="text-xs uppercase tracking-widest">Role para explorar</span>
           </div>
+          </div>
+
+       
         </section>
 
         {/* ───── Intro · 3 cards ───── */}
         <section
           id="sobre"
-          className="py-24 px-6 md:px-12 max-w-7xl mx-auto relative z-10 bg-[#0d0d0d]"
+          className="py-12 px-6 md:px-12 max-w-7xl mx-auto relative z-10 bg-[#0d0d0d]"
         >
-          <div className="mb-16 reveal">
+          <div className="mb-8 md:mb-8 md:mb-16 reveal">
             <div className="flex items-center gap-2 mb-4">
               <div
                 aria-hidden="true"
@@ -382,7 +383,7 @@ export function LandingClient({
                 PROGPT · uma plataforma 2B Supply
               </span>
             </div>
-            <h2 className="text-4xl md:text-5xl font-medium tracking-tight max-w-4xl">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight max-w-3xl text-left leading-[1.15]">
               <span className="text-white">Inteligência invisível</span>{' '}
               <span className="text-gray-500">
                 acelerando cada um dos 8 passos do Strategic Sourcing.
@@ -416,7 +417,7 @@ export function LandingClient({
         {/* ───── Use cases (tabs simulado) ───── */}
         <section
           id="assistentes"
-          className="py-24 px-6 md:px-12 max-w-7xl mx-auto border-t border-white/5"
+          className="py-12 md:py-24 px-6 md:px-12 max-w-7xl mx-auto border-t border-white/5"
         >
           <div className="mb-12 reveal">
             <div className="flex items-center gap-2 mb-4">
@@ -480,9 +481,9 @@ export function LandingClient({
         {/* ───── How It Works ───── */}
         <section
           id="como-funciona"
-          className="py-24 px-6 md:px-12 max-w-7xl mx-auto border-t border-white/5"
+          className="py-12 md:py-24 px-6 md:px-12 max-w-7xl mx-auto border-t border-white/5"
         >
-          <div className="mb-16 reveal">
+          <div className="mb-8 md:mb-8 md:mb-16 reveal">
             <div className="flex items-center gap-2 mb-4">
               <div aria-hidden="true" className="w-1.5 h-1.5 rounded-full bg-brand" />
               <span className="text-sm text-gray-400 font-medium">Como funciona</span>
@@ -533,9 +534,9 @@ export function LandingClient({
         {/* ───── Benefits grid ───── */}
         <section
           id="beneficios"
-          className="py-24 px-6 md:px-12 max-w-7xl mx-auto border-t border-white/5"
+          className="py-12 md:py-24 px-6 md:px-12 max-w-7xl mx-auto border-t border-white/5"
         >
-          <div className="mb-16 reveal">
+          <div className="mb-8 md:mb-8 md:mb-16 reveal">
             <div className="flex items-center gap-2 mb-4">
               <div aria-hidden="true" className="w-1.5 h-1.5 rounded-full bg-brand" />
               <span className="text-sm text-gray-400 font-medium">Benefícios</span>
@@ -572,7 +573,7 @@ export function LandingClient({
         </section>
 
         {/* ───── Planos — MESMO componente da aba /planos (idêntico) ───── */}
-        <section id="planos" className="py-24 px-6 md:px-12 max-w-7xl mx-auto border-t border-white/5">
+        <section id="planos" className="py-12 md:py-24 px-6 md:px-12 max-w-7xl mx-auto border-t border-white/5">
           {plans.length === 0 ? (
             // Fail-soft: se a tabela de planos não responder, o link pra /planos
             // (fonte da verdade) continua acessível.
@@ -602,9 +603,9 @@ export function LandingClient({
      {/* ───── FAQ ───── */}
 <section
   id="faq"
-  className="py-24 px-6 md:px-12 max-w-7xl mx-auto border-t border-white/5"
+  className="py-12 md:py-24 px-6 md:px-12 max-w-7xl mx-auto border-t border-white/5"
 >
-  <div className="mb-16 reveal">
+  <div className="mb-8 md:mb-8 md:mb-16 reveal">
     <div className="flex items-center gap-2 mb-4">
       <div
         aria-hidden="true"
@@ -749,7 +750,7 @@ export function LandingClient({
         </section>
 
         {/* ───── Footer ───── */}
-        <footer className="py-12 px-6 md:px-12 max-w-7xl mx-auto border-t border-white/5 mt-12">
+        <footer className="py-12 md:py-24 px-6 md:px-12 max-w-7xl mx-auto border-t border-white/5 mt-12">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-10">
             <div className="max-w-xs">
               <div className="mb-4">

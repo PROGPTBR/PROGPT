@@ -11,8 +11,7 @@ export default async function LoginPage({
 }: {
   searchParams?: { next?: string };
 }) {
-  // Já logado não deve ver a tela de login (pedia credencial de novo, "não
-  // carregava"). O fluxo agora é: logado ⇒ vai direto pro app.
+  // O fluxo é: logado ⇒ vai direto pro app.
   const user = await getCurrentUser();
   if (user) {
     redirect(searchParams?.next || '/chat');
