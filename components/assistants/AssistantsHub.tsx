@@ -15,6 +15,7 @@ import { HomologacaoPreview } from './previews/HomologacaoPreview';
 import { PesquisaPrecosPreview } from './previews/PesquisaPrecosPreview';
 import { IndicadoresPreview } from './previews/IndicadoresPreview';
 import { DashboardPreview } from './previews/DashboardPreview';
+import { SimuladorTributarioPreview } from './previews/SimuladorTributarioPreview';
 
 // Hub layout — header + spotlight cards.
 //
@@ -217,6 +218,20 @@ const SPOTLIGHTS: SpotlightAssistant[] = [
       'Fonte: Banco Central (séries SGS), atualizado diariamente',
     ],
     Preview: IndicadoresPreview,
+  },
+  {
+    step: 9,
+    stepCategory: 'Macro',
+    href: '/simulador',
+    title: 'Simulador Tributário',
+    short:
+      'Compare o Simples Nacional com o novo modelo da Reforma Tributária (IBS/CBS) e enxergue o impacto no status contábil antes de decidir.',
+    bullets: [
+      'Simulação Simples Nacional × Reforma (IBS/CBS)',
+      'Consulta de CNPJ para preencher os dados',
+      'Comparativo de carga e status contábil',
+    ],
+    Preview: SimuladorTributarioPreview,
   },
 ];
 

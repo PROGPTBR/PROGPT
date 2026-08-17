@@ -36,6 +36,7 @@ export const config = {
     '/admin/:path*',
     '/assistants/:path*',
     '/fornecedores/:path*',
+    '/simulador/:path*',
     '/proc2pay/:path*',
     '/profile/:path*',
     '/prompts/:path*',

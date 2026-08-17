@@ -11,6 +11,7 @@ import {
   Building2,
   LayoutDashboard,
   BarChart3,
+  Calculator,
   PanelLeftClose,
   PanelLeftOpen,
 } from 'lucide-react';
@@ -42,6 +43,7 @@ const NAV_ITEMS = [
   { href: '/dashboard', label: 'Dashboard', icon: BarChart3 },
   { href: '/assistants', label: 'Assistentes', icon: Sparkles },
   { href: '/fornecedores', label: 'Fornecedores', icon: Building2 },
+  { href: '/simulador', label: 'Simulador Tributário', icon: Calculator },
   { href: '/prompts', label: 'Biblioteca de Prompts', icon: BookOpen },
 ] as const;
 
