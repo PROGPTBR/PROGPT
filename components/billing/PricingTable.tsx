@@ -157,7 +157,7 @@ export function PricingTable({
         </h2>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start max-w-5xl mx-auto">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start max-w-5xl mx-auto">
         {orderedPlans.map((plan) => {
           const isRecommended = plan.slug === 'pf-99';
           const isCurrent = userPlanSlug === plan.slug;
@@ -167,15 +167,38 @@ export function PricingTable({
               key={plan.id}
               className={`group relative rounded-3xl p-7 flex flex-col transition-all duration-300 ${
                 isRecommended
-                  ? 'border-2 border-brand bg-card shadow-[0_24px_60px_-22px_rgba(14,141,225,0.5)] md:-translate-y-3 hover:-translate-y-4'
+                  ? 'border-2 border-brand bg-card shadow-[0_24px_60px_-22px_rgba(14,141,225,0.5)] hover:-translate-y-4'
                   : 'border border-border bg-card hover:-translate-y-1 hover:border-brand/40 hover:shadow-xl'
               }`}
             >
-              {isRecommended && (
+           {/*    {isRecommended && (
                 <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-brand-gradient text-black text-[11px] uppercase tracking-wider font-bold px-4 py-1 rounded-full brand-glow whitespace-nowrap">
                   Mais popular
                 </div>
               )}
+ */}
+
+ {plan.slug === 'pf-99' && (
+              <div className="space-y-1.5">
+                <div
+                  className={`text-xs uppercase tracking-wider font-semibold ${
+                    isRecommended ? 'text-brand' : 'text-muted-foreground'
+                  }`}
+                >
+                  {plan.name}
+                </div>
+                <div className="flex items-baseline gap-1.5 pt-1">
+                  <span className="text-foreground text-4xl font-bold tracking-tight">
+                   Teste por 3 dias
+                  </span>
+                 
+                </div>
+               
+              </div>
+
+                )}
+
+ {plan.slug === 'pj-consulte' && (
 
               <div className="space-y-1.5">
                 <div
@@ -196,6 +219,8 @@ export function PricingTable({
                 <p className="text-sm text-muted-foreground pt-1">{plan.description}</p>
               </div>
 
+
+)}
               <ul className="space-y-2.5 pt-6 flex-1">
                 {plan.features?.map((feature: string) => (
                   <li key={feature} className="flex items-start gap-2.5 text-sm">
@@ -255,6 +280,7 @@ export function PricingTable({
                     Começar 3 dias grátis
                     <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
                   </Link>
+                  
                 ) : (
                   <button
                     type="button"
@@ -272,6 +298,24 @@ export function PricingTable({
                     <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
                   </button>
                 )}
+
+{plan.slug === 'pf-99' && (
+  <div className="flex items-baseline justify-center gap-1.5 pt-5">
+    <span className="text-sm text-muted-foreground">
+      Depois pague só
+    </span>
+
+    <span className="text-foreground text-2xl font-bold tracking-tight">
+      {fmtPrice(plan.price)}
+    </span>
+
+    {plan.price > 0 && (
+      <span className="text-sm text-muted-foreground">
+        /{plan.interval}
+      </span>
+    )}
+  </div>
+)}
               </div>
             </div>
           );
