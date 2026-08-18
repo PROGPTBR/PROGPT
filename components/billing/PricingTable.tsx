@@ -31,6 +31,7 @@ type Props = {
   plans: Plan[];
   userPlanSlug: string | null;
   trialExpired?: boolean;
+  hideHeader?: boolean;
   profile: {
     full_name?: string | null;
     cpf_cnpj?: string | null;
@@ -90,6 +91,7 @@ export function PricingTable({
   userPlanSlug,
   profile,
   trialExpired = false,
+  hideHeader = false,
 }: Props) {
   const expired = trialExpired;
   const router = useRouter();
@@ -146,7 +148,7 @@ export function PricingTable({
   return (
     <div className="space-y-12">
       {/* Cabeçalho chamativo */}
-      <header className="text-center space-y-4">
+      {!hideHeader && <header className="text-center space-y-4">
         <div className="inline-flex items-center gap-2 rounded-full border border-brand/30 bg-brand/5 px-4 py-1.5 text-xs font-medium text-brand">
           <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
           Planos PROGPT
@@ -155,7 +157,7 @@ export function PricingTable({
           <span className="text-foreground">Comece grátis,</span>{' '}
           <span className="text-brand-gradient">faça upgrade quando precisar.</span>
         </h2>
-      </header>
+      </header>}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start max-w-5xl mx-auto">
         {orderedPlans.map((plan) => {
