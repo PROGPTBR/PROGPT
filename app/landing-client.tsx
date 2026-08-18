@@ -775,6 +775,12 @@ export function LandingClient({
                   </a>
                 ))}
                 <Link
+                  href="/simulador"
+                  className="text-sm text-gray-500 hover:text-white transition-colors"
+                >
+                  Simulador Tributário
+                </Link>
+                <Link
                   href="/login"
                   className="text-sm text-gray-500 hover:text-white transition-colors"
                 >

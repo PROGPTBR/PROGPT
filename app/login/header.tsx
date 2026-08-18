@@ -34,7 +34,6 @@ const PUBLIC_LINKS = [
 const APP_LINKS = [
   { href: '/assistants', label: 'Assistentes' },
   { href: '/fornecedores', label: 'Fornecedores' },
-  { href: '/simulador', label: 'Simulador' },
   { href: '/painel', label: 'Painel' },
   { href: '/prompts', label: 'Prompts' },
   { href: '/account/billing', label: 'Assinatura' },
