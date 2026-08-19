@@ -67,6 +67,21 @@
 @media(max-width:950px){.useCasePanel{grid-template-columns:1fr;gap:30px}.useCaseCopy{max-width:650px}.useCaseVisual .productVisual{height:390px}}
 @media(max-width:650px){.featureGrid{grid-template-columns:1fr}.featureCard{min-height:210px}.useCaseTabs{gap:22px}.useCasePanel{padding-top:28px}.useCaseVisual .productVisual{height:310px}.useCaseCopy h3{font-size:25px}}
 
+.accordion article p{font-size:16px;white-space:pre-line}
+.useCaseCopy h3{white-space:pre-line}
+.useCaseCopy p{font-size:14px;white-space:pre-line}
+.useCaseCopy .useCaseLead{font-size:27px;line-height:1.25}
+.useCaseCopy>span{font-size:16px}
+.intelligenceHeading h2{font-size:42px}
+.intelligenceContent p{font-size:16px}
+.useCaseTabs button{font-size:14px}
+.offerSubtitle{font-size:16px}
+.page button,
+.cta,
+.outlineButton,
+.pricingTableWrap a{font-weight:700;font-size:14px}
+.accordion button{font-size:16px}
+
 /* Hero com foco maior na captura real do produto. */
 .hero{max-width:1400px;grid-template-columns:minmax(0,.82fr) minmax(0,1.18fr);gap:72px}
 .heroCopy{min-width:0;max-width:535px}
@@ -128,6 +143,6 @@
 .accordion article{background:#080e1c}
 .pricingTableWrap :global(.grid)>:global(.bg-card){background:#080e1c}
 .offer .sectionHeading>span{width:max-content;padding:7px 15px;border:1px solid #11699c;border-radius:999px;background:#071426;color:#149fe5;font-size:12px;font-weight:500}
-.useCaseTabs button{font-size:12px}
+.useCaseTabs button,.useCaseTabs small{font-size:14px}
 .useCaseCopy>span{font-size:11px}
 .useCaseCopy h3{font-size:27px;line-height:1.25}

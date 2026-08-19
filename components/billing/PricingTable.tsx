@@ -51,6 +51,30 @@ const FEATURE_ACRONYMS = new Set([
   'swot', 'zopa', 'roe', 'dre', 'smart', 'ia', 'b2b', 'b2c', 'kpi',
 ]);
 
+const PROGPT_TRIAL_FEATURES = [
+  'Assistentes prontos para diferentes processos de Suprimentos',
+  'Criação de RFI, RFQ e RFP em poucos minutos',
+  'Busca e homologação de fornecedores',
+  'Análise e comparação de propostas comerciais',
+  'Leitura de contratos, riscos, obrigações e prazos',
+  'Dashboards personalizados para acompanhamento dos processos',
+  'Análise de PDFs, planilhas, tabelas, imagens e gráficos',
+  'Comandos por texto ou áudio, com histórico salvo',
+];
+
+const PROGPT_ENTERPRISE_FEATURES = [
+  'Todos os recursos do Plano Comprador Estratégico',
+  'Integração via API com ERP e sistemas internos',
+  'Conexão com os dados e processos da empresa',
+  'Ambiente corporativo preparado para dados sensíveis',
+  'Controle de usuários, acessos e permissões',
+  'Base de conhecimento exclusiva da empresa',
+  'Assistentes personalizados por área, processo ou necessidade',
+  'Dashboards e indicadores adaptados à operação',
+  'Governança e utilização alinhadas às políticas de TI e compliance',
+  'Implantação e suporte técnico especializado',
+];
+
 function formatFeature(raw: string): string {
   // Frases escritas por humano (contêm espaço) passam intactas — só as
   // keywords curtas (chat_ilimitado, rfp, export_pdf) recebem a transformação
@@ -167,7 +191,7 @@ export function PricingTable({
           return (
             <div
               key={plan.id}
-              className={`group relative rounded-3xl p-7 flex flex-col transition-all duration-300 ${
+              className={`group relative rounded-3xl ${plan.slug === 'pf-99' || plan.slug === 'pj-consulte' ? 'px-7 py-10' : 'p-7'} flex flex-col transition-all duration-300 ${
                 isRecommended
                   ? 'border-2 border-brand bg-card shadow-[0_24px_60px_-22px_rgba(14,141,225,0.5)] hover:-translate-y-4'
                   : 'border border-border bg-card hover:-translate-y-1 hover:border-brand/40 hover:shadow-xl'
@@ -191,10 +215,13 @@ export function PricingTable({
                 </div>
                 <div className="flex items-baseline gap-1.5 pt-1">
                   <span className="text-foreground text-4xl font-bold tracking-tight">
-                   Teste por 3 dias
+                   Comece grátis por 3 dias
                   </span>
                  
                 </div>
+                <p className="pt-1 text-[16px] text-muted-foreground">
+                  Menos tarefas manuais. Mais tempo para negociar e decidir.
+                </p>
                
               </div>
 
@@ -218,13 +245,23 @@ export function PricingTable({
                     <span className="text-sm text-muted-foreground">/{plan.interval}</span>
                   )}
                 </div>
-                <p className="text-sm text-muted-foreground pt-1">{plan.description}</p>
+                <p className="text-sm text-muted-foreground pt-1">
+                  Uma IA conectada ao seu ERP e protegida pelas regras da sua empresa
+                </p>
+                <p className="text-sm text-muted-foreground pt-2">
+                  A PROGPT se adapta aos seus sistemas, processos e políticas. Sua empresa não precisa se adaptar à IA.
+                </p>
               </div>
 
 
 )}
-              <ul className="space-y-2.5 pt-6 flex-1">
-                {plan.features?.map((feature: string) => (
+              {plan.slug === 'pf-99' && (
+                <p className="pt-6 text-base font-semibold text-foreground">
+                  Chat especializado e ilimitado
+                </p>
+              )}
+              <ul className={`space-y-2.5 flex-1 ${plan.slug === 'pf-99' ? 'pt-3' : 'pt-6'}`}>
+                {(plan.slug === 'pf-99' ? PROGPT_TRIAL_FEATURES : plan.slug === 'pj-consulte' ? PROGPT_ENTERPRISE_FEATURES : plan.features)?.map((feature: string) => (
                   <li key={feature} className="flex items-start gap-2.5 text-sm">
                     <span
                       className={`mt-0.5 flex h-4 w-4 items-center justify-center rounded-full flex-shrink-0 ${
@@ -239,10 +276,8 @@ export function PricingTable({
               </ul>
 
               {plan.slug === 'pj-consulte' && (
-                <p className="pt-4 text-xs leading-relaxed text-muted-foreground/90 italic">
-                  Neste plano, a IA deixa de ser uma ferramenta genérica e passa
-                  a atuar como uma solução corporativa, conectada aos processos,
-                  regras, documentos e desafios reais da empresa.
+                <p className="pt-4 text-[0.875rem] leading-relaxed text-muted-foreground/90 italic">
+                  Mais do que contratar uma IA, sua empresa passa a contar com uma solução integrada ao ERP, ajustada aos seus processos e preparada para proteger as informações estratégicas da operação.
                 </p>
               )}
 
@@ -267,19 +302,24 @@ export function PricingTable({
                     </Link>
                   )
                 ) : plan.slug === 'pj-consulte' ? (
-                  <a
-                    href="mailto:comercial@2bsupply.com.br?subject=Solicita%C3%A7%C3%A3o%20de%20proposta%20%E2%80%94%20Plano%20Empresas%20PROGPT&body=Ol%C3%A1%2C%20gostaria%20de%20solicitar%20uma%20proposta%20do%20Plano%20Empresas%20do%20PROGPT."
-                    className="inline-flex w-full items-center justify-center gap-2 bg-muted border border-border text-foreground py-2.5 rounded-full text-sm font-medium hover:bg-brand hover:text-black hover:border-brand active:scale-95 transition-all duration-300"
-                  >
-                    Solicitar proposta
-                    <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-                  </a>
+                  <>
+                    <a
+                      href="mailto:comercial@2bsupply.com.br?subject=Solicita%C3%A7%C3%A3o%20de%20proposta%20%E2%80%94%20Plano%20Empresas%20PROGPT&body=Ol%C3%A1%2C%20gostaria%20de%20solicitar%20uma%20proposta%20do%20Plano%20Empresas%20do%20PROGPT."
+                      className="inline-flex w-full items-center justify-center gap-2 bg-muted border border-border text-foreground py-2.5 rounded-full text-sm font-medium hover:bg-brand hover:text-black hover:border-brand active:scale-95 transition-all duration-300"
+                    >
+                      AGENDAR DEMONSTRAÇÃO EMPRESARIAL
+                      <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                    </a>
+                    <p className="pt-3 text-center text-sm text-muted-foreground">
+                      Investimento sob consulta
+                    </p>
+                  </>
                 ) : !authed ? (
                   <Link
                     href="/signup?next=/pricing"
                     className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-brand-gradient text-black hover:brightness-110 brand-glow h-11 text-sm font-semibold transition-all active:scale-[0.98]"
                   >
-                    Começar 3 dias grátis
+                    COMEÇAR MEU TESTE GRÁTIS
                     <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
                   </Link>
                   
@@ -296,7 +336,7 @@ export function PricingTable({
                     }}
                     className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-brand-gradient text-black hover:brightness-110 brand-glow h-11 text-sm font-semibold transition-all active:scale-[0.98]"
                   >
-                    Começar 3 dias grátis
+                    COMEÇAR MEU TESTE GRÁTIS
                     <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
                   </button>
                 )}
@@ -304,7 +344,7 @@ export function PricingTable({
 {plan.slug === 'pf-99' && (
   <div className="flex items-baseline justify-center gap-1.5 pt-5">
     <span className="text-sm text-muted-foreground">
-      Depois pague apenas
+      Depois, continue por apenas
     </span>
 
     <span className="text-foreground text-2xl font-bold tracking-tight">
