@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile';
 import { useTheme } from 'next-themes';
 
@@ -23,8 +23,37 @@ export function TurnstileWidget({ onVerify }: Props) {
   const { resolvedTheme } = useTheme();
   const ref = useRef<TurnstileInstance | null>(null);
 
-  const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
-    ?? (process.env.NODE_ENV === 'production' ? '' : TEST_SITE_KEY_ALWAYS_PASS);
+  const bundledSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+  const [siteKey, setSiteKey] = useState(
+    bundledSiteKey ?? (process.env.NODE_ENV === 'production' ? '' : TEST_SITE_KEY_ALWAYS_PASS),
+  );
+
+  useEffect(() => {
+    if (siteKey || process.env.NODE_ENV !== 'production') return;
+
+    let active = true;
+    fetch('/api/config/turnstile', { cache: 'no-store' })
+      .then(async (res) => {
+        if (!res.ok) throw new Error('Turnstile não configurado');
+        return res.json() as Promise<{ siteKey: string }>;
+      })
+      .then((data) => {
+        if (active) setSiteKey(data.siteKey);
+      })
+      .catch(() => {
+        if (active) onVerify(null);
+      });
+
+    return () => { active = false; };
+  }, [onVerify, siteKey]);
+
+  if (!siteKey) {
+    return (
+      <p className="text-center text-xs text-muted-foreground" role="status">
+        Carregando verificação anti-bot…
+      </p>
+    );
+  }
 
   return (
     <Turnstile
