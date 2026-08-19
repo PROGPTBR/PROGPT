@@ -348,6 +348,9 @@ function Builder({
         </div>
         <div className="flex flex-wrap items-center gap-2 print-hide">
           <input ref={inputRef} type="file" accept=".xlsx,.xlsm,.csv,.tsv,.txt" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = ''; }} />
+          <button onClick={onNew} title="Começar um novo painel (upload ou dados de exemplo)" className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-4 py-2 text-sm font-medium hover:border-brand/40 hover:text-brand transition-colors">
+            <Plus className="h-4 w-4" aria-hidden /> Novo
+          </button>
           <div className="relative">
             <button onClick={() => setOpenMenu((v) => !v)} className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-4 py-2 text-sm font-medium hover:border-brand/40 hover:text-brand transition-colors">
               <FolderOpen className="h-4 w-4" aria-hidden /> Meus dashboards <ChevronDown className="h-3.5 w-3.5" />
