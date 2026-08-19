@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { getServerSupabase } from '@/lib/db/supabase';
 import { verifyTurnstileToken, getClientIp, hashIp } from '@/lib/captcha';
 import { checkAnonRateLimit } from '@/lib/rate-limit';
+import { configuredAppUrl, isRetiredAppHost } from '@/lib/app-url';
 
 
 export const runtime = 'nodejs';
@@ -28,11 +29,11 @@ function originFrom(req: Request): string {
     return `${url.protocol}//${url.host}`;
   }
 
-  const configuredUrl = process.env.APP_URL?.trim() || process.env.NEXT_PUBLIC_APP_URL?.trim();
-  if (configuredUrl) return configuredUrl.replace(/\/+$/, '');
+  const configuredUrl = configuredAppUrl();
+  if (configuredUrl) return configuredUrl;
 
   const forwardedHost = req.headers.get('x-forwarded-host');
-  if (forwardedHost) {
+  if (forwardedHost && !isRetiredAppHost(forwardedHost)) {
     const protocol = req.headers.get('x-forwarded-proto') || 'https';
     return `${protocol}://${forwardedHost}`;
   }

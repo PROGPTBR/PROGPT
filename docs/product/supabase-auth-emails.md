@@ -14,8 +14,8 @@ estabelece a sessão em cookie e redireciona pro destino certo por tipo.
 Supabase Dashboard → **Authentication**.
 
 ### 1) URL Configuration
-- **Site URL:** `https://app.2bsupply.com.br`
-- **Redirect URLs:** incluir `https://app.2bsupply.com.br/**`
+- **Site URL:** `https://progpt.com.br`
+- **Redirect URLs:** incluir `https://progpt.com.br/**`
 
 ### 2) Email Templates
 Cole cada modelo em **Authentication → Email Templates** na aba correspondente

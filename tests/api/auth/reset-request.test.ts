@@ -87,7 +87,7 @@ describe('POST /api/auth/reset-request', () => {
 
   it('uses the request origin for reset links in local development', async () => {
     process.env.APP_ENV = 'local';
-    process.env.APP_URL = 'https://app.2bsupply.com.br';
+    process.env.APP_URL = 'https://progpt.com.br';
     mockCommon(true, true);
     const resetPasswordForEmail = mockReset(null);
     const { POST } = await import('@/app/api/auth/reset-request/route');
@@ -101,6 +101,24 @@ describe('POST /api/auth/reset-request', () => {
 
     expect(resetPasswordForEmail).toHaveBeenCalledWith('local@b.com', {
       redirectTo: 'http://localhost:3000/reset-password',
+    });
+  });
+
+  it('never sends the retired app.2bsupply.com.br domain to Supabase', async () => {
+    process.env.APP_URL = 'https://app.2bsupply.com.br';
+    mockCommon(true, true);
+    const resetPasswordForEmail = mockReset(null);
+    const { POST } = await import('@/app/api/auth/reset-request/route');
+
+    await POST(
+      new Request('https://progpt.com.br/api/auth/reset-request', {
+        method: 'POST',
+        body: JSON.stringify({ email: 'user@b.com', captchaToken: 't' }),
+      }),
+    );
+
+    expect(resetPasswordForEmail).toHaveBeenCalledWith('user@b.com', {
+      redirectTo: 'https://progpt.com.br/reset-password',
     });
   });
 

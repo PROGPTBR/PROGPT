@@ -1,3 +1,5 @@
+import { configuredAppUrl } from '@/lib/app-url';
+
 // Base da URL de retorno (callback) do Asaas.
 //
 // O Asaas EXIGE que o domínio do successUrl seja o mesmo cadastrado em Minha
@@ -8,8 +10,8 @@
 //   2º) x-forwarded-host (domínio público real que o proxy injeta);
 //   3º) host header / req.url (fallback).
 export function callbackBaseUrl(req: Request): string {
-  const envUrl = process.env.APP_URL?.trim();
-  if (envUrl) return envUrl.replace(/\/+$/, '');
+  const envUrl = configuredAppUrl();
+  if (envUrl) return envUrl;
 
   const fwdHost = req.headers.get('x-forwarded-host');
   const host = fwdHost || req.headers.get('host');

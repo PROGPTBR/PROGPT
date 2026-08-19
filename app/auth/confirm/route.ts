@@ -4,6 +4,7 @@ import { getServerSupabase } from '@/lib/db/supabase';
 import { sendEmail } from '@/lib/email/client';
 import { buildWelcomeEmail } from '@/lib/email/templates';
 import { type EmailOtpType } from '@supabase/supabase-js';
+import { configuredAppUrl } from '@/lib/app-url';
 
 async function maybeSendWelcome(userId: string, email: string) {
   const svc = getServerSupabase();
@@ -39,10 +40,7 @@ function safeNext(raw: string | null, fallback: string): string {
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
 
-  const appUrl =
-    process.env.APP_URL ??
-    process.env.NEXT_PUBLIC_APP_URL ??
-    new URL(req.url).origin;
+  const appUrl = configuredAppUrl();
 
   const token_hash = searchParams.get('token_hash');
   const type = searchParams.get('type') as EmailOtpType | null;

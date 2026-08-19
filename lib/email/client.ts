@@ -1,4 +1,5 @@
 import { Resend } from 'resend';
+import { configuredAppUrl } from '@/lib/app-url';
 
 // Sub-projeto 30 — wrapper do Resend.
 //
@@ -12,12 +13,10 @@ import { Resend } from 'resend';
 //                    (resend.dev funciona sem DNS setup — use enquanto
 //                    SPF/DKIM do 2bsupply.com.br não tá pronto).
 //                    Prod: 'PROGPT <noreply@2bsupply.com.br>'
-//   APP_URL        — usado pra construir links em templates. Default:
-//                    https://progpt-production.up.railway.app
+//   APP_URL        — usado pra construir links em templates. O domínio
+//                    desativado é rejeitado e cai no domínio canônico.
 
 const DEFAULT_FROM = 'PROGPT <onboarding@resend.dev>';
-const DEFAULT_APP_URL = 'https://progpt-production.up.railway.app';
-
 let _client: Resend | null = null;
 
 function getClient(): Resend | null {
@@ -29,7 +28,7 @@ function getClient(): Resend | null {
 }
 
 export function getAppUrl(): string {
-  return process.env.APP_URL ?? DEFAULT_APP_URL;
+  return configuredAppUrl();
 }
 
 export type EmailInput = {
