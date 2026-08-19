@@ -7,7 +7,7 @@ import { createHash } from 'node:crypto';
 // resetPasswordForEmail. Aqui usamos como defesa em profundidade:
 //   1. Widget no client gera token
 //   2. /api/auth/* verifica token server-side antes de qualquer chamada DB
-//   3. Token também é passado pro Supabase (se Auth captcha hook tiver ligado)
+//   3. A rota chama o Supabase sem reutilizar o token (tokens são de uso único)
 
 const TURNSTILE_VERIFY_URL =
   'https://challenges.cloudflare.com/turnstile/v0/siteverify';
@@ -51,18 +51,8 @@ export async function verifyTurnstileToken(
       console.warn('[captcha] siteverify HTTP', res.status);
       return false;
     }
- const data = await res.json();
-
-
-console.log("================================");
-console.log("[TURNSTILE]");
-console.log("APP_ENV:", process.env.APP_ENV);
-console.log("Secret exists:", !!process.env.TURNSTILE_SECRET_KEY);
-console.log("Token exists:", !!token);
-console.log("Response:", JSON.stringify(data, null, 2));
-console.log("================================");
-
-return data.success === true;
+    const data = await res.json();
+    return data.success === true;
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.warn('[captcha] siteverify failed:', msg);

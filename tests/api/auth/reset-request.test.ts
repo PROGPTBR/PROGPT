@@ -19,13 +19,15 @@ function mockCommon(captchaOk: boolean, rateOk: boolean) {
 }
 
 function mockReset(error: unknown) {
+  const resetPasswordForEmail = vi.fn().mockResolvedValue({ data: null, error });
   vi.doMock('@/lib/db/supabase', () => ({
     getServerSupabase: () => ({
       auth: {
-        resetPasswordForEmail: vi.fn().mockResolvedValue({ data: null, error }),
+        resetPasswordForEmail,
       },
     }),
   }));
+  return resetPasswordForEmail;
 }
 
 describe('POST /api/auth/reset-request', () => {
@@ -81,6 +83,25 @@ describe('POST /api/auth/reset-request', () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body).toEqual({ ok: true });
+  });
+
+  it('uses the request origin for reset links in local development', async () => {
+    process.env.APP_ENV = 'local';
+    process.env.APP_URL = 'https://app.2bsupply.com.br';
+    mockCommon(true, true);
+    const resetPasswordForEmail = mockReset(null);
+    const { POST } = await import('@/app/api/auth/reset-request/route');
+
+    await POST(
+      new Request('http://localhost:3000/api/auth/reset-request', {
+        method: 'POST',
+        body: JSON.stringify({ email: 'local@b.com', captchaToken: 't' }),
+      }),
+    );
+
+    expect(resetPasswordForEmail).toHaveBeenCalledWith('local@b.com', {
+      redirectTo: 'http://localhost:3000/reset-password',
+    });
   });
 
   it('returns 200 ok for non-existing email (anti-enum)', async () => {

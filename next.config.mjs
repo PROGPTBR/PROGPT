@@ -1,3 +1,26 @@
+const TURNSTILE_TEST_SITE_KEYS = new Set([
+  '1x00000000000000000000AA',
+  '2x00000000000000000000AB',
+  '1x00000000000000000000BB',
+  '2x00000000000000000000BB',
+  '3x00000000000000000000FF',
+]);
+
+// NEXT_PUBLIC_* é incorporada ao JavaScript durante o build. Falhar aqui é
+// mais seguro do que publicar um captcha dummy que todo usuário verá passar,
+// mas cujo token será corretamente recusado pelo secret real no servidor.
+if (process.env.APP_ENV === 'production') {
+  const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+  if (!siteKey || TURNSTILE_TEST_SITE_KEYS.has(siteKey)) {
+    throw new Error(
+      'Production requires a real NEXT_PUBLIC_TURNSTILE_SITE_KEY; Turnstile test keys are not allowed.',
+    );
+  }
+  if (!process.env.TURNSTILE_SECRET_KEY) {
+    throw new Error('Production requires TURNSTILE_SECRET_KEY.');
+  }
+}
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,

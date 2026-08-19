@@ -20,6 +20,23 @@ const Body = z.object({
 });
 
 function originFrom(req: Request): string {
+  // Em desenvolvimento, o link precisa voltar para a instância que originou
+  // a solicitação. O .env.local também pode conter a URL de produção para
+  // outros fluxos; usá-la aqui faria todo reset local abrir o app publicado.
+  if (process.env.APP_ENV === 'local' || process.env.APP_ENV === 'ci') {
+    const url = new URL(req.url);
+    return `${url.protocol}//${url.host}`;
+  }
+
+  const configuredUrl = process.env.APP_URL?.trim() || process.env.NEXT_PUBLIC_APP_URL?.trim();
+  if (configuredUrl) return configuredUrl.replace(/\/+$/, '');
+
+  const forwardedHost = req.headers.get('x-forwarded-host');
+  if (forwardedHost) {
+    const protocol = req.headers.get('x-forwarded-proto') || 'https';
+    return `${protocol}://${forwardedHost}`;
+  }
+
   const url = new URL(req.url);
   return `${url.protocol}//${url.host}`;
 }
@@ -46,38 +63,28 @@ export async function POST(req: Request) {
     );
   }
 
-const sb = getServerSupabase();
+  const sb = getServerSupabase();
+  const redirectTo = `${originFrom(req)}/reset-password`;
 
-// Fire-and-forget: não esperamos pelo erro do Supabase pra evitar leak
-// de existência de email via timing. Logamos internamente.
-
-const redirectTo = `${originFrom(req)}/reset-password`;
-
-console.log("====================================");
-console.log("[RESET PASSWORD]");
-console.log("Origin:", originFrom(req));
-console.log("RedirectTo:", redirectTo);
-console.log("====================================");
-
-void sb.auth
-  .resetPasswordForEmail(parsed.email, {
-    redirectTo,
-    captchaToken: parsed.captchaToken ?? undefined,
-  })
-  .then(({ error }) => {
+  // Aguarda o Supabase antes de responder: em runtimes serverless uma promise
+  // solta pode ser encerrada junto com a requisição. O token não é repassado,
+  // pois já foi consumido pelo Siteverify e tokens Turnstile são de uso único.
+  try {
+    const { error } = await sb.auth.resetPasswordForEmail(parsed.email, {
+      redirectTo,
+    });
     if (error) {
-      const msg = (error.message ?? "").toLowerCase();
+      const msg = (error.message ?? '').toLowerCase();
 
-      if (!msg.includes("not found") && !msg.includes("invalid")) {
-        console.warn("[reset-request] supabase error:", error.message);
+      if (!msg.includes('not found') && !msg.includes('invalid')) {
+        console.warn('[reset-request] supabase error:', error.message);
       }
     }
-  })
-  .catch((err) => {
+  } catch (err) {
     const m = err instanceof Error ? err.message : String(err);
-    console.warn("[reset-request] swallowed:", m);
-  });
+    console.warn('[reset-request] swallowed:', m);
+  }
 
-  // Resposta genérica imediata (sempre 200).
+  // Resposta genérica (sempre 200), inclusive para email inexistente.
   return NextResponse.json({ ok: true });
 }
