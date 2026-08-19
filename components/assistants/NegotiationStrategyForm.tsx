@@ -16,11 +16,55 @@ import {
   NEGOTIATION_OBJECTIVE_LABELS,
   SUPPLIER_MARKET_POSITION,
   SUPPLIER_MARKET_POSITION_LABELS,
+  NEGOTIATION_DECISION_POWER,
+  NEGOTIATION_DECISION_POWER_LABELS,
+  NEGOTIATION_TECHNIQUE,
+  NEGOTIATION_TECHNIQUE_LABELS,
+  NEGOTIATION_PURCHASE_TYPE,
+  NEGOTIATION_PURCHASE_TYPE_LABELS,
   type NegotiationObjective,
   type NegotiationStrategyParams,
   type SupplierMarketPosition,
+  type NegotiationDecisionPower,
+  type NegotiationTechnique,
+  type NegotiationPurchaseType,
 } from '@/lib/assistants/types';
 import type { KraljicQuadrant } from '@/lib/assistants/types';
+
+// Lista de verificação da preparação (resumo do backlog do diretor — PON/Harvard).
+const PREP_CHECKLIST: { group: string; items: string[] }[] = [
+  {
+    group: 'Sua perspectiva',
+    items: [
+      'O que eu quero dessa negociação (curto e longo prazo)?',
+      'Quais são meus pontos fortes (valores, habilidades, ativos)?',
+      'Quais minhas fraquezas e vulnerabilidades?',
+      'Por que a outra parte negocia comigo? O que eu tenho que eles precisam?',
+      'Qual meu BATNA (melhor alternativa)? Como fortalecê-lo?',
+      'Qual meu ponto de reserva e meu ponto de aspiração?',
+    ],
+  },
+  {
+    group: 'A outra parte',
+    items: [
+      'Quais os interesses do outro lado e a importância de cada questão?',
+      'Qual o ponto de reserva e o BATNA deles? Quem tem mais poder de ir embora?',
+      'Existe ZOPA entre meu ponto de reserva e o deles?',
+      'Qual o histórico de relacionamento? Há diferenças culturais?',
+      'Qual a hierarquia e as tensões internas na equipe do outro lado?',
+    ],
+  },
+  {
+    group: 'Logística e equipe',
+    items: [
+      'Onde, quando e por quanto tempo? Que prazos enfrentamos?',
+      'Quem deve estar na minha equipe e quem é o porta-voz?',
+      'Que autoridade tenho para assumir compromissos firmes?',
+      'Preciso de terceiros (advogados, mediadores, intérpretes)?',
+      'Que armadilhas éticas devo ter em mente?',
+    ],
+  },
+];
 
 type Props = {
   initial?: Partial<NegotiationStrategyParams>;
@@ -79,6 +123,19 @@ export function NegotiationStrategyForm({
   const [priceScenario, setPriceScenario] = useState(
     initial?.priceScenario ?? '',
   );
+  const [productType, setProductType] = useState(initial?.productType ?? '');
+  const [purchaseType, setPurchaseType] = useState<NegotiationPurchaseType | ''>(
+    initial?.purchaseType ?? '',
+  );
+  const [concessions, setConcessions] = useState(initial?.concessions ?? '');
+  const [mustHaves, setMustHaves] = useState(initial?.mustHaves ?? '');
+  const [niceToHaves, setNiceToHaves] = useState(initial?.niceToHaves ?? '');
+  const [decisionPower, setDecisionPower] = useState<NegotiationDecisionPower | ''>(
+    initial?.decisionPower ?? '',
+  );
+  const [negotiationTechnique, setNegotiationTechnique] = useState<
+    NegotiationTechnique | ''
+  >(initial?.negotiationTechnique ?? '');
   const [loadingExample, setLoadingExample] = useState(false);
 
   async function fillExample() {
@@ -107,6 +164,13 @@ export function NegotiationStrategyForm({
       setStrategicObjective(p.strategicObjective ?? '');
       setContractStatus(p.contractStatus ?? '');
       setPriceScenario(p.priceScenario ?? '');
+      setProductType(p.productType ?? '');
+      setPurchaseType(p.purchaseType ?? '');
+      setConcessions(p.concessions ?? '');
+      setMustHaves(p.mustHaves ?? '');
+      setNiceToHaves(p.niceToHaves ?? '');
+      setDecisionPower(p.decisionPower ?? '');
+      setNegotiationTechnique(p.negotiationTechnique ?? '');
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       toast.error('Erro ao gerar exemplo', { description: msg });
@@ -133,6 +197,13 @@ export function NegotiationStrategyForm({
       ...(strategicObjective ? { strategicObjective } : {}),
       contractStatus: contractStatus.trim(),
       priceScenario: priceScenario.trim(),
+      productType: productType.trim(),
+      ...(purchaseType ? { purchaseType } : {}),
+      concessions: concessions.trim(),
+      mustHaves: mustHaves.trim(),
+      niceToHaves: niceToHaves.trim(),
+      ...(decisionPower ? { decisionPower } : {}),
+      ...(negotiationTechnique ? { negotiationTechnique } : {}),
     };
     onSubmit(params);
   }
@@ -403,6 +474,159 @@ export function NegotiationStrategyForm({
               disabled={isLoading}
             />
           </div>
+
+          {/* Poder de decisão + técnica */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className={LABEL_CLASS}>
+                Poder de decisão da contraparte
+              </label>
+              <select
+                value={decisionPower}
+                onChange={(e) =>
+                  setDecisionPower(
+                    (e.target.value || '') as NegotiationDecisionPower | '',
+                  )
+                }
+                className={INPUT_CLASS}
+                disabled={isLoading}
+              >
+                <option value="">Selecione uma opção</option>
+                {NEGOTIATION_DECISION_POWER.map((v) => (
+                  <option key={v} value={v}>
+                    {NEGOTIATION_DECISION_POWER_LABELS[v]}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className={LABEL_CLASS}>
+                Qual técnica de negociação você quer empregar?
+              </label>
+              <select
+                value={negotiationTechnique}
+                onChange={(e) =>
+                  setNegotiationTechnique(
+                    (e.target.value || '') as NegotiationTechnique | '',
+                  )
+                }
+                className={INPUT_CLASS}
+                disabled={isLoading}
+              >
+                <option value="">Selecione uma opção</option>
+                {NEGOTIATION_TECHNIQUE.map((v) => (
+                  <option key={v} value={v}>
+                    {NEGOTIATION_TECHNIQUE_LABELS[v]}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Concessões e Trocas (4 itens do backlog) */}
+          <div className="rounded-xl border border-border/70 bg-background/40 p-4 space-y-4">
+            <h3 className="text-xs font-semibold text-foreground/80">
+              Concessões e Trocas
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className={LABEL_CLASS}>Necessário (precisa ter)</label>
+                <textarea
+                  value={mustHaves}
+                  onChange={(e) => setMustHaves(e.target.value)}
+                  placeholder="Ex: prazo de entrega ≤ 15 dias; SLA de 99%."
+                  rows={2}
+                  className={`${INPUT_CLASS} resize-none`}
+                  disabled={isLoading}
+                />
+              </div>
+              <div>
+                <label className={LABEL_CLASS}>Desejável (seria bom ter)</label>
+                <textarea
+                  value={niceToHaves}
+                  onChange={(e) => setNiceToHaves(e.target.value)}
+                  placeholder="Ex: treinamento incluso; estoque consignado."
+                  rows={2}
+                  className={`${INPUT_CLASS} resize-none`}
+                  disabled={isLoading}
+                />
+              </div>
+            </div>
+            <div>
+              <label className={LABEL_CLASS}>
+                O que posso oferecer que custa pouco para mim, mas vale para o
+                vendedor?
+              </label>
+              <textarea
+                value={concessions}
+                onChange={(e) => setConcessions(e.target.value)}
+                placeholder="Ex: prazo de pagamento maior, volume garantido, contrato mais longo."
+                rows={2}
+                className={`${INPUT_CLASS} resize-none`}
+                disabled={isLoading}
+              />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className={LABEL_CLASS}>Tipo de produto ou serviço</label>
+                <input
+                  type="text"
+                  value={productType}
+                  onChange={(e) => setProductType(e.target.value)}
+                  placeholder="Ex: matéria-prima, equipamento, serviço recorrente"
+                  className={INPUT_CLASS}
+                  disabled={isLoading}
+                />
+              </div>
+              <div>
+                <label className={LABEL_CLASS}>Compra única ou contrato?</label>
+                <select
+                  value={purchaseType}
+                  onChange={(e) =>
+                    setPurchaseType(
+                      (e.target.value || '') as NegotiationPurchaseType | '',
+                    )
+                  }
+                  className={INPUT_CLASS}
+                  disabled={isLoading}
+                >
+                  <option value="">Selecione uma opção</option>
+                  {NEGOTIATION_PURCHASE_TYPE.map((v) => (
+                    <option key={v} value={v}>
+                      {NEGOTIATION_PURCHASE_TYPE_LABELS[v]}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Lista de verificação da preparação (referência) */}
+          <details className="rounded-xl border border-border/70 bg-background/40 p-4">
+            <summary className="cursor-pointer text-xs font-semibold text-foreground/80 select-none">
+              Lista de verificação da preparação da negociação
+            </summary>
+            <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-4">
+              {PREP_CHECKLIST.map((col) => (
+                <div key={col.group}>
+                  <h4 className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-brand">
+                    {col.group}
+                  </h4>
+                  <ul className="space-y-1.5">
+                    {col.items.map((it) => (
+                      <li
+                        key={it}
+                        className="flex gap-1.5 text-xs text-muted-foreground leading-snug"
+                      >
+                        <span className="text-brand">□</span>
+                        <span>{it}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </details>
         </section>
 
         <div className="flex justify-center pt-2">

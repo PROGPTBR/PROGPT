@@ -83,6 +83,9 @@ async function speakBody(
       input: body.text,
       instructions,
       response_format: 'mp3',
+      // Fala um pouco mais rápida que o padrão (pedido do diretor 2026-08-19):
+      // a voz treinada soava lenta. 1.0 = normal; 1.15 acelera ~15% sem distorcer.
+      speed: 1.15,
     });
     const audio = Buffer.from(await speech.arrayBuffer());
 

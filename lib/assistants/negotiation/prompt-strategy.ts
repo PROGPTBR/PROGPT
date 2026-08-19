@@ -8,6 +8,9 @@ import {
   SUPPLIER_MARKET_POSITION_LABELS,
   NEGOTIATION_OBJECTIVE_LABELS,
   KRALJIC_QUADRANT_LABELS,
+  NEGOTIATION_PURCHASE_TYPE_LABELS,
+  NEGOTIATION_DECISION_POWER_LABELS,
+  NEGOTIATION_TECHNIQUE_LABELS,
 } from '@/lib/assistants/types';
 
 // Sub-projeto 22 — Strategy Builder do Assistente de Negociação.
@@ -87,6 +90,29 @@ function summarizeParams(p: NegotiationStrategyParams): string {
     parts.push(`## Status do contrato e relacionamento\n${p.contractStatus}`);
   if (p.priceScenario)
     parts.push(`## Cenário de preços e metas\n${p.priceScenario}`);
+  if (p.productType) parts.push(`## Tipo de produto/serviço\n${p.productType}`);
+  if (p.purchaseType)
+    parts.push(
+      `## Tipo de compra\n${NEGOTIATION_PURCHASE_TYPE_LABELS[p.purchaseType]}`,
+    );
+  const trocas: string[] = [];
+  if (p.mustHaves) trocas.push(`- Necessário (precisa ter): ${p.mustHaves}`);
+  if (p.niceToHaves)
+    trocas.push(`- Desejável (seria bom ter): ${p.niceToHaves}`);
+  if (p.concessions)
+    trocas.push(
+      `- Concessões possíveis (baixo custo p/ mim, valor p/ o vendedor): ${p.concessions}`,
+    );
+  if (trocas.length > 0)
+    parts.push(`## Concessões e trocas\n${trocas.join('\n')}`);
+  if (p.decisionPower)
+    parts.push(
+      `## Poder de decisão da contraparte\n${NEGOTIATION_DECISION_POWER_LABELS[p.decisionPower]}`,
+    );
+  if (p.negotiationTechnique)
+    parts.push(
+      `## Técnica de negociação preferida do comprador\n${NEGOTIATION_TECHNIQUE_LABELS[p.negotiationTechnique]}\n(Oriente a estratégia e as táticas a partir desta técnica.)`,
+    );
   return parts.join('\n\n');
 }
 
