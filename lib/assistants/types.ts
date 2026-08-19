@@ -260,10 +260,14 @@ export const FinancialIndicatorsSchema = z.object({
   endividamentoGeralPct: z.number().optional(),
   // Balanço
   liquidezCorrente: z.number().optional(),
+  liquidezSeca: z.number().optional(), // (AC - Estoques) / PC
+  capitalGiroLiquido: z.number().optional(), // R$ MM (AC - PC)
   patrimonioLiquido: z.number().optional(), // R$ MM
   // Rentabilidade (%)
   roePct: z.number().optional(),
   roicPct: z.number().optional(),
+  // Endividamento (cobertura)
+  coberturaJuros: z.number().optional(), // x (EBITDA / Despesa Financeira)
   // Caixa
   fluxoCaixaOperacional: z.number().optional(), // R$ MM
 });

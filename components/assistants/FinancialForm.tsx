@@ -68,6 +68,8 @@ const INDICATOR_FIELDS: Array<{
     hint: 'Pilar 1 (peso 30%)',
     pillar: 'liquidity',
   },
+  { key: 'liquidezSeca', label: 'Liquidez Seca', suffix: '' },
+  { key: 'capitalGiroLiquido', label: 'Capital de Giro Líquido', suffix: 'R$ MM' },
   { key: 'patrimonioLiquido', label: 'Patrimônio Líquido', suffix: 'R$ MM' },
   {
     key: 'roePct',
@@ -77,6 +79,7 @@ const INDICATOR_FIELDS: Array<{
     pillar: 'roe',
   },
   { key: 'roicPct', label: 'ROIC', suffix: '%' },
+  { key: 'coberturaJuros', label: 'Cobertura de Juros', suffix: 'x' },
   { key: 'endividamentoGeralPct', label: 'Endividamento Geral', suffix: '%' },
   {
     key: 'fluxoCaixaOperacional',
