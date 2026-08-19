@@ -126,18 +126,13 @@ async function asaasFetch<T>(
     parsed = text;
   }
 
-if (!res.ok) {
-  console.log('====================');
-  console.log('ASAAS ERROR');
-  console.log(parsed);
-  console.log('====================');
-
-  throw new AsaasError(
-    `Asaas ${method} ${path} failed: ${res.status} - ${JSON.stringify(parsed)}`,
-    res.status,
-    parsed,
-  );
-}
+  if (!res.ok) {
+    throw new AsaasError(
+      `Asaas ${method} ${path} failed: ${res.status} - ${JSON.stringify(parsed)}`,
+      res.status,
+      parsed,
+    );
+  }
 
   return parsed as T;
 }

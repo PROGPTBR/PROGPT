@@ -45,6 +45,11 @@ function mockBillingDeps(opts: {
   vi.doMock('@/lib/db/supabase', () => ({
     getServerSupabase: () => ({
       from: () => ({
+        // profiles update: from('profiles').update({...}).eq('id', ...)
+        update: vi.fn().mockReturnValue({
+          eq: vi.fn().mockResolvedValue({ error: null }),
+        }),
+        // subscriptions upsert
         upsert: vi.fn().mockResolvedValue({ error: null }),
       }),
     }),
@@ -92,6 +97,8 @@ describe('POST /api/billing/checkout', () => {
         status: 'active',
         created_at: new Date().toISOString(),
         asaas_customer_id: 'cus_old',
+        // 409 só dispara quando há subscription paga real no Asaas
+        asaas_subscription_id: 'sub_old',
       },
     });
     const res = await POST_with({ name: 'João', cpf: '390.533.447-05' });

@@ -98,4 +98,25 @@ describe('POST /api/billing/cancel', () => {
       expect.objectContaining({ cancel_at_period_end: true }),
     );
   });
+
+  it('cancel during trial returns accessUntil = trial_end (no charge)', async () => {
+    mockAuth(true);
+    const { subUpdate } = mockDeps({
+      sub: {
+        id: 's1',
+        asaas_subscription_id: 'sub_x',
+        status: 'trialing',
+        current_period_end: null,
+        trial_end: '2026-06-29T00:00:00Z',
+      },
+    });
+    const res = await POST_call();
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    // Sem current_period_end (trial ainda não cobrou) → usa trial_end.
+    expect(body.accessUntil).toBe('2026-06-29T00:00:00Z');
+    expect(subUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ cancel_at_period_end: true }),
+    );
+  });
 });

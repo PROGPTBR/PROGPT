@@ -28,6 +28,77 @@ function mockSupabase(opts: {
   }));
 }
 
+describe('subscriptionGrantsAccess', () => {
+  const future = () => new Date(Date.now() + 86400000).toISOString();
+  const past = () => new Date(Date.now() - 86400000).toISOString();
+
+  function base(over: Record<string, unknown>) {
+    return {
+      id: 's1',
+      user_id: 'u1',
+      asaas_customer_id: null,
+      asaas_subscription_id: null,
+      status: 'active',
+      plan: 'pro',
+      payment_method: 'credit_card',
+      current_period_start: null,
+      current_period_end: null,
+      trial_end: null,
+      cancel_at_period_end: false,
+      cancelled_at: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      ...over,
+    } as Parameters<
+      typeof import('@/lib/billing/subscription').subscriptionGrantsAccess
+    >[0];
+  }
+
+  it('grants access while trialing within trial_end', async () => {
+    const { subscriptionGrantsAccess } = await import('@/lib/billing/subscription');
+    expect(subscriptionGrantsAccess(base({ status: 'trialing', trial_end: future() }))).toBe(true);
+  });
+
+  it('cancel_at_period_end during trial keeps access until trial_end', async () => {
+    // Webhook do Asaas já flipou status p/ 'cancelled' na hora do DELETE, mas
+    // como foi cancelamento do usuário (cancel_at_period_end) e ainda estamos
+    // dentro do trial, o acesso é mantido — promessa da UI.
+    const { subscriptionGrantsAccess } = await import('@/lib/billing/subscription');
+    expect(
+      subscriptionGrantsAccess(
+        base({ status: 'cancelled', cancel_at_period_end: true, trial_end: future() }),
+      ),
+    ).toBe(true);
+  });
+
+  it('cancel_at_period_end on paid sub keeps access until current_period_end', async () => {
+    const { subscriptionGrantsAccess } = await import('@/lib/billing/subscription');
+    expect(
+      subscriptionGrantsAccess(
+        base({ status: 'cancelled', cancel_at_period_end: true, current_period_end: future() }),
+      ),
+    ).toBe(true);
+  });
+
+  it('cancel_at_period_end revokes access once the period/trial ended', async () => {
+    const { subscriptionGrantsAccess } = await import('@/lib/billing/subscription');
+    expect(
+      subscriptionGrantsAccess(
+        base({ status: 'cancelled', cancel_at_period_end: true, trial_end: past() }),
+      ),
+    ).toBe(false);
+  });
+
+  it('cancelled WITHOUT cancel_at_period_end (refund/payment-deleted) revokes access immediately', async () => {
+    const { subscriptionGrantsAccess } = await import('@/lib/billing/subscription');
+    expect(
+      subscriptionGrantsAccess(
+        base({ status: 'cancelled', cancel_at_period_end: false, current_period_end: future() }),
+      ),
+    ).toBe(false);
+  });
+});
+
 describe('getActiveSubscription', () => {
   it('returns sub when status=active', async () => {
     mockSupabase({
