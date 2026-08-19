@@ -16,6 +16,7 @@ import { PesquisaPrecosPreview } from './previews/PesquisaPrecosPreview';
 import { IndicadoresPreview } from './previews/IndicadoresPreview';
 import { DashboardPreview } from './previews/DashboardPreview';
 import { SimuladorTributarioPreview } from './previews/SimuladorTributarioPreview';
+import { SimuladorLogisticoPreview } from './previews/SimuladorLogisticoPreview';
 
 // Hub layout — header + spotlight cards.
 //
@@ -34,6 +35,8 @@ type SpotlightAssistant = {
   short: string;
   bullets: string[];
   Preview: React.ComponentType;
+  /** Mostra o card como "Em breve": badge, visual esmaecido e não-clicável. */
+  emBreve?: boolean;
 };
 
 const SPOTLIGHTS: SpotlightAssistant[] = [
@@ -232,6 +235,22 @@ const SPOTLIGHTS: SpotlightAssistant[] = [
       'Comparativo de carga e status contábil',
     ],
     Preview: SimuladorTributarioPreview,
+    emBreve: true,
+  },
+  {
+    step: 9,
+    stepCategory: 'Macro',
+    href: '/simulador-logistico',
+    title: 'Simulador Logístico (DIFAL)',
+    short:
+      'Simule o custo logístico de uma operação interestadual com a análise do DIFAL (diferencial de alíquota do ICMS) para decidir a melhor origem de compra.',
+    bullets: [
+      'Cálculo do DIFAL por UF de origem × destino',
+      'Custo logístico + frete na comparação',
+      'Melhor cenário de compra interestadual',
+    ],
+    Preview: SimuladorLogisticoPreview,
+    emBreve: true,
   },
 ];
 
@@ -250,15 +269,17 @@ export function AssistantsHub() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {SPOTLIGHTS.map((a) => {
             const { Preview } = a;
-            return (
-              <Link
-                key={a.href}
-                href={a.href}
-                className="group flex flex-col rounded-2xl border border-border bg-card hover:bg-accent hover:border-brand/30 transition-all duration-300 p-6 active:scale-[0.99]"
-              >
+
+            const inner = (
+              <>
                 {/* Preview */}
-                <div className="rounded-xl bg-black/40 overflow-hidden aspect-[16/9] mb-5 ring-1 ring-white/5">
+                <div className="relative rounded-xl bg-black/40 overflow-hidden aspect-[16/9] mb-5 ring-1 ring-white/5">
                   <Preview />
+                  {a.emBreve && (
+                    <span className="absolute right-2 top-2 rounded-full bg-brand-gradient px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-black shadow">
+                      Em breve
+                    </span>
+                  )}
                 </div>
 
                 {/* Title */}
@@ -288,13 +309,41 @@ export function AssistantsHub() {
                 </ul>
 
                 {/* CTA */}
-                <div className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-brand group-hover:text-brand/80 transition-colors">
-                  Abrir assistente
-                  <ArrowRight
-                    className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform"
-                    aria-hidden="true"
-                  />
+                {a.emBreve ? (
+                  <div className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
+                    Em breve
+                  </div>
+                ) : (
+                  <div className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-brand group-hover:text-brand/80 transition-colors">
+                    Abrir assistente
+                    <ArrowRight
+                      className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform"
+                      aria-hidden="true"
+                    />
+                  </div>
+                )}
+              </>
+            );
+
+            if (a.emBreve) {
+              return (
+                <div
+                  key={a.href}
+                  aria-disabled="true"
+                  className="flex flex-col rounded-2xl border border-border bg-card p-6 opacity-70 cursor-default select-none"
+                >
+                  {inner}
                 </div>
+              );
+            }
+
+            return (
+              <Link
+                key={a.href}
+                href={a.href}
+                className="group flex flex-col rounded-2xl border border-border bg-card hover:bg-accent hover:border-brand/30 transition-all duration-300 p-6 active:scale-[0.99]"
+              >
+                {inner}
               </Link>
             );
           })}
