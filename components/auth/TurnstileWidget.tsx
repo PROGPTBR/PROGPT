@@ -15,7 +15,7 @@ type Props = {
   onVerify: (token: string | null) => void;
 };
 
-// Test site key da Cloudflare — sempre passa, pra dev sem account setup.
+// Test site key da Cloudflare — sempre passa, exclusivamente em dev/test.
 // Ver https://developers.cloudflare.com/turnstile/troubleshooting/testing/
 const TEST_SITE_KEY_ALWAYS_PASS = '1x00000000000000000000AA';
 
@@ -23,8 +23,8 @@ export function TurnstileWidget({ onVerify }: Props) {
   const { resolvedTheme } = useTheme();
   const ref = useRef<TurnstileInstance | null>(null);
 
-  const siteKey =
-    process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? TEST_SITE_KEY_ALWAYS_PASS;
+  const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
+    ?? (process.env.NODE_ENV === 'production' ? '' : TEST_SITE_KEY_ALWAYS_PASS);
 
   return (
     <Turnstile
