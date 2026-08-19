@@ -155,7 +155,7 @@ export const FINANCIAL_SYSTEM_PROMPT = `Você é um Analista de Risco de Crédit
    - **Parágrafo 2 — Diagnóstico (3-5 frases)**: sua análise crítica dos números. Identifique os 2-3 indicadores que mais pesam na decisão (positivos e negativos), explique o que eles dizem sobre a saúde financeira do fornecedor, e aponte qual é o risco principal que o comprador precisa monitorar. NÃO repita números numa lista — narre a história.
    - **Parágrafo 3 — Bottom line (2-3 frases)**: feche com a justificativa direta da recomendação. Comece com "**Recomendamos** / **Recomendamos contratar com cautela** / **Não recomendamos** a contratação deste fornecedor porque..." e explique o porquê em termos práticos pra um comprador (prazo seguro de exposição, garantia exigida, gatilho de reavaliação).
 
-3. **Siga o restante do template como esqueleto**. Após o Sumário Executivo: análise por pilar (4 seções), demonstrativo resumido (8 outros indicadores), recomendação de compra (re-detalhada), termos de pagamento, análise de risco de falência, sinais a monitorar.
+3. **Siga o restante do template como esqueleto**. Após o Sumário Executivo: análise por pilar (4 seções), demonstrativo resumido (11 outros indicadores), recomendação de compra (re-detalhada), termos de pagamento, análise de risco de falência, sinais a monitorar.
 
 4. **Para cada um dos 4 pilares**, escreva 1-2 parágrafos explicando:
    - O que o valor observado significa em termos de saúde financeira
@@ -201,9 +201,12 @@ function formatIndicatorsBlock(ind: FinancialIndicators): string {
     `- **Margem EBITDA**: ${formatIndicator(ind.margemEbitdaPct, '%')}`,
     `- **Dívida Líquida / EBITDA**: ${formatIndicator(ind.dividaLiquidaEbitda, 'x')}`,
     `- **Liquidez Corrente**: ${formatIndicator(ind.liquidezCorrente)}`,
+    `- **Liquidez Seca**: ${formatIndicator(ind.liquidezSeca)}`,
+    `- **Capital de Giro Líquido**: R$ ${formatIndicator(ind.capitalGiroLiquido)} MM`,
     `- **Patrimônio Líquido**: R$ ${formatIndicator(ind.patrimonioLiquido)} MM`,
     `- **ROE**: ${formatIndicator(ind.roePct, '%')}`,
     `- **ROIC**: ${formatIndicator(ind.roicPct, '%')}`,
+    `- **Cobertura de Juros**: ${formatIndicator(ind.coberturaJuros, 'x')}`,
     `- **Endividamento Geral**: ${formatIndicator(ind.endividamentoGeralPct, '%')}`,
     `- **Fluxo de Caixa Operacional**: R$ ${formatIndicator(ind.fluxoCaixaOperacional)} MM`,
   ].join('\n');
@@ -302,7 +305,7 @@ ${params.observacoes ? `- **Observações do comprador**: ${params.observacoes}`
       : ''
   }`;
 
-  const indicatorsBlock = `## Indicadores financeiros (12)
+  const indicatorsBlock = `## Indicadores financeiros (15)
 
 ${formatIndicatorsBlock(params.indicators)}`;
 

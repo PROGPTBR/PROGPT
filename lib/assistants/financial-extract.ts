@@ -26,9 +26,12 @@ const ExtractedSchema = z.object({
   margemEbitdaPct: z.number().nullable().optional(),
   dividaLiquidaEbitda: z.number().nullable().optional(),
   liquidezCorrente: z.number().nullable().optional(),
+  liquidezSeca: z.number().nullable().optional(),
+  capitalGiroLiquido: z.number().nullable().optional(),
   patrimonioLiquido: z.number().nullable().optional(),
   roePct: z.number().nullable().optional(),
   roicPct: z.number().nullable().optional(),
+  coberturaJuros: z.number().nullable().optional(),
   endividamentoGeralPct: z.number().nullable().optional(),
   fluxoCaixaOperacional: z.number().nullable().optional(),
   // Optional metadata fields surfaced for diagnostics — not returned to
@@ -42,7 +45,7 @@ type ExtractedShape = z.infer<typeof ExtractedSchema>;
 
 const EXTRACT_SYSTEM_PROMPT = `Você é um Analista de Risco de Crédito Bancário lendo um PDF de Balanço Patrimonial e DRE de uma empresa brasileira.
 
-Tarefa: EXTRAIR exatamente estes 12 indicadores financeiros do PDF (e nada além):
+Tarefa: EXTRAIR exatamente estes 15 indicadores financeiros do PDF (e nada além):
 
 1. **receitaLiquida** — Receita Líquida (em R$ milhões; converta de mil para MM se preciso)
 2. **ebitda** — EBITDA (R$ MM)
@@ -51,11 +54,14 @@ Tarefa: EXTRAIR exatamente estes 12 indicadores financeiros do PDF (e nada além
 5. **margemEbitdaPct** — Margem EBITDA (%) = EBITDA / Receita Líquida × 100
 6. **dividaLiquidaEbitda** — Dívida Líquida / EBITDA (múltiplo, ex: 2.5)
 7. **liquidezCorrente** — Ativo Circulante / Passivo Circulante
-8. **patrimonioLiquido** — Patrimônio Líquido (R$ MM)
-9. **roePct** — ROE (%) = Lucro Líquido / Patrimônio Líquido × 100
-10. **roicPct** — ROIC (%) = NOPAT / Capital Investido × 100
-11. **endividamentoGeralPct** — Endividamento Geral (%) = Passivo Total / Ativo Total × 100
-12. **fluxoCaixaOperacional** — Fluxo de Caixa Operacional (R$ MM)
+8. **liquidezSeca** — (Ativo Circulante − Estoques) / Passivo Circulante
+9. **capitalGiroLiquido** — Capital de Giro Líquido (R$ MM) = Ativo Circulante − Passivo Circulante
+10. **patrimonioLiquido** — Patrimônio Líquido (R$ MM)
+11. **roePct** — ROE (%) = Lucro Líquido / Patrimônio Líquido × 100
+12. **roicPct** — ROIC (%) = NOPAT / Capital Investido × 100
+13. **coberturaJuros** — Cobertura de Juros (múltiplo, x) = EBITDA / Despesa Financeira
+14. **endividamentoGeralPct** — Endividamento Geral (%) = Passivo Total / Ativo Total × 100
+15. **fluxoCaixaOperacional** — Fluxo de Caixa Operacional (R$ MM)
 
 REGRAS DE EXTRAÇÃO:
 - Use os números mais recentes disponíveis no PDF (último ano fiscal completo).
@@ -217,9 +223,12 @@ function stripNulls(p: ExtractedShape): FinancialIndicators {
     'margemEbitdaPct',
     'dividaLiquidaEbitda',
     'liquidezCorrente',
+    'liquidezSeca',
+    'capitalGiroLiquido',
     'patrimonioLiquido',
     'roePct',
     'roicPct',
+    'coberturaJuros',
     'endividamentoGeralPct',
     'fluxoCaixaOperacional',
   ];
