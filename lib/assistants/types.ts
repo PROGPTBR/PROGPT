@@ -544,6 +544,61 @@ export const KRALJIC_QUADRANT_VALUES: KraljicQuadrant[] = [
   'nao-critico',
 ];
 
+// Poder de decisão da contraparte (backlog diretor 2026-08-19).
+export const NEGOTIATION_DECISION_POWER = [
+  'sozinho',
+  'influencia',
+  'sem_alcada',
+  'desconhecido',
+] as const;
+export type NegotiationDecisionPower =
+  (typeof NEGOTIATION_DECISION_POWER)[number];
+export const NEGOTIATION_DECISION_POWER_LABELS: Record<
+  NegotiationDecisionPower,
+  string
+> = {
+  sozinho: 'Decide sozinho(a)',
+  influencia: 'Influencia, mas precisa de aprovação',
+  sem_alcada: 'Sem alçada (só transmite)',
+  desconhecido: 'Não sei',
+};
+
+// Técnica de negociação preferida (backlog diretor 2026-08-19).
+export const NEGOTIATION_TECHNIQUE = [
+  'orcamento',
+  'planejamento',
+  'ouvir',
+  'tranquilidade',
+  'alternativas',
+  'qualidade',
+  'concessoes',
+] as const;
+export type NegotiationTechnique = (typeof NEGOTIATION_TECHNIQUE)[number];
+export const NEGOTIATION_TECHNIQUE_LABELS: Record<
+  NegotiationTechnique,
+  string
+> = {
+  orcamento: 'Defina um orçamento (âncora e limite financeiro)',
+  planejamento: 'Planeje a negociação (cenários, objeções, concessões)',
+  ouvir: 'Seja um bom ouvinte (escutar mais, negociar melhor)',
+  tranquilidade: 'Aja com tranquilidade (sem pressa, sem ansiedade)',
+  alternativas: 'Mostre que tem outras opções (poder do BATNA)',
+  qualidade: 'Priorize a qualidade (não só o menor preço / TCO)',
+  concessoes: 'Faça concessões inteligentes (ceder no que custa pouco)',
+};
+
+// Tipo de compra: pontual x contrato de fornecimento.
+export const NEGOTIATION_PURCHASE_TYPE = ['unica', 'contrato'] as const;
+export type NegotiationPurchaseType =
+  (typeof NEGOTIATION_PURCHASE_TYPE)[number];
+export const NEGOTIATION_PURCHASE_TYPE_LABELS: Record<
+  NegotiationPurchaseType,
+  string
+> = {
+  unica: 'Compra única (pontual)',
+  contrato: 'Contrato de fornecimento (recorrente/longo)',
+};
+
 // Strategy Builder params (form input — Tela 1-2 do Deal Sim).
 export const NegotiationStrategyParamsSchema = z.object({
   // Identificação
@@ -569,6 +624,18 @@ export const NegotiationStrategyParamsSchema = z.object({
   strategicObjective: z.enum(NEGOTIATION_OBJECTIVE).optional(),
   contractStatus: z.string().trim().max(2000).optional().default(''),
   priceScenario: z.string().trim().max(2000).optional().default(''),
+
+  // Concessões e trocas + necessário × desejável (backlog diretor 2026-08-19).
+  // Opcionais sem default para não exigir edição de todos os exemplos.
+  concessions: z.string().trim().max(2000).optional(),
+  mustHaves: z.string().trim().max(2000).optional(),
+  niceToHaves: z.string().trim().max(2000).optional(),
+  productType: z.string().trim().max(200).optional(),
+  purchaseType: z.enum(NEGOTIATION_PURCHASE_TYPE).optional(),
+
+  // Contraparte + técnica escolhida.
+  decisionPower: z.enum(NEGOTIATION_DECISION_POWER).optional(),
+  negotiationTechnique: z.enum(NEGOTIATION_TECHNIQUE).optional(),
 
   // Link opcional a um Perfil (sub-projeto 33).
   perfilId: z.string().uuid().optional(),
