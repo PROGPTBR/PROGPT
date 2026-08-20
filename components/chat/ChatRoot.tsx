@@ -8,6 +8,7 @@ import { ChatSession } from './ChatSession';
 import { ChatErrorBoundary } from './ChatErrorBoundary';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { CHAT_PREFILL_KEY } from '@/lib/prompts/chat-prefill';
+import { AssistantsSidePanel } from './AssistantsSidePanel';
 
 export function ChatRoot() {
   // Wait for client mount before reading localStorage. The server and the
@@ -26,9 +27,11 @@ export function ChatRoot() {
 const SIDEBAR_COLLAPSED_KEY = 'progpt_sidebar_collapsed';
 
 function ChatRootMounted() {
-  const sessionsApi = useChatSessions();
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
+const sessionsApi = useChatSessions();
+const [drawerOpen, setDrawerOpen] = useState(false);
+const [assistantsOpen, setAssistantsOpen] = useState(false);
+const [assistantsMobileOpen, setAssistantsMobileOpen] = useState(false);
+const [collapsed, setCollapsed] = useState(false);
 
   // Restore the persisted collapse preference after mount.
   useEffect(() => {
@@ -104,61 +107,102 @@ if (!currentId) {
       ? pendingPrefill
       : null;
 
-  return (
-    <div className="flex h-screen bg-background text-foreground font-outfit antialiased">
+return (
+  <div className="flex h-screen bg-background text-foreground font-outfit antialiased">
+    {/* Sidebar desktop */}
+    <div className="hidden md:flex">
+      <Sidebar
+        sessions={sessionsApi.sessions}
+        currentId={sessionsApi.currentId}
+        onSwitch={sessionsApi.switchTo}
+        onNew={sessionsApi.createNew}
+        onDelete={sessionsApi.deleteSession}
+        onRename={sessionsApi.renameSession}
+        collapsed={collapsed}
+        onToggleCollapse={toggleCollapse}
+        assistantsOpen={assistantsOpen}
+        onOpenAssistants={() => setAssistantsOpen((open) => !open)}
+      />
+    </div>
+
+    {/* Painel lateral de assistentes — desktop */}
+    {assistantsOpen && (
       <div className="hidden md:flex">
+        <AssistantsSidePanel
+          onClose={() => setAssistantsOpen(false)}
+        />
+      </div>
+    )}
+
+    {/* Sidebar mobile */}
+    <Sheet open={drawerOpen} onOpenChange={(open) => setDrawerOpen(open)}>
+      <SheetContent
+        side="left"
+        showCloseButton={false}
+        className="p-0 w-[17rem] max-w-[85vw] bg-[#0a0f1a] border-border"
+      >
         <Sidebar
           sessions={sessionsApi.sessions}
           currentId={sessionsApi.currentId}
-          onSwitch={sessionsApi.switchTo}
-          onNew={sessionsApi.createNew}
+          onSwitch={(id) => {
+            sessionsApi.switchTo(id);
+            setDrawerOpen(false);
+          }}
+          onNew={() => {
+            sessionsApi.createNew();
+            setDrawerOpen(false);
+          }}
           onDelete={sessionsApi.deleteSession}
           onRename={sessionsApi.renameSession}
-          collapsed={collapsed}
-          onToggleCollapse={toggleCollapse}
+assistantsOpen={assistantsMobileOpen}
+onOpenAssistants={() => {
+  setDrawerOpen(false);
+  setAssistantsMobileOpen(true);
+}}
         />
-      </div>
-      <Sheet open={drawerOpen} onOpenChange={(open) => setDrawerOpen(open)}>
-        <SheetContent
-          side="left"
-          showCloseButton={false}
-          className="p-0 w-[17rem] max-w-[85vw] bg-[#0a0f1a] border-border"
-        >
-          <Sidebar
-            sessions={sessionsApi.sessions}
-            currentId={sessionsApi.currentId}
-            onSwitch={(id) => {
-              sessionsApi.switchTo(id);
-              setDrawerOpen(false);
-            }}
-            onNew={() => {
-              sessionsApi.createNew();
-              setDrawerOpen(false);
-            }}
-            onDelete={sessionsApi.deleteSession}
-            onRename={sessionsApi.renameSession}
-          />
-        </SheetContent>
-      </Sheet>
-      <div className="flex-1 flex flex-col min-w-0">
-        <Header onOpenSidebar={() => setDrawerOpen(true)} />
-        <ChatErrorBoundary>
-          <ChatSession
-            key={sessionsApi.currentId}
-            session={sessionsApi.current}
-            initialRatings={sessionsApi.ratings}
-            prefill={prefillForSession}
-            onPrefillConsumed={() => setPendingPrefill(null)}
-            onMessagesChange={sessionsApi.updateMessages}
-            onTitleChange={
-              sessionsApi.setTitleLocal
-                ? (title) =>
-                    sessionsApi.setTitleLocal!(sessionsApi.currentId, title)
-                : undefined
-            }
-          />
-        </ChatErrorBoundary>
-      </div>
+      </SheetContent>
+    </Sheet>
+
+    {/* Painel assistentes mobile */}
+<Sheet
+  open={assistantsMobileOpen}
+  onOpenChange={setAssistantsMobileOpen}
+>
+      <SheetContent
+        side="left"
+        showCloseButton={false}
+        className="md:hidden p-0 w-[21rem] max-w-[92vw] bg-[#0a0f1a] border-border"
+      >
+     <AssistantsSidePanel
+  onClose={() => setAssistantsMobileOpen(false)}
+/>
+      </SheetContent>
+    </Sheet>
+
+    {/* Chat continua visível */}
+    <div className="flex-1 flex flex-col min-w-0">
+      <Header onOpenSidebar={() => setDrawerOpen(true)} />
+
+      <ChatErrorBoundary>
+        <ChatSession
+          key={sessionsApi.currentId}
+          session={sessionsApi.current}
+          initialRatings={sessionsApi.ratings}
+          prefill={prefillForSession}
+          onPrefillConsumed={() => setPendingPrefill(null)}
+          onMessagesChange={sessionsApi.updateMessages}
+          onTitleChange={
+            sessionsApi.setTitleLocal
+              ? (title) =>
+                  sessionsApi.setTitleLocal!(
+                    sessionsApi.currentId,
+                    title
+                  )
+              : undefined
+          }
+        />
+      </ChatErrorBoundary>
     </div>
-  );
+  </div>
+);
 }

@@ -13,7 +13,10 @@ import {
   BarChart3,
   PanelLeftClose,
   PanelLeftOpen,
+  ChevronRight,
 } from 'lucide-react';
+
+
 import { ScrollArea } from '@/components/ui/scroll-area';
 import type { StoredSession } from '@/lib/chat-storage';
 import { UserRow } from '@/components/auth/UserRow';
@@ -31,6 +34,9 @@ type Props = {
   collapsed?: boolean;
   /** When provided, renders the collapse/expand toggle (desktop only). */
   onToggleCollapse?: () => void;
+
+  onOpenAssistants?: () => void;
+  assistantsOpen?: boolean;
 };
 
 // Navegação principal — TODAS as opções compartilham o mesmo tratamento visual
@@ -65,6 +71,8 @@ export function Sidebar({
   onRename,
   collapsed = false,
   onToggleCollapse,
+  onOpenAssistants,
+  assistantsOpen = false,
 }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState('');
@@ -113,17 +121,58 @@ export function Sidebar({
           </button>
         </div>
         <nav className="flex flex-col items-center gap-1 py-3">
-          {NAV_ITEMS.map(({ href, label, icon: Icon }) => (
-            <Link
-              key={href}
-              href={href}
-              title={label}
-              aria-label={label}
-              className="h-9 w-9 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-            >
-              <Icon className="h-5 w-5" aria-hidden="true" />
-            </Link>
-          ))}
+{NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+  const isAssistants = href === '/assistants';
+
+  if (isAssistants) {
+    return (
+      <button
+  key={href}
+  type="button"
+  onClick={onOpenAssistants}
+  className={`group w-full flex items-center rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
+    assistantsOpen
+      ? 'bg-brand-gradient-soft text-brand'
+      : 'text-foreground/80 hover:bg-accent hover:text-foreground'
+  }`}
+>
+  <div className="flex min-w-0 flex-1 items-center gap-3">
+    <Icon
+      className={`h-4 w-4 shrink-0 transition-colors ${
+        assistantsOpen
+          ? 'text-brand'
+          : 'text-muted-foreground group-hover:text-foreground'
+      }`}
+      aria-hidden="true"
+    />
+
+    <span className="truncate">{label}</span>
+  </div>
+
+  <ChevronRight
+    className={`h-4 w-4 shrink-0 transition-all ${
+      assistantsOpen
+        ? 'text-brand translate-x-0.5'
+        : 'text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5'
+    }`}
+    aria-hidden="true"
+  />
+</button>
+    );
+  }
+
+  return (
+    <Link
+      key={href}
+      href={href}
+      title={label}
+      aria-label={label}
+      className="h-9 w-9 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+    >
+      <Icon className="h-5 w-5" aria-hidden="true" />
+    </Link>
+  );
+})}
         </nav>
         <div className="flex-1" />
         <UserRow collapsed />
@@ -162,19 +211,61 @@ export function Sidebar({
         </div>
       </div>
       <nav className="p-2 space-y-0.5 border-b border-border">
-        {NAV_ITEMS.map(({ href, label, icon: Icon }) => (
-          <Link
-            key={href}
-            href={href}
-            className="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-foreground/80 hover:bg-accent hover:text-foreground transition-colors"
-          >
-            <Icon
-              className="h-4 w-4 shrink-0 text-muted-foreground group-hover:text-foreground transition-colors"
-              aria-hidden="true"
-            />
-            <span className="truncate">{label}</span>
-          </Link>
-        ))}
+{NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+  const isAssistants = href === '/assistants';
+
+if (isAssistants) {
+  return (
+    <button
+      key={href}
+      type="button"
+      onClick={onOpenAssistants}
+      className={`group w-full flex items-center rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
+        assistantsOpen
+          ? 'bg-brand-gradient-soft text-brand'
+          : 'text-foreground/80 hover:bg-accent hover:text-foreground'
+      }`}
+    >
+      <div className="flex min-w-0 flex-1 items-center gap-3">
+        <Icon
+          className={`h-4 w-4 shrink-0 transition-colors ${
+            assistantsOpen
+              ? 'text-brand'
+              : 'text-muted-foreground group-hover:text-foreground'
+          }`}
+          aria-hidden="true"
+        />
+
+        <span className="truncate">{label}</span>
+      </div>
+
+      <ChevronRight
+        className={`h-4 w-4 shrink-0 transition-all ${
+          assistantsOpen
+            ? 'text-brand'
+            : 'text-muted-foreground group-hover:text-foreground'
+        }`}
+        aria-hidden="true"
+      />
+    </button>
+  );
+}
+
+  return (
+    <Link
+      key={href}
+      href={href}
+      className="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-foreground/80 hover:bg-accent hover:text-foreground transition-colors"
+    >
+      <Icon
+        className="h-4 w-4 shrink-0 text-muted-foreground group-hover:text-foreground transition-colors"
+        aria-hidden="true"
+      />
+
+      <span className="truncate">{label}</span>
+    </Link>
+  );
+})}
       </nav>
       <ScrollArea className="flex-1">
         <ul className="p-2 space-y-0.5">

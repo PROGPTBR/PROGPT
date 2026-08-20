@@ -1,7 +1,14 @@
 'use client';
 
 import Link from 'next/link';
+import type { ComponentType } from 'react';
 import { ArrowRight, Check } from 'lucide-react';
+
+import {
+  ASSISTANTS,
+  type AssistantPreviewKey,
+} from './assistants-data';
+
 import { KraljicMatrixPreview } from './previews/KraljicMatrixPreview';
 import { RfpDocumentPreview } from './previews/RfpDocumentPreview';
 import { PorterForcesPreview } from './previews/PorterForcesPreview';
@@ -18,246 +25,36 @@ import { DashboardPreview } from './previews/DashboardPreview';
 import { SimuladorTributarioPreview } from './previews/SimuladorTributarioPreview';
 import { SimuladorLogisticoPreview } from './previews/SimuladorLogisticoPreview';
 
-// Hub layout — header + spotlight cards.
-//
-// Cards grandes (com preview SVG do output) dos assistentes disponíveis. O
-// roadmap/progresso de Strategic Sourcing (barra de progresso, badge "Passo N"
-// e a tira de 7 passos) foi removido do layout em 2026-06-24.
-//
-// Perfil da Categoria foi removido do hub + chat (confundia usuários); a
-// página /assistants/profile e o "Iniciar de um Perfil" no RFP seguem ativos.
-
-type SpotlightAssistant = {
-  step: number;
-  stepCategory: string;
-  href: string;
-  title: string;
-  short: string;
-  bullets: string[];
-  Preview: React.ComponentType;
-  /** Mostra o card como "Em breve": badge, visual esmaecido e não-clicável. */
-  emBreve?: boolean;
+/**
+ * Relaciona o previewKey definido em assistants-data.ts
+ * ao componente visual utilizado no card do Hub.
+ *
+ * Assim, os dados dos assistentes ficam centralizados
+ * em assistants-data.ts, enquanto os componentes pesados
+ * de preview continuam sendo carregados somente nesta página.
+ */
+const PREVIEWS: Record<AssistantPreviewKey, ComponentType> = {
+  dashboard: DashboardPreview,
+  abc: AbcCurvePreview,
+  spend: SpendAnalysisPreview,
+  porter: PorterForcesPreview,
+  suppliers: SuppliersPreview,
+  kraljic: KraljicMatrixPreview,
+  rfp: RfpDocumentPreview,
+  negotiation: NegotiationPreview,
+  financial: FinancialScorePreview,
+  scorecard: ScorecardPreview,
+  homologacao: HomologacaoPreview,
+  pesquisa_precos: PesquisaPrecosPreview,
+  indicadores: IndicadoresPreview,
+  simulador_tributario: SimuladorTributarioPreview,
+  simulador_logistico: SimuladorLogisticoPreview,
 };
-
-const SPOTLIGHTS: SpotlightAssistant[] = [
-  {
-    step: 0,
-    stepCategory: 'Visão geral',
-    href: '/painel',
-    title: 'Painel',
-    short:
-      'Dashboard moderna que reúne TODOS os seus dados num só lugar: conversas, execuções, gasto por categoria, top fornecedores e evolução mensal — atualizado em tempo real, sem planilha nem Power BI.',
-    bullets: [
-      'KPIs e gráficos interativos (SVG, tema claro/escuro)',
-      'Gasto por categoria, fornecedor e mês da Análise de Gastos',
-      'Atualiza sozinho conforme você usa a plataforma',
-    ],
-    Preview: DashboardPreview,
-  },
-  {
-    step: 1,
-    stepCategory: 'Análise',
-    href: '/assistants/abc',
-    title: 'Análise ABC',
-    short:
-      'Classifica spend pela curva de Pareto (80/95%), gera plano de ação por classe A/B/C e curva visual.',
-    bullets: [
-      'Upload de planilha (XLSX, XLS ou CSV)',
-      'Classificação determinística A/B/C',
-      '.docx + .xlsx multi-sheet + chart',
-    ],
-    Preview: AbcCurvePreview,
-  },
-  {
-    step: 1,
-    stepCategory: 'Análise',
-    href: '/assistants/spend_analysis',
-    title: 'Análise de Gastos',
-    short:
-      'Da nota fiscal à estratégia: sobe um lote de invoices (PDF ou planilha), extrai cada nota, classifica e gera KPIs + plano de strategic sourcing.',
-    bullets: [
-      'Upload de invoices em PDF + planilha (XLSX/CSV)',
-      'Extração por IA: PO, país, moeda, total, prazo, categoria',
-      'KPIs + Pareto + strategic sourcing (.xlsx + .docx)',
-    ],
-    Preview: SpendAnalysisPreview,
-  },
-  {
-    step: 2,
-    stepCategory: 'Mercado',
-    href: '/assistants/porter',
-    title: 'Porter',
-    short:
-      'Análise das 5 Forças de Porter (1979) para uma categoria, com classificação de intensidade e recomendações.',
-    bullets: [
-      'Rivalidade, entrantes, substitutos, fornecedores, compradores',
-      'Intensidade baixa / média / alta por força',
-      'Markdown + .docx + chat de refinamento',
-    ],
-    Preview: PorterForcesPreview,
-  },
-  {
-    step: 2,
-    stepCategory: 'Mercado',
-    href: '/assistants/suppliers',
-    title: 'Busca de Fornecedores',
-    short:
-      'Encontre fornecedores reais por CNAE + região. Descreva em linguagem natural; a IA classifica e busca empresas ativas na Receita.',
-    bullets: [
-      'Classificação automática de CNAE',
-      'Filtro por estado e porte',
-      'Export CSV pra Excel BR',
-    ],
-    Preview: SuppliersPreview,
-  },
-  {
-    step: 3,
-    stepCategory: 'Estratégia',
-    href: '/assistants/kraljic',
-    title: 'Kraljic',
-    short:
-      'Classifica seu portfólio na Matriz de Kraljic e gera plano de ação por quadrante.',
-    bullets: [
-      'Portfólio 2-200 itens',
-      'Bubble chart 2×2 + plano',
-      '.docx + .xlsx multi-sheet',
-    ],
-    Preview: KraljicMatrixPreview,
-  },
-  {
-    step: 4,
-    stepCategory: 'Engajamento',
-    href: '/assistants/rfp',
-    title: 'RFP',
-    short:
-      'Gera draft completo de RFP/RFQ a partir de parâmetros + base de conhecimento.',
-    bullets: [
-      'Cliente, escopo, prazo, orçamento',
-      'Markdown + .docx + .xlsx',
-      'Chat de refinamento',
-    ],
-    Preview: RfpDocumentPreview,
-  },
-  {
-    step: 5,
-    stepCategory: 'Negociação',
-    href: '/assistants/negotiation',
-    title: 'Simulador de Negociação',
-    short:
-      'Construtor de estratégia (postura, Kraljic, SWOT, SMART, intel de mercado) + simulador de chat onde a IA personifica o fornecedor.',
-    bullets: [
-      'Form com ZOPA, perfil do fornecedor, objetivo',
-      'Estratégia em cards visuais + chat treino',
-      'Score 0-100 com 4 dimensões ao encerrar',
-    ],
-    Preview: NegotiationPreview,
-  },
-  {
-    step: 6,
-    stepCategory: 'Contrato',
-    href: '/assistants/financial',
-    title: 'Análise Financeira',
-    short:
-      'Score determinístico 0-100 da saúde financeira do fornecedor (12 indicadores, 4 pilares ponderados).',
-    bullets: [
-      'PDF do Balanço/DRE → extração automática',
-      'Score Liquidez/Dívida/Margem/ROE (peso 30/30/20/20)',
-      'Recomendação buy/caution/do_not_buy + termos de pagamento',
-    ],
-    Preview: FinancialScorePreview,
-  },
-  {
-    step: 7,
-    stepCategory: 'Gestão de fornecedores',
-    href: '/assistants/scorecard',
-    title: 'Supplier Scorecard',
-    short:
-      'Avalia e ranqueia fornecedores por critérios ponderados, com plano de ação por faixa.',
-    bullets: [
-      'Critérios editáveis com pesos',
-      'Ranking + faixas (Estratégico/Desenvolvimento/Saída)',
-      '.docx + .xlsx multi-sheet',
-    ],
-    Preview: ScorecardPreview,
-  },
-  {
-    step: 7,
-    stepCategory: 'Gestão de fornecedores',
-    href: '/assistants/homologacao',
-    title: 'Homologação de Fornecedor',
-    short:
-      'Informe o CNPJ e ele consulta situação cadastral, score de risco, compliance e certidões na Receita — e gera o relatório de homologação.',
-    bullets: [
-      'Consulta CNPJ na Receita (BrasilAPI)',
-      'Score de risco + recomendação (aprovar/ressalvas/recusar)',
-      'Relatório de homologação em .docx',
-    ],
-    Preview: HomologacaoPreview,
-  },
-  {
-    step: 8,
-    stepCategory: 'Custo e preço',
-    href: '/assistants/pesquisa_precos',
-    title: 'Pesquisa de Preços',
-    short:
-      'Descreva os itens e ele busca o preço de referência nas compras públicas (CATMAT / Painel de Preços) — mediana, faixa e fontes.',
-    bullets: [
-      'Preço de referência por item (mediana + faixa p25–p75)',
-      'Fonte: compras públicas reais (Painel de Preços)',
-      'Mapa de preços em .docx para RFP e negociação',
-    ],
-    Preview: PesquisaPrecosPreview,
-  },
-  {
-    step: 9,
-    stepCategory: 'Macro',
-    href: '/assistants/indicadores',
-    title: 'Indicadores Econômicos',
-    short:
-      'Painel ao vivo do Banco Central (Selic, CDI, IPCA, IGP-M, dólar, euro) com leitura para compras.',
-    bullets: [
-      'Selic, CDI, IPCA, IGP-M, dólar e euro com gráfico',
-      'Leitura macro orientada a custo e reajuste (IA)',
-      'Fonte: Banco Central (séries SGS), atualizado diariamente',
-    ],
-    Preview: IndicadoresPreview,
-  },
-  {
-    step: 9,
-    stepCategory: 'Macro',
-    href: '/simulador',
-    title: 'Simulador Tributário',
-    short:
-      'Compare o Simples Nacional com o novo modelo da Reforma Tributária (IBS/CBS) e enxergue o impacto no status contábil antes de decidir.',
-    bullets: [
-      'Simulação Simples Nacional × Reforma (IBS/CBS)',
-      'Consulta de CNPJ para preencher os dados',
-      'Comparativo de carga e status contábil',
-    ],
-    Preview: SimuladorTributarioPreview,
-    emBreve: true,
-  },
-  {
-    step: 9,
-    stepCategory: 'Macro',
-    href: '/simulador-logistico',
-    title: 'Simulador Logístico (DIFAL)',
-    short:
-      'Simule o custo logístico de uma operação interestadual com a análise do DIFAL (diferencial de alíquota do ICMS) para decidir a melhor origem de compra.',
-    bullets: [
-      'Cálculo do DIFAL por UF de origem × destino',
-      'Custo logístico + frete na comparação',
-      'Melhor cenário de compra interestadual',
-    ],
-    Preview: SimuladorLogisticoPreview,
-    emBreve: true,
-  },
-];
 
 export function AssistantsHub() {
   return (
     <div className="space-y-12">
-      {/* ───── Header (histórico vive no chrome do layout, sem duplicar aqui) ───── */}
+      {/* ───── Header ───── */}
       <header>
         <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">
           Assistentes <span className="text-brand">.</span>
@@ -267,55 +64,58 @@ export function AssistantsHub() {
       {/* ───── Spotlight cards ───── */}
       <section aria-label="Assistentes disponíveis">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {SPOTLIGHTS.map((a) => {
-            const { Preview } = a;
+          {ASSISTANTS.map((assistant) => {
+            const Preview = PREVIEWS[assistant.previewKey];
 
             const inner = (
               <>
                 {/* Preview */}
                 <div className="relative rounded-xl bg-black/40 overflow-hidden aspect-[16/9] mb-5 ring-1 ring-white/5">
                   <Preview />
-                  {a.emBreve && (
+
+                  {assistant.emBreve && (
                     <span className="absolute right-2 top-2 rounded-full bg-brand-gradient px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-black shadow">
                       Em breve
                     </span>
                   )}
                 </div>
 
-                {/* Title */}
+                {/* Título */}
                 <h2 className="text-2xl font-semibold tracking-tight text-foreground">
-                  {a.title}
+                  {assistant.title}
                 </h2>
 
-                {/* Short description */}
+                {/* Descrição */}
                 <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-                  {a.short}
+                  {assistant.short}
                 </p>
 
-                {/* Capability bullets */}
+                {/* Recursos */}
                 <ul className="mt-4 space-y-1.5">
-                  {a.bullets.map((b) => (
+                  {assistant.bullets.map((bullet) => (
                     <li
-                      key={b}
+                      key={bullet}
                       className="flex items-center gap-2 text-xs text-muted-foreground"
                     >
                       <Check
                         className="h-3 w-3 text-brand flex-shrink-0"
                         aria-hidden="true"
                       />
-                      {b}
+
+                      {bullet}
                     </li>
                   ))}
                 </ul>
 
                 {/* CTA */}
-                {a.emBreve ? (
+                {assistant.emBreve ? (
                   <div className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
                     Em breve
                   </div>
                 ) : (
                   <div className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-brand group-hover:text-brand/80 transition-colors">
                     Abrir assistente
+
                     <ArrowRight
                       className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform"
                       aria-hidden="true"
@@ -325,10 +125,14 @@ export function AssistantsHub() {
               </>
             );
 
-            if (a.emBreve) {
+            /**
+             * Assistentes marcados como "Em breve"
+             * são exibidos visualmente, mas não são clicáveis.
+             */
+            if (assistant.emBreve) {
               return (
                 <div
-                  key={a.href}
+                  key={assistant.id}
                   aria-disabled="true"
                   className="flex flex-col rounded-2xl border border-border bg-card p-6 opacity-70 cursor-default select-none"
                 >
@@ -337,10 +141,14 @@ export function AssistantsHub() {
               );
             }
 
+            /**
+             * Assistentes disponíveis levam para
+             * a rota definida em assistants-data.ts.
+             */
             return (
               <Link
-                key={a.href}
-                href={a.href}
+                key={assistant.id}
+                href={assistant.href}
                 className="group flex flex-col rounded-2xl border border-border bg-card hover:bg-accent hover:border-brand/30 transition-all duration-300 p-6 active:scale-[0.99]"
               >
                 {inner}
@@ -349,7 +157,6 @@ export function AssistantsHub() {
           })}
         </div>
       </section>
-
     </div>
   );
 }
