@@ -5,10 +5,29 @@ import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { PricingTable } from '@/components/billing/PricingTable';
 import {
-  ArrowRight, Bot, Check, ChevronDown, Clock, Database,
-  Eye, Headphones, Layers, Library,
-  LogIn, Menu, ShieldCheck, Sparkles, Target, Users, X, Zap,
+  ArrowRight,
+  Bot,
+  Check,
+  ChevronDown,
+  Clock,
+  Database,
+  Eye,
+  Headphones,
+  Layers,
+  Library,
+  LogIn,
+  Menu,
+  Moon,
+  ShieldCheck,
+  Sparkles,
+  Sun,
+  Target,
+  Users,
+  X,
+  Zap,
 } from 'lucide-react';
+
+import { useTheme } from 'next-themes';
 import styles from './nova.module.css';
 
 const features = [
@@ -55,10 +74,19 @@ const Button = ({ children = 'QUERO ACESSAR AGORA', className = '' }: { children
 );
 
 export function NovaLanding({ plans, authed }: { plans: Plan[]; authed: boolean }) {
-  const [menu, setMenu] = useState(false);
-  const [openFaq, setOpenFaq] = useState<number | null>(0);
-  const [activeSection, setActiveSection] = useState('');
-  const [activeUseCase, setActiveUseCase] = useState(0);
+const { resolvedTheme, setTheme } = useTheme();
+
+const [mounted, setMounted] = useState(false);
+const [menu, setMenu] = useState(false);
+const [openFaq, setOpenFaq] = useState<number | null>(0);
+const [activeSection, setActiveSection] = useState('');
+const [activeUseCase, setActiveUseCase] = useState(0);
+
+const isDark = !mounted || resolvedTheme !== 'light';
+
+useEffect(() => {
+  setMounted(true);
+}, []);
 
   useEffect(() => {
     const sections = ['sobre', 'recursos', 'planos', 'faq']
@@ -84,17 +112,113 @@ export function NovaLanding({ plans, authed }: { plans: Plan[]; authed: boolean 
     };
   }, []);
 
-  const navClass = (section: string) => activeSection === section ? styles.navActive : undefined;
-  const selectedUseCase = useCases[activeUseCase]!;
-  return <main className={styles.page}>
+  const navClass = (section: string) =>
+  activeSection === section ? styles.navActive : undefined;
+
+const selectedUseCase = useCases[activeUseCase]!;
+
+return (
+  <main
+    className={`${styles.page} ${
+      isDark ? styles.darkTheme : styles.lightTheme
+    }`}
+  >
     <nav className={styles.nav}>
-      <Link href="/" className={styles.logo} aria-label="2B Supply - início"><Image src="/2bsupply-logo.png" alt="2B Supply" width={168} height={48} priority /></Link>
+      <Link
+        href="/"
+        className={styles.logo}
+        aria-label="2B Supply - início"
+      >
+<Image
+  src={isDark ? "/2bsupply-logo.png" : "/2bsupply-logo-dark.png"}
+  alt="2B Supply"
+  width={168}
+  height={48}
+  priority
+/>
+      </Link>
+
       <div className={`${styles.navlinks} ${menu ? styles.navOpen : ''}`}>
-        <a href="#sobre" className={navClass('sobre')} onClick={()=>{setActiveSection('sobre');setMenu(false)}}>Sobre</a><a href="#recursos" className={navClass('recursos')} onClick={()=>{setActiveSection('recursos');setMenu(false)}}>Recursos</a><a href="#planos" className={navClass('planos')} onClick={()=>{setActiveSection('planos');setMenu(false)}}>Planos</a><a href="#faq" className={navClass('faq')} onClick={()=>{setActiveSection('faq');setMenu(false)}}>FAQ</a>
+        <a
+          href="#sobre"
+          className={navClass('sobre')}
+          onClick={() => {
+            setActiveSection('sobre');
+            setMenu(false);
+          }}
+        >
+          Sobre
+        </a>
+
+        <a
+          href="#recursos"
+          className={navClass('recursos')}
+          onClick={() => {
+            setActiveSection('recursos');
+            setMenu(false);
+          }}
+        >
+          Recursos
+        </a>
+
+        <a
+          href="#planos"
+          className={navClass('planos')}
+          onClick={() => {
+            setActiveSection('planos');
+            setMenu(false);
+          }}
+        >
+          Planos
+        </a>
+
+        <a
+          href="#faq"
+          className={navClass('faq')}
+          onClick={() => {
+            setActiveSection('faq');
+            setMenu(false);
+          }}
+        >
+          FAQ
+        </a>
       </div>
-      <Link href="/login" className={styles.topLogin}><LogIn size={17}/> Entrar</Link>
-      <Button className={styles.navCta}>COMEÇAR AGORA</Button>
-      <button className={styles.menuButton} onClick={()=>setMenu(!menu)} aria-label="Abrir menu">{menu?<X/>:<Menu/>}</button>
+
+      {/* continua aqui o restante do seu NAV */}
+      
+<button
+  type="button"
+  onClick={() => setTheme(isDark ? 'light' : 'dark')}
+  className={styles.themeToggle}
+  aria-label={
+    isDark
+      ? 'Mudar para tema claro'
+      : 'Mudar para tema escuro'
+  }
+  title={isDark ? 'Tema claro' : 'Tema escuro'}
+>
+  {isDark ? (
+    <Sun size={18} aria-hidden="true" />
+  ) : (
+    <Moon size={18} aria-hidden="true" />
+  )}
+</button>
+
+<Link href="/login" className={styles.topLogin}>
+  <LogIn size={17}/> Entrar
+</Link>
+
+<Button className={styles.navCta}>
+  COMEÇAR AGORA
+</Button>
+
+<button
+  className={styles.menuButton}
+  onClick={() => setMenu(!menu)}
+  aria-label="Abrir menu"
+>
+  {menu ? <X /> : <Menu />}
+</button>
     </nav>
 
     <section className={styles.hero}>
@@ -182,8 +306,47 @@ export function NovaLanding({ plans, authed }: { plans: Plan[]; authed: boolean 
     <section className={styles.faq} id="faq">
       <div><span className={styles.kicker}>Perguntas frequentes</span><h2>Suas dúvidas,<br/><em>respondidas com clareza.</em></h2><a href="https://wa.me/5521999792912" target="_blank" rel="noopener noreferrer" className={styles.outlineButton}><Headphones/> FALAR COM ESPECIALISTA</a></div>
       <div className={styles.accordion}>{faqs.map(([q,a],i)=><article key={q} className={openFaq===i?styles.faqOpen:''}><button onClick={()=>setOpenFaq(openFaq===i?null:i)}><span>{String(i+1).padStart(2,'0')}</span>{q}<ChevronDown/></button>{openFaq===i&&<p>{a}</p>}</article>)}</div>
-    </section>
+        </section>
 
-    <footer className={styles.footer}><div><Link href="/" className={styles.logo} aria-label="2B Supply - início"><Image src="/2bsupply-logo.png" alt="2B Supply" width={168} height={48} /></Link></div><div><b>Produto</b><a href="#recursos">Recursos</a><a href="#planos">Planos</a><Link href="/login">Entrar</Link></div><div><b>Legal</b><Link href="/privacidade">Privacidade</Link><Link href="/termos">Termos de uso</Link><Link href="/cookies">Cookies</Link></div><div><Button>CRIAR MINHA CONTA</Button></div><small>© 2026 PROGPT. Todos os direitos reservados.</small></footer>
-  </main>;
+    <footer className={styles.footer}>
+      <div>
+          <Link
+        href="/"
+        className={styles.logo}
+        aria-label="2B Supply - início"
+      >
+<Image
+  src={isDark ? "/2bsupply-logo.png" : "/2bsupply-logo-dark.png"}
+  alt="2B Supply"
+  width={168}
+  height={48}
+  priority
+/>
+      </Link>
+      </div>
+
+      <div>
+        <b>Produto</b>
+        <a href="#recursos">Recursos</a>
+        <a href="#planos">Planos</a>
+        <Link href="/login">Entrar</Link>
+      </div>
+
+      <div>
+        <b>Legal</b>
+        <Link href="/privacidade">Privacidade</Link>
+        <Link href="/termos">Termos de uso</Link>
+        <Link href="/cookies">Cookies</Link>
+      </div>
+
+      <div>
+        <Button>CRIAR MINHA CONTA</Button>
+      </div>
+
+      <small>
+        © 2026 PROGPT. Todos os direitos reservados.
+      </small>
+    </footer>
+  </main>
+);
 }

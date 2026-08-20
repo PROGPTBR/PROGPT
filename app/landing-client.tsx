@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { useTheme } from 'next-themes';
 import { useRouter } from 'next/navigation';
 import { BrandLogo } from '@/components/brand/BrandLogo';
 import { PricingTable } from '@/components/billing/PricingTable';
@@ -15,6 +16,8 @@ import {
   Database,
   Clock,
   Layers,
+  Moon,
+  Sun,
 } from 'lucide-react';
 
 // Landing page — dark atmospheric aesthetic ported from a reference
@@ -185,10 +188,17 @@ export function LandingClient({
   authed: boolean;
 }) {
   const router = useRouter();
+  const { resolvedTheme, setTheme } = useTheme();
+
+  const [mounted, setMounted] = useState(false);
   // Navegador (inclusive celular) ⇒ landing. App instalado (PWA) ⇒ vai
   // direto pro login; a própria /login manda pro /chat quem já está logado.
   const [enteringApp, setEnteringApp] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+
+  useEffect(() => {
+  setMounted(true);
+}, []);
 
   useEffect(() => {
     if (!isStandaloneDisplay()) return;
@@ -229,6 +239,8 @@ export function LandingClient({
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
+
+const isDark = !mounted || resolvedTheme !== 'light';
 
   // Splash curta enquanto o PWA troca de rota — evita piscar a landing
   // inteira dentro do app instalado.
@@ -295,12 +307,32 @@ export function LandingClient({
             ))}
           </div>
 
-          <Link
-            href="/login"
-            className="inline-flex items-center justify-center bg-brand text-black px-5 h-9 rounded-full text-sm font-medium hover:bg-brand/90 active:scale-95 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d0d0d]"
-          >
-            Entrar
-          </Link>
+<div className="flex items-center gap-2">
+  <button
+    type="button"
+    onClick={() => setTheme(isDark ? 'light' : 'dark')}
+    aria-label={
+      isDark
+        ? 'Mudar para tema claro'
+        : 'Mudar para tema escuro'
+    }
+    title={isDark ? 'Tema claro' : 'Tema escuro'}
+    className="inline-flex h-9 w-9 items-center justify-center rounded-full text-gray-300 hover:text-white hover:bg-white/10 transition-colors"
+  >
+    {isDark ? (
+      <Sun className="h-4 w-4" aria-hidden="true" />
+    ) : (
+      <Moon className="h-4 w-4" aria-hidden="true" />
+    )}
+  </button>
+
+  <Link
+    href="/login"
+    className="inline-flex items-center justify-center bg-brand text-black px-5 h-9 rounded-full text-sm font-medium hover:bg-brand/90 active:scale-95 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d0d0d]"
+  >
+    Entrar
+  </Link>
+</div>
         </nav>
 
         {/* ───── Hero ───── */}
@@ -780,12 +812,32 @@ export function LandingClient({
                 >
                   Simulador Tributário
                 </Link>
-                <Link
-                  href="/login"
-                  className="text-sm text-gray-500 hover:text-white transition-colors"
-                >
-                  Entrar
-                </Link>
+<div className="flex items-center gap-2">
+  <button
+    type="button"
+    onClick={() => setTheme(isDark ? 'light' : 'dark')}
+    aria-label={
+      isDark
+        ? 'Mudar para tema claro'
+        : 'Mudar para tema escuro'
+    }
+    title={isDark ? 'Tema claro' : 'Tema escuro'}
+    className="inline-flex h-9 w-9 items-center justify-center rounded-full text-gray-300 hover:text-white hover:bg-white/10 transition-colors"
+  >
+    {isDark ? (
+      <Sun className="h-4 w-4" aria-hidden="true" />
+    ) : (
+      <Moon className="h-4 w-4" aria-hidden="true" />
+    )}
+  </button>
+
+  <Link
+    href="/login"
+    className="inline-flex items-center justify-center bg-brand text-black px-5 h-9 rounded-full text-sm font-medium hover:bg-brand/90 active:scale-95 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d0d0d]"
+  >
+    Entrar
+  </Link>
+</div>
               </div>
             </div>
 
