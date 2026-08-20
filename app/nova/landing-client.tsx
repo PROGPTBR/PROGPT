@@ -246,7 +246,7 @@ return (
     </section>
 
     <section className={styles.proof}>
-      <div><strong>+10 mil</strong><span>profissionais impactados</span></div><i/><div><strong>+30</strong><span>assistentes especialistas</span></div><i/><div><strong>24/7</strong><span>disponível para sua equipe</span></div>
+      <div><strong>+1.000</strong><span>profissionais impactados</span></div><i/><div><strong>+30</strong><span>assistentes especialistas</span></div><i/><div><strong>24/7</strong><span>disponível para sua equipe</span></div>
     </section>
 
     <section className={styles.intelligence} id="sobre">
@@ -274,7 +274,8 @@ return (
             <div className={styles.shieldRings}><ShieldCheck/></div>
             <div className={styles.sourceLine}><Check/> Fonte verificada</div>
           </div>
-          <div className={styles.intelligenceContent}><span>CONFIANÇA</span><h3>Base curada</h3><p>Retrieval híbrido com gate de relevância — sem alucinação, sem citação falsa. Quando não há fonte na base, o assistente informa.</p></div>
+          <div className={styles.intelligenceContent}><span>CONFIANÇA</span><h3>Base curada</h3><p>A IA pesquisa fontes externas selecionadas e confiáveis para responder com mais segurança. Cada resposta passa por uma verificação de relevância e inclui a fonte consultada.
+<br/><br/>Se não encontrar uma fonte confiável, ela informa com transparência, sem criar uma resposta.</p></div>
         </article>
       </div>
     </section>
