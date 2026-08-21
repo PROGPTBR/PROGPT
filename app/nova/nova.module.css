@@ -816,63 +816,318 @@ color: #94a3b8!important;
 .lightTheme .themeToggle{
 
 }
-
 /* ============================================================
-   CORREÇÃO FINAL DO HEADER
-   Menu centralizado no desktop sem sobrepor as ações da direita.
+   SLIDER DOS ASSISTENTES
 ============================================================ */
 
-@media (min-width: 951px) {
-  .nav {
-    position: fixed;
+/*
+  Impede qualquer conteúdo horizontal da seção
+  de aumentar a largura da página.
+*/
+.bonus {
+  overflow: hidden;
+}
+
+/*
+  Segurança adicional contra scroll lateral da página.
+*/
+.page {
+  overflow-x: hidden;
+}
+
+/* ============================================================
+   ESTRUTURA DO SLIDER
+============================================================ */
+
+.useCaseSlider {
+  position: relative;
+
+  width: 100%;
+  max-width: 100%;
+
+  display: flex;
+  align-items: center;
+
+  box-sizing: border-box;
+
+  /*
+    Espaço reservado para as setas.
+    As tabs nunca passam por baixo delas.
+  */
+  padding-left: 52px;
+  padding-right: 52px;
+
+  overflow: hidden;
+}
+
+/* ============================================================
+   TABS
+============================================================ */
+
+.useCaseTabs {
+  position: relative;
+
+  display: flex;
+  align-items: center;
+
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+
+  /*
+    Espaço real entre os itens.
+  */
+  gap: 30px;
+
+  overflow-x: auto;
+  overflow-y: hidden;
+
+  scroll-behavior: smooth;
+  scroll-snap-type: x proximity;
+
+  overscroll-behavior-x: contain;
+
+  /*
+    Sem padding aqui.
+    O espaço das setas fica no wrapper.
+  */
+  padding: 0;
+
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  box-sizing: border-box;
+}
+
+.useCaseTabs::-webkit-scrollbar {
+  display: none;
+}
+
+/* ============================================================
+   CADA TAB
+============================================================ */
+
+.useCaseTabs button {
+  position: relative;
+
+  flex: 0 0 auto;
+
+  width: auto;
+  min-width: max-content;
+
+  white-space: nowrap;
+
+  padding-left: 2px;
+  padding-right: 2px;
+
+  scroll-snap-align: center;
+}
+
+
+/*
+  O "(em breve)" permanece junto ao nome,
+  mas visualmente um pouco mais discreto.
+*/
+.useCaseTabs button small {
+  white-space: nowrap;
+}
+
+/* ============================================================
+   SETAS
+============================================================ */
+
+.useCaseSliderArrow {
+  position: absolute;
+  top: calc(50% + 4px);
+  transform: translateY(-50%);
+
+  z-index: 30;
+
+  width: 30px;
+  height: 30px;
+
+  padding: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  border-radius: 999px;
+
+  border: 1px solid rgba(34, 211, 238, 0.3);
+
+  background: #07101f;
+  color: #22d3ee;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 5px 18px rgba(0, 0, 0, 0.25);
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.useCaseSliderArrow:hover {
+  background: #0d1b2d;
+
+  border-color: rgba(34, 211, 238, 0.7);
+
+  color: #67e8f9;
+}
+
+.useCaseSliderArrow:active {
+  transform: translateY(-50%) scale(0.94);
+}
+
+/*
+  IMPORTANTE:
+  agora as setas ficam DENTRO do container.
+  Nada de left:-18px / right:-18px.
+*/
+.useCaseSliderArrowLeft {
+  left: 4px;
+}
+
+.useCaseSliderArrowRight {
+  right: 4px;
+}
+
+/* ============================================================
+   DEGRADÊ NAS PONTAS
+============================================================ */
+
+.useCaseSlider::before,
+.useCaseSlider::after {
+  content: '';
+
+  position: absolute;
+
+  top: 0;
+  bottom: 0;
+
+  width: 52px;
+
+  z-index: 20;
+
+  pointer-events: none;
+}
+
+.useCaseSlider::before {
+  left: 0;
+
+  background: linear-gradient(
+    90deg,
+    #050c19 45%,
+    rgba(5, 12, 25, 0)
+  );
+}
+
+.useCaseSlider::after {
+  right: 0;
+
+  background: linear-gradient(
+    270deg,
+    #050c19 45%,
+    rgba(5, 12, 25, 0)
+  );
+}
+
+/* Setas precisam ficar acima do degradê */
+.useCaseSliderArrow {
+  z-index: 40;
+}
+
+/* ============================================================
+   TEMA CLARO
+============================================================ */
+
+.lightTheme .useCaseSliderArrow {
+  background: #ffffff;
+  color: #0e8de1;
+
+  border-color: rgba(14, 141, 225, 0.25);
+
+  box-shadow:
+    0 5px 18px rgba(15, 23, 42, 0.12);
+}
+
+.lightTheme .useCaseSliderArrow:hover {
+  background: #f4f7fa;
+
+  color: #0876c0;
+
+  border-color: rgba(14, 141, 225, 0.55);
+}
+
+.lightTheme .useCaseSlider::before {
+  background: linear-gradient(
+    90deg,
+    #ffffff 45%,
+    rgba(255, 255, 255, 0)
+  );
+}
+
+.lightTheme .useCaseSlider::after {
+  background: linear-gradient(
+    270deg,
+    #ffffff 45%,
+    rgba(255, 255, 255, 0)
+  );
+}
+
+
+/* ============================================================
+   TABLET
+============================================================ */
+
+@media (max-width: 1100px) {
+  .useCaseTabs {
+    gap: 24px;
   }
 
-  .navlinks {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    margin-left: 0;
-    gap: 6px;
-    white-space: nowrap;
-  }
-
-  .themeToggle {
-    margin-left: auto;
+  .useCaseSlider {
+    padding-left: 48px;
+    padding-right: 48px;
   }
 }
 
-@media (max-width: 950px) {
-  .navlinks {
-    display: none;
+/* ============================================================
+   MOBILE
+============================================================ */
+
+@media (max-width: 768px) {
+  .useCaseSlider {
+    padding-left: 40px;
+    padding-right: 40px;
   }
 
-  .navOpen {
-    display: flex;
-    position: absolute;
-    top: 65px;
-    left: 20px;
-    right: 20px;
-    transform: none;
-    margin-left: 0;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 6px;
-    z-index: 50;
+  .useCaseTabs {
+    gap: 20px;
   }
 
-  .navOpen a {
-    width: 100%;
+  .useCaseSliderArrow {
+    width: 32px;
+    height: 32px;
   }
 
-  .themeToggle {
-    margin-left: auto;
+  .useCaseSliderArrowLeft {
+    left: 2px;
+  }
+
+  .useCaseSliderArrowRight {
+    right: 2px;
+  }
+
+  .useCaseSlider::before,
+  .useCaseSlider::after {
+    width: 40px;
   }
 }
 
-@media (max-width: 650px) {
-  .navOpen {
-    top: 60px;
-    left: 12px;
-    right: 12px;
-  }
-}
+

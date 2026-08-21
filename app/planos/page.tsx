@@ -123,13 +123,13 @@ export default async function PricingPage({
       <Header />
 
       <div className="min-h-screen bg-background text-foreground">
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 py-12 pt-20">
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
 
           {/* ====================================================
               NAVEGAÇÃO
           ==================================================== */}
 
-          <div className="max-w-7xl mx-auto px-0 sm:px-6 py-6 sm:py-16 flex items-center justify-between">
+          <div className="max-w-7xl mx-auto px-0 sm:px-6 pb-6 sm:pb-16 flex items-center justify-between">
             <Link
               href={backHref}
               className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-brand transition-colors"
