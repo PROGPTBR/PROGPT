@@ -580,28 +580,20 @@ function CheckoutContent() {
         return;
       }
 
-      // ========================================================
-      // PAGAMENTO JÁ CONFIRMADO
-      // ========================================================
+// ========================================================
+// ASSINATURA CRIADA
+// ========================================================
 
-      if (
-        body?.accessGranted
-      ) {
-        setSuccess(
-          'Pagamento confirmado! Seu acesso ao PROGPT foi liberado.',
-        );
+// A partir daqui não permanecemos mais no checkout.
+// A tela /confirmando verifica o status da assinatura
+// até que o webhook libere o acesso.
 
-        return;
-      }
+router.replace(
+  '/account/billing/confirmando',
+);
 
-      // ========================================================
-      // AGUARDANDO WEBHOOK
-      // ========================================================
+return;
 
-      setSuccess(
-        body?.message ||
-          'Pagamento enviado com sucesso. Estamos confirmando sua assinatura.',
-      );
     } catch {
       setError(
         'Não foi possível conectar ao serviço de pagamento. Tente novamente.',

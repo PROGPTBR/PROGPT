@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BrandLogo } from '@/components/brand/BrandLogo';
 import {
   LogIn,
   Moon,
@@ -20,15 +20,24 @@ import {
   LEGAL_CONTACT_PHONE_TEL,
 } from '@/lib/legal/constants';
 
-// Deslogado: navegação da landing (marketing). Logado: navegação do APP — o
-// usuário autenticado circula pelas áreas internas, não pelas seções da
-// landing. O botão à direita continua levando ao chat.
+/*
+|--------------------------------------------------------------------------
+| Links públicos
+|--------------------------------------------------------------------------
+*/
+
 const PUBLIC_LINKS = [
   { href: '/', label: 'Início' },
   { href: '/recursos', label: 'Recursos' },
   { href: '/planos', label: 'Planos' },
   { href: '/faq', label: 'FAQ' },
 ];
+
+/*
+|--------------------------------------------------------------------------
+| Links da área logada
+|--------------------------------------------------------------------------
+*/
 
 const APP_LINKS = [
   { href: '/assistants', label: 'Assistentes' },
@@ -40,23 +49,33 @@ const APP_LINKS = [
 
 export function Header() {
   const pathname = usePathname();
-  const { resolvedTheme, setTheme } = useTheme();
+
+  const {
+    resolvedTheme,
+    setTheme,
+  } = useTheme();
 
   const [mounted, setMounted] = useState(false);
   const [authed, setAuthed] = useState<boolean | null>(null);
   const [scrolled, setScrolled] = useState(false);
 
+  /*
+  |--------------------------------------------------------------------------
+  | Detecta montagem + scroll
+  |--------------------------------------------------------------------------
+  */
+
   useEffect(() => {
     setMounted(true);
 
-    // Detecta quando a página foi rolada
     const handleScroll = () => {
       setScrolled(window.scrollY > 10);
     };
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('scroll', handleScroll, {
+      passive: true,
+    });
 
-    // Executa uma vez para pegar o estado inicial
     handleScroll();
 
     return () => {
@@ -64,18 +83,26 @@ export function Header() {
     };
   }, []);
 
+  /*
+  |--------------------------------------------------------------------------
+  | Verifica autenticação
+  |--------------------------------------------------------------------------
+  */
+
   useEffect(() => {
-    // Header consciente de login: deslogado mostra Entrar/Cadastre-se,
-    // logado mostra "Ir para o chat".
     let active = true;
 
     supabaseBrowser()
       .auth.getUser()
       .then(({ data }) => {
-        if (active) setAuthed(!!data.user);
+        if (active) {
+          setAuthed(!!data.user);
+        }
       })
       .catch(() => {
-        if (active) setAuthed(false);
+        if (active) {
+          setAuthed(false);
+        }
       });
 
     return () => {
@@ -83,111 +110,433 @@ export function Header() {
     };
   }, []);
 
+  /*
+  |--------------------------------------------------------------------------
+  | Tema
+  |--------------------------------------------------------------------------
+  */
+
   const isDark = !mounted || resolvedTheme !== 'light';
 
-  // Enquanto o estado de auth carrega (authed === null) mostramos os links
-  // públicos; ao confirmar login, troca para os do app.
+  /*
+  |--------------------------------------------------------------------------
+  | Links conforme autenticação
+  |--------------------------------------------------------------------------
+  */
+
   const navLinks = authed ? APP_LINKS : PUBLIC_LINKS;
-return (
-  <header>
-    <div className="flex flex-col md:flex-row items-center md:justify-end gap-1 md:gap-8 bg-[#060b14] border-b border-border/50 px-6 md:px-12 py-2 md:py-0 md:h-8 text-xs text-muted-foreground">
-      <a
-        href={`mailto:${LEGAL_CONTACT_EMAIL}`}
-        className="inline-flex items-center gap-2 hover:text-white transition-colors"
-      >
-        <Mail className="h-3.5 w-3.5" />
-        <span>{LEGAL_CONTACT_EMAIL}</span>
-      </a>
 
-      <a
-        href={`tel:${LEGAL_CONTACT_PHONE_TEL}`}
-        className="inline-flex items-center gap-2 hover:text-white transition-colors"
-      >
-        <Phone className="h-3.5 w-3.5" />
-        <span>{LEGAL_CONTACT_PHONE}</span>
-      </a>
-    </div>
+  /*
+  |--------------------------------------------------------------------------
+  | Verifica link ativo
+  |--------------------------------------------------------------------------
+  */
 
-    {/* Menu */}
-    <nav
-      id="landing-navbar"
-      className={`
-        dark bg-[#0a0f1a]/85 w-full
-        transition-all duration-300
-        backdrop-blur-md border-b border-border
-        py-3 sm:py-4 px-4 sm:px-6 md:px-12
-        flex justify-between items-center gap-2
-        text-foreground z-50
-        ${scrolled ? "fixed inset-x-0 top-0 shadow-md" : "relative"}
-      `}
-    >
-      <Link href={authed ? "/chat" : "/"} className="flex items-center">
-        <BrandLogo size="md" priority />
-      </Link>
+  const isLinkActive = (href: string) => {
+    if (href === '/') {
+      return pathname === '/';
+    }
 
-      <div className="menu-topo hidden md:flex space-x-1 items-center text-sm font-medium text-muted-foreground">
-        {navLinks.map((link) => (
-          <Link
-            key={link.href}
-            href={link.href}
-            className={`py-2 px-4 rounded-full transition-all duration-300 ${
-              pathname === link.href
-                ? "bg-muted text-foreground"
-                : "hover:bg-muted hover:text-foreground"
-            }`}
-          >
-            {link.label}
-          </Link>
-        ))}
-      </div>
+    return pathname === href || pathname.startsWith(`${href}/`);
+  };
 
-      <div className="flex items-center gap-1.5 sm:gap-2">
-        <button
-          type="button"
-          onClick={() => setTheme(isDark ? "light" : "dark")}
-          aria-label={
-            isDark
-              ? "Mudar para tema claro"
-              : "Mudar para tema escuro"
-          }
-          title={isDark ? "Tema claro" : "Tema escuro"}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+  return (
+    <header>
+      {/* ================================================================
+          BARRA SUPERIOR
+      ================================================================= */}
+
+     <div
+  className={`
+    flex
+    flex-col
+    md:flex-row
+    items-center
+    md:justify-end
+    gap-1
+    md:gap-8
+    px-6
+    md:px-12
+    py-2
+    md:py-0
+    md:h-8
+    text-xs
+    border-b
+    transition-colors
+    duration-300
+
+    ${
+      isDark
+        ? `
+          bg-[#060b14]
+          border-white/10
+          text-slate-400
+        `
+        : `
+          bg-[#edeeee]
+          border-slate-200
+          text-slate-500
+        `
+    }
+  `}
+>
+        {/* E-mail */}
+
+        <a
+          href={`mailto:${LEGAL_CONTACT_EMAIL}`}
+          className={`
+            inline-flex
+            items-center
+            gap-2
+            transition-colors
+            duration-200
+
+            ${
+              isDark
+                ? 'hover:text-white'
+                : 'hover:text-[#0b1f44]'
+            }
+          `}
         >
-          {isDark ? (
-            <Sun className="h-4 w-4" aria-hidden="true" />
-          ) : (
-            <Moon className="h-4 w-4" aria-hidden="true" />
-          )}
-        </button>
+          <Mail className="h-3.5 w-3.5" />
 
-        {!authed && (
-          <>
-            <Link
-              href="/login"
-              className="inline-flex items-center justify-center gap-1.5 px-3 sm:px-4 h-9 rounded-full text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-            >
-              <LogIn className="h-4 w-4" aria-hidden="true" />
-              Entrar
-            </Link>
+          <span>
+            {LEGAL_CONTACT_EMAIL}
+          </span>
+        </a>
 
-            <Link
-              href="/signup"
-              className="inline-flex items-center justify-center gap-1.5 bg-brand-gradient text-black px-4 sm:px-5 h-9 rounded-full text-sm font-semibold hover:brightness-110 active:scale-95 transition-all duration-300"
-            >
-              <UserPlus className="h-4 w-4" aria-hidden="true" />
+        {/* Telefone */}
 
-              <span className="hidden sm:inline">
-                Cadastre-se
-              </span>
+        <a
+          href={`tel:${LEGAL_CONTACT_PHONE_TEL}`}
+          className={`
+            inline-flex
+            items-center
+            gap-2
+            transition-colors
+            duration-200
 
-              <span className="sm:hidden">
-                Criar
-              </span>
-            </Link>
-          </>
-        )}
+            ${
+              isDark
+                ? 'hover:text-white'
+                : 'hover:text-[#0b1f44]'
+            }
+          `}
+        >
+          <Phone className="h-3.5 w-3.5" />
+
+          <span>
+            {LEGAL_CONTACT_PHONE}
+          </span>
+        </a>
       </div>
-    </nav>
-  </header>
-);
+
+      {/* ================================================================
+          MENU PRINCIPAL
+      ================================================================= */}
+
+      <nav
+        id="landing-navbar"
+        className={`
+          w-full
+          z-50
+          border-b
+          backdrop-blur-md
+          transition-all
+          duration-300
+
+          py-3
+          sm:py-4
+
+          px-4
+          sm:px-6
+          md:px-12
+
+          flex
+          items-center
+          justify-between
+          gap-2
+
+          ${
+            isDark
+              ? `
+                bg-[#0a0f1a]/95
+                border-white/10
+                text-white
+              `
+              : `
+                bg-white/95
+                border-slate-200
+                text-[#0b1f44]
+              `
+          }
+
+          ${
+            scrolled
+              ? 'fixed inset-x-0 top-0 shadow-md'
+              : 'relative'
+          }
+        `}
+      >
+        {/* ============================================================
+            LOGO
+        ============================================================= */}
+
+        <Link
+          href={authed ? '/chat' : '/'}
+          className="flex items-center shrink-0"
+          aria-label="2B Supply - início"
+        >
+          <Image
+            src={
+              isDark
+                ? '/2bsupply-logo.png'
+                : '/2bsupply-logo-dark.png'
+            }
+            alt="2B Supply"
+            width={168}
+            height={48}
+            priority
+            className="
+              h-auto
+              w-[145px]
+              sm:w-[168px]
+              object-contain
+            "
+          />
+        </Link>
+
+        {/* ============================================================
+            LINKS
+        ============================================================= */}
+
+        <div
+          className={`
+            menu-topo
+            hidden
+            md:flex
+            items-center
+            space-x-1
+            text-sm
+            font-medium
+
+            ${
+              isDark
+                ? 'text-slate-400'
+                : 'text-slate-600'
+            }
+          `}
+        >
+          {navLinks.map((link) => {
+            const active = isLinkActive(link.href);
+
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`
+                  py-2
+                  px-4
+                  rounded-full
+                  transition-all
+                  duration-300
+
+                  ${
+                    active
+                      ? isDark
+                        ? `
+                          bg-white/10
+                          text-white
+                        `
+                        : `
+                          bg-slate-100
+                          text-[#0b1f44]
+                        `
+                      : isDark
+                        ? `
+                          hover:bg-white/10
+                          hover:text-white
+                        `
+                        : `
+                          hover:bg-slate-100
+                          hover:text-[#0b1f44]
+                        `
+                  }
+                `}
+              >
+                {link.label}
+              </Link>
+            );
+          })}
+        </div>
+
+        {/* ============================================================
+            AÇÕES DO LADO DIREITO
+        ============================================================= */}
+
+        <div className="flex items-center gap-1.5 sm:gap-2">
+
+          {/* ==========================================================
+              BOTÃO DE TEMA
+          =========================================================== */}
+
+          <button
+            type="button"
+            onClick={() =>
+              setTheme(isDark ? 'light' : 'dark')
+            }
+            aria-label={
+              isDark
+                ? 'Mudar para tema claro'
+                : 'Mudar para tema escuro'
+            }
+            title={
+              isDark
+                ? 'Tema claro'
+                : 'Tema escuro'
+            }
+            className={`
+              inline-flex
+              h-10
+              w-10
+              items-center
+              justify-center
+              rounded-full
+              border
+              transition-all
+              duration-300
+
+              ${
+                isDark
+                  ? `
+                    bg-transparent
+                    border-white/10
+                    text-slate-400
+                    hover:text-white
+                    hover:bg-white/10
+                  `
+                  : `
+                    bg-white
+                    border-slate-200
+                    text-slate-600
+                    hover:text-[#0b1f44]
+                    hover:bg-slate-50
+                  `
+              }
+            `}
+          >
+            {isDark ? (
+              <Sun
+                className="h-4 w-4"
+                aria-hidden="true"
+              />
+            ) : (
+              <Moon
+                className="h-4 w-4"
+                aria-hidden="true"
+              />
+            )}
+          </button>
+
+          {/* ==========================================================
+              BOTÕES PARA USUÁRIO DESLOGADO
+          =========================================================== */}
+
+          {authed === false && (
+            <>
+              {/* Entrar */}
+
+              <Link
+                href="/login"
+                className={`
+                  inline-flex
+                  items-center
+                  justify-center
+                  gap-1.5
+
+                  px-3
+                  sm:px-4
+
+                  h-9
+
+                  rounded-full
+
+                  text-sm
+                  font-medium
+
+                  transition-all
+                  duration-300
+
+                  ${
+                    isDark
+                      ? `
+                        text-slate-400
+                        hover:text-white
+                        hover:bg-white/10
+                      `
+                      : `
+                        text-slate-600
+                        hover:text-[#0b1f44]
+                        hover:bg-slate-100
+                      `
+                  }
+                `}
+              >
+                <LogIn
+                  className="h-4 w-4"
+                  aria-hidden="true"
+                />
+
+                Entrar
+              </Link>
+
+              {/* Cadastre-se */}
+
+              <Link
+                href="/signup"
+                className="
+                  inline-flex
+                  items-center
+                  justify-center
+                  gap-1.5
+
+                  bg-brand-gradient
+                  text-black
+
+                  px-4
+                  sm:px-5
+
+                  h-9
+
+                  rounded-full
+
+                  text-sm
+                  font-semibold
+
+                  hover:brightness-110
+                  active:scale-95
+
+                  transition-all
+                  duration-300
+                "
+              >
+                <UserPlus
+                  className="h-4 w-4"
+                  aria-hidden="true"
+                />
+
+                <span className="hidden sm:inline">
+                  Cadastre-se
+                </span>
+
+                <span className="sm:hidden">
+                  Criar
+                </span>
+              </Link>
+            </>
+          )}
+        </div>
+      </nav>
+    </header>
+  );
 }
