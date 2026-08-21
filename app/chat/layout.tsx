@@ -52,7 +52,7 @@ export default async function ChatLayout({
 
 // const paidPlan =
  // currentPlan === 'pf' ||
- // currentPlan === 'pf-99' ||
+ // currentPlan === 'pf-73' ||
 //  currentPlan === 'pj' ||
  // currentPlan === 'pj-consulte';
 

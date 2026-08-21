@@ -156,7 +156,7 @@ export function AccountPricingTable({
   const orderedPlans = [...plans].sort((a, b) => {
     const order: Record<string, number> = {
       free: 1,
-      'pf-99': 2,
+      'pf-73': 2,
       'pj-consulte': 3,
     };
 
@@ -182,7 +182,7 @@ export function AccountPricingTable({
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start max-w-5xl mx-auto">
         {orderedPlans.map((plan) => {
-          const isRecommended = plan.slug === 'pf-99';
+          const isRecommended = plan.slug === 'pf-73';
           const isCurrent = userPlanSlug === plan.slug;
 
           return (

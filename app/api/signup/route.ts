@@ -6,10 +6,13 @@ import {
 import { createAsaasCustomer, createAsaasSubscription, deleteAsaasCustomer, } from "@/lib/billing/asaas";
 import { getBillingSettings } from "@/lib/billing/settings";
 import {
+  isValidCpf,
+  formatCpf,
+} from '@/lib/validators/cpf';
+import {
   verifyTurnstileToken,
   getClientIp,
 } from "@/lib/captcha";
-
 
 
 function originFrom(req: Request): string {
@@ -174,6 +177,20 @@ const [month, year] = body.cardExpiry.split("/");
 
 console.log(`[${requestId}] Criando assinatura (venc. ${nextDueDateString})...`);
 
+const cpf = formatCpf(body.cpf);
+
+if (!isValidCpf(cpf)) {
+  return NextResponse.json(
+    {
+      error: 'invalid_cpf',
+      message: 'CPF inválido.',
+    },
+    {
+      status: 400,
+    },
+  );
+}
+
 const subscription = await createAsaasSubscription({
 customerId: customer.id,
 value: billing.planPrice,
@@ -191,16 +208,16 @@ expiryYear: `20${year}`,
 },
 
 creditCardHolderInfo: {
-  name: body.fullName,
+  name: body.name,
   email: body.email,
-  cpfCnpj: body.cpf.replace(/\D/g, ""),
-  postalCode: body.postalCode.replace(/\D/g, ""),
+  cpfCnpj: cpf,
+  postalCode: body.postalCode,
   addressNumber: body.addressNumber,
-  addressComplement: body.addressComplement,
   phone: body.phone.replace(/\D/g, ""),
   mobilePhone: body.phone.replace(/\D/g, ""),
-  remoteIp,
 },
+
+remoteIp,
 });
 
 console.log(`[${requestId}] ✅ Assinatura criada (id ${subscription.id})`);

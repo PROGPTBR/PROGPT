@@ -77,7 +77,7 @@ export function StartTrial({ priceLabel, trialDays, initial }: Props) {
     setError(null);
 
     try {
-      const res = await fetch('/api/billing/checkout?plan=pf-99', {
+      const res = await fetch('/api/billing/checkout?plan=pf-73', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

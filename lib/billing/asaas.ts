@@ -27,13 +27,13 @@ export type CreateSubscriptionInput = {
 
   value: number;
 
-  cycle: "MONTHLY" | "YEARLY";
+  cycle: 'MONTHLY' | 'YEARLY';
 
   billingType:
-    | "CREDIT_CARD"
-    | "PIX"
-    | "BOLETO"
-    | "UNDEFINED";
+    | 'CREDIT_CARD'
+    | 'PIX'
+    | 'BOLETO'
+    | 'UNDEFINED';
 
   description: string;
 
@@ -63,9 +63,19 @@ export type CreateSubscriptionInput = {
 
     phone: string;
     mobilePhone?: string;
-
-     remoteIp: string;
   };
+
+  /**
+   * IP REAL do dispositivo do pagador.
+   * Deve ser enviado no nível principal da requisição Asaas.
+   */
+  remoteIp?: string;
+
+  /**
+   * Checkout interno não precisa buscar invoiceUrl.
+   * O checkout antigo continua usando invoiceUrl normalmente.
+   */
+  skipInvoiceUrlLookup?: boolean;
 };
 
 export type CreateSubscriptionResult = {
@@ -86,204 +96,372 @@ class AsaasError extends Error {
 }
 
 async function getConfig() {
-  // Config administrável (billing_settings) com fallback no env. Async porque
-  // lê do banco — o admin gerencia a chave/URL pelo painel /admin/billing.
+  // Config administrável (billing_settings) com fallback no env.
   const { getBillingSettings } = await import('./settings');
-  const { apiKey, apiUrl } = await getBillingSettings();
+
+  const { apiKey, apiUrl } =
+    await getBillingSettings();
+
   if (!apiKey) {
     throw new Error(
       'Asaas API key não configurada (billing_settings ou ASAAS_API_KEY env)',
     );
   }
-  return { apiKey, apiUrl };
+
+  return {
+    apiKey,
+    apiUrl,
+  };
 }
-
-
 
 async function asaasFetch<T>(
   method: 'GET' | 'POST' | 'PUT' | 'DELETE',
   path: string,
   body?: Record<string, unknown>,
 ): Promise<T> {
-  const { apiKey, apiUrl } = await getConfig();
-  const res = await fetch(`${apiUrl}${path}`, {
-    method,
-    headers: {
-      access_token: apiKey,
-      'Content-Type': 'application/json',
-      // Asaas pede user-agent customizado por boas práticas
-      'User-Agent': 'PROGPT/1.0',
+  const { apiKey, apiUrl } =
+    await getConfig();
+
+  const res = await fetch(
+    `${apiUrl}${path}`,
+    {
+      method,
+
+      headers: {
+        access_token: apiKey,
+        'Content-Type': 'application/json',
+        'User-Agent': 'PROGPT/1.0',
+      },
+
+      body: body
+        ? JSON.stringify(body)
+        : undefined,
+
+      /**
+       * Asaas recomenda timeout mínimo de 60 segundos
+       * para operações de cartão.
+       */
+      signal: AbortSignal.timeout(65000),
     },
-    body: body ? JSON.stringify(body) : undefined,
-    signal: AbortSignal.timeout(15000),
-  });
+  );
 
   const text = await res.text();
+
   let parsed: unknown;
+
   try {
-    parsed = text ? JSON.parse(text) : null;
+    parsed = text
+      ? JSON.parse(text)
+      : null;
   } catch {
     parsed = text;
   }
 
-if (!res.ok) {
-  console.log('====================');
-  console.log('ASAAS ERROR');
-  console.log(parsed);
-  console.log('====================');
+  if (!res.ok) {
+    /**
+     * NÃO registrar body da requisição aqui.
+     *
+     * Principalmente porque operações com cartão
+     * possuem número e CVV.
+     */
+    console.error(
+      `[Asaas] ${method} ${path} retornou ${res.status}`,
+    );
 
-  throw new AsaasError(
-    `Asaas ${method} ${path} failed: ${res.status} - ${JSON.stringify(parsed)}`,
-    res.status,
-    parsed,
-  );
-}
+    console.error(
+      '[Asaas] Resposta:',
+      parsed,
+    );
+
+    throw new AsaasError(
+      `Asaas ${method} ${path} failed: ${res.status}`,
+      res.status,
+      parsed,
+    );
+  }
 
   return parsed as T;
 }
 
 /**
- * Cria customer no Asaas. CPF é obrigatório pela API.
- * Reutilizar `customerId` existente quando user já comprou antes —
- * checar `subscriptions.asaas_customer_id` no DB antes de chamar.
+ * Cria customer no Asaas.
  */
 export async function createAsaasCustomer(
   input: {
-  name: string;
-  email: string;
-  cpfCnpj: string;
+    name: string;
+    email: string;
+    cpfCnpj: string;
 
-  mobilePhone?: string;
-  phone?: string;
-  company?: string;
+    mobilePhone?: string;
+    phone?: string;
+    company?: string;
 
-  postalCode?: string;
-  address?: string;
-  addressNumber?: string;
-  province?: string;
-  city?: string;
-}): Promise<AsaasCustomer> {
-  return asaasFetch<AsaasCustomer>('POST', '/customers', input);
+    postalCode?: string;
+    address?: string;
+    addressNumber?: string;
+    province?: string;
+    city?: string;
+  },
+): Promise<AsaasCustomer> {
+  return asaasFetch<AsaasCustomer>(
+    'POST',
+    '/customers',
+    input,
+  );
 }
 
 /**
- * Cria subscription recorrente. Retorna `invoiceUrl` que é o hosted
- * checkout — redirect o user pra lá.
+ * Cria assinatura recorrente.
  *
- * v1 usa `billingType: 'UNDEFINED'` pra Asaas mostrar cartão + Pix no
- * checkout (user escolhe na hora).
+ * Pode funcionar de duas formas:
+ *
+ * 1. Hosted checkout antigo:
+ *    - sem cartão
+ *    - busca invoiceUrl
+ *
+ * 2. Checkout interno PROGPT:
+ *    - envia creditCard
+ *    - envia creditCardHolderInfo
+ *    - envia remoteIp
+ *    - skipInvoiceUrlLookup = true
  */
 export async function createAsaasSubscription(
-
   input: CreateSubscriptionInput,
 ): Promise<CreateSubscriptionResult> {
-
-  
-  const body = {
+  const body: Record<string, unknown> = {
     customer: input.customerId,
     value: input.value,
     cycle: input.cycle,
     billingType: input.billingType,
     description: input.description,
     nextDueDate: input.nextDueDate,
-    creditCard: input.creditCard,
-    creditCardHolderInfo: input.creditCardHolderInfo,
+
+    ...(input.creditCard && {
+      creditCard:
+        input.creditCard,
+    }),
+
+    ...(input.creditCardHolderInfo && {
+      creditCardHolderInfo:
+        input.creditCardHolderInfo,
+    }),
+
+    ...(input.remoteIp && {
+      remoteIp: input.remoteIp,
+    }),
+
     ...(input.callback && {
       callback: {
-        successUrl: input.callback.successUrl,
-        autoRedirect: input.callback.autoRedirect,
+        successUrl:
+          input.callback.successUrl,
+
+        autoRedirect:
+          input.callback.autoRedirect,
       },
     }),
   };
 
-console.log("========== BODY ENVIADO AO ASAAS ==========");
-console.log(JSON.stringify(body, null, 2));
-console.log("===========================================");
+  /**
+   * IMPORTANTE:
+   * jamais fazer console.log(body).
+   *
+   * body pode conter:
+   * - número do cartão
+   * - CVV
+   * - CPF
+   */
+  console.log(
+    '[Asaas] Criando assinatura:',
+    {
+      customer:
+        input.customerId,
 
+      value:
+        input.value,
 
-  const result = await asaasFetch<{
-    id: string;
-    invoiceUrl?: string;
-    paymentLink?: string;
-  }>('POST', '/subscriptions', body);
+      cycle:
+        input.cycle,
 
-  // IMPORTANTE: o `invoiceUrl` (página de checkout do cartão) vive na 1ª
-  // COBRANÇA da subscription, NÃO no objeto subscription (que vem sem ele). Por
-  // isso buscamos as cobranças e usamos o invoiceUrl da primeira. A cobrança é
-  // gerada de forma assíncrona, então tentamos algumas vezes.
-  let invoiceUrl = result.invoiceUrl ?? result.paymentLink ?? '';
+      billingType:
+        input.billingType,
+
+      nextDueDate:
+        input.nextDueDate,
+
+      hasCreditCard:
+        !!input.creditCard,
+
+      hasRemoteIp:
+        !!input.remoteIp,
+
+      internalCheckout:
+        !!input.skipInvoiceUrlLookup,
+    },
+  );
+
+  const result =
+    await asaasFetch<{
+      id: string;
+      invoiceUrl?: string;
+      paymentLink?: string;
+    }>(
+      'POST',
+      '/subscriptions',
+      body,
+    );
+
+  /**
+   * Checkout interno:
+   *
+   * Já enviamos o cartão junto da criação,
+   * portanto não precisamos buscar invoiceUrl.
+   */
+  if (
+    input.skipInvoiceUrlLookup
+  ) {
+    return {
+      id: result.id,
+      invoiceUrl: '',
+      paymentLink:
+        result.paymentLink ??
+        null,
+    };
+  }
+
+  /**
+   * Checkout hospedado antigo.
+   */
+  let invoiceUrl =
+    result.invoiceUrl ??
+    result.paymentLink ??
+    '';
+
   if (!invoiceUrl) {
-    invoiceUrl = await fetchSubscriptionInvoiceUrl(result.id);
+    invoiceUrl =
+      await fetchSubscriptionInvoiceUrl(
+        result.id,
+      );
   }
 
   return {
     id: result.id,
     invoiceUrl,
-    paymentLink: result.paymentLink ?? null,
+    paymentLink:
+      result.paymentLink ??
+      null,
   };
 }
 
 /**
- * Busca o `invoiceUrl` (checkout do cartão) da 1ª cobrança de uma subscription.
- * A cobrança é criada async pelo Asaas — retry curto até aparecer.
+ * Busca invoiceUrl da primeira cobrança.
+ * Usado somente no checkout hospedado antigo.
  */
-async function fetchSubscriptionInvoiceUrl(subscriptionId: string): Promise<string> {
-  for (let attempt = 0; attempt < 4; attempt++) {
+async function fetchSubscriptionInvoiceUrl(
+  subscriptionId: string,
+): Promise<string> {
+  for (
+    let attempt = 0;
+    attempt < 4;
+    attempt++
+  ) {
     try {
-      const pays = await asaasFetch<{ data?: Array<{ invoiceUrl?: string }> }>(
-        'GET',
-        `/subscriptions/${subscriptionId}/payments`,
-      );
-      const url = pays.data?.[0]?.invoiceUrl;
-      if (url) return url;
+      const pays =
+        await asaasFetch<{
+          data?: Array<{
+            invoiceUrl?: string;
+          }>;
+        }>(
+          'GET',
+          `/subscriptions/${subscriptionId}/payments`,
+        );
+
+      const url =
+        pays.data?.[0]
+          ?.invoiceUrl;
+
+      if (url) {
+        return url;
+      }
     } catch (err) {
-      console.warn('[asaas] fetch subscription payments failed:', err);
+      console.warn(
+        '[Asaas] Erro ao buscar cobrança da assinatura:',
+        err,
+      );
     }
-    if (attempt < 3) await new Promise((r) => setTimeout(r, 900));
+
+    if (attempt < 3) {
+      await new Promise(
+        (resolve) =>
+          setTimeout(
+            resolve,
+            900,
+          ),
+      );
+    }
   }
+
   return '';
 }
 
 /**
- * Cancela subscription. Asaas pára de gerar cobranças futuras; a
- * cobrança atual (se já paga) continua válida até `current_period_end`.
+ * Cancela assinatura.
  */
 export async function cancelAsaasSubscription(
   subscriptionId: string,
 ): Promise<void> {
-  await asaasFetch('DELETE', `/subscriptions/${subscriptionId}`);
+  await asaasFetch(
+    'DELETE',
+    `/subscriptions/${subscriptionId}`,
+  );
 }
 
 /**
- * Force-refresh do estado de uma subscription. Usado em caso de webhook
- * perdido — admin pode chamar /api/admin/billing/sync/:id (TODO v1.1).
+ * Recupera estado da assinatura.
  */
 export async function getAsaasSubscription(
   subscriptionId: string,
 ): Promise<AsaasSubscription> {
-  return asaasFetch<AsaasSubscription>('GET', `/subscriptions/${subscriptionId}`);
+  return asaasFetch<AsaasSubscription>(
+    'GET',
+    `/subscriptions/${subscriptionId}`,
+  );
 }
 
-export async function createAsaasPaymentLink(input: {
-  name: string;
-  value: number;
-  description: string;
-}): Promise<{
+export async function createAsaasPaymentLink(
+  input: {
+    name: string;
+    value: number;
+    description: string;
+  },
+): Promise<{
   id: string;
   url: string;
 }> {
-  const result = await asaasFetch<{
-    id: string;
-    url: string;
-  }>('POST', '/paymentLinks', {
-    name: input.name,
-    billingType: 'UNDEFINED',
-    chargeType: 'RECURRENT',
-    value: input.value,
-    description: input.description,
+  const result =
+    await asaasFetch<{
+      id: string;
+      url: string;
+    }>(
+      'POST',
+      '/paymentLinks',
+      {
+        name: input.name,
 
-    dueDateLimitDays: 3,
-  });
+        billingType:
+          'UNDEFINED',
+
+        chargeType:
+          'RECURRENT',
+
+        value:
+          input.value,
+
+        description:
+          input.description,
+
+        dueDateLimitDays: 3,
+      },
+    );
 
   return {
     id: result.id,
@@ -291,14 +469,15 @@ export async function createAsaasPaymentLink(input: {
   };
 }
 
-
-export { AsaasError };
+export {
+  AsaasError,
+};
 
 export async function deleteAsaasCustomer(
   customerId: string,
 ): Promise<void> {
   await asaasFetch(
-    "DELETE",
+    'DELETE',
     `/customers/${customerId}`,
   );
 }
