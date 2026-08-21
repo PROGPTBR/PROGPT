@@ -1130,4 +1130,25 @@ color: #94a3b8!important;
   }
 }
 
+/* Corrige a cor das setas no tema claro */
+.lightTheme .useCaseSliderArrow {
+  background: #ffffff;
+  color: #0e8de1 !important;
+  border-color: rgba(14, 141, 225, 0.3);
+}
 
+.lightTheme .useCaseSliderArrow svg {
+  color: #0e8de1 !important;
+  stroke: #0e8de1 !important;
+}
+
+.lightTheme .useCaseSliderArrow:hover {
+  background: #f3f8fc;
+  color: #0876c0 !important;
+  border-color: rgba(14, 141, 225, 0.55);
+}
+
+.lightTheme .useCaseSliderArrow:hover svg {
+  color: #0876c0 !important;
+  stroke: #0876c0 !important;
+}
