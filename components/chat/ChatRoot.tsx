@@ -1,54 +1,126 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import {
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
+
 import { useTheme } from 'next-themes';
 import { Moon, Sun } from 'lucide-react';
 
 import { useChatSessionsRemote as useChatSessions } from '@/hooks/useChatSessionsRemote';
+
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { ChatSession } from './ChatSession';
 import { ChatErrorBoundary } from './ChatErrorBoundary';
-import { Sheet, SheetContent } from '@/components/ui/sheet';
-import { CHAT_PREFILL_KEY } from '@/lib/prompts/chat-prefill';
 import { AssistantsSidePanel } from './AssistantsSidePanel';
+import { PromptsSidePanel } from './PromptsSidePanel';
+
+import {
+  Sheet,
+  SheetContent,
+} from '@/components/ui/sheet';
+
+import { CHAT_PREFILL_KEY } from '@/lib/prompts/chat-prefill';
+
+const SIDEBAR_COLLAPSED_KEY =
+  'progpt_sidebar_collapsed';
+
+/* ============================================================
+   CHAT ROOT
+============================================================ */
 
 export function ChatRoot() {
-  // Wait for client mount before reading localStorage. The server and the
-  // initial client render both produce the empty placeholder, so React
-  // hydration matches; the real tree mounts in a subsequent effect.
-  const [mounted, setMounted] = useState(false);
+  const [mounted, setMounted] =
+    useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
   if (!mounted) {
-    return <div className="h-screen bg-background" />;
+    return (
+      <div className="h-screen bg-background" />
+    );
   }
 
   return <ChatRootMounted />;
 }
 
-const SIDEBAR_COLLAPSED_KEY = 'progpt_sidebar_collapsed';
+/* ============================================================
+   CHAT ROOT MONTADO
+============================================================ */
 
 function ChatRootMounted() {
-  const sessionsApi = useChatSessions();
+  const sessionsApi =
+    useChatSessions();
 
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [assistantsOpen, setAssistantsOpen] = useState(false);
-  const [assistantsMobileOpen, setAssistantsMobileOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
+  /* ==========================================================
+     SIDEBAR
+  ========================================================== */
 
-  // Tema claro / escuro
-  const { resolvedTheme, setTheme } = useTheme();
-  const isDark = resolvedTheme === 'dark';
+  const [
+    drawerOpen,
+    setDrawerOpen,
+  ] = useState(false);
 
-  // Restore the persisted collapse preference after mount.
+  const [
+    collapsed,
+    setCollapsed,
+  ] = useState(false);
+
+  /* ==========================================================
+     ASSISTENTES
+  ========================================================== */
+
+  const [
+    assistantsOpen,
+    setAssistantsOpen,
+  ] = useState(false);
+
+  const [
+    assistantsMobileOpen,
+    setAssistantsMobileOpen,
+  ] = useState(false);
+
+  /* ==========================================================
+     BIBLIOTECA DE PROMPTS
+  ========================================================== */
+
+  const [
+    promptsOpen,
+    setPromptsOpen,
+  ] = useState(false);
+
+  const [
+    promptsMobileOpen,
+    setPromptsMobileOpen,
+  ] = useState(false);
+
+  /* ==========================================================
+     TEMA
+  ========================================================== */
+
+  const {
+    resolvedTheme,
+    setTheme,
+  } = useTheme();
+
+  const isDark =
+    resolvedTheme === 'dark';
+
+  /* ==========================================================
+     RESTAURA ESTADO DA SIDEBAR
+  ========================================================== */
+
   useEffect(() => {
     try {
       setCollapsed(
-        window.localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1'
+        window.localStorage.getItem(
+          SIDEBAR_COLLAPSED_KEY
+        ) === '1'
       );
     } catch {
       /* ignore */
@@ -56,44 +128,69 @@ function ChatRootMounted() {
   }, []);
 
   function toggleCollapse() {
-    setCollapsed((c) => {
-      const next = !c;
+    setCollapsed(
+      (current) => {
+        const next =
+          !current;
 
-      try {
-        window.localStorage.setItem(
-          SIDEBAR_COLLAPSED_KEY,
-          next ? '1' : '0'
-        );
-      } catch {
-        /* ignore */
-      }
-
-      return next;
-    });
-  }
-
-  // Sub-projeto 32 — "Usar no chat" da Biblioteca de Prompts.
-  // Capturamos o texto do sessionStorage UMA vez aqui no pai
-  // e limpamos.
-  const [pendingPrefill, setPendingPrefill] = useState<string | null>(
-    () => {
-      if (typeof window === 'undefined') return null;
-
-      try {
-        const v = window.sessionStorage.getItem(CHAT_PREFILL_KEY);
-
-        if (v) {
-          window.sessionStorage.removeItem(CHAT_PREFILL_KEY);
+        try {
+          window.localStorage.setItem(
+            SIDEBAR_COLLAPSED_KEY,
+            next ? '1' : '0'
+          );
+        } catch {
+          /* ignore */
         }
 
-        return v;
+        return next;
+      }
+    );
+  }
+
+  /* ==========================================================
+     PREFILL DA BIBLIOTECA DE PROMPTS
+
+     Também continua suportando o fluxo existente da página
+     /prompts através do sessionStorage.
+  ========================================================== */
+
+  const [
+    pendingPrefill,
+    setPendingPrefill,
+  ] = useState<string | null>(
+    () => {
+      if (
+        typeof window ===
+        'undefined'
+      ) {
+        return null;
+      }
+
+      try {
+        const value =
+          window.sessionStorage.getItem(
+            CHAT_PREFILL_KEY
+          );
+
+        if (value) {
+          window.sessionStorage.removeItem(
+            CHAT_PREFILL_KEY
+          );
+        }
+
+        return value;
       } catch {
         return null;
       }
     }
   );
 
-  const decidedRef = useRef(false);
+  /*
+   * Controla se já decidimos se o prompt
+   * precisa abrir uma conversa nova.
+   */
+  const decidedRef =
+    useRef(false);
 
   const {
     current,
@@ -101,17 +198,38 @@ function ChatRootMounted() {
     createNew,
   } = sessionsApi;
 
-  // Prompt vindo da biblioteca deve SEMPRE cair numa conversa nova/vazia.
-  // Se a atual já tem histórico, abre uma nova.
-  // Se já está vazia, reaproveita.
+  /* ==========================================================
+     PROMPT → CONVERSA NOVA OU ATUAL
+
+     Se a conversa atual já tiver mensagens:
+     cria uma conversa nova.
+
+     Se estiver vazia:
+     reutiliza a conversa atual.
+  ========================================================== */
+
   useEffect(() => {
-    if (decidedRef.current) return;
-    if (!pendingPrefill) return;
-    if (!currentId) return;
+    if (
+      decidedRef.current
+    ) {
+      return;
+    }
 
-    decidedRef.current = true;
+    if (!pendingPrefill) {
+      return;
+    }
 
-    if (current && current.messages.length > 0) {
+    if (!currentId) {
+      return;
+    }
+
+    decidedRef.current =
+      true;
+
+    if (
+      current &&
+      current.messages.length > 0
+    ) {
       void createNew();
     }
   }, [
@@ -121,108 +239,427 @@ function ChatRootMounted() {
     createNew,
   ]);
 
-  if (!currentId) {
-    return <div className="h-screen bg-background" />;
+  /* ==========================================================
+     SELEÇÃO DE PROMPT PELO PAINEL LATERAL
+
+     Fluxo:
+     1. usuário clica no prompt
+     2. painel fecha
+     3. se necessário cria conversa nova
+     4. prompt aparece no Composer
+  ========================================================== */
+
+  function handleSelectPrompt(
+    prompt: string
+  ) {
+    const clean =
+      prompt.trim();
+
+    if (!clean) {
+      return;
+    }
+
+    /*
+     * Permite executar novamente a decisão
+     * conversa atual / conversa nova.
+     */
+    decidedRef.current =
+      false;
+
+    setPendingPrefill(
+      clean
+    );
+
+    /*
+     * Fecha todos os painéis desktop.
+     */
+    setPromptsOpen(false);
+    setAssistantsOpen(false);
+
+    /*
+     * Fecha todos os painéis mobile.
+     */
+    setPromptsMobileOpen(false);
+    setAssistantsMobileOpen(false);
+
+    setDrawerOpen(false);
   }
 
-  // Só prefila a sessão-alvo (a nova/vazia).
-  // A conversa antiga (com mensagens) nunca recebe o prefill.
+  /* ==========================================================
+     SEM SESSÃO
+  ========================================================== */
+
+  if (!currentId) {
+    return (
+      <div className="h-screen bg-background" />
+    );
+  }
+
+  /* ==========================================================
+     PREFILL SOMENTE EM CONVERSA VAZIA
+  ========================================================== */
+
   const prefillForSession =
     pendingPrefill &&
-    sessionsApi.current.messages.length === 0
+    sessionsApi.current.messages
+      .length === 0
       ? pendingPrefill
       : null;
 
   return (
-    <div className="flex h-screen bg-background text-foreground font-outfit antialiased">
-      {/* Sidebar desktop */}
+    <div
+      className="
+        flex
+        h-screen
+        bg-background
+        font-outfit
+        text-foreground
+        antialiased
+      "
+    >
+      {/* ======================================================
+          SIDEBAR DESKTOP
+      ======================================================= */}
+
       <div className="hidden md:flex">
         <Sidebar
-          sessions={sessionsApi.sessions}
-          currentId={sessionsApi.currentId}
-          onSwitch={sessionsApi.switchTo}
-          onNew={sessionsApi.createNew}
-          onDelete={sessionsApi.deleteSession}
-          onRename={sessionsApi.renameSession}
-          collapsed={collapsed}
-          onToggleCollapse={toggleCollapse}
-          assistantsOpen={assistantsOpen}
-          onOpenAssistants={() =>
-            setAssistantsOpen((open) => !open)
+          sessions={
+            sessionsApi.sessions
           }
+          currentId={
+            sessionsApi.currentId
+          }
+          onSwitch={
+            sessionsApi.switchTo
+          }
+          onNew={
+            sessionsApi.createNew
+          }
+          onDelete={
+            sessionsApi.deleteSession
+          }
+          onRename={
+            sessionsApi.renameSession
+          }
+          collapsed={
+            collapsed
+          }
+          onToggleCollapse={
+            toggleCollapse
+          }
+
+          /* ================================================
+             ASSISTENTES
+          ================================================= */
+
+          assistantsOpen={
+            assistantsOpen
+          }
+
+          onOpenAssistants={() => {
+            /*
+             * Fecha Prompts antes
+             * de abrir Assistentes.
+             */
+            setPromptsOpen(false);
+
+            setAssistantsOpen(
+              (open) => !open
+            );
+          }}
+
+          /* ================================================
+             PROMPTS
+          ================================================= */
+
+          promptsOpen={
+            promptsOpen
+          }
+
+          onOpenPrompts={() => {
+            /*
+             * Fecha Assistentes antes
+             * de abrir Prompts.
+             */
+            setAssistantsOpen(false);
+
+            setPromptsOpen(
+              (open) => !open
+            );
+          }}
         />
       </div>
 
-      {/* Painel lateral de assistentes — desktop */}
+      {/* ======================================================
+          PAINEL ASSISTENTES — DESKTOP
+      ======================================================= */}
+
       {assistantsOpen && (
         <div className="hidden md:flex">
           <AssistantsSidePanel
-            onClose={() => setAssistantsOpen(false)}
+            onClose={() =>
+              setAssistantsOpen(
+                false
+              )
+            }
           />
         </div>
       )}
 
-      {/* Sidebar mobile */}
+      {/* ======================================================
+          PAINEL PROMPTS — DESKTOP
+      ======================================================= */}
+
+      {promptsOpen && (
+        <div className="hidden md:flex">
+          <PromptsSidePanel
+            onClose={() =>
+              setPromptsOpen(
+                false
+              )
+            }
+            onSelectPrompt={
+              handleSelectPrompt
+            }
+          />
+        </div>
+      )}
+
+      {/* ======================================================
+          SIDEBAR MOBILE
+      ======================================================= */}
+
       <Sheet
         open={drawerOpen}
-        onOpenChange={(open) => setDrawerOpen(open)}
+        onOpenChange={
+          setDrawerOpen
+        }
       >
         <SheetContent
           side="left"
-          showCloseButton={false}
-          className="p-0 w-[17rem] max-w-[85vw] bg-[#0a0f1a] border-border"
+          showCloseButton={
+            false
+          }
+          className="
+            w-[17rem]
+            max-w-[85vw]
+            border-border
+            bg-[#0a0f1a]
+            p-0
+          "
         >
           <Sidebar
-            sessions={sessionsApi.sessions}
-            currentId={sessionsApi.currentId}
+            sessions={
+              sessionsApi.sessions
+            }
+            currentId={
+              sessionsApi.currentId
+            }
+
+            /* Trocar conversa */
             onSwitch={(id) => {
-              sessionsApi.switchTo(id);
-              setDrawerOpen(false);
+              sessionsApi.switchTo(
+                id
+              );
+
+              setDrawerOpen(
+                false
+              );
             }}
+
+            /* Nova conversa */
             onNew={() => {
               sessionsApi.createNew();
-              setDrawerOpen(false);
+
+              setDrawerOpen(
+                false
+              );
             }}
-            onDelete={sessionsApi.deleteSession}
-            onRename={sessionsApi.renameSession}
-            assistantsOpen={assistantsMobileOpen}
+
+            onDelete={
+              sessionsApi.deleteSession
+            }
+
+            onRename={
+              sessionsApi.renameSession
+            }
+
+            /* ==============================================
+               ASSISTENTES MOBILE
+            =============================================== */
+
+            assistantsOpen={
+              assistantsMobileOpen
+            }
+
             onOpenAssistants={() => {
-              setDrawerOpen(false);
-              setAssistantsMobileOpen(true);
+              /*
+               * Fecha menu principal.
+               */
+              setDrawerOpen(
+                false
+              );
+
+              /*
+               * Garante que prompts fique fechado.
+               */
+              setPromptsMobileOpen(
+                false
+              );
+
+              /*
+               * Abre Assistentes.
+               */
+              setAssistantsMobileOpen(
+                true
+              );
+            }}
+
+            /* ==============================================
+               PROMPTS MOBILE
+            =============================================== */
+
+            promptsOpen={
+              promptsMobileOpen
+            }
+
+            onOpenPrompts={() => {
+              /*
+               * Fecha menu principal.
+               */
+              setDrawerOpen(
+                false
+              );
+
+              /*
+               * Garante que Assistentes fique fechado.
+               */
+              setAssistantsMobileOpen(
+                false
+              );
+
+              /*
+               * Abre Biblioteca.
+               */
+              setPromptsMobileOpen(
+                true
+              );
             }}
           />
         </SheetContent>
       </Sheet>
 
-      {/* Painel assistentes mobile */}
+      {/* ======================================================
+          ASSISTENTES MOBILE
+      ======================================================= */}
+
       <Sheet
-        open={assistantsMobileOpen}
-        onOpenChange={setAssistantsMobileOpen}
+        open={
+          assistantsMobileOpen
+        }
+        onOpenChange={
+          setAssistantsMobileOpen
+        }
       >
         <SheetContent
           side="left"
-          showCloseButton={false}
-          className="md:hidden p-0 w-[21rem] max-w-[92vw] bg-[#0a0f1a] border-border"
+          showCloseButton={
+            false
+          }
+          className="
+            w-[21rem]
+            max-w-[92vw]
+            border-border
+            bg-[#0a0f1a]
+            p-0
+            md:hidden
+          "
         >
           <AssistantsSidePanel
             onClose={() =>
-              setAssistantsMobileOpen(false)
+              setAssistantsMobileOpen(
+                false
+              )
             }
           />
         </SheetContent>
       </Sheet>
 
-      {/* Chat continua visível */}
-      <div className="relative flex-1 flex flex-col min-w-0 bg-background transition-colors duration-300">
+      {/* ======================================================
+          PROMPTS MOBILE
+      ======================================================= */}
+
+      <Sheet
+        open={
+          promptsMobileOpen
+        }
+        onOpenChange={
+          setPromptsMobileOpen
+        }
+      >
+        <SheetContent
+          side="left"
+          showCloseButton={
+            false
+          }
+          className="
+            w-[22rem]
+            max-w-[92vw]
+            border-border
+            bg-[#0a0f1a]
+            p-0
+            md:hidden
+          "
+        >
+          <PromptsSidePanel
+            onClose={() =>
+              setPromptsMobileOpen(
+                false
+              )
+            }
+            onSelectPrompt={
+              handleSelectPrompt
+            }
+          />
+        </SheetContent>
+      </Sheet>
+
+      {/* ======================================================
+          ÁREA PRINCIPAL DO CHAT
+      ======================================================= */}
+
+      <div
+        className="
+          relative
+          flex
+          min-w-0
+          flex-1
+          flex-col
+          bg-background
+          transition-colors
+          duration-300
+        "
+      >
         <Header
-          onOpenSidebar={() => setDrawerOpen(true)}
+          onOpenSidebar={() =>
+            setDrawerOpen(
+              true
+            )
+          }
         />
 
-        {/* Botão tema claro / escuro */}
+        {/* ====================================================
+            TEMA CLARO / ESCURO
+        ===================================================== */}
+
         <button
           type="button"
           onClick={() =>
-            setTheme(isDark ? 'light' : 'dark')
+            setTheme(
+              isDark
+                ? 'light'
+                : 'dark'
+            )
           }
           aria-label={
             isDark
@@ -236,52 +673,93 @@ function ChatRootMounted() {
           }
           className="
             absolute
-            top-4
             right-5
+            top-4
             z-50
+
             inline-flex
             h-10
             w-10
+
             items-center
             justify-center
+
             rounded-full
+
             border
             border-border
+
             bg-background/80
+
             text-muted-foreground
+
             shadow-sm
+
             backdrop-blur-md
+
             transition-all
             duration-200
+
             hover:bg-muted
             hover:text-foreground
           "
         >
           {isDark ? (
             <Sun
-              className="h-[18px] w-[18px]"
+              className="
+                h-[18px]
+                w-[18px]
+              "
               aria-hidden="true"
             />
           ) : (
             <Moon
-              className="h-[18px] w-[18px]"
+              className="
+                h-[18px]
+                w-[18px]
+              "
               aria-hidden="true"
             />
           )}
         </button>
 
+        {/* ====================================================
+            CHAT
+        ===================================================== */}
+
         <ChatErrorBoundary>
           <ChatSession
-            key={sessionsApi.currentId}
-            session={sessionsApi.current}
-            initialRatings={sessionsApi.ratings}
-            prefill={prefillForSession}
-            onPrefillConsumed={() =>
-              setPendingPrefill(null)
+            key={
+              sessionsApi.currentId
             }
+
+            session={
+              sessionsApi.current
+            }
+
+            initialRatings={
+              sessionsApi.ratings
+            }
+
+            /* Prompt selecionado */
+            prefill={
+              prefillForSession
+            }
+
+            /*
+             * ChatSession avisa quando já colocou
+             * o prompt dentro do Composer.
+             */
+            onPrefillConsumed={() =>
+              setPendingPrefill(
+                null
+              )
+            }
+
             onMessagesChange={
               sessionsApi.updateMessages
             }
+
             onTitleChange={
               sessionsApi.setTitleLocal
                 ? (title) =>

@@ -1,26 +1,32 @@
 'use client';
 
 import { type FormEvent } from 'react';
-import Link from 'next/link';
-import { ArrowRight, Sparkles, Phone, BookOpen } from 'lucide-react';
-import { Composer, type ChatAttachment } from './Composer';
-import { OnboardingQuickStartCard } from './OnboardingQuickStartCard';
+import { Sparkles } from 'lucide-react';
 
-// 2B Supply contact CTA — surfaces in the empty state as a "got value
-// from this? talk to us" handoff. tel: link for click-to-call on mobile;
-// desktop falls back to opening the OS dialer.
-const CONTACT_TEL_HREF = '+5521999792912';
-const CONTACT_PHONE_DISPLAY = '(21) 99979-2912';
+import {
+  Composer,
+  type ChatAttachment,
+} from './Composer';
+
+import { OnboardingQuickStartCard } from './OnboardingQuickStartCard';
 
 type Props = {
   // Composer props piped through — we own the single Composer instance
   // here so the user goes straight from typing → submitting from the hero
   // input without an extra hop.
   input: string;
+
   onChange: (value: string) => void;
-  onSubmit: (e?: FormEvent, attachment?: ChatAttachment) => void;
+
+  onSubmit: (
+    e?: FormEvent,
+    attachment?: ChatAttachment
+  ) => void;
+
   isLoading: boolean;
+
   onStop: () => void;
+
   onVoiceMode?: () => void;
 };
 
@@ -34,35 +40,34 @@ export function EmptyState({
 }: Props) {
   return (
     <div className="relative flex-1 flex flex-col items-center px-6 py-8 overflow-y-auto">
-      {/* Ambient brand backdrop — soft cyan/blue glow behind the hero. */}
+      {/* Ambient brand backdrop */}
       <div
         className="pointer-events-none absolute inset-x-0 top-0 h-80 brand-aura"
         aria-hidden="true"
       />
-      {/* my-auto (em vez de justify-center) centraliza sem cortar o topo no
-          mobile quando o conteúdo é mais alto que a viewport. */}
+
+      {/* Conteúdo principal */}
       <div className="relative my-auto w-full max-w-2xl flex flex-col items-center gap-8">
-        {/* Hero pitch — action-oriented; positions ProcurementGPT as a
-            focused supply-chain tool, not a generic chat. */}
+        {/* Hero */}
         <div className="flex flex-col items-center gap-3 text-center">
           <div className="flex items-start gap-3">
             <Sparkles
               className="h-6 w-6 text-brand flex-shrink-0 mt-1"
               aria-hidden="true"
             />
+
             <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground leading-snug">
               Sua IA de Suprimentos está pronta.
               <br />
-              <span className="text-brand-gradient">Qual problema vamos resolver?</span>
+
+              <span className="text-brand-gradient">
+                Por onde começamos?
+              </span>
             </h1>
           </div>
-          <p className="text-sm md:text-base text-muted-foreground max-w-xl">
-            Compras, contratos, fornecedores, estoque ou logística. Por onde
-            começamos?
-          </p>
         </div>
 
-        {/* Composer hero — centered, pill-card */}
+        {/* Composer principal */}
         <div className="w-full">
           <Composer
             input={input}
@@ -71,62 +76,18 @@ export function EmptyState({
             isLoading={isLoading}
             onStop={onStop}
             variant="hero"
-            placeholder="Pergunte alguma coisa…"
+            placeholder="Escreva a sua dúvida"
             onVoiceMode={onVoiceMode}
           />
         </div>
 
-        {/* Assistant launcher — destaque dos 8 assistentes (feedback de
-            usuário). Fica acima dos chat-starters porque a maior parte
-            do valor da plataforma está nos assistentes. 
-        <div className="w-full">
-          <div className="text-xs uppercase tracking-wide text-muted-foreground mb-5 text-center">
-            Vá direto pro assistente
-          </div>
-          <AssistantLauncher variant="hero" />
-        </div>
-*/}
-        {/* Descobrir — Biblioteca de Prompts (sub-projeto 32). Caminho de
-            descoberta pros +100 prompts prontos de procurement. */}
-        <Link
-          href="/prompts"
-          className="group inline-flex flex-wrap items-center justify-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <BookOpen className="h-4 w-4 text-brand" aria-hidden="true" />
-          Explore <span className="text-foreground font-medium">+100 prompts</span> prontos de procurement
-          <ArrowRight
-            className="h-3.5 w-3.5 text-brand group-hover:translate-x-0.5 transition-transform"
-            aria-hidden="true"
-          />
-        </Link>
+        {/* Aviso */}
+        <p className="max-w-xl text-center text-sm text-muted-foreground/40">
+          O ProGPT pode cometer erros. Verifique informações importantes.
+        </p>
 
-        {/* Onboarding quick-win — só pra quem ainda não dispensou (1ª visita).
-            Leva aos 3 caminhos de "aha" mais rápidos. */}
+        {/* Onboarding quick-win */}
         <OnboardingQuickStartCard />
-
-        {/* 2B Supply contact CTA — handoff to a real human when the IA
-            doesn't cover it (or for sales/onboarding). Tel link works
-            on mobile + desktop softphones. */}
-        <a
-          href={CONTACT_TEL_HREF}
-          className="group inline-flex flex-wrap items-center justify-center gap-x-3 gap-y-1 rounded-2xl border border-brand/30 bg-brand/5 hover:bg-brand/10 hover:border-brand/50 px-5 py-3 transition-all duration-300 active:scale-[0.99]"
-        >
-          <span className="text-sm text-muted-foreground">
-            Gostou da IA de Compras?
-          </span>
-          <span className="hidden sm:inline text-muted-foreground/40">·</span>
-          <span className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground">
-            Fale com a <span className="text-brand">2BSUPPLY</span>
-          </span>
-          <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand">
-            <Phone className="h-3.5 w-3.5" aria-hidden="true" />
-            {CONTACT_PHONE_DISPLAY}
-          </span>
-          <ArrowRight
-            className="h-3.5 w-3.5 text-brand group-hover:translate-x-0.5 transition-transform"
-            aria-hidden="true"
-          />
-        </a>
       </div>
     </div>
   );
