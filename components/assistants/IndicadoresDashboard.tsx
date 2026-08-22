@@ -15,6 +15,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Sparkline } from './Sparkline';
 import { IndicadorDetailDialog, type DetailCard } from './IndicadorDetailDialog';
+import { INDICADORES_DISCLAIMER } from '@/lib/legal/disclaimers';
 
 type IndicadorTipo = 'taxa' | 'indice' | 'cambio';
 type Tendencia = 'up' | 'down' | 'flat';
@@ -222,6 +223,7 @@ export function IndicadoresDashboard() {
         Fonte: Banco Central do Brasil (séries SGS). Valores indicativos para apoio à decisão;
         confirme no provedor oficial antes de usar em cláusula contratual.
       </p>
+      <p className="text-[11px] text-muted-foreground">{INDICADORES_DISCLAIMER}</p>
     </div>
   );
 }

@@ -16,7 +16,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import type { GroupedSupplier, SearchResponse, UF } from '@/lib/suppliers/types';
-import type { FiscalBadge } from '@/lib/fiscal/snapshot';
+import type { SupplierEnrichment } from '@/lib/suppliers/enrichment';
 import { passesFiscalFilter, pickMatriz, type FiscalFilter } from '@/lib/suppliers/ranking';
 import { useSupplierBase, type SaveFromSearchInput } from '@/hooks/useSupplierBase';
 import { SuppliersResultCard } from './SuppliersResultCard';
@@ -76,7 +76,7 @@ export function SuppliersResults({
 }: Props) {
   const [sizeFilter, setSizeFilter] = useState<SizeFilter>('all');
   const [contactOnly, setContactOnly] = useState(false);
-  const [fiscalMap, setFiscalMap] = useState<Map<string, FiscalBadge>>(new Map());
+  const [enrichMap, setEnrichMap] = useState<Map<string, SupplierEnrichment>>(new Map());
   const [fiscalFilter, setFiscalFilter] = useState<FiscalFilter>({
     onlyActive: false,
     hideHighRisk: false,
@@ -85,7 +85,7 @@ export function SuppliersResults({
   const { saveFromSearch, savedBasicos } = useSupplierBase();
   const [savingBase, setSavingBase] = useState(false);
 
-  const enriched = fiscalMap.size > 0;
+  const enriched = enrichMap.size > 0;
 
   function toSaveInput(g: GroupedSupplier): SaveFromSearchInput {
     const m = pickMatriz(g.units);
@@ -129,10 +129,10 @@ export function SuppliersResults({
     return response.groups.filter((g) => {
       if (!groupHasSize(g, sizeFilter)) return false;
       if (contactOnly && !groupHasContact(g)) return false;
-      if (!passesFiscalFilter(fiscalMap.get(matrizCnpj(g)), fiscalFilter)) return false;
+      if (!passesFiscalFilter(enrichMap.get(matrizCnpj(g))?.fiscal, fiscalFilter)) return false;
       return true;
     });
-  }, [response.groups, sizeFilter, contactOnly, fiscalMap, fiscalFilter]);
+  }, [response.groups, sizeFilter, contactOnly, enrichMap, fiscalFilter]);
 
   const totalLabel =
     response.total >= 500 ? '500+' : response.total.toString();
@@ -155,14 +155,24 @@ export function SuppliersResults({
         );
         return;
       }
-      const data = (await res.json()) as { results: Record<string, FiscalBadge> };
-      setFiscalMap(new Map(Object.entries(data.results)));
-      const badges = Object.values(data.results);
-      if (!badges.some((b) => b.available)) {
+      const data = (await res.json()) as { results: Record<string, SupplierEnrichment> };
+      setEnrichMap(new Map(Object.entries(data.results)));
+      const enrichments = Object.values(data.results);
+      if (!enrichments.some((e) => e.fiscal.available)) {
         toast.message('Consulta fiscal indisponível neste momento.');
       } else {
-        const ativas = badges.filter((b) => b.situacao === 'ATIVA').length;
-        toast.success(`${badges.length} verificados · ${ativas} com cadastro ATIVO`);
+        const ativas = enrichments.filter((e) => e.fiscal.situacao === 'ATIVA').length;
+        const fornecemGoverno = enrichments.filter((e) => e.historico.forneceAoGoverno).length;
+        const sancionados = enrichments.filter((e) => e.sancoes.temSancao).length;
+        const extra = [
+          fornecemGoverno > 0 ? `${fornecemGoverno} fornecem pro governo` : null,
+          sancionados > 0 ? `⛔ ${sancionados} com sanção` : null,
+        ]
+          .filter(Boolean)
+          .join(' · ');
+        toast.success(
+          `${enrichments.length} verificados · ${ativas} com cadastro ATIVO${extra ? ` · ${extra}` : ''}`,
+        );
       }
     } catch (err) {
       toast.error('Falha na verificação', { description: String(err) });
@@ -228,7 +238,7 @@ export function SuppliersResults({
                 type="button"
                 onClick={verificarFiscal}
                 disabled={enriching}
-                title={`Consultar situação cadastral e risco na Receita (até ${ENRICH_CAP} primeiros)`}
+                title={`Consultar situação cadastral, histórico de contratos públicos e sanções (até ${ENRICH_CAP} primeiros)`}
                 className="inline-flex items-center gap-2 rounded-full border border-border bg-card hover:bg-accent hover:border-brand/30 text-foreground px-5 h-10 text-sm font-medium transition-all duration-300 active:scale-95 disabled:opacity-60"
               >
                 {enriching ? (
@@ -236,7 +246,7 @@ export function SuppliersResults({
                 ) : (
                   <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
                 )}
-                {enriching ? 'Verificando…' : 'Verificar situação fiscal'}
+                {enriching ? 'Verificando…' : 'Verificar nas bases do governo'}
               </button>
               {onSave && (
                 <button
@@ -353,7 +363,7 @@ export function SuppliersResults({
               key={g.cnpjBasico}
               group={g}
               cnae={cnae}
-              fiscal={fiscalMap.get(matrizCnpj(g))}
+              enrichment={enrichMap.get(matrizCnpj(g))}
               savedToBase={savedBasicos.has(g.cnpjBasico)}
               onSaveToBase={() => void saveOneToBase(g)}
             />

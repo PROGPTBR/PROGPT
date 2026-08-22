@@ -9,7 +9,13 @@ import type {
 import { splitTemplateBody, renderPlaceholders } from './template-assembly';
 import type { CompanyData } from '@/lib/db/user-company';
 import type { FiscalSnapshot } from '@/lib/fiscal/snapshot';
+import type { ReputacaoResult } from '@/lib/fiscal/reputacao';
+import type { ApiOperation } from '@/lib/observability/api-usage';
 import { indicadoresMarkdown, type IndicadoresAtuais } from '@/lib/govdata/indicadores';
+import {
+  FINANCIAL_BUSINESS_SIZE_LABELS,
+  FINANCIAL_BUSINESS_SECTOR_LABELS,
+} from './types';
 
 // Sub-projeto 30 — Análise financeira determinística de fornecedor.
 //
@@ -179,7 +185,9 @@ export const FINANCIAL_SYSTEM_PROMPT = `Você é um Analista de Risco de Crédit
 
 11. **Formato Markdown limpo**. Headings (#, ##), tabelas para o demonstrativo resumido e o scorecard, **bold** para destaques. Sem preâmbulo conversacional. Comece direto pelo título do relatório.
 
-12. **Saúde fiscal/cadastral (quando houver \`<dados-fiscais>\`)**: o contexto pode trazer situação cadastral na Receita e um score de risco fiscal do CNPJ. Combine com a saúde financeira numa seção curta "Situação fiscal/cadastral": uma situação **diferente de ATIVA** (suspensa, inapta, baixada) é um **alerta grave** que pesa contra a contratação INDEPENDENTE de bons indicadores financeiros — sinalize com destaque. Se os dados fiscais não vieram, não invente — apenas siga com a análise financeira.`;
+12. **Saúde fiscal/cadastral (quando houver \`<dados-fiscais>\`)**: o contexto pode trazer situação cadastral na Receita e um score de risco fiscal do CNPJ. Combine com a saúde financeira numa seção curta "Situação fiscal/cadastral": uma situação **diferente de ATIVA** (suspensa, inapta, baixada) é um **alerta grave** que pesa contra a contratação INDEPENDENTE de bons indicadores financeiros — sinalize com destaque. Se os dados fiscais não vieram, não invente — apenas siga com a análise financeira.
+
+13. **Contexto qualitativo (porte, setor, tempo de mercado, pendências)**: quando informados, use-os para calibrar a leitura dos números — uma empresa pequena/jovem com os mesmos indicadores de uma grande e consolidada carrega mais risco de concentração/descontinuidade; mencione isso na seção de risco de falência ou nos sinais a monitorar. Pendências judiciais/protestos relatadas pelo comprador são **ressalva grave**, mesmo com score alto. Se vier um bloco de "Sinais reputacionais" (busca web), trate-o como **indicativo/não-oficial** — mencione com essa ressalva explícita e nunca o apresente como fonte oficial.`;
 
 function formatIndicator(v: number | undefined, suffix = ''): string {
   if (v === undefined || v === null || !Number.isFinite(v)) return 'N/D';
@@ -247,6 +255,28 @@ const RISK_LABEL: Record<string, string> = {
   critico: 'Crítico',
 };
 
+// Due diligence reputacional (backlog do diretor, 2026-08-19, Batch F) —
+// pendências judiciais/protestos não têm API pública gratuita; usamos o
+// mesmo módulo de busca web da Homologação (lib/fiscal/reputacao.ts), com
+// operação/flag PRÓPRIOS pra não misturar custo com HOMOLOGACAO_WEBSEARCH.
+export function isFinancialReputacaoEnabled(): boolean {
+  return process.env.FINANCIAL_WEBSEARCH !== 'false' && !!process.env.OPENAI_API_KEY;
+}
+
+export const FINANCIAL_REPUTACAO_OPERATION: ApiOperation = 'assistant-financial-reputacao';
+export const FINANCIAL_REPUTACAO_CONTEXTO =
+  'um fornecedor em análise financeira para contratação';
+
+// Bloco reputacional — indicativo/não-oficial, nunca confundir com dado fiscal.
+function reputacaoBlock(reputacao: ReputacaoResult | null): string {
+  if (!reputacao || !reputacao.available || !reputacao.resumo) return '';
+  return `## Sinais reputacionais (busca web — INDICATIVO, NÃO-OFICIAL)
+
+Pendências judiciais/protestos não têm base pública gratuita; isto é um sinal indicativo de busca web, não um dado oficial. Mencione na seção de risco com a ressalva de que precisa ser confirmado manualmente (CENPROT/tribunais) antes de pesar na decisão.
+
+${reputacao.resumo}`;
+}
+
 // Bloco de saúde fiscal/cadastral injetado quando o CNPJ foi consultado.
 function fiscalBlock(fiscal: FiscalSnapshot | null): string {
   if (!fiscal || !fiscal.enabled || !fiscal.available) return '';
@@ -277,6 +307,7 @@ export function buildFinancialPrompt(
   company: CompanyData | null = null,
   fiscal: FiscalSnapshot | null = null,
   macro: IndicadoresAtuais | null = null,
+  reputacao: ReputacaoResult | null = null,
 ): { system: string; user: string } {
   const companyBlock = company
     ? [
@@ -299,6 +330,10 @@ export function buildFinancialPrompt(
 - **Razão social / nome**: ${params.supplierName}
 ${params.cnpj ? `- **CNPJ**: ${params.cnpj}` : ''}
 ${params.referenceYear ? `- **Ano de referência**: ${params.referenceYear}` : ''}
+${params.businessSize ? `- **Porte do negócio**: ${FINANCIAL_BUSINESS_SIZE_LABELS[params.businessSize]}` : ''}
+${params.businessSector ? `- **Setor**: ${FINANCIAL_BUSINESS_SECTOR_LABELS[params.businessSector]}` : ''}
+${params.tempoMercadoAnos != null ? `- **Tempo de mercado**: ${params.tempoMercadoAnos} ano${params.tempoMercadoAnos === 1 ? '' : 's'}${params.tempoMercadoAnos < 3 ? ' — empresa jovem, pese como fator de risco adicional' : ''}` : ''}
+${params.pendencias ? `- **Pendências judiciais/protestos relatados pelo comprador**: ${params.pendencias} — trate como ressalva grave na recomendação` : ''}
 ${params.observacoes ? `- **Observações do comprador**: ${params.observacoes}` : ''}${
     companyBlock
       ? `\n\n## Empresa do comprador (referência)\n\n${companyBlock}`
@@ -343,6 +378,7 @@ Gere o relatório de análise financeira agora. Comece direto pelo título. Para
       indicatorsBlock,
       analysisBlock,
       fiscalBlock(fiscal),
+      reputacaoBlock(reputacao),
       macroBlock,
       templateBlock,
       contextBlock,

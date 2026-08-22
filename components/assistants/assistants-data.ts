@@ -27,10 +27,12 @@ export type AssistantDefinition = {
   previewKey: AssistantPreviewKey;
 
   /**
-   * true = aparece como "Em breve"
-   * e não fica clicável no Hub.
+   * 'em_breve' = recurso em desenvolvimento, sem CTA de contato.
+   * 'sob_demanda' = recurso existe mas depende de projeto/contrato
+   *   dedicado; CTA vira "Falar com o time" (mailto comercial).
+   * Em ambos os casos o card não é clicável no Hub.
    */
-  emBreve?: boolean;
+  badge?: 'em_breve' | 'sob_demanda';
 
   /**
    * false = aparece no Hub, mas não aparece
@@ -228,6 +230,7 @@ export const ASSISTANTS: readonly AssistantDefinition[] = [
       'Relatório de homologação em .docx',
     ],
     previewKey: 'homologacao',
+    badge: 'sob_demanda',
   },
 
   {
@@ -279,7 +282,7 @@ export const ASSISTANTS: readonly AssistantDefinition[] = [
       'Comparativo de carga e status contábil',
     ],
     previewKey: 'simulador_tributario',
-    emBreve: true,
+    badge: 'em_breve',
   },
 
   {
@@ -297,6 +300,6 @@ export const ASSISTANTS: readonly AssistantDefinition[] = [
       'Melhor cenário de compra interestadual',
     ],
     previewKey: 'simulador_logistico',
-    emBreve: true,
+    badge: 'em_breve',
   },
 ];

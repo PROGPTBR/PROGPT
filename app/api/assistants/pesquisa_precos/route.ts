@@ -3,6 +3,7 @@ import { PesquisaPrecosRequestSchema } from '@/lib/assistants/types';
 import {
   classifyPesquisaPrecos,
   buildPesquisaPrecosPrompt,
+  itensSemAmostra,
   type PesquisaPrecosClassified,
 } from '@/lib/assistants/pesquisa-precos';
 
@@ -47,6 +48,17 @@ export const POST = buildAssistantHandler<
     pricedCount: classified.itens.filter((i) => i.preco?.stats).length,
     itemCount: classified.itens.length,
   }),
+  // Itens sem amostra na base pública (backlog do diretor 2026-08-19,
+  // Batch G) — o client lê este header pra oferecer "Buscar preço e NCM
+  // aproximado" por item, sem precisar parsear o stream de annotations.
+  responseHeaders: (classified) => {
+    const semAmostra = itensSemAmostra(classified);
+    const headers: Record<string, string> = {};
+    if (semAmostra.length > 0) {
+      headers['X-Sem-Amostra'] = encodeURIComponent(JSON.stringify(semAmostra));
+    }
+    return headers;
+  },
   // Facade RfpParams-shaped para o assembleOutput/renderPlaceholders.
   paramsForAssembly: (params, company) => ({
     client: company?.company_name ?? '',

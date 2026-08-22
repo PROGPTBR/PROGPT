@@ -9,7 +9,13 @@ import { handlePaywallResponse } from '@/lib/billing/handle-paywall';
 
 type Phase = 'form' | 'generating' | 'done';
 
-export function FinancialAssistant() {
+export function FinancialAssistant({
+  initialCnpj,
+  initialSupplierName,
+}: {
+  initialCnpj?: string;
+  initialSupplierName?: string;
+} = {}) {
   const [phase, setPhase] = useState<Phase>('form');
   const [output, setOutput] = useState('');
   const [runId, setRunId] = useState<string | null>(null);
@@ -35,7 +41,13 @@ export function FinancialAssistant() {
             referenceYear: values.referenceYear,
             observacoes: values.observacoes,
             indicators: values.indicators,
+            pendencias: values.pendencias,
             ...(values.perfilId ? { perfilId: values.perfilId } : {}),
+            ...(values.businessSize ? { businessSize: values.businessSize } : {}),
+            ...(values.businessSector ? { businessSector: values.businessSector } : {}),
+            ...(values.tempoMercadoAnos != null
+              ? { tempoMercadoAnos: values.tempoMercadoAnos }
+              : {}),
           },
         }),
       });
@@ -134,7 +146,13 @@ export function FinancialAssistant() {
         </div>
       )}
 
-      {phase === 'form' && <FinancialForm onSubmit={handleSubmit} />}
+      {phase === 'form' && (
+        <FinancialForm
+          onSubmit={handleSubmit}
+          initialCnpj={initialCnpj}
+          initialSupplierName={initialSupplierName}
+        />
+      )}
 
       {(phase === 'generating' || phase === 'done') && (
         <FinancialResult

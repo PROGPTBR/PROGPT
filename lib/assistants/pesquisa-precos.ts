@@ -8,6 +8,7 @@ import {
   type CatmatMatch,
   type PrecoReferencia,
 } from '@/lib/govdata/precos';
+import { PRICING_NCM_DISCLAIMER } from '@/lib/legal/disclaimers';
 
 // Sub-projeto 37 (fase 1) — Pesquisa de Preços / Mapa de Preços.
 //
@@ -77,6 +78,19 @@ export async function classifyPesquisaPrecos(
     itens,
     anyAvailable: itens.some((i) => i.preco?.stats != null),
   };
+}
+
+/**
+ * Itens sem preço praticado na base pública — usado pra oferecer "Buscar
+ * preço e NCM aproximado" (backlog do diretor 2026-08-19, Batch G). Puro/
+ * testável sem precisar montar o classify inteiro.
+ */
+export function itensSemAmostra(
+  classified: PesquisaPrecosClassified,
+): { descricao: string; unidade?: string }[] {
+  return classified.itens
+    .filter((i) => !i.preco?.stats)
+    .map((i) => ({ descricao: i.descricao, unidade: i.unidade || undefined }));
 }
 
 // ── Prompt builder ───────────────────────────────────────────────────────
@@ -204,13 +218,27 @@ ${renderedHead}
 
 ${formatChunks(chunks)}`;
 
+  // Disclaimer legal fixo (backlog do diretor, 2026-08-19) — o LLM deve
+  // reproduzi-lo verbatim como última seção, nunca paraphraseá-lo.
+  const disclaimerBlock = `## Disclaimer (inclua-o VERBATIM como última seção do relatório, título "## Aviso")
+
+${PRICING_NCM_DISCLAIMER}`;
+
   const instruction = `## Tarefa
 
-Gere agora o mapa de preços seguindo o template e as regras. Use as estatísticas como verdade de base e a mediana como preço de referência. Quando um item não mapeou ou ficou sem amostras, sinalize e oriente pesquisa manual. Registre as ressalvas metodológicas (tributos/frete embutidos, unidade de fornecimento, sazonalidade).`;
+Gere agora o mapa de preços seguindo o template e as regras. Use as estatísticas como verdade de base e a mediana como preço de referência. Quando um item não mapeou ou ficou sem amostras, sinalize e oriente pesquisa manual. Registre as ressalvas metodológicas (tributos/frete embutidos, unidade de fornecimento, sazonalidade). Encerre o relatório com o disclaimer fornecido acima, na íntegra e sem alterações.`;
 
   return {
     system: PESQUISA_PRECOS_SYSTEM_PROMPT,
-    user: [headerBlock, precosBlock, companyBlock, templateBlock, contextBlock, instruction]
+    user: [
+      headerBlock,
+      precosBlock,
+      companyBlock,
+      templateBlock,
+      contextBlock,
+      disclaimerBlock,
+      instruction,
+    ]
       .filter(Boolean)
       .join('\n\n---\n\n'),
   };

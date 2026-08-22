@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { getCurrentUser } from '@/lib/auth';
 import { checkChatRateLimit } from '@/lib/rate-limit';
 import { fetchFiscalSnapshot } from '@/lib/fiscal/snapshot';
+import { extractYear, yearsInMarket } from '@/lib/suppliers/ranking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -34,6 +35,7 @@ export async function POST(req: Request): Promise<Response> {
   }
 
   const snap = await fetchFiscalSnapshot(cnpj);
+  const aberturaAno = extractYear(snap.cnpjData?.data_abertura);
   return NextResponse.json({
     enabled: snap.enabled,
     available: snap.available,
@@ -46,5 +48,7 @@ export async function POST(req: Request): Promise<Response> {
     score: snap.risk?.score ?? null,
     risco: snap.risk?.risco ?? null,
     recomendacao: snap.risk?.recomendacao ?? null,
+    // Backlog do diretor 2026-08-19 (Batch F) — auto-preenche "tempo de mercado".
+    tempoMercadoAnos: yearsInMarket(aberturaAno, new Date().getFullYear()),
   });
 }

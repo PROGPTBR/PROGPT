@@ -2,28 +2,33 @@
 
 import { useState } from 'react';
 import {
+  Banknote,
   Building2,
   CalendarClock,
   ChevronDown,
   ChevronUp,
   ExternalLink,
+  FileWarning,
   FolderPlus,
   FolderCheck,
+  Landmark,
   Mail,
   MapPin,
   Phone,
+  ShieldAlert,
   Star,
   Users,
 } from 'lucide-react';
 import type { GroupedSupplier, SupplierResult } from '@/lib/suppliers/types';
-import type { FiscalBadge } from '@/lib/fiscal/snapshot';
+import type { SupplierEnrichment } from '@/lib/suppliers/enrichment';
+import { certidoesLinks } from '@/lib/assistants/certidoes-links';
 import { isPrimaryActivity, yearsInMarket } from '@/lib/suppliers/ranking';
 
 type Props = {
   group: GroupedSupplier;
   /** CNAE que originou a busca — pra badge "atividade principal/secundária". */
   cnae: string;
-  fiscal?: FiscalBadge;
+  enrichment?: SupplierEnrichment;
   /** Já está na "Minha base de fornecedores"? */
   savedToBase?: boolean;
   /** Salvar este fornecedor na base. */
@@ -37,27 +42,52 @@ const RISK_LABEL: Record<string, string> = {
   critico: 'crítico',
 };
 
-function FiscalSelo({ fiscal }: { fiscal?: FiscalBadge }) {
-  if (!fiscal || !fiscal.available) return null;
+// Selos das 3 bases do governo (backlog do diretor, 2026-08-19, Batch E):
+// Receita (situação + risco), Compras.gov.br/PNCP (fornece pro governo) e
+// Portal da Transparência (sanções CEIS/CNEP — impeditivo, sempre primeiro).
+function EnrichmentSelos({ enrichment }: { enrichment?: SupplierEnrichment }) {
+  if (!enrichment) return null;
+  const { fiscal, historico, sancoes } = enrichment;
+  if (!fiscal.available && !historico.consultado && !sancoes.temSancao) return null;
   const ativa = fiscal.situacao === 'ATIVA';
   return (
     <div className="flex flex-wrap items-center gap-1.5">
-      <span
-        className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-medium border ${
-          ativa
-            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400'
-            : 'bg-red-500/10 border-red-500/30 text-red-600 dark:text-red-400'
-        }`}
-        title="Situação cadastral na Receita"
-      >
-        {fiscal.situacao ?? '—'}
-      </span>
-      {fiscal.score != null && (
+      {sancoes.temSancao && (
+        <span
+          className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-semibold border bg-red-600/10 border-red-600/40 text-red-600 dark:text-red-400"
+          title={`Sanção ativa no CEIS/CNEP (Portal da Transparência) — ${sancoes.total} registro${sancoes.total === 1 ? '' : 's'}`}
+        >
+          <ShieldAlert className="h-2.5 w-2.5" aria-hidden="true" />
+          ⛔ Sanção CEIS/CNEP
+        </span>
+      )}
+      {fiscal.available && (
+        <span
+          className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-medium border ${
+            ativa
+              ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400'
+              : 'bg-red-500/10 border-red-500/30 text-red-600 dark:text-red-400'
+          }`}
+          title="Situação cadastral na Receita"
+        >
+          {fiscal.situacao ?? '—'}
+        </span>
+      )}
+      {fiscal.available && fiscal.score != null && (
         <span
           className="inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-medium bg-muted/60 border border-border text-foreground/80"
           title="Score de risco fiscal"
         >
           risco {RISK_LABEL[fiscal.risco ?? ''] ?? fiscal.risco} · {fiscal.score}/100
+        </span>
+      )}
+      {historico.consultado && historico.forneceAoGoverno && (
+        <span
+          className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-medium border bg-brand/10 border-brand/30 text-brand"
+          title={`${historico.totalItens} contrato(s) público(s) nos últimos ${historico.periodoMeses} meses (Compras.gov.br/PNCP)${historico.ufs.length > 0 ? ` · ${historico.ufs.join(', ')}` : ''}`}
+        >
+          <Landmark className="h-2.5 w-2.5" aria-hidden="true" />
+          Fornece pro governo · {historico.totalItens}
         </span>
       )}
     </div>
@@ -123,7 +153,7 @@ function collectUfs(units: SupplierResult[]): string[] {
 export function SuppliersResultCard({
   group,
   cnae,
-  fiscal,
+  enrichment,
   savedToBase,
   onSaveToBase,
 }: Props) {
@@ -140,6 +170,8 @@ export function SuppliersResultCard({
   const googleQuery = encodeURIComponent(
     `${matriz.razao_social} ${matriz.municipio ?? ''} ${matriz.uf ?? ''}`,
   );
+  const financialHref = `/assistants/financial?cnpj=${encodeURIComponent(matriz.cnpj)}&nome=${encodeURIComponent(matriz.razao_social)}`;
+  const documentos = certidoesLinks(matriz.uf);
 
   return (
     <div className="group flex flex-col rounded-2xl border border-border bg-card hover:border-brand/30 transition-all duration-300 p-5 space-y-3">
@@ -202,7 +234,7 @@ export function SuppliersResultCard({
             {primaryMatch ? 'Atividade principal' : 'Atividade secundária'}
           </span>
         </div>
-        <FiscalSelo fiscal={fiscal} />
+        <EnrichmentSelos enrichment={enrichment} />
       </div>
 
       <div className="flex flex-wrap gap-1.5">
@@ -354,6 +386,45 @@ export function SuppliersResultCard({
               ))}
             </div>
           </div>
+
+          {enrichment && (
+            <div className="space-y-1.5">
+              <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                Análise mínima (Receita + Compras.gov.br/PNCP + Portal da Transparência)
+              </div>
+              <div className="text-[11px] text-foreground/80">{enrichment.resumo}</div>
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+              Documentação
+            </div>
+            <div className="flex flex-col gap-1">
+              {documentos.map((d) => (
+                <a
+                  key={d.label}
+                  href={d.url}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  title={d.nota}
+                  className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-brand transition-colors"
+                >
+                  <FileWarning className="h-3 w-3 flex-shrink-0" aria-hidden="true" />
+                  <span className="truncate">{d.label}</span>
+                </a>
+              ))}
+            </div>
+          </div>
+
+          <a
+            href={financialHref}
+            className="inline-flex items-center gap-1.5 text-[11px] font-medium text-brand hover:text-brand/80 transition-colors"
+            title="Abre a Análise Financeira com CNPJ e razão social pré-preenchidos"
+          >
+            <Banknote className="h-3 w-3 flex-shrink-0" aria-hidden="true" />
+            Analisar saúde financeira
+          </a>
         </div>
       )}
     </div>

@@ -5,7 +5,17 @@ import { toast } from 'sonner';
 import { Upload, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import type { FinancialIndicators } from '@/lib/assistants/types';
+import type {
+  FinancialIndicators,
+  FinancialBusinessSize,
+  FinancialBusinessSector,
+} from '@/lib/assistants/types';
+import {
+  FINANCIAL_BUSINESS_SIZE,
+  FINANCIAL_BUSINESS_SIZE_LABELS,
+  FINANCIAL_BUSINESS_SECTOR,
+  FINANCIAL_BUSINESS_SECTOR_LABELS,
+} from '@/lib/assistants/types';
 import { calculateFinancialScore } from '@/lib/assistants/financial';
 import { FINANCIAL_EXAMPLES } from '@/lib/assistants/examples';
 
@@ -28,6 +38,10 @@ export type FinancialFormValues = {
   observacoes: string;
   indicators: FinancialIndicators;
   perfilId?: string;
+  businessSize?: FinancialBusinessSize;
+  businessSector?: FinancialBusinessSector;
+  tempoMercadoAnos?: number;
+  pendencias: string;
 };
 
 type Template = {
@@ -90,12 +104,17 @@ const INDICATOR_FIELDS: Array<{
 
 export function FinancialForm({
   onSubmit,
+  initialCnpj,
+  initialSupplierName,
 }: {
   onSubmit: (v: FinancialFormValues) => void;
+  /** Prefill vindo da Busca de Fornecedores (?cnpj=&nome=), sub-projeto Batch E. */
+  initialCnpj?: string;
+  initialSupplierName?: string;
 }) {
   const [templateId, setTemplateId] = useState('');
-  const [supplierName, setSupplierName] = useState('');
-  const [cnpj, setCnpj] = useState('');
+  const [supplierName, setSupplierName] = useState(initialSupplierName ?? '');
+  const [cnpj, setCnpj] = useState(initialCnpj ?? '');
   const [referenceYear, setReferenceYear] = useState('');
   const [observacoes, setObservacoes] = useState('');
   const [indicators, setIndicators] = useState<FinancialIndicators>({});
@@ -105,6 +124,12 @@ export function FinancialForm({
   const [perfilId] = useState<string | undefined>(undefined);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [lookingUp, setLookingUp] = useState(false);
+  // Contexto qualitativo (backlog do diretor, 2026-08-19, Batch F) — NÃO
+  // entram no score determinístico; só calibram a narrativa do LLM.
+  const [businessSize, setBusinessSize] = useState<FinancialBusinessSize | ''>('');
+  const [businessSector, setBusinessSector] = useState<FinancialBusinessSector | ''>('');
+  const [tempoMercadoAnos, setTempoMercadoAnos] = useState('');
+  const [pendencias, setPendencias] = useState('');
   const [fiscalLookup, setFiscalLookup] = useState<null | {
     enabled: boolean;
     available: boolean;
@@ -114,6 +139,7 @@ export function FinancialForm({
     uf: string | null;
     score: number | null;
     risco: string | null;
+    tempoMercadoAnos: number | null;
   }>(null);
 
   async function consultarCnpjFiscal() {
@@ -141,6 +167,9 @@ export function FinancialForm({
         toast.message('CNPJ não encontrado na base fiscal.');
       } else {
         if (!supplierName.trim() && data.razaoSocial) setSupplierName(data.razaoSocial);
+        if (!tempoMercadoAnos.trim() && data.tempoMercadoAnos != null) {
+          setTempoMercadoAnos(String(data.tempoMercadoAnos));
+        }
         toast.success('CNPJ consultado — entra no relatório.');
       }
     } catch (err) {
@@ -181,6 +210,10 @@ export function FinancialForm({
     setReferenceYear(p.referenceYear ?? '');
     setObservacoes(p.observacoes ?? '');
     setIndicators(p.indicators);
+    setBusinessSize(p.businessSize ?? '');
+    setBusinessSector(p.businessSector ?? '');
+    setTempoMercadoAnos(p.tempoMercadoAnos != null ? String(p.tempoMercadoAnos) : '');
+    setPendencias(p.pendencias ?? '');
     toast.success('Exemplo carregado — ajuste e gere');
   }
 
@@ -271,6 +304,7 @@ export function FinancialForm({
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!valid()) return;
+    const tempoMercadoNum = Number(tempoMercadoAnos.trim());
     onSubmit({
       templateId,
       supplierName: supplierName.trim(),
@@ -279,6 +313,13 @@ export function FinancialForm({
       observacoes: observacoes.trim(),
       indicators,
       perfilId,
+      businessSize: businessSize || undefined,
+      businessSector: businessSector || undefined,
+      tempoMercadoAnos:
+        tempoMercadoAnos.trim() && Number.isFinite(tempoMercadoNum)
+          ? tempoMercadoNum
+          : undefined,
+      pendencias: pendencias.trim(),
     });
   }
 
@@ -368,6 +409,13 @@ export function FinancialForm({
                     {fiscalLookup.score}/100 ({fiscalLookup.risco})
                   </span>
                 )}
+                {fiscalLookup.tempoMercadoAnos != null && (
+                  <span>
+                    <span className="text-muted-foreground">Tempo de mercado:</span>{' '}
+                    {fiscalLookup.tempoMercadoAnos} ano
+                    {fiscalLookup.tempoMercadoAnos === 1 ? '' : 's'}
+                  </span>
+                )}
               </div>
               <div className="text-muted-foreground">
                 Esses dados entram automaticamente no relatório.
@@ -384,6 +432,83 @@ export function FinancialForm({
             placeholder="Ex: 2024, 2025/2024"
             maxLength={20}
           />
+        </div>
+
+        <div>
+          <label className="text-xs font-medium block mb-1">Porte do negócio</label>
+          <select
+            value={businessSize}
+            onChange={(e) => setBusinessSize(e.target.value as FinancialBusinessSize | '')}
+            className="w-full rounded-md border border-input bg-background p-2 text-sm h-9 focus:outline-none focus:ring-1 focus:ring-ring"
+          >
+            <option value="">Não informado</option>
+            {FINANCIAL_BUSINESS_SIZE.map((v) => (
+              <option key={v} value={v}>
+                {FINANCIAL_BUSINESS_SIZE_LABELS[v]}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="text-xs font-medium block mb-1">Setor</label>
+          <select
+            value={businessSector}
+            onChange={(e) => setBusinessSector(e.target.value as FinancialBusinessSector | '')}
+            className="w-full rounded-md border border-input bg-background p-2 text-sm h-9 focus:outline-none focus:ring-1 focus:ring-ring"
+          >
+            <option value="">Não informado</option>
+            {FINANCIAL_BUSINESS_SECTOR.map((v) => (
+              <option key={v} value={v}>
+                {FINANCIAL_BUSINESS_SECTOR_LABELS[v]}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="text-xs font-medium block mb-1">Tempo de mercado (anos)</label>
+          <Input
+            value={tempoMercadoAnos}
+            onChange={(e) => setTempoMercadoAnos(e.target.value)}
+            placeholder="Auto-preenchido ao consultar o CNPJ"
+            inputMode="numeric"
+            maxLength={3}
+          />
+        </div>
+
+        <div className="md:col-span-2">
+          <label className="text-xs font-medium block mb-1">
+            Pendências judiciais / protestos
+          </label>
+          <textarea
+            value={pendencias}
+            onChange={(e) => setPendencias(e.target.value)}
+            placeholder="Ex: 2 protestos registrados em 2025 no valor de R$ 40k (CENPROT-SP)"
+            className="w-full rounded-md border border-input bg-background p-2 text-sm min-h-[60px] focus:outline-none focus:ring-1 focus:ring-ring"
+            maxLength={1000}
+          />
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            Sem API pública gratuita — pesquise manualmente antes de preencher:{' '}
+            <a
+              href="https://www.cenprot.org.br/"
+              target="_blank"
+              rel="noreferrer noopener"
+              className="underline hover:text-foreground"
+            >
+              CENPROT
+            </a>{' '}
+            (protestos) ·{' '}
+            <a
+              href="https://esaj.tjsp.jus.br/cpopg/open.do"
+              target="_blank"
+              rel="noreferrer noopener"
+              className="underline hover:text-foreground"
+            >
+              e-SAJ TJSP
+            </a>{' '}
+            (processos, ajuste pro tribunal da sede do fornecedor).
+          </p>
         </div>
 
         <div className="md:col-span-2">

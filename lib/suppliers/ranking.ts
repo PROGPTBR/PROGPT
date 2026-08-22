@@ -73,7 +73,7 @@ export type FiscalFilter = {
 /**
  * Um grupo passa no filtro fiscal? Grupos AINDA não enriquecidos (sem badge)
  * passam sempre — o filtro só morde o que já foi verificado, pra não sumir
- * com a lista inteira antes do usuário clicar em "Verificar situação fiscal".
+ * com a lista inteira antes do usuário clicar em "Verificar nas bases do governo".
  */
 export function passesFiscalFilter(
   badge: FiscalBadge | undefined,

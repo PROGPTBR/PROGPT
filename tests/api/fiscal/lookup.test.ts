@@ -76,4 +76,34 @@ describe('POST /api/fiscal/lookup', () => {
     expect(b.uf).toBe('SP');
     expect(b.score).toBe(88);
   });
+
+  it('200 calcula tempoMercadoAnos a partir de data_abertura (Batch F)', async () => {
+    const thisYear = new Date().getFullYear();
+    setup({
+      snap: {
+        enabled: true,
+        available: true,
+        cnpjData: {
+          razao_social: 'ACME SA',
+          situacao_cadastral: 'ATIVA',
+          natureza_juridica: 'LTDA',
+          endereco: { municipio: 'SAO PAULO', uf: 'SP' },
+          data_abertura: `${thisYear - 10}-03-15`,
+        },
+        risk: { score: 88, risco: 'baixo', recomendacao: 'aprovar' },
+      },
+    });
+    const { POST } = await import('@/app/api/fiscal/lookup/route');
+    const res = await POST(req({ cnpj: '00000000000191' }));
+    const b = (await res.json()) as Record<string, unknown>;
+    expect(b.tempoMercadoAnos).toBe(10);
+  });
+
+  it('200 sem data_abertura → tempoMercadoAnos null', async () => {
+    setup();
+    const { POST } = await import('@/app/api/fiscal/lookup/route');
+    const res = await POST(req({ cnpj: '00000000000191' }));
+    const b = (await res.json()) as Record<string, unknown>;
+    expect(b.tempoMercadoAnos).toBeNull();
+  });
 });

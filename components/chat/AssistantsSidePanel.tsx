@@ -45,13 +45,13 @@ export function AssistantsSidePanel({ onClose }: Props) {
   const availableAssistants = ASSISTANTS.filter(
     (assistant) =>
       assistant.showInSidePanel !== false &&
-      !assistant.emBreve
+      !assistant.badge
   );
 
   const upcomingAssistants = ASSISTANTS.filter(
     (assistant) =>
       assistant.showInSidePanel !== false &&
-      assistant.emBreve
+      assistant.badge
   );
 
   return (
@@ -227,7 +227,9 @@ export function AssistantsSidePanel({ onClose }: Props) {
                     </div>
 
                     <div className="mt-0.5 text-xs text-muted-foreground">
-                      Em desenvolvimento
+                      {assistant.badge === 'sob_demanda'
+                        ? 'Sob demanda'
+                        : 'Em desenvolvimento'}
                     </div>
                   </div>
                 </div>

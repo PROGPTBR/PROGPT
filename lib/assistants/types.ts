@@ -274,6 +274,28 @@ export const FinancialIndicatorsSchema = z.object({
 
 export type FinancialIndicators = z.infer<typeof FinancialIndicatorsSchema>;
 
+// Campos qualitativos (backlog do diretor, 2026-08-19, Batch F) — NÃO são
+// indicadores contábeis, então ficam em FinancialParams (não em
+// FinancialIndicatorsSchema) e não entram no score determinístico dos 4
+// pilares. Entram no prompt como contexto de ressalva pro parágrafo de
+// recomendação.
+export const FINANCIAL_BUSINESS_SIZE = ['micro', 'pequena', 'media', 'grande'] as const;
+export type FinancialBusinessSize = (typeof FINANCIAL_BUSINESS_SIZE)[number];
+export const FINANCIAL_BUSINESS_SIZE_LABELS: Record<FinancialBusinessSize, string> = {
+  micro: 'Microempresa',
+  pequena: 'Pequena empresa',
+  media: 'Média empresa',
+  grande: 'Grande empresa',
+};
+
+export const FINANCIAL_BUSINESS_SECTOR = ['comercio', 'industria', 'servico'] as const;
+export type FinancialBusinessSector = (typeof FINANCIAL_BUSINESS_SECTOR)[number];
+export const FINANCIAL_BUSINESS_SECTOR_LABELS: Record<FinancialBusinessSector, string> = {
+  comercio: 'Comércio',
+  industria: 'Indústria',
+  servico: 'Serviço',
+};
+
 export const FinancialParamsSchema = z.object({
   supplierName: z.string().trim().min(2).max(200),
   cnpj: z.string().trim().max(32).optional().default(''),
@@ -281,6 +303,16 @@ export const FinancialParamsSchema = z.object({
   observacoes: z.string().trim().max(2000).optional().default(''),
   indicators: FinancialIndicatorsSchema,
   perfilId: z.string().uuid().optional(),
+  businessSize: z.enum(FINANCIAL_BUSINESS_SIZE).optional(),
+  businessSector: z.enum(FINANCIAL_BUSINESS_SECTOR).optional(),
+  // Anos de mercado — auto-preenchido de data_abertura (fiscal lookup) quando
+  // disponível; o comprador pode sobrescrever.
+  tempoMercadoAnos: z.number().int().min(0).max(200).optional(),
+  // Pendências judiciais/protestos — SEM API pública gratuita (CNJ não expõe
+  // por CNPJ; protesto é por cartório/CENPROT, pago). Texto livre + link de
+  // consulta manual no form; ver lib/fiscal/reputacao.ts pro sinal indicativo
+  // via web search (FINANCIAL_WEBSEARCH).
+  pendencias: z.string().trim().max(1000).optional().default(''),
 });
 
 export type FinancialParams = z.infer<typeof FinancialParamsSchema>;

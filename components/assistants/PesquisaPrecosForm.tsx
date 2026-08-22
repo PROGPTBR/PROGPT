@@ -6,6 +6,7 @@ import { Plus, Trash2, Loader2, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PESQUISA_PRECOS_EXAMPLES } from '@/lib/assistants/examples';
+import { PRICING_NCM_DISCLAIMER } from '@/lib/legal/disclaimers';
 
 // Sub-projeto 37 (fase 1) — form do assistente de Pesquisa de Preços.
 // Lista de itens (descrição livre → CATMAT) + UF opcional pra recorte regional.
@@ -139,10 +140,11 @@ export function PesquisaPrecosForm({
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="space-y-5 rounded-md border border-border bg-card p-6 max-w-3xl"
-    >
+    <>
+      <form
+        onSubmit={handleSubmit}
+        className="space-y-5 rounded-md border border-border bg-card p-6 max-w-3xl"
+      >
       <div className="flex justify-end">
         <Button type="button" variant="outline" size="sm" onClick={loadExample}>
           Carregar exemplo
@@ -258,7 +260,12 @@ export function PesquisaPrecosForm({
           Pesquisar preços
         </Button>
       </div>
-    </form>
+      </form>
+
+      <p className="mt-3 max-w-3xl text-[11px] leading-relaxed text-muted-foreground">
+        {PRICING_NCM_DISCLAIMER}
+      </p>
+    </>
   );
 }
 

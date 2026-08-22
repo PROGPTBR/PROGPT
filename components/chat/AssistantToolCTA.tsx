@@ -11,7 +11,6 @@ import {
   LineChart,
   MessageCircle,
   Receipt,
-  ShieldCheck,
   Star,
   TrendingUp,
   UserCircle2,
@@ -35,7 +34,6 @@ export type AssistantToolType =
   | 'scorecard'
   | 'profile'
   | 'negotiation'
-  | 'homologacao'
   | 'pesquisa_precos'
   | 'spend_analysis'
   | 'indicadores';
@@ -94,12 +92,6 @@ const META: Record<AssistantToolType, Meta> = {
     blurb:
       'Monta a estratégia (BATNA, SWOT, metas SMART) e simula a negociação com a IA no papel do fornecedor — com score no final.',
     Icon: MessageCircle,
-  },
-  homologacao: {
-    title: 'Homologação de Fornecedor',
-    blurb:
-      'Informe o CNPJ e ele consulta situação cadastral, score de risco, compliance e certidões na Receita — com relatório de homologação e recomendação.',
-    Icon: ShieldCheck,
   },
   pesquisa_precos: {
     title: 'Pesquisa de Preços',
@@ -169,7 +161,6 @@ const VALID_TYPES = new Set<AssistantToolType>([
   'scorecard',
   'profile',
   'negotiation',
-  'homologacao',
   'pesquisa_precos',
   'spend_analysis',
   'indicadores',

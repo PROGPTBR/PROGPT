@@ -123,6 +123,7 @@ describe('buildRefineSystemForType', () => {
       cnpj: '00.000.000/0001-00',
       referenceYear: '2024',
       observacoes: '',
+      pendencias: '',
       indicators: {
         liquidezCorrente: 1.5,
         dividaLiquidaEbitda: 2,

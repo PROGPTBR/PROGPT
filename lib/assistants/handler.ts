@@ -102,6 +102,12 @@ export type AssistantHandlerConfig<
     params: z.infer<Schema>['params'],
     company: CompanyData | null,
   ) => AssistantParams;
+  // Optional extra response headers merged with `X-Run-Id`. Uso: sinalizar
+  // um resultado leve do classify pro client SEM precisar parsear o stream
+  // de annotations (ex.: Pesquisa de Preços expõe X-Sem-Amostra — backlog do
+  // diretor 2026-08-19, Batch G). Valores devem ser ASCII-safe (o caller
+  // encodeURIComponent quando precisar de JSON/acentos).
+  responseHeaders?: (classified: Classified) => Record<string, string>;
 };
 
 export function buildAssistantHandler<
@@ -293,7 +299,10 @@ export function buildAssistantHandler<
 
       return result.toDataStreamResponse({
         data,
-        headers: { 'X-Run-Id': run.id },
+        headers: {
+          'X-Run-Id': run.id,
+          ...(config.responseHeaders?.(classified) ?? {}),
+        },
       });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);

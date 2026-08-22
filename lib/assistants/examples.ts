@@ -204,6 +204,10 @@ export const FINANCIAL_EXAMPLES: FormExample<FinancialParams>[] = [
       supplierName: 'Polifilm Indústria de Embalagens S.A. (exemplo)',
       cnpj: '12.345.678/0001-90',
       referenceYear: '2024',
+      businessSize: 'media',
+      businessSector: 'industria',
+      tempoMercadoAnos: 18,
+      pendencias: '',
       observacoes:
         'Fornecedor candidato a contrato anual de filmes laminados (~R$ 1,2 MM/ano). Avaliação de saúde financeira como parte do due diligence pré-contrato.',
       indicators: {

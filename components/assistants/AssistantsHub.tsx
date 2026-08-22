@@ -2,12 +2,13 @@
 
 import Link from 'next/link';
 import type { ComponentType } from 'react';
-import { ArrowRight, Check } from 'lucide-react';
+import { ArrowRight, Check, Mail } from 'lucide-react';
 
 import {
   ASSISTANTS,
   type AssistantPreviewKey,
 } from './assistants-data';
+import { LEGAL_CONTACT_EMAIL } from '@/lib/legal/constants';
 
 import { KraljicMatrixPreview } from './previews/KraljicMatrixPreview';
 import { RfpDocumentPreview } from './previews/RfpDocumentPreview';
@@ -33,6 +34,11 @@ import { SimuladorLogisticoPreview } from './previews/SimuladorLogisticoPreview'
  * em assistants-data.ts, enquanto os componentes pesados
  * de preview continuam sendo carregados somente nesta página.
  */
+const BADGE_LABEL: Record<'em_breve' | 'sob_demanda', string> = {
+  em_breve: 'Em breve',
+  sob_demanda: 'Sob demanda',
+};
+
 const PREVIEWS: Record<AssistantPreviewKey, ComponentType> = {
   dashboard: DashboardPreview,
   abc: AbcCurvePreview,
@@ -66,6 +72,7 @@ export function AssistantsHub() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {ASSISTANTS.map((assistant) => {
             const Preview = PREVIEWS[assistant.previewKey];
+            const badge = assistant.badge;
 
             const inner = (
               <>
@@ -73,9 +80,9 @@ export function AssistantsHub() {
                 <div className="relative rounded-xl bg-black/40 overflow-hidden aspect-[16/9] mb-5 ring-1 ring-white/5">
                   <Preview />
 
-                  {assistant.emBreve && (
+                  {badge && (
                     <span className="absolute right-2 top-2 rounded-full bg-brand-gradient px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-black shadow">
-                      Em breve
+                      {BADGE_LABEL[badge]}
                     </span>
                   )}
                 </div>
@@ -108,7 +115,12 @@ export function AssistantsHub() {
                 </ul>
 
                 {/* CTA */}
-                {assistant.emBreve ? (
+                {badge === 'sob_demanda' ? (
+                  <div className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-brand">
+                    <Mail className="h-3.5 w-3.5" aria-hidden="true" />
+                    Falar com o time
+                  </div>
+                ) : badge === 'em_breve' ? (
                   <div className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
                     Em breve
                   </div>
@@ -126,10 +138,28 @@ export function AssistantsHub() {
             );
 
             /**
+             * Assistentes "sob demanda" abrem o cliente de email do
+             * comprador (contato comercial) em vez da rota do assistente.
+             */
+            if (badge === 'sob_demanda') {
+              return (
+                <a
+                  key={assistant.id}
+                  href={`mailto:${LEGAL_CONTACT_EMAIL}?subject=${encodeURIComponent(
+                    `Interesse: ${assistant.title}`,
+                  )}`}
+                  className="group flex flex-col rounded-2xl border border-border bg-card hover:bg-accent hover:border-brand/30 transition-all duration-300 p-6 active:scale-[0.99]"
+                >
+                  {inner}
+                </a>
+              );
+            }
+
+            /**
              * Assistentes marcados como "Em breve"
              * são exibidos visualmente, mas não são clicáveis.
              */
-            if (assistant.emBreve) {
+            if (badge === 'em_breve') {
               return (
                 <div
                   key={assistant.id}

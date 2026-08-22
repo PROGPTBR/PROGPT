@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   buildPesquisaPrecosPrompt,
+  itensSemAmostra,
   PESQUISA_PRECOS_SYSTEM_PROMPT,
   type PesquisaPrecosClassified,
 } from '@/lib/assistants/pesquisa-precos';
@@ -110,5 +111,31 @@ describe('buildPesquisaPrecosPrompt', () => {
   it('declara a fonte (compras públicas) e o recorte de UF', () => {
     expect(user).toMatch(/compras públicas/i);
     expect(user).toContain('UF SP');
+  });
+});
+
+// Backlog do diretor, 2026-08-19 (Batch G) — "Buscar preço e NCM aproximado".
+describe('itensSemAmostra', () => {
+  it('omite o item com preço e lista os 2 sem preço (mapeado sem amostra + não-mapeado)', () => {
+    const r = itensSemAmostra(classified);
+    expect(r).toHaveLength(2);
+    expect(r.map((i) => i.descricao)).toEqual([
+      'Item mapeado sem preço',
+      'Item impossível de mapear xyzzy',
+    ]);
+  });
+
+  it('preserva a unidade quando informada e omite quando vazia', () => {
+    const r = itensSemAmostra(classified);
+    expect(r[0]!.unidade).toBe('un');
+    expect(r[1]!.unidade).toBeUndefined();
+  });
+
+  it('lista vazia quando todos os itens têm preço', () => {
+    const allPriced: PesquisaPrecosClassified = {
+      ...classified,
+      itens: [classified.itens[0]!],
+    };
+    expect(itensSemAmostra(allPriced)).toEqual([]);
   });
 });

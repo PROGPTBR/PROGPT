@@ -2,19 +2,17 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentUser } from '@/lib/auth';
 import { checkChatRateLimit } from '@/lib/rate-limit';
-import {
-  fetchFiscalSnapshot,
-  snapshotToBadge,
-  type FiscalBadge,
-} from '@/lib/fiscal/snapshot';
+import { enrichSupplier, type SupplierEnrichment } from '@/lib/suppliers/enrichment';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-// POST /api/suppliers/enrich — sub-projeto 36 (fase 3).
-// Selo fiscal sob demanda pros cards da busca de fornecedores. Consulta
-// por-CNPJ (o serviço não tem lote) com cap de concorrência pra não estourar
-// o rate-limit das fontes. Auth + rate-limit do chat. Fail-soft.
+// POST /api/suppliers/enrich — sub-projeto 36 (fase 3) + backlog do diretor
+// 2026-08-19 (Batch E). Enriquece os cards da busca de fornecedores com as
+// 3 bases do governo (Receita, Compras.gov.br/PNCP, Portal da Transparência)
+// via lib/suppliers/enrichment.ts. Consulta por-CNPJ (nenhum serviço tem
+// lote) com cap de concorrência pra não estourar o rate-limit das fontes.
+// Auth + rate-limit do chat. Fail-soft (cada fonte cai independente).
 
 const MAX_CNPJS = 30;
 const CONCURRENCY = 4;
@@ -62,10 +60,9 @@ export async function POST(req: Request): Promise<Response> {
   }
 
   const unique = [...new Set(cnpjs.map(onlyDigits).filter((d) => d.length === 14))];
-  const results: Record<string, FiscalBadge> = {};
+  const results: Record<string, SupplierEnrichment> = {};
   await mapWithConcurrency(unique, CONCURRENCY, async (d) => {
-    const snap = await fetchFiscalSnapshot(d);
-    results[d] = snapshotToBadge(snap);
+    results[d] = await enrichSupplier(d);
   });
 
   return NextResponse.json({ results });

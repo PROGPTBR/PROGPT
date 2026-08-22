@@ -2,13 +2,17 @@
 // `web_search`). Sinais NÃO-oficiais (notícias, processos, recuperação
 // judicial, multas) sobre o fornecedor — rotulados como indicativos.
 //
-// Fail-soft e desligável: HOMOLOGACAO_WEBSEARCH='false' desliga (custa por
-// homologação). Erro/timeout → segue sem o bloco. NUNCA lança pro caller.
+// Fail-soft e desligável por chamador: cada assistente que reusa este módulo
+// passa seu próprio `enabled`/`operation` (ex.: homologação usa
+// HOMOLOGACAO_WEBSEARCH='false'; a Análise Financeira usa FINANCIAL_WEBSEARCH,
+// backlog do diretor 2026-08-19, Batch F — pendências judiciais/protestos não
+// têm API pública gratuita). Erro/timeout → segue sem o bloco. NUNCA lança.
 
 import { getOpenAI, getOpenAIModel } from '@/lib/llm/openai';
-import { recordApiUsage } from '@/lib/observability/api-usage';
+import { recordApiUsage, type ApiOperation } from '@/lib/observability/api-usage';
 
 const TIMEOUT_MS = 25_000;
+const DEFAULT_OPERATION: ApiOperation = 'assistant-homologacao-reputacao';
 
 export type ReputacaoResult = {
   enabled: boolean;
@@ -22,8 +26,8 @@ export function isReputacaoEnabled(): boolean {
   return process.env.HOMOLOGACAO_WEBSEARCH !== 'false' && !!process.env.OPENAI_API_KEY;
 }
 
-function buildPrompt(razaoSocial: string, cnpj: string): string {
-  return `Você é um analista de due diligence. Faça uma busca web factual sobre a empresa "${razaoSocial}" (CNPJ ${cnpj}), um fornecedor em processo de homologação no Brasil.
+function buildPrompt(razaoSocial: string, cnpj: string, contexto: string): string {
+  return `Você é um analista de due diligence. Faça uma busca web factual sobre a empresa "${razaoSocial}" (CNPJ ${cnpj}), ${contexto} no Brasil.
 
 Resuma em até 5 bullets curtos APENAS sinais reputacionais relevantes para risco de fornecedor, SE existirem: notícias negativas, recuperação judicial/falência, processos ou condenações relevantes, multas ambientais/trabalhistas, fraude/corrupção, paralisações, problemas de entrega/qualidade noticiados.
 
@@ -36,8 +40,18 @@ Regras:
 export async function buscarReputacao(input: {
   razaoSocial: string;
   cnpj: string;
+  /** Override do gate padrão (isReputacaoEnabled) — cada chamador decide seu próprio flag/custo. */
+  enabled?: boolean;
+  /** Rótulo de custo em recordApiUsage (default: homologação, back-compat). */
+  operation?: ApiOperation;
+  /** Framing da busca (default: "um fornecedor em processo de homologação"). */
+  contexto?: string;
 }): Promise<ReputacaoResult> {
-  const result: ReputacaoResult = { enabled: isReputacaoEnabled(), available: false, resumo: '' };
+  const result: ReputacaoResult = {
+    enabled: input.enabled ?? isReputacaoEnabled(),
+    available: false,
+    resumo: '',
+  };
   if (!result.enabled) return result;
 
   const controller = new AbortController();
@@ -49,7 +63,11 @@ export async function buscarReputacao(input: {
       {
         model,
         tools: [{ type: 'web_search' } as never],
-        input: buildPrompt(input.razaoSocial, input.cnpj),
+        input: buildPrompt(
+          input.razaoSocial,
+          input.cnpj,
+          input.contexto ?? 'um fornecedor em processo de homologação',
+        ),
       },
       { signal: controller.signal },
     );
@@ -60,7 +78,7 @@ export async function buscarReputacao(input: {
     // só esse extra; aceito pra um sinal indicativo).
     void recordApiUsage({
       provider: 'openai',
-      operation: 'assistant-homologacao-reputacao',
+      operation: input.operation ?? DEFAULT_OPERATION,
       model,
       tokensIn: out.usage?.input_tokens ?? 0,
       tokensOut: out.usage?.output_tokens ?? 0,

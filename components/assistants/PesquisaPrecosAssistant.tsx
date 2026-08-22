@@ -40,12 +40,15 @@ function buildParams(v: PesquisaPrecosFormValues) {
   };
 }
 
+export type ItemSemAmostra = { descricao: string; unidade?: string };
+
 export function PesquisaPrecosAssistant() {
   const [phase, setPhase] = useState<Phase>('form');
   const [output, setOutput] = useState('');
   const [runId, setRunId] = useState<string | null>(null);
   const [titulo, setTitulo] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [semAmostra, setSemAmostra] = useState<ItemSemAmostra[]>([]);
 
   async function handleSubmit(values: PesquisaPrecosFormValues) {
     setPhase('generating');
@@ -53,6 +56,7 @@ export function PesquisaPrecosAssistant() {
     setRunId(null);
     setTitulo(values.titulo);
     setError(null);
+    setSemAmostra([]);
 
     try {
       const res = await fetch('/api/assistants/pesquisa_precos', {
@@ -75,6 +79,15 @@ export function PesquisaPrecosAssistant() {
       const runIdHeader = res.headers.get('x-run-id');
       if (runIdHeader) setRunId(runIdHeader);
       const finalRunId = runIdHeader;
+
+      const semAmostraHeader = res.headers.get('x-sem-amostra');
+      if (semAmostraHeader) {
+        try {
+          setSemAmostra(JSON.parse(decodeURIComponent(semAmostraHeader)) as ItemSemAmostra[]);
+        } catch {
+          // tolerant — o botão "aproximado" só some, não quebra o relatório
+        }
+      }
 
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
@@ -121,6 +134,7 @@ export function PesquisaPrecosAssistant() {
     setOutput('');
     setRunId(null);
     setError(null);
+    setSemAmostra([]);
   }
 
   return (
@@ -152,6 +166,7 @@ export function PesquisaPrecosAssistant() {
           titulo={titulo}
           generating={phase === 'generating'}
           onReset={handleReset}
+          semAmostra={semAmostra}
         />
       )}
 

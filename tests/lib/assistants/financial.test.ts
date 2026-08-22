@@ -1,7 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   buildFinancialPrompt,
   calculateFinancialScore,
+  isFinancialReputacaoEnabled,
   FINANCIAL_SYSTEM_PROMPT,
 } from '@/lib/assistants/financial';
 import type {
@@ -10,6 +11,7 @@ import type {
   TemplateRow,
 } from '@/lib/assistants/types';
 import type { RetrievedChunk } from '@/lib/rag/types';
+import type { ReputacaoResult } from '@/lib/fiscal/reputacao';
 
 const baseTemplate: TemplateRow = {
   id: 'tpl-fin-1',
@@ -122,6 +124,7 @@ describe('buildFinancialPrompt', () => {
     cnpj: '00.000.000/0001-00',
     referenceYear: '2024',
     observacoes: 'Spend anual estimado R$ 8M',
+    pendencias: '',
     indicators: {
       receitaLiquida: 500,
       ebitda: 100,
@@ -226,5 +229,75 @@ describe('buildFinancialPrompt', () => {
     const a = calculateFinancialScore(params.indicators);
     const out = buildFinancialPrompt(params, baseTemplate, [chunk], a, null);
     expect(out.user).toContain('Análise de crédito corporativo');
+  });
+
+  // Backlog do diretor, 2026-08-19 (Batch F).
+  it('injeta porte, setor, tempo de mercado e pendências quando informados', () => {
+    const qualParams: FinancialParams = {
+      ...params,
+      businessSize: 'pequena',
+      businessSector: 'comercio',
+      tempoMercadoAnos: 2,
+      pendencias: '2 protestos registrados em 2025 (CENPROT-SP)',
+    };
+    const a = calculateFinancialScore(qualParams.indicators);
+    const out = buildFinancialPrompt(qualParams, baseTemplate, [], a, null);
+    expect(out.user).toContain('Pequena empresa');
+    expect(out.user).toContain('Comércio');
+    expect(out.user).toContain('2 anos');
+    expect(out.user).toContain('empresa jovem, pese como fator de risco adicional');
+    expect(out.user).toContain('2 protestos registrados em 2025');
+    expect(out.user).toContain('ressalva grave');
+  });
+
+  it('omite os campos qualitativos quando não informados', () => {
+    const a = calculateFinancialScore(params.indicators);
+    const out = buildFinancialPrompt(params, baseTemplate, [], a, null);
+    expect(out.user).not.toContain('Porte do negócio');
+    expect(out.user).not.toContain('ressalva grave');
+  });
+
+  it('injeta o bloco reputacional (indicativo/não-oficial) quando disponível', () => {
+    const reputacao: ReputacaoResult = {
+      enabled: true,
+      available: true,
+      resumo: '- Recuperação judicial deferida em 2024.',
+    };
+    const a = calculateFinancialScore(params.indicators);
+    const out = buildFinancialPrompt(params, baseTemplate, [], a, null, null, null, reputacao);
+    expect(out.user).toContain('Sinais reputacionais');
+    expect(out.user).toContain('INDICATIVO, NÃO-OFICIAL');
+    expect(out.user).toContain('Recuperação judicial deferida em 2024');
+  });
+
+  it('omite o bloco reputacional quando indisponível/desligado', () => {
+    const a = calculateFinancialScore(params.indicators);
+    const out = buildFinancialPrompt(params, baseTemplate, [], a, null, null, null, {
+      enabled: false,
+      available: false,
+      resumo: '',
+    });
+    expect(out.user).not.toContain('Sinais reputacionais');
+  });
+});
+
+describe('isFinancialReputacaoEnabled', () => {
+  afterEach(() => vi.unstubAllEnvs());
+
+  it('true por padrão quando há OPENAI_API_KEY', () => {
+    vi.stubEnv('OPENAI_API_KEY', 'sk-test');
+    vi.stubEnv('FINANCIAL_WEBSEARCH', '');
+    expect(isFinancialReputacaoEnabled()).toBe(true);
+  });
+
+  it('false quando FINANCIAL_WEBSEARCH=false', () => {
+    vi.stubEnv('OPENAI_API_KEY', 'sk-test');
+    vi.stubEnv('FINANCIAL_WEBSEARCH', 'false');
+    expect(isFinancialReputacaoEnabled()).toBe(false);
+  });
+
+  it('false sem OPENAI_API_KEY', () => {
+    vi.stubEnv('OPENAI_API_KEY', '');
+    expect(isFinancialReputacaoEnabled()).toBe(false);
   });
 });
