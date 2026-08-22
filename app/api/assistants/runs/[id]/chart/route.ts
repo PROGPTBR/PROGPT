@@ -8,6 +8,7 @@ import { renderAbcChartPng } from '@/lib/assistants/abc-chart';
 import { scoreSuppliers } from '@/lib/assistants/scorecard';
 import { renderScorecardChartPng } from '@/lib/assistants/scorecard-chart';
 import { renderSpendParetoPng } from '@/lib/assistants/spend-chart';
+import { renderSwotChartPng } from '@/lib/assistants/negotiation/swot-chart';
 import { listInvoicesByRun } from '@/lib/spend/db';
 import { buildCubeFromRows } from '@/lib/spend/from-rows';
 import type {
@@ -20,7 +21,8 @@ import type {
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-// GET /api/assistants/runs/[id]/chart — Kraljic bubble OR ABC curve PNG.
+// GET /api/assistants/runs/[id]/chart — Kraljic bubble, ABC curve,
+// scorecard ranking, Pareto de gastos OU matriz SWOT da negociação (PNG).
 //
 // Dispatches by run.assistant_type. Owner-gated like the other run
 // endpoints. Non-supported types return 404. Same rendering function
@@ -56,6 +58,13 @@ export async function GET(
       const rows = await listInvoicesByRun(run.id);
       const cube = buildCubeFromRows(rows, (sp.referenceCurrency ?? 'BRL').toUpperCase());
       buf = await renderSpendParetoPng(cube);
+    } else if (run.assistant_type === 'negotiation') {
+      // Matriz SWOT 2x2 (backlog do diretor 2026-08-19, Batch H). A SWOT
+      // vive em assistant_runs.strategy, preenchida pelo Strategy Builder —
+      // um run sem estratégia (falhou ou ainda rodando) não tem gráfico.
+      const swot = run.strategy?.swot;
+      if (!swot) return new NextResponse('Not Found', { status: 404 });
+      buf = await renderSwotChartPng(swot);
     } else {
       return new NextResponse('Not Found', { status: 404 });
     }

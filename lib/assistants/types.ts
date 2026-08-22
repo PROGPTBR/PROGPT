@@ -673,9 +673,26 @@ export const NegotiationStrategyParamsSchema = z.object({
   decisionPower: z.enum(NEGOTIATION_DECISION_POWER).optional(),
   negotiationTechnique: z.enum(NEGOTIATION_TECHNIQUE).optional(),
 
+  // Matriz SWOT preenchida pelo comprador (backlog do diretor 2026-08-19,
+  // Batch H). Opcional; quando vem preenchida, o prompt instrui a IA a
+  // PARTIR dela — refinar e completar, nunca descartar o que o comprador
+  // trouxe. Sem ela, a IA segue inventando a SWOT do zero como antes.
+  swotInput: z
+    .object({
+      strengths: z.string().trim().max(1000).optional().default(''),
+      weaknesses: z.string().trim().max(1000).optional().default(''),
+      opportunities: z.string().trim().max(1000).optional().default(''),
+      threats: z.string().trim().max(1000).optional().default(''),
+    })
+    .optional(),
+
   // Link opcional a um Perfil (sub-projeto 33).
   perfilId: z.string().uuid().optional(),
 });
+
+export type NegotiationSwotInput = NonNullable<
+  z.infer<typeof NegotiationStrategyParamsSchema>['swotInput']
+>;
 
 export type NegotiationStrategyParams = z.infer<
   typeof NegotiationStrategyParamsSchema

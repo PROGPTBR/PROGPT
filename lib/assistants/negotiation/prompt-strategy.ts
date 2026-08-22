@@ -11,6 +11,7 @@ import {
   NEGOTIATION_PURCHASE_TYPE_LABELS,
   NEGOTIATION_DECISION_POWER_LABELS,
   NEGOTIATION_TECHNIQUE_LABELS,
+  type NegotiationSwotInput,
 } from '@/lib/assistants/types';
 
 // Sub-projeto 22 — Strategy Builder do Assistente de Negociação.
@@ -113,7 +114,47 @@ function summarizeParams(p: NegotiationStrategyParams): string {
     parts.push(
       `## Técnica de negociação preferida do comprador\n${NEGOTIATION_TECHNIQUE_LABELS[p.negotiationTechnique]}\n(Oriente a estratégia e as táticas a partir desta técnica.)`,
     );
+  const swotBlock = swotInputBlock(p.swotInput);
+  if (swotBlock) parts.push(swotBlock);
   return parts.join('\n\n');
+}
+
+/**
+ * A SWOT veio preenchida pelo comprador? (backlog do diretor 2026-08-19,
+ * Batch H). Vazia/ausente ⇒ a IA gera do zero, como antes.
+ */
+export function hasSwotInput(swot: NegotiationSwotInput | undefined): boolean {
+  if (!swot) return false;
+  return [swot.strengths, swot.weaknesses, swot.opportunities, swot.threats].some(
+    (v) => (v ?? '').trim().length > 0,
+  );
+}
+
+const SWOT_INPUT_LABELS: [keyof NegotiationSwotInput, string][] = [
+  ['strengths', 'Forças (do comprador)'],
+  ['weaknesses', 'Fraquezas (do comprador)'],
+  ['opportunities', 'Oportunidades (externas)'],
+  ['threats', 'Ameaças (externas)'],
+];
+
+/**
+ * Bloco da SWOT do comprador. A instrução é deliberadamente forte porque o
+ * comportamento anterior era inventar os 4 quadrantes do zero — o que
+ * descartava o diagnóstico de quem conhece a relação com o fornecedor.
+ */
+export function swotInputBlock(
+  swot: NegotiationSwotInput | undefined,
+): string | null {
+  if (!hasSwotInput(swot)) return null;
+  const lines: string[] = [];
+  for (const [key, label] of SWOT_INPUT_LABELS) {
+    const value = (swot![key] ?? '').trim();
+    if (value) lines.push(`- **${label}**: ${value}`);
+  }
+  return `## Matriz SWOT preenchida pelo comprador
+${lines.join('\n')}
+
+PARTA DESTE SWOT ao emitir o campo swot: preserve TODOS os pontos que o comprador trouxe (pode reescrever para ficarem curtos e objetivos, no formato de 5-15 palavras), complete os quadrantes que ficaram vazios ou rasos, e só então acrescente o que sua análise identificar. NÃO descarte nenhum ponto informado — quem preencheu conhece a relação com este fornecedor.`;
 }
 
 export async function generateStrategy(

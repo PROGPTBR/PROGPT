@@ -21,6 +21,7 @@ import { renderAbcChartPng } from '@/lib/assistants/abc-chart';
 import { scoreSuppliers } from '@/lib/assistants/scorecard';
 import { renderScorecardChartPng } from '@/lib/assistants/scorecard-chart';
 import { renderSpendParetoPng } from '@/lib/assistants/spend-chart';
+import { renderSwotChartPng } from '@/lib/assistants/negotiation/swot-chart';
 import { listInvoicesByRun } from '@/lib/spend/db';
 import { buildCubeFromRows } from '@/lib/spend/from-rows';
 import type { SpendAnalysisParams } from '@/lib/assistants/types';
@@ -54,6 +55,7 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
   let abcChartPng: Buffer | undefined;
   let scorecardChartPng: Buffer | undefined;
   let spendChartPng: Buffer | undefined;
+  let swotChartPng: Buffer | undefined;
 
   if (run.assistant_type === 'kraljic') {
     const kp = run.params as KraljicParams;
@@ -111,6 +113,16 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
     const np = run.params as NegotiationStrategyParams;
     titleSafe = `Estratégia de Negociação - ${np.supplierName}`.slice(0, 120);
     categoryForCover = np.category;
+    // Matriz SWOT 2x2 no relatório (backlog do diretor 2026-08-19, Batch H).
+    // Fail-soft como os demais gráficos: sem estratégia ou erro de render, o
+    // .docx sai sem a imagem, com os bullets da SWOT intactos no texto.
+    if (run.strategy?.swot) {
+      try {
+        swotChartPng = await renderSwotChartPng(run.strategy.swot);
+      } catch (err) {
+        console.warn('[docx] swot chart render failed:', err);
+      }
+    }
   } else {
     const rfpParams = run.params as RfpParams;
     const scope = rfpParams.scope ?? 'RFP';
@@ -157,6 +169,7 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
     abcChartPng,
     scorecardChartPng,
     spendChartPng,
+    swotChartPng,
   });
 
   // Filename derived from run id (no PII), browser saves it as a .docx.

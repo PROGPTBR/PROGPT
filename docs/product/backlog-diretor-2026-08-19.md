@@ -27,7 +27,7 @@ em 22/08/2026) — ver o Rastreamento no fim deste doc. Pendência externa: prov
 | **E** ✅ | Busca de Fornecedores: 3 bases do governo + saúde financeira + documentação | P/M (reuso puro) | — |
 | **F** ✅ | Financeira: os 3 campos qualitativos do doc (tipo de negócio, tempo de mercado, pendências) | P/M | — |
 | **G** ✅ | Pesquisa de Preços: "Buscar preço e NCM aproximado" via LLM + web search | M | D (disclaimer) |
-| **H** | SWOT: perguntas no Contexto Comercial + gráfico 2×2 no relatório | M | — |
+| **H** ✅ | SWOT: perguntas no Contexto Comercial + gráfico 2×2 no relatório | M | — |
 | **I** | RFQ/RFP: mais campos + anexo + abrir e-mail com o arquivo anexado | M | — |
 | **J** | Supplier Scorecard: adotar a planilha `Mudanças v1.xlsx` | G | — |
 | **K** | Indicadores: ampliar fontes com link/fonte/data + tabela categoria→referência | G | D (disclaimer) |
@@ -416,7 +416,7 @@ presa, Spend Analysis em polling, ou o chat).
 | 4 | Vendor list + autofill CNPJ/nome (Kraljic) | L | ⬜ |
 | 5 | RFQ: campos + anexo + e-mail com anexo | I | ⬜ |
 | 6 | Negociação: voz, poder de decisão, técnica, concessões, checklist | Batch B | ✅ #226 |
-| 7 | SWOT como perguntas + gráfico no relatório | H | ⬜ |
+| 7 | SWOT como perguntas + gráfico no relatório | H | ✅ |
 | 8 | Financeira 12 → 15 indicadores | Batch C | ✅ #227 |
 | 9 | Financeira: tipo de negócio, pendências, tempo de mercado | F | ✅ |
 | 10 | Scorecard com a planilha `Mudanças v1.xlsx` | J | ⬜ |

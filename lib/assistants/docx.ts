@@ -321,6 +321,7 @@ export async function mdToDocxBuffer(
     abcChartPng?: Buffer;
     scorecardChartPng?: Buffer;
     spendChartPng?: Buffer;
+    swotChartPng?: Buffer;
   } = {},
 ): Promise<Buffer> {
   // Strip the literal logo-placeholder line — handled by the cover page.
@@ -459,6 +460,28 @@ export async function mdToDocxBuffer(
           }),
         );
         (body as { __spendInserted?: boolean }).__spendInserted = true;
+      }
+      // Negociação: insere a matriz SWOT 2x2 logo após o heading da SWOT
+      // (backlog do diretor 2026-08-19, Batch H). One-shot guard.
+      if (
+        opts.swotChartPng &&
+        /swot/i.test(h2[1]!.trim()) &&
+        !(body as { __swotInserted?: boolean }).__swotInserted
+      ) {
+        body.push(
+          new Paragraph({
+            alignment: AlignmentType.CENTER,
+            children: [
+              new ImageRun({
+                data: opts.swotChartPng,
+                transformation: { width: 580, height: 400 },
+                type: 'png',
+              }),
+            ],
+            spacing: { after: 200 },
+          }),
+        );
+        (body as { __swotInserted?: boolean }).__swotInserted = true;
       }
       continue;
     }

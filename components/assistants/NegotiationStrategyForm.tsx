@@ -8,6 +8,7 @@ import {
   Target,
   Wallet,
   PieChart,
+  Grid2X2,
   Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -136,6 +137,20 @@ export function NegotiationStrategyForm({
   const [negotiationTechnique, setNegotiationTechnique] = useState<
     NegotiationTechnique | ''
   >(initial?.negotiationTechnique ?? '');
+  // Matriz SWOT do comprador (backlog do diretor 2026-08-19, Batch H) —
+  // opcional; quando preenchida, a IA parte dela em vez de inventar do zero.
+  const [swotStrengths, setSwotStrengths] = useState(
+    initial?.swotInput?.strengths ?? '',
+  );
+  const [swotWeaknesses, setSwotWeaknesses] = useState(
+    initial?.swotInput?.weaknesses ?? '',
+  );
+  const [swotOpportunities, setSwotOpportunities] = useState(
+    initial?.swotInput?.opportunities ?? '',
+  );
+  const [swotThreats, setSwotThreats] = useState(
+    initial?.swotInput?.threats ?? '',
+  );
   const [loadingExample, setLoadingExample] = useState(false);
 
   async function fillExample() {
@@ -204,6 +219,19 @@ export function NegotiationStrategyForm({
       niceToHaves: niceToHaves.trim(),
       ...(decisionPower ? { decisionPower } : {}),
       ...(negotiationTechnique ? { negotiationTechnique } : {}),
+      ...(swotStrengths.trim() ||
+      swotWeaknesses.trim() ||
+      swotOpportunities.trim() ||
+      swotThreats.trim()
+        ? {
+            swotInput: {
+              strengths: swotStrengths.trim(),
+              weaknesses: swotWeaknesses.trim(),
+              opportunities: swotOpportunities.trim(),
+              threats: swotThreats.trim(),
+            },
+          }
+        : {}),
     };
     onSubmit(params);
   }
@@ -363,6 +391,78 @@ export function NegotiationStrategyForm({
             </div>
           </section>
         </div>
+
+        {/* MATRIZ SWOT DO COMPRADOR (backlog do diretor 2026-08-19, Batch H).
+            Opcional: preenchida, a IA parte dela; vazia, ela gera do zero. */}
+        <section className="space-y-4 border-t border-border pt-5">
+          <h2 className={SECTION_TITLE}>
+            <Grid2X2 className="h-4 w-4" aria-hidden="true" />
+            Matriz SWOT (opcional)
+          </h2>
+          <p className="text-xs text-muted-foreground -mt-1">
+            Se você já tem o diagnóstico desta negociação, escreva aqui. A IA
+            parte do que você trouxe — refina, completa o que faltar e monta a
+            matriz no relatório. Deixando em branco, ela gera a SWOT sozinha.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className={LABEL_CLASS}>
+                Forças — o que nos dá vantagem nesta negociação?
+              </label>
+              <textarea
+                value={swotStrengths}
+                onChange={(e) => setSwotStrengths(e.target.value)}
+                placeholder="Ex: somos 40% do faturamento dele; temos 2 fornecedores homologados como alternativa."
+                rows={3}
+                className={`${INPUT_CLASS} resize-none`}
+                disabled={isLoading}
+                maxLength={1000}
+              />
+            </div>
+            <div>
+              <label className={LABEL_CLASS}>
+                Fraquezas — onde estamos vulneráveis?
+              </label>
+              <textarea
+                value={swotWeaknesses}
+                onChange={(e) => setSwotWeaknesses(e.target.value)}
+                placeholder="Ex: estoque para 15 dias; troca de fornecedor exige requalificação de 3 meses."
+                rows={3}
+                className={`${INPUT_CLASS} resize-none`}
+                disabled={isLoading}
+                maxLength={1000}
+              />
+            </div>
+            <div>
+              <label className={LABEL_CLASS}>
+                Oportunidades — o que o mercado abre a nosso favor?
+              </label>
+              <textarea
+                value={swotOpportunities}
+                onChange={(e) => setSwotOpportunities(e.target.value)}
+                placeholder="Ex: entrada de dois concorrentes na região; queda da matéria-prima nos últimos 6 meses."
+                rows={3}
+                className={`${INPUT_CLASS} resize-none`}
+                disabled={isLoading}
+                maxLength={1000}
+              />
+            </div>
+            <div>
+              <label className={LABEL_CLASS}>
+                Ameaças — o que pode jogar contra?
+              </label>
+              <textarea
+                value={swotThreats}
+                onChange={(e) => setSwotThreats(e.target.value)}
+                placeholder="Ex: reajuste anunciado no setor; risco de desabastecimento no 2º semestre."
+                rows={3}
+                className={`${INPUT_CLASS} resize-none`}
+                disabled={isLoading}
+                maxLength={1000}
+              />
+            </div>
+          </div>
+        </section>
 
         {/* ZOPA & PARÂMETROS FINANCEIROS */}
         <section className="space-y-4 border-t border-border pt-5">

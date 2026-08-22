@@ -35,6 +35,18 @@ export const STRATEGY_EXAMPLES: StrategyExample[] = [
         'Contrato expira em 6 meses. Relacionamento bom, mas preços ~10% acima do mercado em alguns SKUs (S3, EC2 reservadas).',
       priceScenario:
         'Reduzir o spend anual de R$ 4,5MM para R$ 3,8MM via Enterprise Discount Program (compromisso de 3 anos) + migração para Graviton 5 + reotimização de tiers S3.',
+      // SWOT do comprador (Batch H) — exemplo serve também de discovery do
+      // campo: mostra a granularidade esperada (frases curtas e concretas).
+      swotInput: {
+        strengths:
+          'Volume relevante e previsível; contrato de 3 anos é atrativo para o vendedor; time interno domina FinOps.',
+        weaknesses:
+          'Migração de saída levaria 12+ meses; dependência de serviços gerenciados proprietários.',
+        opportunities:
+          'Concorrência agressiva de Azure e GCP em contratos enterprise; Graviton reduz custo por vCPU.',
+        threats:
+          'Reajuste anual indexado ao câmbio; lock-in aumenta a cada novo serviço adotado.',
+      },
     },
   },
   {
