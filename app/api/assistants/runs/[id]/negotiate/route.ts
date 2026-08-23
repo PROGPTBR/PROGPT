@@ -1,8 +1,6 @@
 import { streamText } from 'ai';
-import { createOpenAI } from '@ai-sdk/openai';
-import { getOpenAIModel } from '@/lib/llm/openai';
+import { getOpenAIModel, getStreamingOpenAI } from '@/lib/llm/openai';
 import { NextResponse } from 'next/server';
-import { requireEnv } from '@/lib/env';
 import { getCurrentUser } from '@/lib/auth';
 import { checkChatRateLimit } from '@/lib/rate-limit';
 import { getRunForOwner, updateRunTranscript } from '@/lib/assistants/runs';
@@ -110,7 +108,7 @@ async function negotiateBody(
     setup: setupParsed.data,
   });
 
-  const openai = createOpenAI({ apiKey: requireEnv('OPENAI_API_KEY') });
+  const openai = getStreamingOpenAI();
   const model = getOpenAIModel('generation');
   const generateSpan = trace.span('generate-turn', {
     turn: parsed.data.messages.length,

@@ -1,9 +1,7 @@
 import { streamText } from 'ai';
-import { createOpenAI } from '@ai-sdk/openai';
 import { z } from 'zod';
 import { NextResponse } from 'next/server';
-import { getOpenAIModel } from '@/lib/llm/openai';
-import { requireEnv } from '@/lib/env';
+import { getOpenAIModel, getStreamingOpenAI } from '@/lib/llm/openai';
 import { getCurrentUser } from '@/lib/auth';
 import { checkChatRateLimit } from '@/lib/rate-limit';
 import { getRunForOwner } from '@/lib/assistants/runs';
@@ -106,7 +104,7 @@ async function adviseBody(
   });
   const userMsg = buildCoachUser(body.messages, body.question);
 
-  const openai = createOpenAI({ apiKey: requireEnv('OPENAI_API_KEY') });
+  const openai = getStreamingOpenAI();
   const model = getOpenAIModel('generation');
   const span = trace.span('generate-advice', { turns: body.messages.length });
 

@@ -14,6 +14,18 @@ const RANGES = new Set([1, 2, 7, 30, 90]);
 const PAGE = 1000;
 const SAFETY_CAP = 50_000;
 
+// Alerta de consumo (backlog do diretor 2026-08-23): sinaliza no painel
+// quando o custo real de IA de um cliente pago se aproxima do valor que ele
+// paga pelo plano, ANTES de eventualmente ultrapassar. Limiar e taxa de
+// câmbio são intencionalmente simples (constantes, sem fetch externo nesta
+// rota) — é um painel interno, não um cálculo de billing.
+const ALERT_THRESHOLD_PCT = 70;
+// USD→BRL fixo e conservador (câmbio sobe mais que desce historicamente,
+// então subestimar o custo em BRL seria o erro perigoso aqui). Ajustar
+// periodicamente — não crítico se ficar um pouco desatualizado, já que o
+// próprio limiar de 70% já dá folga. Cotação de referência: PTAX 21/08/2026.
+const USD_BRL_RATE = 5.30;
+
 type SupabaseClient = ReturnType<typeof getServerSupabase>;
 
 // Busca paginada de uma tabela filtrando por coluna de data >= since.
@@ -62,12 +74,25 @@ export async function GET(req: Request) {
   const svc = getServerSupabase();
 
   // Usuários + email + papel + assinaturas (leituras leves).
-  const [{ data: profileRows }, { data: subRows }] = await Promise.all([
+  const [{ data: profileRows }, { data: subRows }, { data: billingRow }] = await Promise.all([
     svc
       .from('profiles_with_email')
       .select('id, email, role, created_at, auth_created_at, last_sign_in_at'),
-    svc.from('subscriptions').select('status'),
+    svc.from('subscriptions').select('user_id, status, plan'),
+    svc.from('billing_settings').select('plan_price').eq('id', 1).maybeSingle(),
   ]);
+
+  const planPriceBrl = num(billingRow?.plan_price);
+  // active/trialing/past_due contam como "pagando" pro alerta — past_due
+  // ainda tem acesso Pro até current_period_end (mesma regra de isPro em
+  // lib/billing/subscription.ts).
+  const PAYING_STATUSES = new Set(['active', 'trialing', 'past_due']);
+  const planByUser = new Map<string, { plan: string; status: string }>();
+  for (const s of (subRows ?? []) as Array<{ user_id: string; status: string | null; plan: string | null }>) {
+    if (s.status && PAYING_STATUSES.has(s.status)) {
+      planByUser.set(s.user_id, { plan: s.plan ?? 'pro', status: s.status });
+    }
+  }
 
   const profiles = (profileRows ?? []) as Array<{
     id: string;
@@ -158,17 +183,38 @@ export async function GET(req: Request) {
     return c ? new Date(c).getTime() >= sinceMs : false;
   }).length;
 
+  // Preço do plano prorrateado pra janela selecionada, pra o limiar de 70%
+  // fazer sentido em "Hoje"/"7 dias" tanto quanto em "30 dias" (o plano é
+  // mensal; comparar gasto de 1 dia contra o preço do mês inteiro sempre
+  // ficaria bem abaixo do limiar, escondendo um cliente que está de fato
+  // queimando rápido).
+  const proratedPlanCentsBrl = planPriceBrl > 0 ? planPriceBrl * 100 * (rangeDays / 30) : 0;
+
   const users = Array.from(userMap.entries())
-    .map(([userId, a]) => ({
-      userId,
-      email: emailById.get(userId) ?? '—',
-      role: roleById.get(userId) ?? 'user',
-      sessions: a.sessions,
-      runs: a.runs,
-      spendCents: a.spendCents,
-      lastActive: a.lastActive,
-    }))
+    .map(([userId, a]) => {
+      const sub = planByUser.get(userId);
+      const spendCentsBrl = a.spendCents * USD_BRL_RATE;
+      const pctOfPlan =
+        sub && proratedPlanCentsBrl > 0 ? (spendCentsBrl / proratedPlanCentsBrl) * 100 : null;
+      return {
+        userId,
+        email: emailById.get(userId) ?? '—',
+        role: roleById.get(userId) ?? 'user',
+        sessions: a.sessions,
+        runs: a.runs,
+        spendCents: a.spendCents,
+        lastActive: a.lastActive,
+        plan: sub?.plan ?? null,
+        subStatus: sub?.status ?? null,
+        pctOfPlan,
+        alert: pctOfPlan !== null && pctOfPlan >= ALERT_THRESHOLD_PCT,
+      };
+    })
     .sort((a, b) => b.spendCents - a.spendCents || b.sessions - a.sessions);
+
+  const alerts = users
+    .filter((u) => u.alert)
+    .sort((a, b) => (b.pctOfPlan ?? 0) - (a.pctOfPlan ?? 0));
 
   const sessionsOut = Array.from(sessSpend.entries())
     .map(([sessionId, a]) => {
@@ -207,5 +253,11 @@ export async function GET(req: Request) {
     byDay,
     users,
     sessions: sessionsOut,
+    consumptionAlerts: {
+      thresholdPct: ALERT_THRESHOLD_PCT,
+      planPriceBrl,
+      usdBrlRate: USD_BRL_RATE,
+      users: alerts,
+    },
   });
 }

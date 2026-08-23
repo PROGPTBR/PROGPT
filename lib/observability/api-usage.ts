@@ -199,15 +199,25 @@ const REALTIME_MINI_TEXT_IN_PER_M = 0.6;
 const REALTIME_MINI_TEXT_OUT_PER_M = 2.4;
 const REALTIME_MINI_CACHED_IN_PER_M = 0.3;
 
+// A caller-reported token count that isn't a finite number (NaN/Infinity —
+// e.g. a streaming provider that never sent a usage chunk) must never reach
+// `api_usage_events`: tokens_in/tokens_out are NOT NULL ints, JSON.stringify
+// turns NaN into `null`, and that insert fails silently (recordApiUsage
+// swallows the error). Coercing to 0 here keeps the event recordable — an
+// under-counted row beats a dropped one.
+function finite(n: number | undefined): number {
+  return typeof n === 'number' && Number.isFinite(n) ? n : 0;
+}
+
 /**
  * Compute estimated cost in USD cents for a given API usage event. Pure
  * function — easy to unit test. Adjust the rate constants above when
  * provider pricing changes.
  */
 export function computeCostUsdCents(input: RecordUsageInput): number {
-  const tIn = input.tokensIn ?? 0;
-  const tOut = input.tokensOut ?? 0;
-  const tCached = input.tokensCached ?? 0;
+  const tIn = finite(input.tokensIn);
+  const tOut = finite(input.tokensOut);
+  const tCached = finite(input.tokensCached);
   const calls = input.callCount ?? 1;
 
   if (input.provider === 'openai') {
@@ -288,16 +298,19 @@ export async function recordApiUsage(input: RecordUsageInput): Promise<void> {
       provider: input.provider,
       operation: input.operation,
       model: input.model ?? null,
-      tokens_in: input.tokensIn ?? 0,
-      tokens_out: input.tokensOut ?? 0,
-      tokens_cached: input.tokensCached ?? 0,
+      tokens_in: finite(input.tokensIn),
+      tokens_out: finite(input.tokensOut),
+      tokens_cached: finite(input.tokensCached),
       call_count: input.callCount ?? 1,
-      cost_usd_cents: cost,
+      cost_usd_cents: Number.isFinite(cost) ? cost : 0,
       metadata: input.metadata ?? {},
       user_id: userId,
     });
     if (error) {
-      console.warn('[api-usage] insert failed:', error.message);
+      console.warn(
+        `[api-usage] insert failed for operation=${input.operation}:`,
+        error.message,
+      );
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

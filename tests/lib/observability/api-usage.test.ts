@@ -141,6 +141,24 @@ describe('computeCostUsdCents', () => {
       computeCostUsdCents({ provider: 'cohere', operation: 'rerank', callCount: 0 }),
     ).toBe(0);
   });
+
+  // Regression (2026-08-23): a `streamText()` provider that never received a
+  // usage chunk (see getStreamingOpenAI in lib/llm/openai.ts) reports
+  // NaN token counts. NaN must be treated as 0, not propagate — a NaN cost
+  // JSON-serializes to `null` and breaks the NOT NULL insert in
+  // recordApiUsage, silently dropping the whole event.
+  it('treats NaN token counts as 0 instead of propagating NaN', () => {
+    const cost = computeCostUsdCents({
+      provider: 'openai',
+      operation: 'chat-generate',
+      model: 'gpt-5.4-mini',
+      tokensIn: NaN,
+      tokensOut: NaN,
+      tokensCached: NaN,
+    });
+    expect(cost).toBe(0);
+    expect(Number.isNaN(cost)).toBe(false);
+  });
 });
 
 // ── per-model rate cards (model tiering caveat #1) ───────────────────────────
@@ -270,6 +288,27 @@ describe('recordApiUsage', () => {
     expect(row.tokens_out).toBe(80);
     expect(row.cost_usd_cents).toBeGreaterThan(0);
     expect(row.cost_usd_cents).toBeLessThan(1);
+  });
+
+  it('never inserts NaN token counts (would violate the NOT NULL columns and drop the row)', async () => {
+    const insert = vi.fn().mockResolvedValue({ error: null });
+    vi.doMock('@/lib/db/supabase', () => ({
+      getServerSupabase: () => ({ from: () => ({ insert }) }),
+    }));
+    const { recordApiUsage } = await import('@/lib/observability/api-usage');
+    await recordApiUsage({
+      provider: 'openai',
+      operation: 'chat-generate',
+      model: 'gpt-5.4-mini',
+      tokensIn: NaN,
+      tokensOut: NaN,
+      tokensCached: NaN,
+    });
+    const row = insert.mock.calls[0]![0];
+    expect(row.tokens_in).toBe(0);
+    expect(row.tokens_out).toBe(0);
+    expect(row.tokens_cached).toBe(0);
+    expect(Number.isFinite(row.cost_usd_cents)).toBe(true);
   });
 
   it('swallows errors so cost-tracking failures never break the pipeline', async () => {

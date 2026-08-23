@@ -1,6 +1,47 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getOpenAIModel, withRateLimitRetry } from '@/lib/llm/openai';
 
+// ── getStreamingOpenAI ──────────────────────────────────────────────────────
+// Regression test for the 2026-08-23 silent-drop bug: every streamText()
+// call site (chat, assistant generate, refine chat, negotiate, advise) built
+// its own `createOpenAI({ apiKey })` without `compatibility: 'strict'`. That
+// omission means `@ai-sdk/openai` never sends `stream_options.include_usage`,
+// so OpenAI's streaming response never carries a `usage` chunk, `onFinish`'s
+// usage.promptTokens/completionTokens come back NaN, and the api_usage_events
+// insert silently fails its NOT NULL constraint (recordApiUsage swallows the
+// error). Every call site MUST go through getStreamingOpenAI() instead of
+// constructing its own createOpenAI({...}).
+describe('getStreamingOpenAI', () => {
+  beforeEach(() => {
+    vi.resetModules();
+    process.env.OPENAI_API_KEY = 'test-key';
+  });
+
+  it('passes compatibility: "strict" to createOpenAI', async () => {
+    const createOpenAI = vi.fn(() => () => 'mock-model');
+    vi.doMock('@ai-sdk/openai', () => ({ createOpenAI }));
+
+    const { getStreamingOpenAI } = await import('@/lib/llm/openai');
+    getStreamingOpenAI();
+
+    expect(createOpenAI).toHaveBeenCalledWith(
+      expect.objectContaining({ apiKey: 'test-key', compatibility: 'strict' }),
+    );
+  });
+
+  it('memoizes the provider instead of re-creating it on every call', async () => {
+    const createOpenAI = vi.fn(() => () => 'mock-model');
+    vi.doMock('@ai-sdk/openai', () => ({ createOpenAI }));
+
+    const { getStreamingOpenAI } = await import('@/lib/llm/openai');
+    const a = getStreamingOpenAI();
+    const b = getStreamingOpenAI();
+
+    expect(a).toBe(b);
+    expect(createOpenAI).toHaveBeenCalledTimes(1);
+  });
+});
+
 function rateLimitErr(retrySecs = 1.5) {
   const e = new Error(
     `Rate limit reached for gpt-4o-mini in organization org-X. Limit 200000, Used 200000. Please try again in ${retrySecs}s.`,

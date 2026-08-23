@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Activity, Users, MessageSquare, Sparkles, DollarSign, UserPlus,
-  Download, RefreshCw, Loader2,
+  Download, RefreshCw, Loader2, AlertTriangle,
 } from 'lucide-react';
 
 type UserRow = {
@@ -14,6 +14,10 @@ type UserRow = {
   runs: number;
   spendCents: number;
   lastActive: string;
+  plan: string | null;
+  subStatus: string | null;
+  pctOfPlan: number | null;
+  alert: boolean;
 };
 type SessionRow = {
   sessionId: string;
@@ -43,6 +47,12 @@ type Payload = {
   byDay: Array<{ day: string; costCents: number; calls: number }>;
   users: UserRow[];
   sessions: SessionRow[];
+  consumptionAlerts: {
+    thresholdPct: number;
+    planPriceBrl: number;
+    usdBrlRate: number;
+    users: UserRow[];
+  };
 };
 
 const RANGES = [
@@ -58,6 +68,8 @@ const usd = (cents: number) => {
   return `US$ ${v.toFixed(v > 0 && v < 1 ? 4 : 2)}`;
 };
 const int = (n: number) => n.toLocaleString('pt-BR');
+const pct = (v: number) => `${v.toFixed(0)}%`;
+const brl = (v: number) => `R$ ${v.toFixed(2).replace('.', ',')}`;
 const ROLE_LABEL: Record<string, string> = { admin: 'Admin', gestor: 'Gestor', user: 'Usuário' };
 
 function relative(iso: string): string {
@@ -178,7 +190,7 @@ export function MonitorDashboard() {
       {data && (
         <>
           {/* KPIs */}
-          <section className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+          <section className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
             <Kpi icon={<Users className="h-4 w-4" />} label="Usuários" value={int(data.overview.totalUsers)} hint={`${data.overview.admin} adm · ${data.overview.gestor} gestor`} />
             <Kpi icon={<Activity className="h-4 w-4" />} label="Ativos" value={int(data.overview.activeUsers)} hint="no período" />
             <Kpi icon={<UserPlus className="h-4 w-4" />} label="Novos" value={int(data.overview.newUsers)} hint="no período" />
@@ -186,7 +198,38 @@ export function MonitorDashboard() {
             <Kpi icon={<Sparkles className="h-4 w-4" />} label="Execuções" value={int(data.overview.totalRuns)} />
             <Kpi icon={<DollarSign className="h-4 w-4" />} label="Gasto (API)" value={usd(data.overview.totalSpendCents)} />
             <Kpi icon={<DollarSign className="h-4 w-4" />} label="Assinaturas" value={int(data.overview.subscriptions.active ?? 0)} hint={`${data.overview.subscriptions.trialing ?? 0} trial`} />
+            <Kpi
+              icon={<AlertTriangle className="h-4 w-4" />}
+              label="Alertas de consumo"
+              value={int(data.consumptionAlerts.users.length)}
+              hint={`≥ ${data.consumptionAlerts.thresholdPct}% do plano`}
+              tone={data.consumptionAlerts.users.length > 0 ? 'warn' : undefined}
+            />
           </section>
+
+          {/* Alertas de consumo — clientes cujo custo real de IA no período já
+              consumiu boa parte do valor do plano deles. Painel-only (sem
+              e-mail/push): o admin/diretor vê ao abrir o monitoramento. */}
+          {data.consumptionAlerts.users.length > 0 && (
+            <Panel
+              title="⚠️ Clientes acima do limiar de consumo"
+              subtitle={`Custo real de IA já passou de ${data.consumptionAlerts.thresholdPct}% do valor do plano (${brl(data.consumptionAlerts.planPriceBrl)}/mês) no período selecionado`}
+            >
+              <Table
+                head={['Cliente', 'Plano', 'Status', '% do plano', 'Gasto real (API)', 'Último acesso']}
+                rows={data.consumptionAlerts.users.map((u) => [
+                  u.email,
+                  u.plan ?? '—',
+                  u.subStatus ?? '—',
+                  pct(u.pctOfPlan ?? 0),
+                  usd(u.spendCents),
+                  relative(u.lastActive),
+                ])}
+                numericCols={[3, 4]}
+                highlightRow={() => true}
+              />
+            </Panel>
+          )}
 
           {/* Atividade por dia */}
           <Panel title="Custo de API por dia" subtitle="Some por dia no período">
@@ -221,7 +264,9 @@ export function MonitorDashboard() {
                     data.users.map((u) => ({
                       email: u.email, papel: ROLE_LABEL[u.role] ?? u.role,
                       sessoes: u.sessions, execucoes: u.runs,
-                      gasto_usd: (u.spendCents / 100).toFixed(4), ultimo_acesso: u.lastActive,
+                      gasto_usd: (u.spendCents / 100).toFixed(4),
+                      pct_do_plano: u.pctOfPlan !== null ? u.pctOfPlan.toFixed(0) : '',
+                      ultimo_acesso: u.lastActive,
                     })),
                   )
                 }
@@ -232,16 +277,18 @@ export function MonitorDashboard() {
               <Empty text="Nenhuma atividade de usuário no período." />
             ) : (
               <Table
-                head={['Usuário', 'Papel', 'Sessões', 'Execuções', 'Gasto', 'Último acesso']}
+                head={['Usuário', 'Papel', 'Sessões', 'Execuções', 'Gasto', '% do plano', 'Último acesso']}
                 rows={data.users.map((u) => [
                   u.email,
                   ROLE_LABEL[u.role] ?? u.role,
                   int(u.sessions),
                   int(u.runs),
                   usd(u.spendCents),
+                  u.pctOfPlan !== null ? pct(u.pctOfPlan) : '—',
                   relative(u.lastActive),
                 ])}
-                numericCols={[2, 3, 4]}
+                numericCols={[2, 3, 4, 5]}
+                highlightRow={(ri) => data.users[ri]?.alert === true}
               />
             )}
           </Panel>
@@ -290,14 +337,17 @@ export function MonitorDashboard() {
 
 // ─── UI ───────────────────────────────────────────────────────────────────
 
-function Kpi({ icon, label, value, hint }: { icon: React.ReactNode; label: string; value: string; hint?: string }) {
+function Kpi({
+  icon, label, value, hint, tone,
+}: { icon: React.ReactNode; label: string; value: string; hint?: string; tone?: 'warn' }) {
+  const warn = tone === 'warn';
   return (
-    <div className="rounded-xl border border-border bg-card p-3">
-      <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-muted-foreground">
-        <span className="text-brand">{icon}</span>
+    <div className={`rounded-xl border p-3 ${warn ? 'border-amber-500/40 bg-amber-500/10' : 'border-border bg-card'}`}>
+      <div className={`flex items-center gap-1.5 text-[11px] uppercase tracking-wide ${warn ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground'}`}>
+        <span className={warn ? 'text-amber-600 dark:text-amber-400' : 'text-brand'}>{icon}</span>
         <span className="truncate">{label}</span>
       </div>
-      <div className="mt-1 text-lg sm:text-xl font-semibold tabular-nums leading-tight">{value}</div>
+      <div className={`mt-1 text-lg sm:text-xl font-semibold tabular-nums leading-tight ${warn ? 'text-amber-700 dark:text-amber-300' : ''}`}>{value}</div>
       {hint && <div className="text-[10px] text-muted-foreground truncate">{hint}</div>}
     </div>
   );
@@ -333,7 +383,9 @@ function Empty({ text }: { text: string }) {
   return <p className="text-xs text-muted-foreground">{text}</p>;
 }
 
-function Table({ head, rows, numericCols = [] }: { head: string[]; rows: (string | number)[][]; numericCols?: number[] }) {
+function Table({
+  head, rows, numericCols = [], highlightRow,
+}: { head: string[]; rows: (string | number)[][]; numericCols?: number[]; highlightRow?: (ri: number) => boolean }) {
   const num = new Set(numericCols);
   return (
     <div className="overflow-x-auto rounded-lg border border-border">
@@ -349,7 +401,12 @@ function Table({ head, rows, numericCols = [] }: { head: string[]; rows: (string
         </thead>
         <tbody>
           {rows.map((r, ri) => (
-            <tr key={ri} className="border-b border-border/60 last:border-0 hover:bg-muted/30">
+            <tr
+              key={ri}
+              className={`border-b border-border/60 last:border-0 ${
+                highlightRow?.(ri) ? 'bg-amber-500/10 hover:bg-amber-500/15' : 'hover:bg-muted/30'
+              }`}
+            >
               {r.map((c, ci) => (
                 <td key={ci} className={`px-3 py-1.5 whitespace-nowrap max-w-[240px] truncate ${num.has(ci) ? 'text-right tabular-nums' : 'text-foreground/90'}`} title={String(c)}>
                   {c}

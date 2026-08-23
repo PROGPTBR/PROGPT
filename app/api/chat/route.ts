@@ -1,8 +1,6 @@
 import { z } from 'zod';
 import { streamText, StreamData } from 'ai';
-import { createOpenAI } from '@ai-sdk/openai';
-import { getOpenAIModel } from '@/lib/llm/openai';
-import { requireEnv } from '@/lib/env';
+import { getOpenAIModel, getStreamingOpenAI } from '@/lib/llm/openai';
 import { runRag } from '@/lib/rag';
 import { condenseQuery } from '@/lib/rag/condenser';
 import { suggestFollowups } from '@/lib/rag/followups';
@@ -146,9 +144,7 @@ export async function POST(req: Request): Promise<Response> {
       { role: 'user', content: rag.user },
     ];
 
-    const openai = createOpenAI({
-      apiKey: requireEnv('OPENAI_API_KEY'),
-    });
+    const openai = getStreamingOpenAI();
 
     const data = new StreamData();
     data.appendMessageAnnotation({

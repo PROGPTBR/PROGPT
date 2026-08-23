@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import { createOpenAI, type OpenAIProvider } from '@ai-sdk/openai';
 import { requireEnv } from '@/lib/env';
 
 const TIMEOUT_MS = 30_000;
@@ -10,6 +11,29 @@ export function getOpenAI(): OpenAI {
   const apiKey = requireEnv('OPENAI_API_KEY');
   instance = new OpenAI({ apiKey });
   return instance;
+}
+
+let streamingInstance: OpenAIProvider | null = null;
+
+/**
+ * Vercel AI SDK provider for `streamText()` call sites. `compatibility:
+ * 'strict'` is load-bearing, not cosmetic: without it `@ai-sdk/openai` never
+ * sends `stream_options.include_usage` to OpenAI, so streaming responses
+ * never carry a `usage` chunk and `onFinish`'s `usage.promptTokens` /
+ * `usage.completionTokens` come back as `NaN`. That NaN gets JSON-serialized
+ * to `null`, which then violates the NOT NULL constraint on
+ * `api_usage_events.tokens_in`/`tokens_out` and `recordApiUsage` swallows
+ * the insert error — every `chat-generate` / `assistant-*-generate` /
+ * refine / negotiate row was silently dropped until this was added
+ * (found 2026-08-23, zero rows for those operations since sub-projeto 19).
+ * `getOpenAI()` above (non-streaming `generateObject`/`generateText`) is
+ * unaffected — OpenAI always includes usage on non-streaming responses.
+ */
+export function getStreamingOpenAI(): OpenAIProvider {
+  if (streamingInstance) return streamingInstance;
+  const apiKey = requireEnv('OPENAI_API_KEY');
+  streamingInstance = createOpenAI({ apiKey, compatibility: 'strict' });
+  return streamingInstance;
 }
 
 export type ModelTier = 'generation' | 'routing' | 'multimodal';

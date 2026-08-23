@@ -1,8 +1,6 @@
 import { streamText } from 'ai';
-import { createOpenAI } from '@ai-sdk/openai';
-import { getOpenAIModel } from '@/lib/llm/openai';
+import { getOpenAIModel, getStreamingOpenAI } from '@/lib/llm/openai';
 import { z } from 'zod';
-import { requireEnv } from '@/lib/env';
 import { getCurrentUser } from '@/lib/auth';
 import { checkChatRateLimit } from '@/lib/rate-limit';
 import { retrieve } from '@/lib/rag/retriever';
@@ -127,7 +125,7 @@ async function refineBody(
     } as Record<AssistantType, ApiOperation>
   )[run.assistant_type];
 
-  const openai = createOpenAI({ apiKey: requireEnv('OPENAI_API_KEY') });
+  const openai = getStreamingOpenAI();
   const generateSpan = trace.span('generate', { systemLen: system.length });
 
   try {
