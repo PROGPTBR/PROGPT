@@ -15,9 +15,11 @@ Fonte: dois arquivos entregues pelo diretor em 21/08/2026.
 1.15x, poder de decisão, técnica, concessões/trocas, checklist) · Batch C = `d3e5a4b` (#227)
 financeira 12 → 15 indicadores.
 
-**Batches D, E, F e G** estão implementados na árvore de trabalho (ainda **não commitados**
-em 22/08/2026) — ver o Rastreamento no fim deste doc. Pendência externa: provisionar
-`PORTAL_TRANSPARENCIA_TOKEN` no Railway, sem o qual a 3ª base do Batch E fica dormente.
+**Batches D–I** estão entregues (D–G = `8084c07`, H = `03e2adb`, I = esta rodada) — ver o
+Rastreamento no fim deste doc. Pendências externas: provisionar `PORTAL_TRANSPARENCIA_TOKEN`
+no Railway (sem ele a 3ª base do Batch E fica dormente) e rodar
+`python scripts/insert_template_rfq_padrao.py` pra o template da RFQ em produção passar a
+usar os placeholders comerciais do Batch I.
 
 ## Ordem de execução
 
@@ -28,7 +30,7 @@ em 22/08/2026) — ver o Rastreamento no fim deste doc. Pendência externa: prov
 | **F** ✅ | Financeira: os 3 campos qualitativos do doc (tipo de negócio, tempo de mercado, pendências) | P/M | — |
 | **G** ✅ | Pesquisa de Preços: "Buscar preço e NCM aproximado" via LLM + web search | M | D (disclaimer) |
 | **H** ✅ | SWOT: perguntas no Contexto Comercial + gráfico 2×2 no relatório | M | — |
-| **I** | RFQ/RFP: mais campos + anexo + abrir e-mail com o arquivo anexado | M | — |
+| **I** ✅ | RFQ/RFP: mais campos + anexo + abrir e-mail com o arquivo anexado | M | — |
 | **J** | Supplier Scorecard: adotar a planilha `Mudanças v1.xlsx` | G | — |
 | **K** | Indicadores: ampliar fontes com link/fonte/data + tabela categoria→referência | G | D (disclaimer) |
 | **L** | Base do cliente: materiais + vendor list (upload, atualizável, autofill) | G | — |
@@ -54,9 +56,9 @@ contidas numa tela; J–L são schema+integração. M depende de reprodução co
 - **Assistente novo ou mudança de status de tile** → atualizar `AssistantToolCTA`
   (`AssistantToolType` + `META` + `VALID_TYPES` + `STRIP_TYPES`) **e** a lista "Ferramentas
   dedicadas" no `SYSTEM_PROMPT`.
-- **Baseline de testes**: a `main` tem 6 vitest vermelhos pré-existentes (4 em
-  `tests/api/billing/checkout.test.ts`, 2 no guard de sandbox do Asaas) + 1 flaky de exceljs.
-  Não confundir com regressão do batch.
+- **Baseline de testes**: a `main` tem **16 vitest vermelhos pré-existentes** (checkout e
+  webhook do Asaas, guard de sandbox, voice-routes, middleware, EmptyState) + 1 flaky de
+  exceljs. Verificado com `git stash` em 22/08/2026. Não confundir com regressão do batch.
 
 ---
 
@@ -414,7 +416,7 @@ presa, Spend Analysis em polling, ou o chat).
 | 2 | Base de materiais do cliente (ABC) | L | ⬜ |
 | 3 | Planilhas do cliente + 3 bases gov + saúde financeira/documentação (Busca) | E / L | 🟡 E feito (falta o token da CGU); planilhas ficam no L |
 | 4 | Vendor list + autofill CNPJ/nome (Kraljic) | L | ⬜ |
-| 5 | RFQ: campos + anexo + e-mail com anexo | I | ⬜ |
+| 5 | RFQ: campos + anexo + e-mail com anexo | I | ✅ |
 | 6 | Negociação: voz, poder de decisão, técnica, concessões, checklist | Batch B | ✅ #226 |
 | 7 | SWOT como perguntas + gráfico no relatório | H | ✅ |
 | 8 | Financeira 12 → 15 indicadores | Batch C | ✅ #227 |
@@ -436,6 +438,14 @@ presa, Spend Analysis em polling, ou o chat).
    `/assistants/homologacao` abrem `mailto:comercial@2bsupply.com.br` com o assunto
    "Interesse: Homologação de Fornecedor"; no painel lateral do chat aparece como
    "Sob demanda", inclicável.
+2. ✅ **RFQ com anexo**: implementado o `.eml` (opção 1). A mensagem sai com o `.docx` já
+   anexado e abre no cliente do próprio comprador — o remetente continua sendo ele, sem
+   registro de envio nem domínio nosso na conversa com o fornecedor. Resend (opção 2) fica
+   disponível se o diretor quiser rastrear envios, mas muda a semântica.
+3. ✅ **Quais "mais campos" na RFQ**: entrou a lista proposta inteira (quantidade/unidade,
+   local e prazo de entrega, Incoterm, condição de pagamento, moeda, validade da proposta,
+   data/hora limite de resposta, contato do comprador, amostra) — **todos opcionais**. Campo
+   em branco não entra no prompt nem vira linha no documento.
 4. ✅ **Pendências judiciais/protestos**: entregues **as duas saídas**, como recomendado —
    campo manual `pendencias` no form com links de consulta (CENPROT / e-SAJ TJSP) **e**
    busca web rotulada indicativa/não-oficial atrás de `FINANCIAL_WEBSEARCH` (default ON,
@@ -443,9 +453,6 @@ presa, Spend Analysis em polling, ou o chat).
 
 ### Em aberto
 
-2. **RFQ com anexo**: `.eml` aberto no cliente de e-mail do comprador (recomendado) ou envio
-   pelo nosso domínio via Resend?
-3. **Quais "mais campos" na RFQ** — validar a lista proposta no Batch I.
 5. **Escala do Scorecard**: migrar tudo para 1–5 (como a planilha) ou manter 0–10 e converter
    na exibição? Afeta runs já salvos.
 6. **Tier 3 dos indicadores** (ANP, ANTT, CEPEA, Pink Sheet): aceita entrar como fonte

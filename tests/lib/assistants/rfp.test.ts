@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { buildRfpPrompt, RFP_SYSTEM_PROMPT } from '@/lib/assistants/rfp';
+import {
+  buildRfpPrompt,
+  formatCommercialTerms,
+  RFP_SYSTEM_PROMPT,
+} from '@/lib/assistants/rfp';
 import type { RfpParams, TemplateRow } from '@/lib/assistants/types';
 import type { RetrievedChunk } from '@/lib/rag/types';
 
@@ -134,5 +138,56 @@ describe('buildRfpPrompt', () => {
     const out = buildRfpPrompt(baseParams, templated, []);
     expect(out.user).toMatch(/Head section/);
     expect(out.user).not.toMatch(/Verbatim tail not for LLM/);
+  });
+});
+
+// Condições comerciais da RFQ — backlog do diretor (2026-08-19, Batch I).
+// A regra que importa: campo em branco NÃO vira linha no prompt, senão o
+// modelo inventa Incoterm/prazo que o comprador nunca definiu.
+describe('formatCommercialTerms', () => {
+  it('returns an empty string when no commercial field was filled', () => {
+    expect(formatCommercialTerms(baseParams)).toBe('');
+  });
+
+  it('renders only the filled fields, in the canonical order', () => {
+    const out = formatCommercialTerms({
+      ...baseParams,
+      quantity: '12.000 unidades',
+      incoterm: 'DAP',
+      paymentTerms: '30 dias fora a quinzena',
+    });
+    expect(out).toContain('**Quantidade / unidade de fornecimento**: 12.000 unidades');
+    expect(out).toContain('**Incoterm**: DAP');
+    expect(out).toContain('**Condição de pagamento**: 30 dias fora a quinzena');
+    expect(out).not.toContain('Local de entrega');
+    expect(out).not.toContain('Moeda da proposta');
+    expect(out.indexOf('Quantidade')).toBeLessThan(out.indexOf('Incoterm'));
+    expect(out.indexOf('Incoterm')).toBeLessThan(out.indexOf('Condição de pagamento'));
+  });
+
+  it('ignores whitespace-only values', () => {
+    expect(formatCommercialTerms({ ...baseParams, incoterm: '   ' })).toBe('');
+  });
+
+  it('spells out the sample requirement only when the flag is on', () => {
+    expect(formatCommercialTerms({ ...baseParams, sampleRequired: true })).toContain(
+      '**Amostra**: obrigatória',
+    );
+    expect(formatCommercialTerms({ ...baseParams, sampleRequired: false })).toBe('');
+  });
+
+  it('reaches the user prompt through buildRfpPrompt', () => {
+    const filled = buildRfpPrompt(
+      { ...baseParams, deliveryLocation: 'CD Cajamar/SP', sampleRequired: true },
+      template,
+      [],
+    );
+    expect(filled.user).toContain('**Local de entrega**: CD Cajamar/SP');
+    expect(filled.user).toContain('**Amostra**: obrigatória');
+
+    // E some por completo quando nada foi preenchido — sem cabeçalho órfão.
+    const empty = buildRfpPrompt(baseParams, template, []);
+    expect(empty.user).not.toContain('Local de entrega');
+    expect(empty.user).not.toContain('Incoterm');
   });
 });

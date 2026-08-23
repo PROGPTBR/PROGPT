@@ -16,6 +16,33 @@ import { handlePaywallResponse } from '@/lib/billing/handle-paywall';
 
 type Phase = 'form' | 'generating' | 'done';
 
+// Campos comerciais da RFQ (backlog do diretor 2026-08-19, Batch I).
+// Só os preenchidos entram no params do run: string vazia gravada no JSONB
+// viraria linha vazia no prompt e ruído no histórico.
+const COMMERCIAL_TEXT_FIELDS = [
+  'quantity',
+  'deliveryLocation',
+  'deliveryDeadline',
+  'incoterm',
+  'paymentTerms',
+  'currency',
+  'proposalValidity',
+  'responseDeadline',
+  'buyerContact',
+] as const;
+
+export function commercialTerms(
+  values: RfpFormValues,
+): Record<string, string | boolean> {
+  const out: Record<string, string | boolean> = {};
+  for (const key of COMMERCIAL_TEXT_FIELDS) {
+    const v = values[key];
+    if (typeof v === 'string' && v.trim()) out[key] = v.trim();
+  }
+  if (values.sampleRequired) out.sampleRequired = true;
+  return out;
+}
+
 export function RfpAssistant() {
   const [phase, setPhase] = useState<Phase>('form');
   const [output, setOutput] = useState('');
@@ -44,6 +71,9 @@ export function RfpAssistant() {
             budget: values.budget,
             criteria: values.criteria,
             notes: values.notes,
+            // Condições comerciais (Batch I): só viajam quando preenchidas.
+            // Campo vazio fora do payload = campo fora do prompt.
+            ...commercialTerms(values),
             ...(values.perfilId ? { perfilId: values.perfilId } : {}),
           },
         }),

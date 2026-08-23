@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { Download, RotateCcw, Copy, FileSpreadsheet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SendEmailButton } from './SendEmailButton';
+import { SendEmailWithAttachmentButton } from './SendEmailWithAttachmentButton';
 
 type Props = {
   markdown: string;
@@ -124,6 +125,16 @@ export function RfpResult({ markdown, runId, scope, generating, onReset }: Props
             {downloadingDocx ? 'Baixando…' : 'Baixar .docx'}
           </Button>
         </div>
+      </div>
+
+      {/* Batch I — enviar a RFQ pro mercado com o .docx já anexado. Fica
+          numa linha própria porque leva o campo de destinatários junto. */}
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        <SendEmailWithAttachmentButton
+          runId={runId}
+          disabled={generating}
+          label="Abrir e-mail com a RFQ anexada"
+        />
       </div>
 
       <article className="rounded-md border border-border bg-card p-6 prose prose-sm dark:prose-invert max-w-none overflow-x-auto [&_table]:block [&_table]:overflow-x-auto [&_table]:whitespace-nowrap [&_table]:max-w-full [&_th]:px-2 [&_td]:px-2">

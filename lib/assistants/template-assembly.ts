@@ -50,7 +50,10 @@ export function splitTemplateBody(bodyMd: string): {
 // an empty string).
 //
 // Each assistant contributes its own placeholder vocabulary:
-//   RFP     → cliente, categoria, escopo, prazo, orcamento, criterios, notas
+//   RFP     → cliente, categoria, escopo, prazo, orcamento, criterios, notas,
+//             quantidade, local_entrega, prazo_entrega, incoterm,
+//             condicao_pagamento, moeda, validade_proposta,
+//             limite_resposta, contato_comprador, amostra
 //   Kraljic → portfolio, periodo, num_itens, spend_total, notas
 //   Porter  → categoria, segmento, escopo, observacoes
 //
@@ -87,6 +90,28 @@ export function renderPlaceholders(
         ? '(critérios padrão de procurement)'
         : params.criteria.map((cr) => `- ${cr}`).join('\n');
     substitutions.notas = params.notes ?? '';
+    // Condições comerciais da RFQ (backlog do diretor 2026-08-19, Batch I).
+    // Todas opcionais no form: quando o comprador não define, o placeholder
+    // cai no mesmo texto entre colchetes que o template usava antes, pra o
+    // documento continuar pedindo o dado em vez de sair com célula vazia.
+    substitutions.quantidade =
+      params.quantity || '[Quantidade ou frequência do serviço]';
+    substitutions.local_entrega =
+      params.deliveryLocation || '[Local de entrega a definir pelo comprador]';
+    substitutions.prazo_entrega =
+      params.deliveryDeadline || '[Prazo de entrega exigido a definir]';
+    substitutions.incoterm = params.incoterm || '[Incoterm a definir]';
+    substitutions.condicao_pagamento =
+      params.paymentTerms || '[Condição de pagamento a definir]';
+    substitutions.moeda = params.currency || '[Moeda da proposta a definir]';
+    substitutions.validade_proposta =
+      params.proposalValidity || '[Validade mínima da proposta a definir]';
+    substitutions.limite_resposta = params.responseDeadline || params.deadline;
+    substitutions.contato_comprador =
+      params.buyerContact || c?.company_email || '[Contato do comprador]';
+    substitutions.amostra = params.sampleRequired
+      ? 'Obrigatória — enviar amostra para aprovação antes da contratação'
+      : 'Não exigida';
     // Profile-name falls back to client name when blank — keeps the
     // verbatim tail (assinatura, foro, etc.) sensible if profile is
     // empty.

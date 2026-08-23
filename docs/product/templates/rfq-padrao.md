@@ -65,6 +65,10 @@ Salientamos que a mais estrita confidencialidade será mantida no manuseio desta
 - Data de emissão da RFQ: [Data]
 - Forneça informações sobre o envio da resposta, incluindo formatação do arquivo e revisão das fases RFQ
 - Proposal Deadline: {{prazo}}
+- Data/hora limite para resposta: {{limite_resposta}}
+- Enviar a proposta para: {{contato_comprador}}
+- Moeda da proposta: {{moeda}}
+- Validade mínima da proposta: {{validade_proposta}}
 
 ---
 
@@ -74,8 +78,12 @@ Salientamos que a mais estrita confidencialidade será mantida no manuseio desta
 |-------|---------|
 | Detalhes do Produto/Serviço | [Descrição detalhada baseada em {{escopo}}] |
 | Requerimentos Técnicos | [Especificações técnicas necessárias] |
-| Quantidade / Duração | [Quantidade ou frequência do serviço] |
-| Entrega | [Requerimentos detalhados sobre a entrega] |
+| Quantidade / Duração | {{quantidade}} |
+| Local de entrega | {{local_entrega}} |
+| Prazo de entrega exigido | {{prazo_entrega}} |
+| Modalidade de entrega (Incoterm) | {{incoterm}} |
+| Condição de pagamento | {{condicao_pagamento}} |
+| Amostra | {{amostra}} |
 
 ---
 

@@ -18,6 +18,18 @@ export type RfpFormValues = {
   budget: string;
   criteria: string[];
   notes: string;
+  // Condições comerciais da RFQ (backlog do diretor 2026-08-19, Batch I).
+  // Todas opcionais — o comprador preenche o que faz sentido pra categoria.
+  quantity: string;
+  deliveryLocation: string;
+  deliveryDeadline: string;
+  incoterm: string;
+  paymentTerms: string;
+  currency: string;
+  proposalValidity: string;
+  responseDeadline: string;
+  buyerContact: string;
+  sampleRequired: boolean;
   // Sub-projeto 33: when the user starts from a Profile, perfilId is
   // stored in the run's params JSONB for future cross-referencing.
   perfilId?: string;
@@ -49,6 +61,16 @@ const EMPTY: RfpFormValues = {
   budget: '',
   criteria: [],
   notes: '',
+  quantity: '',
+  deliveryLocation: '',
+  deliveryDeadline: '',
+  incoterm: '',
+  paymentTerms: '',
+  currency: '',
+  proposalValidity: '',
+  responseDeadline: '',
+  buyerContact: '',
+  sampleRequired: false,
 };
 
 export function RfpForm({ onSubmit }: { onSubmit: (v: RfpFormValues) => void }) {
@@ -108,6 +130,16 @@ export function RfpForm({ onSubmit }: { onSubmit: (v: RfpFormValues) => void }) 
       budget: p.budget,
       criteria: [...p.criteria],
       notes: p.notes ?? '',
+      quantity: p.quantity ?? '',
+      deliveryLocation: p.deliveryLocation ?? '',
+      deliveryDeadline: p.deliveryDeadline ?? '',
+      incoterm: p.incoterm ?? '',
+      paymentTerms: p.paymentTerms ?? '',
+      currency: p.currency ?? '',
+      proposalValidity: p.proposalValidity ?? '',
+      responseDeadline: p.responseDeadline ?? '',
+      buyerContact: p.buyerContact ?? '',
+      sampleRequired: p.sampleRequired ?? false,
     }));
     toast.success('Exemplo carregado — ajuste e gere');
   }
@@ -261,6 +293,140 @@ export function RfpForm({ onSubmit }: { onSubmit: (v: RfpFormValues) => void }) 
           Selecione os critérios que o template deve priorizar. Se nenhum, o modelo usa o
           padrão sênior de procurement.
         </p>
+      </div>
+
+      {/* CONDIÇÕES COMERCIAIS DA RFQ (backlog do diretor 2026-08-19, Batch I).
+          Tudo opcional: campo vazio não entra no prompt, pra não induzir o
+          modelo a inventar Incoterm ou prazo que o comprador não definiu. */}
+      <div className="border-t border-border pt-4">
+        <div className="text-xs font-medium mb-1">
+          Condições comerciais (opcional)
+        </div>
+        <p className="text-[10px] text-muted-foreground mb-3">
+          Preencha o que já estiver definido — entra no documento como
+          exigência da cotação. O que ficar em branco é omitido.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div>
+            <label className="text-xs font-medium block mb-1">Quantidade / unidade</label>
+            <input
+              type="text"
+              value={values.quantity}
+              onChange={(e) =>
+                setValues((v) => ({ ...v, quantity: e.target.value }))
+              }
+              placeholder="Ex: 12.000 unidades (caixa c/ 24)"
+              className="w-full rounded-md border border-input bg-background p-2 text-sm h-9 focus:outline-none focus:ring-1 focus:ring-ring"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-medium block mb-1">Local de entrega</label>
+            <input
+              type="text"
+              value={values.deliveryLocation}
+              onChange={(e) =>
+                setValues((v) => ({ ...v, deliveryLocation: e.target.value }))
+              }
+              placeholder="Ex: CD Cajamar/SP"
+              className="w-full rounded-md border border-input bg-background p-2 text-sm h-9 focus:outline-none focus:ring-1 focus:ring-ring"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-medium block mb-1">Prazo de entrega</label>
+            <input
+              type="text"
+              value={values.deliveryDeadline}
+              onChange={(e) =>
+                setValues((v) => ({ ...v, deliveryDeadline: e.target.value }))
+              }
+              placeholder="Ex: 30 dias após a OC"
+              className="w-full rounded-md border border-input bg-background p-2 text-sm h-9 focus:outline-none focus:ring-1 focus:ring-ring"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-medium block mb-1">Incoterm</label>
+            <input
+              type="text"
+              value={values.incoterm}
+              onChange={(e) =>
+                setValues((v) => ({ ...v, incoterm: e.target.value }))
+              }
+              placeholder="Ex: DAP, CIF, FOB"
+              className="w-full rounded-md border border-input bg-background p-2 text-sm h-9 focus:outline-none focus:ring-1 focus:ring-ring"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-medium block mb-1">Condição de pagamento</label>
+            <input
+              type="text"
+              value={values.paymentTerms}
+              onChange={(e) =>
+                setValues((v) => ({ ...v, paymentTerms: e.target.value }))
+              }
+              placeholder="Ex: 30 dias fora a quinzena"
+              className="w-full rounded-md border border-input bg-background p-2 text-sm h-9 focus:outline-none focus:ring-1 focus:ring-ring"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-medium block mb-1">Moeda da proposta</label>
+            <input
+              type="text"
+              value={values.currency}
+              onChange={(e) =>
+                setValues((v) => ({ ...v, currency: e.target.value }))
+              }
+              placeholder="Ex: BRL"
+              className="w-full rounded-md border border-input bg-background p-2 text-sm h-9 focus:outline-none focus:ring-1 focus:ring-ring"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-medium block mb-1">Validade da proposta</label>
+            <input
+              type="text"
+              value={values.proposalValidity}
+              onChange={(e) =>
+                setValues((v) => ({ ...v, proposalValidity: e.target.value }))
+              }
+              placeholder="Ex: 60 dias"
+              className="w-full rounded-md border border-input bg-background p-2 text-sm h-9 focus:outline-none focus:ring-1 focus:ring-ring"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-medium block mb-1">Limite para resposta</label>
+            <input
+              type="text"
+              value={values.responseDeadline}
+              onChange={(e) =>
+                setValues((v) => ({ ...v, responseDeadline: e.target.value }))
+              }
+              placeholder="Ex: 15/09/2026 às 18h"
+              className="w-full rounded-md border border-input bg-background p-2 text-sm h-9 focus:outline-none focus:ring-1 focus:ring-ring"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-medium block mb-1">Contato do comprador</label>
+            <input
+              type="text"
+              value={values.buyerContact}
+              onChange={(e) =>
+                setValues((v) => ({ ...v, buyerContact: e.target.value }))
+              }
+              placeholder="Ex: compras@empresa.com.br"
+              className="w-full rounded-md border border-input bg-background p-2 text-sm h-9 focus:outline-none focus:ring-1 focus:ring-ring"
+            />
+          </div>
+        </div>
+        <label className="mt-3 flex items-center gap-2 text-xs text-foreground/90">
+          <input
+            type="checkbox"
+            checked={values.sampleRequired}
+            onChange={(e) =>
+              setValues((v) => ({ ...v, sampleRequired: e.target.checked }))
+            }
+            className="h-3.5 w-3.5 rounded border-input"
+          />
+          Exigir amostra para aprovação antes da contratação
+        </label>
       </div>
 
       <div>

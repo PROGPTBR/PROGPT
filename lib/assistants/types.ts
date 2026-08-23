@@ -91,6 +91,25 @@ export const RfpParamsSchema = z.object({
   // string[] before sending. Empty array is OK — model defaults to standard.
   criteria: z.array(z.string().trim().min(1).max(80)).max(20),
   notes: z.string().trim().max(2000).optional().default(''),
+
+  // Campos de RFQ de mercado (backlog do diretor 2026-08-19, Batch I). Todos
+  // OPCIONAIS: runs antigos em assistant_runs.params continuam abrindo, e o
+  // comprador preenche só o que fizer sentido pra categoria dele. Cada um
+  // entra no prompt (lib/assistants/rfp.ts) apenas quando preenchido.
+  // Sem `.default('')`: o tipo de saída precisa continuar opcional, senão as
+  // fachadas RfpParams-shaped dos outros assistentes (paramsForAssembly)
+  // deixariam de compilar.
+  quantity: z.string().trim().max(120).optional(),
+  deliveryLocation: z.string().trim().max(200).optional(),
+  deliveryDeadline: z.string().trim().max(120).optional(),
+  incoterm: z.string().trim().max(40).optional(),
+  paymentTerms: z.string().trim().max(200).optional(),
+  proposalValidity: z.string().trim().max(120).optional(),
+  currency: z.string().trim().max(40).optional(),
+  sampleRequired: z.boolean().optional(),
+  buyerContact: z.string().trim().max(200).optional(),
+  responseDeadline: z.string().trim().max(120).optional(),
+
   // Sub-projeto 33: when the user invokes "Iniciar de um Perfil" in the
   // form, the UUID of the source Profile run is stored here for cross-
   // referencing. Optional and JSONB — no migration needed.

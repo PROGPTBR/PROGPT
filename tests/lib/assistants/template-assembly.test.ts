@@ -181,3 +181,65 @@ describe('splitAssembledOutput', () => {
     expect(tail).toBe('Cliente: Embraer S.A.');
   });
 });
+
+// Condições comerciais da RFQ — backlog do diretor (2026-08-19, Batch I).
+// O template `rfq-padrao.md` passou a consumir estes placeholders na seção
+// de Especificações Técnicas e nas Instruções de Envio.
+describe('renderPlaceholders — condições comerciais da RFQ', () => {
+  const text = [
+    'q={{quantidade}}',
+    'local={{local_entrega}}',
+    'prazoEnt={{prazo_entrega}}',
+    'incoterm={{incoterm}}',
+    'pgto={{condicao_pagamento}}',
+    'moeda={{moeda}}',
+    'validade={{validade_proposta}}',
+    'limite={{limite_resposta}}',
+    'contato={{contato_comprador}}',
+    'amostra={{amostra}}',
+  ].join('\n');
+
+  it('substitutes every filled commercial field', () => {
+    const out = renderPlaceholders(
+      text,
+      {
+        ...params,
+        quantity: '12.000 un',
+        deliveryLocation: 'CD Cajamar/SP',
+        deliveryDeadline: '30 dias após a OC',
+        incoterm: 'DAP',
+        paymentTerms: '30 ddl',
+        currency: 'BRL',
+        proposalValidity: '60 dias',
+        responseDeadline: '15/09/2026 18h',
+        buyerContact: 'compras@embraer.com',
+        sampleRequired: true,
+      },
+      company,
+    );
+    expect(out).toContain('q=12.000 un');
+    expect(out).toContain('local=CD Cajamar/SP');
+    expect(out).toContain('prazoEnt=30 dias após a OC');
+    expect(out).toContain('incoterm=DAP');
+    expect(out).toContain('pgto=30 ddl');
+    expect(out).toContain('moeda=BRL');
+    expect(out).toContain('validade=60 dias');
+    expect(out).toContain('limite=15/09/2026 18h');
+    expect(out).toContain('contato=compras@embraer.com');
+    expect(out).toContain('amostra=Obrigatória');
+  });
+
+  it('falls back to a "a definir" instruction instead of leaving the cell blank', () => {
+    const out = renderPlaceholders(text, params, null);
+    expect(out).toContain('q=[Quantidade ou frequência do serviço]');
+    expect(out).toContain('incoterm=[Incoterm a definir]');
+    expect(out).toContain('amostra=Não exigida');
+    expect(out).not.toMatch(/\{\{/); // nenhum placeholder vazando
+  });
+
+  it('falls back to the response deadline and the company e-mail when specific fields are blank', () => {
+    const out = renderPlaceholders(text, params, company);
+    expect(out).toContain('limite=30 dias'); // params.deadline
+    expect(out).toContain('contato=compras@acme.com.br'); // perfil da empresa
+  });
+});

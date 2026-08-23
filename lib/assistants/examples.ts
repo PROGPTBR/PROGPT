@@ -142,6 +142,17 @@ export const RFP_EXAMPLES: FormExample<RfpParams>[] = [
       ],
       notes:
         'Fornecedor ideal combina proximidade logística no Sudeste/Sul, capacidade de inovação em barreiras de umidade e referências no setor de alimentos. A RFQ será analisada em conjunto por Compras, P&D (requisitos técnicos) e Supply (lead times).',
+      // Condições comerciais (Batch I) — o exemplo já demonstra a seção nova.
+      quantity: '200 ton/ano (bobinas de 1.200 mm)',
+      deliveryLocation: 'CD Cajamar/SP e planta Rio Claro/SP',
+      deliveryDeadline: '30 dias após a ordem de compra',
+      incoterm: 'DAP (entrega na planta do comprador)',
+      paymentTerms: '30 dias fora a quinzena, a partir do aceite fiscal',
+      currency: 'BRL',
+      proposalValidity: '60 dias',
+      responseDeadline: '30 dias úteis a partir do envio da RFQ, às 18h',
+      buyerContact: 'compras@alfaalimentos.com.br',
+      sampleRequired: true,
     },
   },
 ];

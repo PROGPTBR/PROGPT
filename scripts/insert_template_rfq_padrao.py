@@ -3,11 +3,7 @@
 Idempotent: if a template with the same name + assistant_type already exists,
 this updates body_md/description instead of creating a duplicate.
 """
-import os, sys, urllib.parse
-from dotenv import load_dotenv
-
-load_dotenv('.env.local')
-import psycopg
+from db_connect import connect
 
 ADMIN_USER_ID = '5efba61c-6b36-49d1-b443-b235b003ad54'  # rgoalves@gmail.com
 TEMPLATE_NAME = 'RFQ Padrão (com termos e código de conduta)'
@@ -15,23 +11,22 @@ TEMPLATE_DESCRIPTION = (
     'Template completo PT-BR com cotação fiscal brasileira (PIS/COFINS/ICMS/IPI/NCM), '
     'termos & condições (13 cláusulas) e código de ética (10 seções). '
     'Placeholders alinhados aos campos do form: '
-    '{{escopo}}, {{categoria}}, {{prazo}}, {{orcamento}}, {{criterios}}, {{notas}}.'
+    '{{escopo}}, {{categoria}}, {{prazo}}, {{orcamento}}, {{criterios}}, {{notas}}, '
+    '{{quantidade}}, {{local_entrega}}, {{prazo_entrega}}, {{incoterm}}, '
+    '{{condicao_pagamento}}, {{moeda}}, {{validade_proposta}}, '
+    '{{limite_resposta}}, {{contato_comprador}}, {{amostra}}.'
 )
 BODY_PATH = 'docs/product/templates/rfq-padrao.md'
 
 with open(BODY_PATH, 'r', encoding='utf-8') as f:
     body_md = f.read()
 
-url = os.environ['NEXT_PUBLIC_SUPABASE_URL']
-ref = url.replace('https://', '').split('.')[0]
-pw = urllib.parse.quote(os.environ['SUPABASE_DB_PASSWORD'], safe='')
-dsn = f'postgresql://postgres:{pw}@db.{ref}.supabase.co:5432/postgres?sslmode=require'
-
-print(f'Conectando em db.{ref}.supabase.co ...')
 print(f'Template: {TEMPLATE_NAME!r}')
 print(f'Tamanho do body_md: {len(body_md)} chars')
 
-with psycopg.connect(dsn, autocommit=True) as conn:
+# connect() tenta o host direto (IPv6) e cai no pooler IPv4 — o host direto
+# sozinho falha em rede sem IPv6 (ver CLAUDE.md / scripts/db_connect.py).
+with connect() as conn:
     with conn.cursor() as cur:
         cur.execute(
             "select id, char_length(body_md) from templates where assistant_type='rfp' and name=%s",

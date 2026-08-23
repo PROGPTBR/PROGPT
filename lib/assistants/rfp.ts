@@ -38,6 +38,38 @@ function formatCriteria(criteria: string[]): string {
   return criteria.map((c) => `- ${c}`).join('\n');
 }
 
+// Condições comerciais da RFQ (backlog do diretor 2026-08-19, Batch I).
+// Só entram no prompt quando preenchidas — campo vazio não vira linha, pra
+// não induzir o LLM a inventar Incoterm ou prazo que o comprador não definiu.
+const COMMERCIAL_TERM_LABELS: [keyof RfpParams, string][] = [
+  ['quantity', 'Quantidade / unidade de fornecimento'],
+  ['deliveryLocation', 'Local de entrega'],
+  ['deliveryDeadline', 'Prazo de entrega exigido'],
+  ['incoterm', 'Incoterm'],
+  ['paymentTerms', 'Condição de pagamento'],
+  ['currency', 'Moeda da proposta'],
+  ['proposalValidity', 'Validade mínima da proposta'],
+  ['responseDeadline', 'Data/hora limite para resposta'],
+  ['buyerContact', 'Contato do comprador para dúvidas'],
+];
+
+export function formatCommercialTerms(params: RfpParams): string {
+  const lines: string[] = [];
+  for (const [key, label] of COMMERCIAL_TERM_LABELS) {
+    const value = params[key];
+    if (typeof value === 'string' && value.trim()) {
+      lines.push(`- **${label}**: ${value.trim()}`);
+    }
+  }
+  if (params.sampleRequired) {
+    lines.push(
+      '- **Amostra**: obrigatória — o fornecedor deve enviar amostra para aprovação antes da contratação',
+    );
+  }
+  if (lines.length === 0) return '';
+  return `${lines.join('\n')}\n`;
+}
+
 function formatChunks(chunks: RetrievedChunk[]): string {
   if (chunks.length === 0) {
     return '(nenhum trecho relevante recuperado — fundamentar em princípios gerais de procurement)';
@@ -86,7 +118,7 @@ export function buildRfpPrompt(
 - **Orçamento estimado**: ${params.budget}
 - **Critérios de avaliação prioritários**:
 ${formatCriteria(params.criteria)}
-${params.notes ? `- **Notas adicionais do comprador**: ${params.notes}` : ''}${
+${formatCommercialTerms(params)}${params.notes ? `- **Notas adicionais do comprador**: ${params.notes}` : ''}${
     companyBlock ? `\n\n## Dados da empresa do comprador (referência)\n\n${companyBlock}` : ''
   }`;
 
