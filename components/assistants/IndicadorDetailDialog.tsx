@@ -18,6 +18,10 @@ export type DetailCard = {
   unidade: string;
   serieLabel: string;
   descricao: string;
+  fonte: string;
+  fonteUrl: string;
+  periodo: string;
+  metodologia: string;
 };
 
 type Pt = { data: string; valor: number };
@@ -183,8 +187,17 @@ export function IndicadorDetailDialog({
             )}
 
             <p className="text-[11px] text-muted-foreground">
-              {card.serieLabel} · fonte: Banco Central do Brasil (séries SGS).
+              {card.serieLabel} · {card.periodo} · fonte:{' '}
+              <a
+                href={card.fonteUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:text-foreground"
+              >
+                {card.fonte}
+              </a>
             </p>
+            <p className="text-[11px] text-muted-foreground">{card.metodologia}</p>
           </div>
         )}
       </DialogContent>

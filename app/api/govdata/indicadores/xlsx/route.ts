@@ -37,7 +37,10 @@ export async function GET(req: Request): Promise<Response> {
   const meta = INDICADOR_META[key];
 
   const pontos = await serieIndicador(key, meses);
-  const buf = await serieXlsxBuffer(meta.nome, meta.unidade, pontos);
+  const buf = await serieXlsxBuffer(meta.nome, meta.unidade, pontos, {
+    metodologia: meta.metodologia,
+    consultadoEm: new Date().toISOString(),
+  });
 
   return new NextResponse(buf as unknown as BodyInit, {
     status: 200,

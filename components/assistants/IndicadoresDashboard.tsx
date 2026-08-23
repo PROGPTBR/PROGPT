@@ -17,8 +17,9 @@ import { Sparkline } from './Sparkline';
 import { IndicadorDetailDialog, type DetailCard } from './IndicadorDetailDialog';
 import { INDICADORES_DISCLAIMER } from '@/lib/legal/disclaimers';
 
-type IndicadorTipo = 'taxa' | 'indice' | 'cambio';
+type IndicadorTipo = 'taxa' | 'indice' | 'cambio' | 'expectativa';
 type Tendencia = 'up' | 'down' | 'flat';
+type Secao = 'juros_cambio' | 'inflacao_reajuste' | 'custos_expectativas';
 
 type Card = {
   key: string;
@@ -31,9 +32,36 @@ type Card = {
   serie: { data: string; valor: number }[];
   serieLabel: string;
   tendencia: Tendencia;
+  secao: Secao;
+  fonte: string;
+  fonteUrl: string;
+  periodo: string;
+  abrangencia: string;
+  metodologia: string;
+  consultadoEm: string;
 };
 
-type Painel = { disponivel: boolean; atualizadoEm: string; cards: Card[] };
+type FonteReferenciada = { fonte: string; cobre: string; aplicacao: string; url: string };
+type IndicadorPorCategoria = { categoria: string; referencia: string };
+
+type Painel = {
+  disponivel: boolean;
+  atualizadoEm: string;
+  cards: Card[];
+  fontesReferenciadas: FonteReferenciada[];
+  indicadorPorCategoria: IndicadorPorCategoria[];
+};
+
+const SECAO_ORDER: Secao[] = ['juros_cambio', 'inflacao_reajuste', 'custos_expectativas'];
+const SECAO_LABELS: Record<Secao, string> = {
+  juros_cambio: 'Juros e câmbio',
+  inflacao_reajuste: 'Inflação e reajuste contratual',
+  custos_expectativas: 'Custos setoriais e expectativas',
+};
+
+// Indicadores sem série SGS por código (ex.: Focus, via OData por nome) não
+// têm drill-down interno — abrem a fonte oficial numa nova aba.
+const DRILLABLE_TIPOS: IndicadorTipo[] = ['taxa', 'indice', 'cambio'];
 
 function fmt(n: number, frac = 2): string {
   return n.toLocaleString('pt-BR', { minimumFractionDigits: frac, maximumFractionDigits: frac });
@@ -42,6 +70,7 @@ function fmt(n: number, frac = 2): string {
 function valorLabel(c: Card): { big: string; suffix: string } {
   if (c.tipo === 'cambio') return { big: `R$ ${fmt(c.valor)}`, suffix: '' };
   if (c.tipo === 'indice') return { big: `${fmt(c.valor)}%`, suffix: '12m' };
+  if (c.tipo === 'expectativa') return { big: `${fmt(c.valor)}%`, suffix: 'Focus 12m' };
   return { big: `${fmt(c.valor)}%`, suffix: 'a.a.' };
 }
 
@@ -56,11 +85,16 @@ function tendStyle(t: Tendencia): { Icon: typeof Minus; cls: string; label: stri
 function IndicadorCardView({ c, onOpen }: { c: Card; onOpen: () => void }) {
   const { big, suffix } = valorLabel(c);
   const t = tendStyle(c.tendencia);
+  const drillable = DRILLABLE_TIPOS.includes(c.tipo);
   return (
     <button
       type="button"
       onClick={onOpen}
-      title={`Ver série histórica de ${c.nome}`}
+      title={
+        drillable
+          ? `Ver série histórica de ${c.nome}`
+          : `Abrir a fonte oficial de ${c.nome} (${c.fonte})`
+      }
       className="group text-left rounded-lg border border-border bg-card p-4 flex flex-col gap-2 transition-all hover:border-brand/50 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-brand/40"
     >
       <div className="flex items-center justify-between">
@@ -83,6 +117,7 @@ function IndicadorCardView({ c, onOpen }: { c: Card; onOpen: () => void }) {
         {c.serieLabel} · em {c.data}
       </div>
       <p className="text-xs text-muted-foreground leading-snug">{c.descricao}</p>
+      <div className="text-[10px] text-muted-foreground/70">{c.fonte}</div>
     </button>
   );
 }
@@ -173,31 +208,49 @@ export function IndicadoresDashboard() {
 
       {loading && !painel && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {Array.from({ length: 6 }).map((_, i) => (
+          {Array.from({ length: 9 }).map((_, i) => (
             <div key={i} className="rounded-lg border border-border bg-card p-4 h-40 animate-pulse" />
           ))}
         </div>
       )}
 
-      {painel?.cards && painel.cards.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {painel.cards.map((c) => (
-            <IndicadorCardView
-              key={c.key}
-              c={c}
-              onOpen={() =>
-                setSelected({
-                  key: c.key,
-                  nome: c.nome,
-                  unidade: c.unidade,
-                  serieLabel: c.serieLabel,
-                  descricao: c.descricao,
-                })
-              }
-            />
-          ))}
-        </div>
-      )}
+      {painel?.cards && painel.cards.length > 0 &&
+        SECAO_ORDER.map((secao) => {
+          const cards = painel.cards.filter((c) => c.secao === secao);
+          if (cards.length === 0) return null;
+          return (
+            <div key={secao} className="space-y-3">
+              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                {SECAO_LABELS[secao]}
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {cards.map((c) => (
+                  <IndicadorCardView
+                    key={c.key}
+                    c={c}
+                    onOpen={() => {
+                      if (!DRILLABLE_TIPOS.includes(c.tipo)) {
+                        window.open(c.fonteUrl, '_blank', 'noopener,noreferrer');
+                        return;
+                      }
+                      setSelected({
+                        key: c.key,
+                        nome: c.nome,
+                        unidade: c.unidade,
+                        serieLabel: c.serieLabel,
+                        descricao: c.descricao,
+                        fonte: c.fonte,
+                        fonteUrl: c.fonteUrl,
+                        periodo: c.periodo,
+                        metodologia: c.metodologia,
+                      });
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          );
+        })}
 
       <IndicadorDetailDialog card={selected} onClose={() => setSelected(null)} />
 
@@ -219,9 +272,66 @@ export function IndicadoresDashboard() {
         </div>
       )}
 
+      {painel && painel.indicadorPorCategoria.length > 0 && (
+        <div className="space-y-2">
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+            Qual indicador usar em cada compra
+          </h2>
+          <div className="rounded-lg border border-border overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead className="bg-muted/40">
+                <tr>
+                  <th className="text-left p-2.5 font-medium">Categoria</th>
+                  <th className="text-left p-2.5 font-medium">Referência recomendada</th>
+                </tr>
+              </thead>
+              <tbody>
+                {painel.indicadorPorCategoria.map((r) => (
+                  <tr key={r.categoria} className="border-t border-border">
+                    <td className="p-2.5 font-medium whitespace-nowrap">{r.categoria}</td>
+                    <td className="p-2.5 text-muted-foreground">{r.referencia}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="text-[10px] text-muted-foreground">
+            Indicador econômico não é cotação de mercado — combine com preços recentes e
+            propostas de fornecedores antes de usar num pedido de compra.
+          </p>
+        </div>
+      )}
+
+      {painel && painel.fontesReferenciadas.length > 0 && (
+        <div className="space-y-2">
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+            Outras fontes de referência
+          </h2>
+          <p className="text-xs text-muted-foreground">
+            Sem integração ao vivo nesta versão — link direto pra consulta.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {painel.fontesReferenciadas.map((f) => (
+              <a
+                key={f.fonte}
+                href={f.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-lg border border-border bg-card p-3 text-xs hover:border-brand/50 hover:shadow-sm transition-all"
+              >
+                <div className="font-medium text-foreground">{f.fonte}</div>
+                <div className="text-muted-foreground mt-1">{f.cobre}</div>
+                <div className="text-muted-foreground/80 mt-1 italic">{f.aplicacao}</div>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+
       <p className="text-[11px] text-muted-foreground">
-        Fonte: Banco Central do Brasil (séries SGS). Valores indicativos para apoio à decisão;
-        confirme no provedor oficial antes de usar em cláusula contratual.
+        Fonte: Banco Central do Brasil (séries SGS e Expectativas de Mercado). Valores
+        indicativos para apoio à decisão; confirme no provedor oficial antes de usar em
+        cláusula contratual.
       </p>
       <p className="text-[11px] text-muted-foreground">{INDICADORES_DISCLAIMER}</p>
     </div>

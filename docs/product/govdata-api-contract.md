@@ -28,7 +28,45 @@ Séries úteis (confirmadas no spike):
 - `432` — Meta Selic definida pelo Copom (% a.a.)
 - `433` — IPCA mensal (% no mês) → acumular 12m no código
 - `1` — Câmbio livre dólar (venda)
-- (a confirmar p/ construção: `189` IGP-M, `192` INCC — checar antes de usar)
+- `4389` — CDI anualizado (base 252, % a.a.)
+- `189` — IGP-M mensal (%)
+- `21619` — Câmbio livre euro (venda)
+
+**Batch K (backlog do diretor 21/08) — confirmados via documento oficial do BACEN**
+("Price Indices in Brazil", FAQ 02, bcb.gov.br/conteudo/home-en/FAQs, nota de rodapé de
+cada índice) **antes de commitar** — não chutados:
+- `190` — IGP-DI mensal (%) — nota do Chart 1, pág. 9: "these two series can also be
+  found... with the codes SGS 433 and SGS 190" (IPCA e IGP-DI, respectivamente)
+- `192` — INCC mensal (%) — nota 5, pág. 16
+- `7450` — IPA (Broad Producer Price, FGV) mensal (%) — nota 3, pág. 15
+
+Cross-checados ao vivo (22/08/2026): `190`/`7450` correlacionam em direção com `189`
+(IGP-M) mês a mês, consistente com IGP-M = IGP-DI = 60% IPA + 30% IPC + 10% INCC (mesmo
+documento). Não incluídos nesta rodada por falta de fonte primária confirmável em tempo
+hábil: INPC, IPCA-15, SINAPI, IPP (IBGE) — ver `lib/govdata/indicadores.ts` (Batch K).
+
+## BACEN Focus (Expectativas de Mercado) — Batch K, Tier 1
+
+Base nova `bacen_olinda` (`BACEN_OLINDA_URL`, default
+`https://olinda.bcb.gov.br/olinda/servico/Expectativas/versao/v1/odata`). OData público,
+sem chave. Filtra por **nome** do indicador (`Indicador eq 'IPCA'`), não por código
+numérico — elimina o risco de série errada.
+
+`GET /ExpectativasMercadoInflacao12Meses?$filter=Indicador eq 'IPCA' and Suavizada eq 'N'
+and baseCalculo eq 1&$top=N&$orderby=Data desc&$select=Data,Suavizada,Mediana&$format=json`
+
+Resposta: `{ value: [{ Indicador, Data (YYYY-MM-DD), Suavizada ('S'|'N'), Media, Mediana,
+DesvioPadrao, Minimo, Maximo, numeroRespondentes, baseCalculo }] }`. Usamos `Mediana`.
+
+⚠️ **Parser não-conforme, confirmado ao vivo** — este endpoint específico (diferente do
+SGS clássico) rejeita:
+1. Espaço codificado como `+` no querystring — exige `%20` literal.
+2. Vírgula %-codificada (`%2C`) em `$select` — exige `,` literal.
+
+`URLSearchParams` (usado por `govGet` normalmente) faz as duas coisas "erradas" pra esse
+servidor. Por isso `lib/govdata/indicadores.ts` monta a query do Focus à mão
+(`focusODataQuery`) em vez de passar `params` pro `govGet`. Ver o teste de regressão em
+`tests/lib/govdata/indicadores.test.ts` ("monta a query do Focus sem...").
 
 ## Compras.gov.br dados abertos — Fases 1 e 2
 

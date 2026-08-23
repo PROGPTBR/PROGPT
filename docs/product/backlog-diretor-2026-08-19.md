@@ -15,12 +15,14 @@ Fonte: dois arquivos entregues pelo diretor em 21/08/2026.
 1.15x, poder de decisão, técnica, concessões/trocas, checklist) · Batch C = `d3e5a4b` (#227)
 financeira 12 → 15 indicadores.
 
-**Batches D–I** estão entregues (D–G = `8084c07`, H = `03e2adb`, I = esta rodada) — ver o
-Rastreamento no fim deste doc. **Batch J** está em andamento na árvore de trabalho (schema,
-scoring, form, import e exports feitos; gráficos extra ficam de fora desta rodada). Pendências
-externas: provisionar `PORTAL_TRANSPARENCIA_TOKEN` no Railway (sem ele a 3ª base do Batch E fica
-dormente), rodar `python scripts/insert_template_rfq_padrao.py` pra o template da RFQ em
-produção passar a usar os placeholders comerciais do Batch I, e rodar
+**Batches D–J** estão entregues (D–G = `8084c07`, H = `03e2adb`, I = `bcede66`,
+J = `93e0b5b`, todos em `origin/main`) — ver o Rastreamento no fim deste doc. Batch J entregou
+schema/scoring/form/import/exports; gráficos extra (radar/barras por grupo) ficaram de fora
+dessa rodada. **Batch K** está em andamento na árvore de trabalho (painel de indicadores 6 → 10
+cards + Focus + fontes/link/metodologia; passos 1–5 feitos, ver Estado na seção do batch).
+Pendências externas: provisionar `PORTAL_TRANSPARENCIA_TOKEN` no Railway (sem ele a 3ª base do
+Batch E fica dormente), rodar `python scripts/insert_template_rfq_padrao.py` pra o template da
+RFQ em produção passar a usar os placeholders comerciais do Batch I, e rodar
 `python scripts/insert_template_scorecard.py` pra o parágrafo de doutrina do Batch J chegar no
 template do Scorecard em produção.
 
@@ -35,7 +37,7 @@ template do Scorecard em produção.
 | **H** ✅ | SWOT: perguntas no Contexto Comercial + gráfico 2×2 no relatório | M | — |
 | **I** ✅ | RFQ/RFP: mais campos + anexo + abrir e-mail com o arquivo anexado | M | — |
 | **J** 🟡 | Supplier Scorecard: adotar a planilha `Mudanças v1.xlsx` | G | — |
-| **K** | Indicadores: ampliar fontes com link/fonte/data + tabela categoria→referência | G | D (disclaimer) |
+| **K** 🟡 | Indicadores: ampliar fontes com link/fonte/data + tabela categoria→referência | G | D (disclaimer) |
 | **L** | Base do cliente: materiais + vendor list (upload, atualizável, autofill) | G | — |
 | **M** | Bug "assistente travado em uma operação" (diagnóstico) | ? | precisa repro |
 
@@ -388,6 +390,38 @@ link/metodologia por indicador.
 **Atenção**: a tool de voz `consultar_indicadores_economicos` e o bloco macro da Análise
 Financeira leem os mesmos helpers — crescer o painel sem inflar o payload dessas duas rotas.
 
+**Estado (22/08/2026 — ainda não commitado)**: painel de 6 → 10 cards, agrupado em 3 seções.
+Passos 1–5 entregues; passo 6 parcial (só a env do Focus).
+
+- ✅ **3 séries novas confirmadas via fonte primária** (não chutadas): IGP-DI (SGS 190),
+  INCC (SGS 192) e IPA (SGS 7450) — códigos citados nas notas de rodapé do documento oficial
+  do BACEN "Price Indices in Brazil" (FAQ 02, bcb.gov.br). Cross-checados ao vivo: IGP-DI e
+  IPA correlacionam em direção com IGP-M mês a mês, como esperado (IGP-M/IGP-DI = 60% IPA +
+  30% IPC + 10% INCC, mesmo documento). `dadosabertos.bcb.gov.br` (o catálogo público) só
+  indexa bem as séries decompostas do IPCA — não serviu pra confirmar headlines antigos.
+- ✅ **BACEN Focus (expectativas de mercado)** — nova base `bacen_olinda` em
+  `lib/govdata/client.ts`, card "IPCA (Focus, 12m à frente)" via OData filtrado por **nome**
+  do indicador (não código numérico — zero risco de série errada). Achado ao vivo: o parser
+  desse endpoint é não-conforme (rejeita `+` no lugar de espaço e vírgula %-codificada em
+  `$select`) — `URLSearchParams` quebra nas duas; a query é montada à mão
+  (`focusODataQuery`). Documentado no contrato + CLAUDE.md + teste de regressão.
+- ✅ **Fonte/link/período/abrangência/metodologia/consultadoEm** em todo `IndicadorCard`
+  (passo 1); dialog de detalhe e exports (.xlsx) mostram/incluem.
+- ✅ **Seções** (passo 2): Juros e câmbio · Inflação e reajuste contratual · Custos setoriais
+  e expectativas — 3 em vez das 4 sugeridas (sem volume de indicadores de comércio exterior
+  ainda pra justificar uma 4ª seção separada).
+- ✅ **"Qual indicador usar em cada compra"** (passo 3) — 8 categorias do doc, dado estático
+  embutido na resposta do painel (`indicadorPorCategoria`).
+- ✅ **Fontes referenciadas** (não é um passo numerado, mas cobre o resto da tabela de 10
+  fontes do doc) — IBGE/SIDRA, IpeaData, ANP, ANTT, Comex Stat, CEPEA, Banco Mundial Pink
+  Sheet como cards de link (sem integração ao vivo — dado curado).
+- 🟡 **Passo 6 parcial**: só `BACEN_OLINDA_URL` foi adicionada. `IBGE_API_URL`/`IPEA_API_URL`/
+  `COMEX_API_URL` **não** foram criadas — IBGE SIDRA, IpeaData e Comex Stat continuam como
+  fonte referenciada (link), não integração ao vivo, nesta rodada.
+- ⬜ **Pendente**: INPC, IPCA-15, SINAPI e IPP (IBGE) — não entraram por falta de confirmação
+  de código SGS numa fonte primária em tempo hábil (ver nota no contrato). Entram numa rodada
+  futura assim que confirmados.
+
 ---
 
 ## Batch L — Base do cliente: materiais + vendor list
@@ -466,7 +500,7 @@ presa, Spend Analysis em polling, ou o chat).
 | 11 | Homologação como SOB DEMANDA | D | ✅ |
 | 12 | Preço + NCM aproximado via LLM | G | ✅ |
 | 13 | Disclaimer de preços/NCM | D | ✅ |
-| 14 | Indicadores: ampliar fontes + link/fonte/data | K | ⬜ |
+| 14 | Indicadores: ampliar fontes + link/fonte/data | K | 🟡 IGP-DI/INCC/IPA/Focus + seções + tabela feitos; IBGE SIDRA/IpeaData/Comex Stat ficam como fonte referenciada (sem integração ao vivo) |
 | 15 | Disclaimer dos indicadores | D | ✅ |
 | 16 | Simulador Tributário "Em breve" | Batch A | ✅ #225 |
 | 17 | Card Simulador Logístico (DIFAL) | Batch A | ✅ #225 |

@@ -17,18 +17,23 @@
 
 const TIMEOUT_MS = 20_000; // APIs gov às vezes lentas/instáveis
 
-export type GovBase = 'pncp' | 'compras' | 'bacen';
+// 'bacen_olinda' — Sistema Expectativas de Mercado (Focus), OData público sem
+// chave. Base diferente do SGS clássico ('bacen'); adicionada no Batch K do
+// backlog do diretor (21/08) pra expectativa de inflação (IPCA 12m).
+export type GovBase = 'pncp' | 'compras' | 'bacen' | 'bacen_olinda';
 
 const DEFAULT_BASE: Record<GovBase, string> = {
   pncp: 'https://pncp.gov.br/api/consulta',
   compras: 'https://dadosabertos.compras.gov.br',
   bacen: 'https://api.bcb.gov.br/dados',
+  bacen_olinda: 'https://olinda.bcb.gov.br/olinda/servico/Expectativas/versao/v1/odata',
 };
 
 const ENV_KEY: Record<GovBase, string> = {
   pncp: 'PNCP_API_URL',
   compras: 'COMPRAS_API_URL',
   bacen: 'BACEN_API_URL',
+  bacen_olinda: 'BACEN_OLINDA_URL',
 };
 
 export class GovDataError extends Error {

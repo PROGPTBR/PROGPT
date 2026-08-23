@@ -57,6 +57,37 @@ describe('GET /api/govdata/indicadores/serie', () => {
   });
 });
 
+describe('GET /api/govdata/indicadores/xlsx', () => {
+  it('repassa a metodologia do INDICADOR_META pro banner do .xlsx gerado', async () => {
+    setup();
+    vi.doMock('@/lib/govdata/indicadores', () => ({
+      isIndicadorKey: (k: string) => k === 'igpdi',
+      serieIndicador: vi.fn().mockResolvedValue([{ data: '01/05/2026', valor: 1.14 }]),
+      INDICADOR_META: {
+        igpdi: { codigo: 190, nome: 'IGP-DI (variação mensal)', unidade: '%', metodologia: 'FGV IBRE — teste' },
+      },
+    }));
+    // NÃO mocka indicadores-xlsx — roda o serieXlsxBuffer real e inspeciona
+    // o .xlsx resultante (evita mock leakage entre módulos compartilhados
+    // com o describe abaixo, que testa serieXlsxBuffer isoladamente).
+    const { GET } = await import('@/app/api/govdata/indicadores/xlsx/route');
+    const res = await GET(new Request('http://localhost/api/govdata/indicadores/xlsx?key=igpdi&meses=12'));
+    expect(res.status).toBe(200);
+    const buf = Buffer.from(await res.arrayBuffer());
+    const ExcelJS = (await import('exceljs')).default;
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(buf as unknown as ArrayBuffer);
+    const ws = wb.getWorksheet('Série')!;
+    const cellValues: string[] = [];
+    ws.eachRow((row) => {
+      const v = row.getCell(1).value;
+      if (typeof v === 'string') cellValues.push(v);
+    });
+    expect(cellValues.some((v) => v.includes('Metodologia: FGV IBRE — teste'))).toBe(true);
+    expect(cellValues.some((v) => v.startsWith('Consultado em:'))).toBe(true);
+  });
+});
+
 describe('serieXlsxBuffer', () => {
   it('gera um buffer .xlsx não vazio', async () => {
     const { serieXlsxBuffer } = await import('@/lib/govdata/indicadores-xlsx');
@@ -69,5 +100,37 @@ describe('serieXlsxBuffer', () => {
     // assinatura ZIP do .xlsx (PK\x03\x04)
     expect(buf[0]).toBe(0x50);
     expect(buf[1]).toBe(0x4b);
+  });
+
+  // Batch K — banner ganha metodologia + data da consulta quando fornecidos.
+  it('inclui linhas de metodologia e "consultado em" no banner quando passadas', async () => {
+    const ExcelJS = (await import('exceljs')).default;
+    const { serieXlsxBuffer } = await import('@/lib/govdata/indicadores-xlsx');
+    const buf = await serieXlsxBuffer(
+      'IGP-DI (variação mensal)',
+      '%',
+      [{ data: '01/05/2026', valor: 1.14 }],
+      { metodologia: 'FGV IBRE — teste', consultadoEm: '2026-08-22T12:00:00.000Z' },
+    );
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(buf as unknown as ArrayBuffer);
+    const ws = wb.getWorksheet('Série')!;
+    const cellValues: string[] = [];
+    ws.eachRow((row) => {
+      const v = row.getCell(1).value;
+      if (typeof v === 'string') cellValues.push(v);
+    });
+    expect(cellValues.some((v) => v.includes('Metodologia: FGV IBRE — teste'))).toBe(true);
+    expect(cellValues.some((v) => v.startsWith('Consultado em:'))).toBe(true);
+  });
+
+  it('sem meta, mantém só as 2 linhas de banner originais (fonte)', async () => {
+    const ExcelJS = (await import('exceljs')).default;
+    const { serieXlsxBuffer } = await import('@/lib/govdata/indicadores-xlsx');
+    const buf = await serieXlsxBuffer('Selic (meta)', '% a.a.', [{ data: '01/05/2026', valor: 14.25 }]);
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(buf as unknown as ArrayBuffer);
+    const ws = wb.getWorksheet('Série')!;
+    expect(ws.getCell('A3').value).toBe('Data'); // header na linha 3 (sem linhas extras)
   });
 });
