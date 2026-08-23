@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabaseBrowser } from '@/lib/db/supabase-browser';
+import { classifyUpsert } from '@/lib/import-diff';
 import {
   cnpjBasicoOf,
   type NewSupplierInput,
@@ -93,6 +94,8 @@ export type SaveFromSearchInput = {
   email?: string | null;
 };
 
+export type ImportSummary = { inserted: number; updated: number; failed: number };
+
 export type UseSupplierBase = {
   suppliers: SavedSupplier[];
   loading: boolean;
@@ -102,6 +105,11 @@ export type UseSupplierBase = {
   addManual: (input: NewSupplierInput) => Promise<SavedSupplier | null>;
   updateSupplier: (id: string, patch: SupplierPatch) => Promise<boolean>;
   deleteSupplier: (id: string) => Promise<void>;
+  // Batch L (backlog do diretor) — import de "vendor list" (Kraljic).
+  /** Preview puro (sem gravar) — "N novos · N atualizados" antes de confirmar. */
+  previewVendorListImport: (rows: NewSupplierInput[]) => { novos: number; atualizados: number };
+  /** Grava o import: insert em lote pros novos, update por id pros que já existem (por CNPJ base). */
+  applyVendorListImport: (rows: NewSupplierInput[]) => Promise<ImportSummary>;
 };
 
 export function useSupplierBase(): UseSupplierBase {
@@ -240,6 +248,103 @@ export function useSupplierBase(): UseSupplierBase {
     [suppliers],
   );
 
+  // ── Vendor list import (Batch L) ─────────────────────────────────────────
+
+  const byCnpjBasico = useMemo(() => {
+    const m = new Map<string, SavedSupplier>();
+    for (const s of suppliers) if (s.cnpjBasico) m.set(s.cnpjBasico, s);
+    return m;
+  }, [suppliers]);
+
+  function inputToInsertRow(input: NewSupplierInput): Record<string, unknown> {
+    return {
+      cnpj: input.cnpj ?? null,
+      cnpj_basico: cnpjBasicoOf(input.cnpj),
+      razao_social: input.razaoSocial.trim(),
+      categoria: input.categoria ?? null,
+      uf: input.uf ?? null,
+      municipio: input.municipio ?? null,
+      telefone: input.telefone ?? null,
+      email: input.email ?? null,
+      notas: input.notas ?? null,
+      status: input.status ?? 'prospecto',
+      origem: 'manual',
+    };
+  }
+
+  const previewVendorListImport = useCallback<UseSupplierBase['previewVendorListImport']>(
+    (rows) => {
+      const { novos, atualizados, semChave } = classifyUpsert(
+        new Set(byCnpjBasico.keys()),
+        rows,
+        (r) => cnpjBasicoOf(r.cnpj),
+      );
+      // Fornecedor sem CNPJ conta como novo cadastro (não há como saber se é update).
+      return { novos: novos.length + semChave.length, atualizados: atualizados.length };
+    },
+    [byCnpjBasico],
+  );
+
+  const applyVendorListImport = useCallback<UseSupplierBase['applyVendorListImport']>(
+    async (rows) => {
+      const { novos, atualizados, semChave } = classifyUpsert(
+        new Set(byCnpjBasico.keys()),
+        rows,
+        (r) => cnpjBasicoOf(r.cnpj),
+      );
+      const sb = supabaseBrowser();
+      let inserted = 0;
+      let updated = 0;
+      let failed = 0;
+
+      const toInsert = [...novos, ...semChave];
+      if (toInsert.length > 0) {
+        const { data, error } = await sb
+          .from('suppliers')
+          .insert(toInsert.map(inputToInsertRow))
+          .select(COLS);
+        if (error) {
+          console.warn('[useSupplierBase] applyVendorListImport insert failed:', error.message);
+          failed += toInsert.length;
+        } else {
+          inserted += data?.length ?? 0;
+        }
+      }
+
+      for (const r of atualizados) {
+        const existing = byCnpjBasico.get(cnpjBasicoOf(r.cnpj)!);
+        if (!existing) {
+          failed++;
+          continue;
+        }
+        const row: Record<string, unknown> = { updated_at: new Date().toISOString() };
+        if (r.razaoSocial.trim()) row.razao_social = r.razaoSocial.trim();
+        if (r.categoria) row.categoria = r.categoria;
+        if (r.uf) row.uf = r.uf;
+        if (r.municipio) row.municipio = r.municipio;
+        if (r.telefone) row.telefone = r.telefone;
+        if (r.email) row.email = r.email;
+        const { error } = await sb.from('suppliers').update(row).eq('id', existing.id);
+        if (error) {
+          console.warn('[useSupplierBase] applyVendorListImport update failed:', error.message);
+          failed++;
+        } else {
+          updated++;
+        }
+      }
+
+      // Recarrega a base pra refletir os novos ids/registros gravados.
+      const { data, error } = await sb
+        .from('suppliers')
+        .select(COLS)
+        .order('created_at', { ascending: false });
+      if (!error && data) setSuppliers((data as Row[]).map(rowToSupplier));
+
+      return { inserted, updated, failed };
+    },
+    [byCnpjBasico],
+  );
+
   return {
     suppliers,
     loading,
@@ -248,5 +353,7 @@ export function useSupplierBase(): UseSupplierBase {
     addManual,
     updateSupplier,
     deleteSupplier,
+    previewVendorListImport,
+    applyVendorListImport,
   };
 }

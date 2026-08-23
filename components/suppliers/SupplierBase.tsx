@@ -12,9 +12,11 @@ import {
   Plus,
   Search,
   Trash2,
+  Upload,
   X,
 } from 'lucide-react';
 import { useSupplierBase } from '@/hooks/useSupplierBase';
+import { VendorListImportDialog } from './VendorListImportDialog';
 import {
   SUPPLIER_STATUSES,
   SUPPLIER_STATUS_LABEL,
@@ -31,11 +33,19 @@ function formatCnpj(cnpj: string | null): string | null {
 }
 
 export function SupplierBase() {
-  const { suppliers, loading, addManual, updateSupplier, deleteSupplier } =
-    useSupplierBase();
+  const {
+    suppliers,
+    loading,
+    addManual,
+    updateSupplier,
+    deleteSupplier,
+    previewVendorListImport,
+    applyVendorListImport,
+  } = useSupplierBase();
   const [statusFilter, setStatusFilter] = useState<'all' | SupplierStatus>('all');
   const [q, setQ] = useState('');
   const [showAdd, setShowAdd] = useState(false);
+  const [showImport, setShowImport] = useState(false);
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -66,15 +76,32 @@ export function SupplierBase() {
             carteira · salve da Busca de Fornecedores ou cadastre à mão.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setShowAdd((v) => !v)}
-          className="inline-flex items-center gap-2 rounded-full border border-brand/30 bg-brand/5 hover:bg-brand/10 hover:border-brand/50 text-brand px-5 h-10 text-sm font-medium transition-all duration-300 active:scale-95"
-        >
-          {showAdd ? <X className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
-          {showAdd ? 'Fechar' : 'Adicionar fornecedor'}
-        </button>
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            type="button"
+            onClick={() => setShowImport(true)}
+            className="inline-flex items-center gap-2 rounded-full border border-border bg-background hover:bg-accent text-foreground/80 px-5 h-10 text-sm font-medium transition-all duration-300 active:scale-95"
+          >
+            <Upload className="h-3.5 w-3.5" />
+            Importar vendor list
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowAdd((v) => !v)}
+            className="inline-flex items-center gap-2 rounded-full border border-brand/30 bg-brand/5 hover:bg-brand/10 hover:border-brand/50 text-brand px-5 h-10 text-sm font-medium transition-all duration-300 active:scale-95"
+          >
+            {showAdd ? <X className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
+            {showAdd ? 'Fechar' : 'Adicionar fornecedor'}
+          </button>
+        </div>
       </div>
+
+      <VendorListImportDialog
+        open={showImport}
+        onClose={() => setShowImport(false)}
+        preview={previewVendorListImport}
+        onConfirm={applyVendorListImport}
+      />
 
       {showAdd && (
         <AddSupplierForm

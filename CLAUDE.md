@@ -110,7 +110,10 @@ Roadmap completo em `docs/product/beta-readiness.md`. Roadmap B2B (Milestone 3+)
 > **não** detalhados aqui: `lib/assistants/*` (handler compartilhado + 1 arquivo por assistente:
 > `scorecard*`, `kraljic*`, `porter*`, `financial*`, `abc*`, `profile*`, `negotiation/*`, `rfp`,
 > `docx.ts`, `xlsx.ts`, `runs.ts`, `refine.ts`, `template-assembly.ts`), `lib/billing/*`,
-> `lib/email/*`, `lib/legal/*`, `lib/suppliers/*`, `lib/fiscal/*`, `lib/govdata/*` (compras públicas — `client`/`precos`/`catalog`/`fornecedor`/`indicadores`), `lib/captcha.ts`; `app/assistants/*` (uma
+> `lib/email/*`, `lib/legal/*`, `lib/suppliers/*` (+ `import.ts`, Batch L), `lib/materials/*` (Batch L —
+> base de materiais, espelha `lib/suppliers/*`), `lib/import-diff.ts` (diff puro novo/atualizado,
+> compartilhado pelos dois imports do Batch L), `lib/fiscal/*`, `lib/govdata/*` (compras públicas —
+> `client`/`precos`/`catalog`/`fornecedor`/`indicadores`), `lib/captcha.ts`; `app/assistants/*` (uma
 > página por assistente) + `app/api/assistants/*` (rota por tipo + `runs/[id]/{chart,xlsx,docx,chat,apply}`);
 > `app/api/{billing,auth,account,suppliers,transcribe}/*`; `app/{pricing,account,termos,privacidade,cookies}`;
 > `components/assistants/*`, `components/billing/*`, `components/legal/*`; `scripts/db_connect.py`.

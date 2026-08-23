@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import { getCurrentUser } from '@/lib/auth';
 import { Header } from '../login/header';
-import { SupplierBase } from '@/components/suppliers/SupplierBase';
+import { FornecedoresBaseTabs } from '@/components/suppliers/FornecedoresBaseTabs';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,7 +31,7 @@ export default async function FornecedoresPage() {
               Voltar ao chat
             </Link>
           </div>
-          <SupplierBase />
+          <FornecedoresBaseTabs />
         </main>
       </div>
     </>

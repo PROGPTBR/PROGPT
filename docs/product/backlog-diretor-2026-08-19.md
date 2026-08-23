@@ -15,16 +15,20 @@ Fonte: dois arquivos entregues pelo diretor em 21/08/2026.
 1.15x, poder de decisão, técnica, concessões/trocas, checklist) · Batch C = `d3e5a4b` (#227)
 financeira 12 → 15 indicadores.
 
-**Batches D–J** estão entregues (D–G = `8084c07`, H = `03e2adb`, I = `bcede66`,
-J = `93e0b5b`, todos em `origin/main`) — ver o Rastreamento no fim deste doc. Batch J entregou
-schema/scoring/form/import/exports; gráficos extra (radar/barras por grupo) ficaram de fora
-dessa rodada. **Batch K** está em andamento na árvore de trabalho (painel de indicadores 6 → 10
-cards + Focus + fontes/link/metodologia; passos 1–5 feitos, ver Estado na seção do batch).
-Pendências externas: provisionar `PORTAL_TRANSPARENCIA_TOKEN` no Railway (sem ele a 3ª base do
-Batch E fica dormente), rodar `python scripts/insert_template_rfq_padrao.py` pra o template da
-RFQ em produção passar a usar os placeholders comerciais do Batch I, e rodar
-`python scripts/insert_template_scorecard.py` pra o parágrafo de doutrina do Batch J chegar no
-template do Scorecard em produção.
+**Batches D–K** estão entregues (D–G = `8084c07`, H = `03e2adb`, I = `bcede66`,
+J = `93e0b5b`, K = `a718c0c`, todos em `origin/main`) — ver o Rastreamento no fim deste doc.
+Batch J entregou schema/scoring/form/import/exports (gráficos extra ficaram de fora); Batch K
+levou o painel de indicadores de 6 para 10 cards + Focus + fontes/link/metodologia (INPC/
+IPCA-15/SINAPI/IPP ficaram de fora por falta de confirmação de código numa fonte primária).
+**Batch L** está em andamento na árvore de trabalho (L1: migration `materials` + import de
+planilha pra materiais e vendor list + tela com abas; L2 — autofill nos 6 forms — fica pra
+depois, ver Estado na seção do batch). Pendências externas: provisionar
+`PORTAL_TRANSPARENCIA_TOKEN` no Railway (sem ele a 3ª base do Batch E fica dormente), rodar
+`python scripts/insert_template_rfq_padrao.py` pra o template da RFQ em produção passar a usar
+os placeholders comerciais do Batch I, rodar `python scripts/insert_template_scorecard.py` pra
+o parágrafo de doutrina do Batch J chegar no template do Scorecard em produção, e rodar
+`python scripts/apply_migration_0047.py` pra criar a tabela `materials` do Batch L em produção
+(**bloqueante** — sem ela a aba Materiais em `/fornecedores` quebra).
 
 ## Ordem de execução
 
@@ -38,7 +42,7 @@ template do Scorecard em produção.
 | **I** ✅ | RFQ/RFP: mais campos + anexo + abrir e-mail com o arquivo anexado | M | — |
 | **J** 🟡 | Supplier Scorecard: adotar a planilha `Mudanças v1.xlsx` | G | — |
 | **K** 🟡 | Indicadores: ampliar fontes com link/fonte/data + tabela categoria→referência | G | D (disclaimer) |
-| **L** | Base do cliente: materiais + vendor list (upload, atualizável, autofill) | G | — |
+| **L** 🟡 | Base do cliente: materiais + vendor list (upload, atualizável, autofill) | G | — |
 | **M** | Bug "assistente travado em uma operação" (diagnóstico) | ? | precisa repro |
 
 Racional da ordem: D–F são reuso/copy com impacto imediato na demo; G–I são features
@@ -458,6 +462,35 @@ import de planilha** e **não existe base de materiais**.
 **Risco**: é o batch com maior superfície de UI. Sugiro fatiar em L1 (migration + import +
 tela) e L2 (autofill nos 6 forms).
 
+**Estado (22/08/2026 — ainda não commitado)**: L1 entregue (passos 1–3); L2 (passo 4,
+autofill nos 6 forms) fica pra outra rodada, como o próprio plano já sugeria.
+
+- ✅ **Migration `0047_materials.sql`** — tabela `materials` owner-RLS espelhando exatamente
+  o padrão de `suppliers` (migration 0045): mesmas 4 policies, índice único parcial
+  `(user_id, codigo) where codigo is not null` pro upsert idempotente. **Não aplicada em
+  produção nesta sessão** — o sandbox não tem `pip`/venv Python funcional pra rodar
+  `scripts/apply_migration_0047.py` (script novo, mesmo padrão do `apply_migration_0013.py`,
+  usa `db_connect.connect()`). Rodar antes de deployar o código deste batch, senão
+  `/fornecedores` (aba Materiais) quebra com "relation materials does not exist".
+- ✅ **Import de planilha** pra materiais (`lib/materials/import.ts`) e pro vendor list
+  (`lib/suppliers/import.ts`), fuzzy-header matching no mesmo estilo de
+  `lib/spend/sheet-import.ts` — `coerceAmount` (pt-BR/en-US) **importado direto de lá**, não
+  reescrito, como pedia o passo 2. Preview "N novos · N atualizados" via `lib/import-diff.ts`
+  (`classifyUpsert`, puro, compartilhado pelos dois imports) antes de gravar — upsert real
+  por `codigo`/CNPJ-base, não duplicação. Vendor list grava na tabela `suppliers` já
+  existente (não cria uma base separada) — é exatamente o "puxar da base interna" que o
+  Kraljic pedia.
+- ✅ **Tela**: `/fornecedores` ganha abas "Fornecedores" / "Materiais"
+  (`FornecedoresBaseTabs.tsx`); `MaterialsBase.tsx` espelha `SupplierBase.tsx` (lista, busca,
+  edição inline, adicionar manual); botão "Importar vendor list" novo em `SupplierBase.tsx`,
+  "Importar planilha" em `MaterialsBase.tsx`.
+- ⬜ **Passo 4 (autofill nos 6 forms) — não iniciado.** `ABCForm`/`KraljicForm` ganharem
+  "Carregar da minha base", e `NegotiationStrategyForm`/`FinancialForm`/`HomologacaoForm`/
+  `PesquisaPrecosForm` ganharem seletor de fornecedor/material — fica pra próxima rodada
+  (era exatamente o corte sugerido no plano original).
+- ⬜ Semear a base a partir de fornecedores já vistos em Spend Analysis/busca — já era
+  follow-up explícito, fora de escopo.
+
 ---
 
 ## Batch M — Bug "assistente travado em uma operação"
@@ -488,9 +521,9 @@ presa, Spend Analysis em polling, ou o chat).
 | # | Item | Batch | Status |
 |---|---|---|---|
 | 1 | Assistente travado | M | ⬜ precisa repro |
-| 2 | Base de materiais do cliente (ABC) | L | ⬜ |
-| 3 | Planilhas do cliente + 3 bases gov + saúde financeira/documentação (Busca) | E / L | 🟡 E feito (falta o token da CGU); planilhas ficam no L |
-| 4 | Vendor list + autofill CNPJ/nome (Kraljic) | L | ⬜ |
+| 2 | Base de materiais do cliente (ABC) | L | 🟡 migration + import + tela feitos; migration ainda não aplicada em produção |
+| 3 | Planilhas do cliente + 3 bases gov + saúde financeira/documentação (Busca) | E / L | 🟡 E feito (falta o token da CGU); import de planilha entregue no L (materiais e vendor list) |
+| 4 | Vendor list + autofill CNPJ/nome (Kraljic) | L | 🟡 import do vendor list feito (grava na base de fornecedores existente); autofill nos forms (L2) fica pra depois |
 | 5 | RFQ: campos + anexo + e-mail com anexo | I | ✅ |
 | 6 | Negociação: voz, poder de decisão, técnica, concessões, checklist | Batch B | ✅ #226 |
 | 7 | SWOT como perguntas + gráfico no relatório | H | ✅ |
