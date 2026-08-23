@@ -57,6 +57,31 @@ describe('detectAssistantToolCTA', () => {
   it('case-insensitive match', () => {
     expect(detectAssistantToolCTA('/Assistants/RFP')).toBe('rfp');
   });
+
+  it('detects simulador_logistico via its custom path (not under /assistants/)', () => {
+    expect(
+      detectAssistantToolCTA('Use o simulador em /simulador-logistico agora.'),
+    ).toBe('simulador_logistico');
+  });
+
+  it('custom-path detection is case-insensitive', () => {
+    expect(detectAssistantToolCTA('/Simulador-Logistico')).toBe(
+      'simulador_logistico',
+    );
+  });
+
+  it('first-mention semantics hold across /assistants/ and custom paths', () => {
+    expect(
+      detectAssistantToolCTA(
+        'Veja /simulador-logistico ou /assistants/rfp.',
+      ),
+    ).toBe('simulador_logistico');
+    expect(
+      detectAssistantToolCTA(
+        'Veja /assistants/rfp ou /simulador-logistico.',
+      ),
+    ).toBe('rfp');
+  });
 });
 
 describe('stripAssistantPaths', () => {
@@ -99,5 +124,14 @@ describe('stripAssistantPaths', () => {
 
   it('returns the input unchanged when there is no path', () => {
     expect(stripAssistantPaths('sem ferramenta aqui')).toBe('sem ferramenta aqui');
+  });
+
+  it('strips the simulador_logistico custom path too', () => {
+    expect(
+      stripAssistantPaths('use a ferramenta em /simulador-logistico agora'),
+    ).toBe('use a ferramenta agora');
+    expect(stripAssistantPaths('/simulador-logistico fica')).toBe(
+      'fica',
+    );
   });
 });

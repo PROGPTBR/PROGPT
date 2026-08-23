@@ -13,6 +13,7 @@ import {
   Receipt,
   Star,
   TrendingUp,
+  Truck,
   UserCircle2,
 } from 'lucide-react';
 
@@ -36,12 +37,17 @@ export type AssistantToolType =
   | 'negotiation'
   | 'pesquisa_precos'
   | 'spend_analysis'
-  | 'indicadores';
+  | 'indicadores'
+  | 'simulador_logistico';
 
 type Meta = {
   title: string;
   blurb: string;
   Icon: typeof FileText;
+  // Só necessário quando a rota do assistente NÃO segue o padrão
+  // `/assistants/<type>` (ex.: os Simuladores, que vivem em `/simulador*`).
+  // Default: `/assistants/${type}`.
+  path?: string;
 };
 
 const META: Record<AssistantToolType, Meta> = {
@@ -111,7 +117,18 @@ const META: Record<AssistantToolType, Meta> = {
       'Painel ao vivo do Banco Central (Selic, CDI, IPCA, IGP-M, dólar, euro) com gráfico e leitura para compras — custo de capital, reajuste contratual e câmbio.',
     Icon: LineChart,
   },
+  simulador_logistico: {
+    title: 'Simulador Logístico (DIFAL)',
+    blurb:
+      'Calcula o DIFAL (diferencial de alíquota do ICMS) de uma compra interestadual e compara o custo total entre diferentes UFs de origem.',
+    Icon: Truck,
+    path: '/simulador-logistico',
+  },
 };
+
+function pathFor(type: AssistantToolType): string {
+  return META[type]?.path ?? `/assistants/${type}`;
+}
 
 type Props = {
   type: AssistantToolType;
@@ -123,7 +140,7 @@ export function AssistantToolCTA({ type }: Props) {
   const { title, blurb, Icon } = meta;
   return (
     <Link
-      href={`/assistants/${type}`}
+      href={pathFor(type)}
       aria-label={`Abrir ${title}`}
       className="group no-underline mt-4 flex items-center gap-4 rounded-2xl border border-brand/30 bg-gradient-to-br from-brand/10 to-brand/[0.04] hover:from-brand/20 hover:to-brand/10 hover:border-brand/60 px-4 py-4 shadow-sm hover:shadow-md transition-all duration-300 active:scale-[0.99]"
     >
@@ -164,14 +181,44 @@ const VALID_TYPES = new Set<AssistantToolType>([
   'pesquisa_precos',
   'spend_analysis',
   'indicadores',
+  'simulador_logistico',
 ]);
 
-// Server- and client-callable detector. Procura o PRIMEIRO `/assistants/<type>`
-// canônico no texto da resposta do LLM. Retorna null se não achar nada ou se
-// achar `suppliers` (que tem CTA próprio via supplier_search intent).
+// Tipos cuja rota NÃO segue `/assistants/<type>` (ver `path` em META) —
+// precisam de detecção/strip à parte, já que o regex principal só reconhece
+// o prefixo `/assistants/`.
+const CUSTOM_PATH_TYPES = (Object.keys(META) as AssistantToolType[]).filter(
+  (t) => META[t].path,
+);
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+const CUSTOM_PATH_ALTERNATION = CUSTOM_PATH_TYPES.map((t) =>
+  escapeRegExp(META[t].path!),
+).join('|');
+
+// Server- and client-callable detector. Procura a PRIMEIRA menção — um
+// `/assistants/<type>` canônico OU uma das rotas custom acima (ex.:
+// `/simulador-logistico`) — no texto da resposta do LLM. Retorna null se não
+// achar nada ou se achar `suppliers` (que tem CTA próprio via
+// supplier_search intent).
 export function detectAssistantToolCTA(text: string): AssistantToolType | null {
-  const m = text.match(/\/assistants\/([a-z][a-z0-9_-]*)\b/i);
+  const re = CUSTOM_PATH_ALTERNATION
+    ? new RegExp(
+        `/assistants/([a-z][a-z0-9_-]*)\\b|(${CUSTOM_PATH_ALTERNATION})\\b`,
+        'i',
+      )
+    : /\/assistants\/([a-z][a-z0-9_-]*)\b/i;
+  const m = text.match(re);
   if (!m) return null;
+
+  if (m[2]) {
+    const found = CUSTOM_PATH_TYPES.find(
+      (t) => META[t].path!.toLowerCase() === m[2]!.toLowerCase(),
+    );
+    return found ?? null;
+  }
+
   const candidate = m[1]!.toLowerCase() as AssistantToolType;
   if (candidate === ('suppliers' as AssistantToolType)) return null;
   if (!VALID_TYPES.has(candidate)) return null;
@@ -182,14 +229,18 @@ export function detectAssistantToolCTA(text: string): AssistantToolType | null {
 // Inclui `suppliers` (caminho válido) pra não deixar o path feio na frase.
 const STRIP_TYPES =
   'rfp|kraljic|porter|abc|financial|scorecard|profile|negotiation|homologacao|pesquisa_precos|spend_analysis|indicadores|suppliers';
-// "...em /assistants/rfp" → remove a preposição + o caminho, deixando a frase
-// natural ("use a ferramenta dedicada — ela gera...").
+const ASSISTANTS_OR_CUSTOM = CUSTOM_PATH_ALTERNATION
+  ? `/assistants/(?:${STRIP_TYPES})|${CUSTOM_PATH_ALTERNATION}`
+  : `/assistants/(?:${STRIP_TYPES})`;
+// "...em /assistants/rfp" (ou "...em /simulador-logistico") → remove a
+// preposição + o caminho, deixando a frase natural ("use a ferramenta
+// dedicada — ela gera...").
 const STRIP_PREP_RE = new RegExp(
-  `\\s+(?:em|no|na|via|in|at)\\s+/assistants/(?:${STRIP_TYPES})\\b`,
+  `\\s+(?:em|no|na|via|in|at)\\s+(?:${ASSISTANTS_OR_CUSTOM})\\b`,
   'gi',
 );
 // Qualquer caminho cru remanescente.
-const STRIP_BARE_RE = new RegExp(`/assistants/(?:${STRIP_TYPES})\\b`, 'gi');
+const STRIP_BARE_RE = new RegExp(`(?:${ASSISTANTS_OR_CUSTOM})\\b`, 'gi');
 
 export function stripAssistantPaths(md: string): string {
   return md

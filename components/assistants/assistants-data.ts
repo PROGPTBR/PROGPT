@@ -296,10 +296,9 @@ export const ASSISTANTS: readonly AssistantDefinition[] = [
     sideSubtitle: 'Simule custos logísticos e DIFAL',
     bullets: [
       'Cálculo do DIFAL por UF de origem × destino',
-      'Custo logístico + frete na comparação',
+      'Compare o custo total (DIFAL + frete informado) de várias origens',
       'Melhor cenário de compra interestadual',
     ],
     previewKey: 'simulador_logistico',
-    badge: 'em_breve',
   },
 ];

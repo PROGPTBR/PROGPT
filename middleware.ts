@@ -180,6 +180,7 @@ export const config = {
     '/assistants/:path*',
     '/fornecedores/:path*',
     '/simulador/:path*',
+    '/simulador-logistico/:path*',
     '/proc2pay/:path*',
     '/profile/:path*',
     '/prompts/:path*',

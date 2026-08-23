@@ -9,3 +9,9 @@ export const PRICING_NCM_DISCLAIMER =
 
 export const INDICADORES_DISCLAIMER =
   'Aviso: Antes de incluir estas informações em contratos ou pedidos de compra, o comprador deverá confirmar sua atualização e validá-las com o fornecedor e as áreas responsáveis.';
+
+// Disclaimer NOVO (Simulador Logístico/DIFAL) — ainda não passou pelo
+// diretor como os dois acima ("verbatim aprovado"). Segue o mesmo tom
+// curto; ajustar a redação se o diretor pedir antes de divulgar amplamente.
+export const DIFAL_DISCLAIMER =
+  'Aviso: as alíquotas de ICMS e o cálculo do DIFAL apresentados têm caráter referencial. Alíquotas estaduais, FCP e exceções por NCM/produto mudam por legislação de cada estado — confirme a alíquota vigente e valide o cálculo com a contabilidade da empresa antes de tomar uma decisão de compra ou de recolhimento.';
