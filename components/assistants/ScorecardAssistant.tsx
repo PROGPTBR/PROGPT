@@ -6,6 +6,7 @@ import { ScorecardResult } from './ScorecardResult';
 import { RfpChatPanel } from './RfpChatPanel';
 import { DownloadTemplateButton } from './DownloadTemplateButton';
 import { handlePaywallResponse } from '@/lib/billing/handle-paywall';
+import { readAssistantChunk } from '@/lib/assistants/stream-client';
 
 type Phase = 'form' | 'generating' | 'done';
 
@@ -49,7 +50,7 @@ export function ScorecardAssistant() {
       const decoder = new TextDecoder();
       let buffer = '';
       while (true) {
-        const { value, done } = await reader.read();
+        const { value, done } = await readAssistantChunk(reader);
         if (done) break;
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');

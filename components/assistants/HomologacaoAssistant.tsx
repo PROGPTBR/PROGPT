@@ -5,6 +5,7 @@ import { HomologacaoForm, type HomologacaoFormValues } from './HomologacaoForm';
 import { HomologacaoResult } from './HomologacaoResult';
 import { RfpChatPanel } from './RfpChatPanel';
 import { handlePaywallResponse } from '@/lib/billing/handle-paywall';
+import { readAssistantChunk } from '@/lib/assistants/stream-client';
 
 type Phase = 'form' | 'generating' | 'done';
 
@@ -61,7 +62,7 @@ export function HomologacaoAssistant() {
       const decoder = new TextDecoder();
       let buffer = '';
       while (true) {
-        const { value, done } = await reader.read();
+        const { value, done } = await readAssistantChunk(reader);
         if (done) break;
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');

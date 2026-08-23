@@ -236,6 +236,44 @@ export async function updateRunRefineMessages(
   return true;
 }
 
+// Batch M do backlog do diretor (21/08) — "não consegui trabalhar no
+// assistente, parece que está travado em uma operação". `assistant_runs`
+// não tem coluna de progresso; um run cujo streamText trava no meio (o
+// processo é reiniciado, a conexão cai sem FIN) nunca chega em onFinish/catch
+// em lib/assistants/handler.ts — fica em status='running' pra sempre, sem
+// finished_at nem output_md. `sweepOrphanedRuns` varre e fecha esses runs
+// órfãos como 'error' (mensagem clara) na próxima vez que o usuário abre o
+// histórico — chamado explicitamente pela rota GET /api/assistants/runs
+// (não embutido em listRunsForOwner, pra não obrigar todo teste dessa
+// função a mockar um .update() que ela nunca fazia).
+//
+// Spend Analysis é EXCLUÍDO: já tem heartbeat próprio
+// (spend_invoices.updated_at, reaper de 5 min) — duplicar a lógica aqui
+// entraria em conflito com um run que ainda está processando de verdade.
+const ORPHAN_THRESHOLD_MS = 10 * 60 * 1000; // 10 min sem terminar = travado
+const ORPHAN_ERROR_MESSAGE =
+  'Execução não finalizou (processo travado ou interrompido). Apague este item e tente novamente.';
+
+export async function sweepOrphanedRuns(userId: string): Promise<void> {
+  const sb = getServerSupabase();
+  const cutoff = new Date(Date.now() - ORPHAN_THRESHOLD_MS).toISOString();
+  const { error } = await sb
+    .from('assistant_runs')
+    .update({
+      status: 'error',
+      error_message: ORPHAN_ERROR_MESSAGE,
+      finished_at: new Date().toISOString(),
+    })
+    .eq('user_id', userId)
+    .eq('status', 'running')
+    .is('output_md', null)
+    .lt('created_at', cutoff)
+    .neq('assistant_type', 'spend_analysis');
+  if (error) {
+    console.warn('[assistants/runs] sweepOrphanedRuns failed:', error.message);
+  }
+}
+
 // Owner-scoped lookup. Used by the docx download endpoint to verify the
 // caller owns the run before rendering. We pass userId explicitly rather
 // than relying on RLS so the route's auth check is visible in code review.

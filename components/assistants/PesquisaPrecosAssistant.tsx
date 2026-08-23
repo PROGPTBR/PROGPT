@@ -5,6 +5,7 @@ import { PesquisaPrecosForm, type PesquisaPrecosFormValues } from './PesquisaPre
 import { PesquisaPrecosResult } from './PesquisaPrecosResult';
 import { RfpChatPanel } from './RfpChatPanel';
 import { handlePaywallResponse } from '@/lib/billing/handle-paywall';
+import { readAssistantChunk } from '@/lib/assistants/stream-client';
 
 type Phase = 'form' | 'generating' | 'done';
 
@@ -93,7 +94,7 @@ export function PesquisaPrecosAssistant() {
       const decoder = new TextDecoder();
       let buffer = '';
       while (true) {
-        const { value, done } = await reader.read();
+        const { value, done } = await readAssistantChunk(reader);
         if (done) break;
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');

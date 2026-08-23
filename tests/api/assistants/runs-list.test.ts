@@ -36,12 +36,23 @@ function setupMocks(opts: Opts = {}) {
   const order = vi.fn().mockReturnValue({ limit });
   const eq = vi.fn().mockReturnValue({ order });
   const select = vi.fn().mockReturnValue({ eq });
+
+  // Batch M — GET /api/assistants/runs também chama sweepOrphanedRuns
+  // (lib/assistants/runs.ts) antes de listar, que faz um .update(...) em
+  // cadeia separada (.eq.eq.is.lt.neq, resolvendo {error:null}).
+  const updateChain: Record<string, unknown> = {};
+  updateChain.eq = vi.fn().mockReturnValue(updateChain);
+  updateChain.is = vi.fn().mockReturnValue(updateChain);
+  updateChain.lt = vi.fn().mockReturnValue(updateChain);
+  updateChain.neq = vi.fn().mockResolvedValue({ error: null });
+  const update = vi.fn().mockReturnValue(updateChain);
+
   vi.doMock('@/lib/db/supabase', () => ({
     getServerSupabase: () => ({
-      from: () => ({ select }),
+      from: () => ({ select, update }),
     }),
   }));
-  return { select, eq, order, limit, lt };
+  return { select, eq, order, limit, lt, update };
 }
 
 function buildGet(url = 'http://x/api/assistants/runs'): Request {

@@ -11,6 +11,17 @@ import type { Proc2PayProcess, Proc2PayStageRun, Stage, StageId } from '@/lib/pr
 
 const MVP_STAGES = STAGES.filter((s) => s.mvp);
 
+// Batch M do backlog do diretor (21/08) — "assistente travado em uma
+// operação". Proc2Pay roda a etapa síncrona inline (sem polling, sem
+// assistant_runs) — se o LLM pendurar, o fetch fica esperando sem limite e
+// o botão gira pra sempre, sem erro nem forma de tentar de novo. 120s cobre
+// folgadamente uma chamada LLM síncrona de narrativa.
+const STAGE_TIMEOUT_MS = 120_000;
+
+function isTimeoutError(err: unknown): boolean {
+  return err instanceof DOMException && err.name === 'TimeoutError';
+}
+
 export function ProcessCockpit({
   initialProcess,
   initialStageRuns,
@@ -55,6 +66,7 @@ export function ProcessCockpit({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
+        signal: AbortSignal.timeout(STAGE_TIMEOUT_MS),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -63,8 +75,12 @@ export function ProcessCockpit({
       }
       await refresh();
       toast.success('Etapa concluída.');
-    } catch {
-      toast.error('Erro de rede.');
+    } catch (err) {
+      toast.error(
+        isTimeoutError(err)
+          ? 'A etapa demorou demais e foi interrompida. Tente novamente.'
+          : 'Erro de rede.',
+      );
     } finally {
       setBusy(null);
     }
@@ -77,6 +93,7 @@ export function ProcessCockpit({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ decision, comment: comment || undefined }),
+        signal: AbortSignal.timeout(STAGE_TIMEOUT_MS),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -85,8 +102,12 @@ export function ProcessCockpit({
       }
       await refresh();
       toast.success(decision === 'aprovado' ? 'Aprovado.' : 'Reprovado.');
-    } catch {
-      toast.error('Erro de rede.');
+    } catch (err) {
+      toast.error(
+        isTimeoutError(err)
+          ? 'A confirmação demorou demais e foi interrompida. Tente novamente.'
+          : 'Erro de rede.',
+      );
     } finally {
       setBusy(null);
     }

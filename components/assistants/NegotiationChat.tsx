@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { handlePaywallResponse } from '@/lib/billing/handle-paywall';
+import { readAssistantChunk } from '@/lib/assistants/stream-client';
 import { MicRecorderButton } from '@/components/chat/MicRecorderButton';
 import { wrapWithAttachment } from '@/components/chat/ChatSession';
 import type { ChatAttachment } from '@/components/chat/Composer';
@@ -220,7 +221,7 @@ export function NegotiationChat({
     let buffer = '';
     let acc = '';
     while (true) {
-      const { value, done } = await reader.read();
+      const { value, done } = await readAssistantChunk(reader);
       if (done) break;
       buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split('\n');

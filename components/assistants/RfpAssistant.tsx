@@ -6,6 +6,7 @@ import { RfpResult } from './RfpResult';
 import { RfpChatPanel } from './RfpChatPanel';
 import { DownloadTemplateButton } from './DownloadTemplateButton';
 import { handlePaywallResponse } from '@/lib/billing/handle-paywall';
+import { readAssistantChunk } from '@/lib/assistants/stream-client';
 
 // Top-level state machine for the RFP assistant page:
 //   'form'        — user filling out parameters (entrada direta)
@@ -101,7 +102,7 @@ export function RfpAssistant() {
       const decoder = new TextDecoder();
       let buffer = '';
       while (true) {
-        const { value, done } = await reader.read();
+        const { value, done } = await readAssistantChunk(reader);
         if (done) break;
         buffer += decoder.decode(value, { stream: true });
 

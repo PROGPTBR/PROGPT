@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
-import { listRunsForOwner } from '@/lib/assistants/runs';
+import { listRunsForOwner, sweepOrphanedRuns } from '@/lib/assistants/runs';
 import { ASSISTANT_TYPES, type AssistantType } from '@/lib/assistants/types';
 
 export const runtime = 'nodejs';
@@ -15,6 +15,10 @@ export const dynamic = 'force-dynamic';
 export async function GET(req: Request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+
+  // Batch M — fecha runs travados (status='running' há >10min, sem
+  // output_md) como 'error' antes de listar. Ver lib/assistants/runs.ts.
+  await sweepOrphanedRuns(user.id);
 
   const url = new URL(req.url);
   const rawLimit = Number(url.searchParams.get('limit') ?? '50');

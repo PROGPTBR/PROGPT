@@ -6,6 +6,7 @@ import remarkGfm from 'remark-gfm';
 import { toast } from 'sonner';
 import { Send, Sparkles, User as UserIcon, FilePlus2, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { readAssistantChunk } from '@/lib/assistants/stream-client';
 
 // Painel de refino de um run concluído (compartilhado por todos os tipos).
 //
@@ -118,7 +119,7 @@ export function RfpChatPanel({ runId, onRfpUpdated }: Props) {
       const decoder = new TextDecoder();
       let buffer = '';
       while (true) {
-        const { value, done } = await reader.read();
+        const { value, done } = await readAssistantChunk(reader);
         if (done) break;
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');

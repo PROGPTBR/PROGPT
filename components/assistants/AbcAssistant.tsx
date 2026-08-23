@@ -6,6 +6,7 @@ import { AbcResult } from './AbcResult';
 import { RfpChatPanel } from './RfpChatPanel';
 import { DownloadTemplateButton } from './DownloadTemplateButton';
 import { handlePaywallResponse } from '@/lib/billing/handle-paywall';
+import { readAssistantChunk } from '@/lib/assistants/stream-client';
 
 // Sub-projeto 31 — Assistente de Análise ABC (Curva de Pareto).
 //
@@ -63,7 +64,7 @@ export function AbcAssistant() {
       const decoder = new TextDecoder();
       let buffer = '';
       while (true) {
-        const { value, done } = await reader.read();
+        const { value, done } = await readAssistantChunk(reader);
         if (done) break;
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');

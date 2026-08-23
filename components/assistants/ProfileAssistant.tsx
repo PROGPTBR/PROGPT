@@ -6,6 +6,7 @@ import { ProfileResult } from './ProfileResult';
 import { RfpChatPanel } from './RfpChatPanel';
 import { DownloadTemplateButton } from './DownloadTemplateButton';
 import { handlePaywallResponse } from '@/lib/billing/handle-paywall';
+import { readAssistantChunk } from '@/lib/assistants/stream-client';
 
 // Sub-projeto 33 — Profile (Perfil da Categoria) assistant.
 //
@@ -52,7 +53,7 @@ export function ProfileAssistant() {
       const decoder = new TextDecoder();
       let buffer = '';
       while (true) {
-        const { value, done } = await reader.read();
+        const { value, done } = await readAssistantChunk(reader);
         if (done) break;
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');

@@ -6,6 +6,7 @@ import { PorterResult } from './PorterResult';
 import { RfpChatPanel } from './RfpChatPanel';
 import { DownloadTemplateButton } from './DownloadTemplateButton';
 import { handlePaywallResponse } from '@/lib/billing/handle-paywall';
+import { readAssistantChunk } from '@/lib/assistants/stream-client';
 
 // Sub-projeto 29 — Assistente das 5 Forças de Porter.
 //
@@ -67,7 +68,7 @@ export function PorterAssistant() {
       const decoder = new TextDecoder();
       let buffer = '';
       while (true) {
-        const { value, done } = await reader.read();
+        const { value, done } = await readAssistantChunk(reader);
         if (done) break;
         buffer += decoder.decode(value, { stream: true });
 

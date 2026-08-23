@@ -15,14 +15,16 @@ Fonte: dois arquivos entregues pelo diretor em 21/08/2026.
 1.15x, poder de decisão, técnica, concessões/trocas, checklist) · Batch C = `d3e5a4b` (#227)
 financeira 12 → 15 indicadores.
 
-**Batches D–K** estão entregues (D–G = `8084c07`, H = `03e2adb`, I = `bcede66`,
-J = `93e0b5b`, K = `a718c0c`, todos em `origin/main`) — ver o Rastreamento no fim deste doc.
-Batch J entregou schema/scoring/form/import/exports (gráficos extra ficaram de fora); Batch K
-levou o painel de indicadores de 6 para 10 cards + Focus + fontes/link/metodologia (INPC/
-IPCA-15/SINAPI/IPP ficaram de fora por falta de confirmação de código numa fonte primária).
-**Batch L** está em andamento na árvore de trabalho (L1: migration `materials` + import de
-planilha pra materiais e vendor list + tela com abas; L2 — autofill nos 6 forms — fica pra
-depois, ver Estado na seção do batch). Pendências externas: provisionar
+**Batches D–L** estão entregues (D–G = `8084c07`, H = `03e2adb`, I = `bcede66`,
+J = `93e0b5b`, K = `a718c0c`, L1 = `6de6022`, todos em `origin/main`) — ver o Rastreamento no
+fim deste doc. Batch J entregou schema/scoring/form/import/exports (gráficos extra ficaram de
+fora); Batch K levou o painel de indicadores de 6 para 10 cards + Focus + fontes/link/
+metodologia (INPC/IPCA-15/SINAPI/IPP ficaram de fora por falta de confirmação de código numa
+fonte primária); Batch L1 entregou migration `materials` + import de planilha pra materiais e
+vendor list + tela com abas (L2 — autofill nos 6 forms — fica pra depois). **Batch M** está em
+andamento na árvore de trabalho (watchdog client-side nos 11 componentes de assistente + sweep
+de runs órfãos + timeout no Proc2Pay; passo 1 — diagnóstico específico — segue precisando do
+diretor, ver Estado na seção do batch). Pendências externas: provisionar
 `PORTAL_TRANSPARENCIA_TOKEN` no Railway (sem ele a 3ª base do Batch E fica dormente), rodar
 `python scripts/insert_template_rfq_padrao.py` pra o template da RFQ em produção passar a usar
 os placeholders comerciais do Batch I, rodar `python scripts/insert_template_scorecard.py` pra
@@ -43,7 +45,7 @@ o parágrafo de doutrina do Batch J chegar no template do Scorecard em produçã
 | **J** 🟡 | Supplier Scorecard: adotar a planilha `Mudanças v1.xlsx` | G | — |
 | **K** 🟡 | Indicadores: ampliar fontes com link/fonte/data + tabela categoria→referência | G | D (disclaimer) |
 | **L** 🟡 | Base do cliente: materiais + vendor list (upload, atualizável, autofill) | G | — |
-| **M** | Bug "assistente travado em uma operação" (diagnóstico) | ? | precisa repro |
+| **M** 🟡 | Bug "assistente travado em uma operação" (diagnóstico) | ? | precisa repro |
 
 Racional da ordem: D–F são reuso/copy com impacto imediato na demo; G–I são features
 contidas numa tela; J–L são schema+integração. M depende de reprodução com o diretor.
@@ -514,13 +516,41 @@ presa, Spend Analysis em polling, ou o chat).
 3. Verificar também o caso Proc2Pay: etapa síncrona longa sem feedback de progresso passa a
    mesma impressão de "travado".
 
+**Estado (22/08/2026 — ainda não commitado)**: passo 1 não é acionável por mim (precisa do
+diretor); passos 2 e 3 entregues.
+
+- ⬜ **Passo 1 — segue precisando do diretor**: qual assistente, o que a tela mostrava, o
+  horário. Sem isso não dá pra puxar o trace específico no Langfuse.
+- ✅ **Watchdog client-side** (`lib/assistants/stream-client.ts`, `readAssistantChunk`):
+  todo `*Assistant.tsx` (11 componentes — RFP, Kraljic, Porter, Financial, ABC, Profile,
+  Scorecard, Homologação, Pesquisa de Preços, Negociação, RfpChatPanel) lê o SSE com o mesmo
+  laço `while (true) { await reader.read() }`; se nenhum chunk novo chega em 90s, rejeita com
+  uma mensagem acionável que cai no catch/toast **já existente** em cada componente — não foi
+  preciso adicionar UI nova, só trocar `reader.read()` por `readAssistantChunk(reader)`
+  (mecânico, mesma assinatura).
+- ✅ **Sweep de runs órfãos** (`sweepOrphanedRuns` em `lib/assistants/runs.ts`, chamado em
+  `GET /api/assistants/runs`): fecha como `status='error'` qualquer run do usuário que esteja
+  `running` há mais de 10 min sem `output_md` — cobre o caso raiz (processo reiniciado/conexão
+  caída no meio do `streamText`, que nunca chega no `onFinish`/catch de
+  `lib/assistants/handler.ts` e fica `running` pra sempre). **Exclui `spend_analysis`**
+  deliberadamente — já tem heartbeat próprio (`spend_invoices.updated_at`, reaper de 5 min);
+  duplicar aqui entraria em conflito com um run genuinamente em andamento.
+- ✅ **"Cancelar/recomeçar" já existe — não precisou de UI nova**: o botão "Apagar" em
+  `/assistants/history` (`RfpHistoryList.tsx`) **já fica habilitado pra qualquer status**,
+  inclusive `running`. Combinado com o sweep acima (que transforma "trava silenciosa pra
+  sempre" em "erro visível com botão de apagar"), o pedido do diretor já fica coberto sem
+  gastar orçamento numa 2ª forma de cancelar.
+- ✅ **Proc2Pay** (`components/proc2pay/ProcessCockpit.tsx`): as 2 chamadas síncronas longas
+  (`runStage`, `approve`) ganharam `AbortSignal.timeout(120s)` + mensagem distinta de timeout
+  vs. erro de rede — sem isso o fetch ficava esperando sem limite se o LLM pendurasse.
+
 ---
 
 ## Rastreamento
 
 | # | Item | Batch | Status |
 |---|---|---|---|
-| 1 | Assistente travado | M | ⬜ precisa repro |
+| 1 | Assistente travado | M | 🟡 modo de falha genérico coberto (watchdog client + sweep de runs órfãos); diagnóstico específico ainda precisa do diretor |
 | 2 | Base de materiais do cliente (ABC) | L | 🟡 migration + import + tela feitos; migration ainda não aplicada em produção |
 | 3 | Planilhas do cliente + 3 bases gov + saúde financeira/documentação (Busca) | E / L | 🟡 E feito (falta o token da CGU); import de planilha entregue no L (materiais e vendor list) |
 | 4 | Vendor list + autofill CNPJ/nome (Kraljic) | L | 🟡 import do vendor list feito (grava na base de fornecedores existente); autofill nos forms (L2) fica pra depois |
