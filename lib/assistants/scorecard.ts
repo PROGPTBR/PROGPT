@@ -1,18 +1,24 @@
 import type { ScorecardParams, ClassifiedSupplier, ScorecardBand, TemplateRow } from './types';
-import { SCORECARD_BAND_LABELS } from './types';
+import { SCORECARD_BAND_LABELS, SCORECARD_CAPABILITY_BONUS_POINTS } from './types';
 import type { RetrievedChunk } from '@/lib/rag/types';
 import type { CompanyData } from '@/lib/db/user-company';
 import { splitTemplateBody, renderPlaceholders } from './template-assembly';
 
 export function scoreSuppliers(params: ScorecardParams): ClassifiedSupplier[] {
   const totalWeight = params.criteria.reduce((a, c) => a + c.weight, 0) || 1;
+  // Fallback defensivo: runs salvos antes do Batch J não têm `scale` no JSONB
+  // persistido (lido direto do DB, sem reparse via zod) — sem o `?? 10` aqui,
+  // reabrir/baixar um scorecard antigo vira NaN silencioso.
+  const scale = params.scale ?? 10;
   const scored = params.suppliers.map((s) => {
     const weighted = params.criteria.reduce((acc, c) => {
       const raw = s.scores[c.id] ?? 0;
-      return acc + (raw / 10) * (c.weight / totalWeight);
+      return acc + (raw / scale) * (c.weight / totalWeight);
     }, 0);
-    const weightedScore = Number((weighted * 100).toFixed(1));
-    return { supplier: s, weightedScore };
+    const base = weighted * 100;
+    const bonusPoints = (s.strategicCapabilities?.length ?? 0) * SCORECARD_CAPABILITY_BONUS_POINTS;
+    const weightedScore = Number(Math.min(100, base + bonusPoints).toFixed(1));
+    return { supplier: s, weightedScore, bonusPoints };
   });
   const ordered = scored
     .map((x, i) => ({ ...x, i }))
@@ -21,6 +27,7 @@ export function scoreSuppliers(params: ScorecardParams): ClassifiedSupplier[] {
   return ordered.map((x, idx) => ({
     ...x.supplier,
     weightedScore: x.weightedScore,
+    bonusPoints: x.bonusPoints,
     rank: idx + 1,
     band: bandFor(x.weightedScore, strategic, development),
   }));
@@ -47,7 +54,12 @@ export const SCORECARD_SYSTEM_PROMPT = `Você é um especialista sênior em Stra
 5. **Sem preâmbulo conversacional**; comece pelo título.
 6. **Não invente dados de fornecedor**; quando faltar fundamento, use "o comprador definirá".
 7. **Use a base de conhecimento (SRM, Cousins, supplier segmentation)** para fundamentar, sem citar autores/IDs.
-8. **Markdown limpo**: headings, tabelas markdown, **bold** para valores críticos.`;
+8. **Markdown limpo**: headings, tabelas markdown, **bold** para valores críticos.
+9. **Doutrina de scorecard** (planilha \`Mudanças v1.xlsx\` do diretor — incorporar no tom do relatório):
+   - Um bom scorecard mistura **medidas de qualidade** (ex.: taxa de erro, defeitos) **e de quantidade/volume** (ex.: volume de transações) — a maioria das empresas mede bem quantidade e negligencia qualidade; reforce isso quando os critérios do usuário forem majoritariamente quantitativos.
+   - O scorecard deve funcionar como **incentivo, não penalidade** — plano de ação recomendado nunca deve soar punitivo, e sim como caminho de melhoria com meta e prazo.
+   - Quando fizer sentido, referencie KPIs essenciais de scorecard de fornecedor (nº de fornecedores por categoria, taxa de conformidade, tempo de ciclo de PO, disponibilidade, taxa de defeito, taxa de erro, prazo de entrega competitivo, custo de PO, ROI de aquisição, melhoria contínua) e equações objetivas (ex.: quantidade rejeitada ÷ quantidade entregue = taxa de rejeição; prazo real − prazo inicial = ganho de prazo) em vez de generalidades.
+   - Se o fornecedor tiver **capacidades estratégicas** marcadas (bônus no score — já aplicado), destaque-as como diferenciais no diagnóstico, não como parte do cálculo (o cálculo já está feito).`;
 
 function formatChunks(chunks: RetrievedChunk[]): string {
   if (chunks.length === 0) {
@@ -65,26 +77,37 @@ export function buildScorecardPrompt(
   chunks: RetrievedChunk[],
   company: CompanyData | null = null,
 ): { system: string; user: string } {
-  // Build criteria+weights summary
+  // Build criteria+weights summary — group prefix + "base para pontuação" when presentes
+  // (Batch J: adoção da planilha `Mudanças v1.xlsx`, grupos + justificativa qualitativa).
   const totalWeight = params.criteria.reduce((a, c) => a + c.weight, 0) || 1;
   const criteriaLines = params.criteria
-    .map((c) => `- **${c.label}**: ${((c.weight / totalWeight) * 100).toFixed(1)}%`)
+    .map((c) => {
+      const prefix = c.group ? `${c.group} — ` : '';
+      const basis = c.basis ? ` _(base: ${c.basis})_` : '';
+      return `- **${prefix}${c.label}**: ${((c.weight / totalWeight) * 100).toFixed(1)}%${basis}`;
+    })
     .join('\n');
 
-  // Build ranking table
-  const tableHeader = '| Rank | Fornecedor | Segmento | Score | Faixa |';
-  const tableSep    = '|---|---|---|---|---|';
+  // Build ranking table — Bônus só aparece quando algum fornecedor tem capacidades marcadas.
+  const hasBonus = classified.some((s) => s.bonusPoints > 0);
+  const tableHeader = hasBonus
+    ? '| Rank | Fornecedor | Segmento | Score | Bônus | Faixa |'
+    : '| Rank | Fornecedor | Segmento | Score | Faixa |';
+  const tableSep = hasBonus ? '|---|---|---|---|---|---|' : '|---|---|---|---|---|';
   const tableRows = classified
     .map((s) => {
       const seg = s.segment ? s.segment : '—';
       const faixa = SCORECARD_BAND_LABELS[s.band];
-      return `| ${s.rank} | ${s.name} | ${seg} | ${s.weightedScore} | ${faixa} |`;
+      return hasBonus
+        ? `| ${s.rank} | ${s.name} | ${seg} | ${s.weightedScore} | +${s.bonusPoints} | ${faixa} |`
+        : `| ${s.rank} | ${s.name} | ${seg} | ${s.weightedScore} | ${faixa} |`;
     })
     .join('\n');
 
   const dataBlock = `## Scorecard: ${params.scorecardName}
 ${params.period ? `\n- **Período**: ${params.period}` : ''}
 ${params.notes ? `\n- **Notas**: ${params.notes}` : ''}
+- **Escala das notas**: 1–${params.scale ?? 10}
 
 ### Critérios e pesos (já normalizados)
 

@@ -6,7 +6,7 @@ import { SCORECARD_DEFAULT_THRESHOLDS } from '@/lib/assistants/types';
 import type { ScorecardParams } from '@/lib/assistants/types';
 
 const p: ScorecardParams = {
-  scorecardName: 'Aço', period: '', notes: '', thresholds: SCORECARD_DEFAULT_THRESHOLDS,
+  scorecardName: 'Aço', period: '', notes: '', scale: 10, thresholds: SCORECARD_DEFAULT_THRESHOLDS,
   criteria: [{ id: 'q', label: 'Qualidade', weight: 60 }, { id: 'pr', label: 'Preço', weight: 40 }],
   suppliers: [
     { name: 'A', segment: '', scores: { q: 9, pr: 7 } },
@@ -29,6 +29,37 @@ describe('buildScorecardXlsxBuffer', () => {
     const wb = new ExcelJS.Workbook();
     await wb.xlsx.load(buf as unknown as ArrayBuffer);
     expect(wb.getWorksheet('Gráfico')).toBeTruthy();
+  });
+
+  it('adds a Grupo row + basis footnote + Bônus column when present (Batch J)', async () => {
+    const grouped: ScorecardParams = {
+      ...p,
+      criteria: [
+        { id: 'q', label: 'Qualidade', weight: 60, group: 'Requisitos', basis: 'Comprovante técnico' },
+        { id: 'pr', label: 'Preço', weight: 40, group: '', basis: '' },
+      ],
+      suppliers: [
+        { name: 'A', segment: '', scores: { q: 9, pr: 7 }, strategicCapabilities: ['pd-forte'] },
+        { name: 'B', segment: '', scores: { q: 4, pr: 5 } },
+      ],
+    };
+    const classified = scoreSuppliers(grouped);
+    const buf = await buildScorecardXlsxBuffer(grouped, classified);
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(buf as unknown as ArrayBuffer);
+    const ws = wb.getWorksheet('Scorecard')!;
+    const values: string[] = [];
+    ws.eachRow((row) => {
+      const first = row.getCell(1).value;
+      if (typeof first === 'string') values.push(first);
+    });
+    expect(values).toContain('Grupo');
+    expect(values).toContain('Base para pontuação');
+    let headerVals: unknown[] = [];
+    ws.eachRow((row) => {
+      if (row.getCell(1).value === 'Fornecedor') headerVals = (row.values as unknown[]).slice(1);
+    });
+    expect(headerVals).toContain('Bônus');
   });
 
   it('Scorecard header spans Fornecedor + N criteria + Score + Rank + Faixa', async () => {

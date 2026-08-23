@@ -915,17 +915,44 @@ export const DEFAULT_SCORECARD_CRITERIA = [
   { id: 'esg', label: 'ESG/sustentabilidade', weight: 10 },
 ] as const;
 
+// Batch J (backlog do diretor 21/08) — `Mudanças v1.xlsx` propôs 8 grupos de
+// critérios (Adesão ao RFP, Informações da empresa, …) com sub-critérios,
+// escala 1–5 e uma coluna "Base para pontuação" (justificativa qualitativa).
+// Em vez de reescrever o motor de pesos (hoje: peso por critério, soma
+// normalizada), `group`/`basis` são metadados de organização — o critério
+// continua com peso próprio, o que é um superset estrito do modelo da
+// planilha (lá o peso é só por grupo, com sub-critérios em média simples).
 export const ScorecardCriterionSchema = z.object({
   id: z.string().trim().min(1).max(60),
   label: z.string().trim().min(1).max(80),
   weight: z.number().min(0.01).max(100),
+  group: z.string().trim().max(80).optional(), // ausente/'' = sem grupo (modo simples/legado)
+  basis: z.string().trim().max(300).optional(), // "base para pontuação" (planilha, coluna E)
 });
 export type ScorecardCriterion = z.infer<typeof ScorecardCriterionSchema>;
+
+// Aba "Capacidades estratégicas" da planilha — itens marcáveis por fornecedor
+// que SOMAM pontos ao score final (bônus explícito e auditável, nunca peso
+// oculto). +1 ponto por item marcado, cap = 9 (todos marcados).
+export const SCORECARD_STRATEGIC_CAPABILITIES = [
+  { id: 'pd-forte', label: 'Equipe forte de P&D' },
+  { id: 'saude-financeira', label: 'Análise da saúde financeira do fornecedor' },
+  { id: 'integracao-vertical', label: 'Integração vertical dos recursos da cadeia de suprimentos' },
+  { id: 'politicas-cadeia', label: 'Políticas em vigor ao longo de toda a cadeia de suprimentos' },
+  { id: 'resposta-criatividade', label: 'Capacidade de resposta e criatividade' },
+  { id: 'melhoria-continua', label: 'Orientação para melhoria contínua' },
+  { id: 'acompanhamento-novos-produtos', label: 'Acompanhamento do desenvolvimento de novos produtos' },
+  { id: 'inovacao-novos-produtos', label: 'Desenvolvimento e inovação de novos produtos' },
+  { id: 'ideias-economia-custos', label: 'Ideias e oportunidades de economia de custos' },
+] as const;
+export type ScorecardCapabilityId = (typeof SCORECARD_STRATEGIC_CAPABILITIES)[number]['id'];
+export const SCORECARD_CAPABILITY_BONUS_POINTS = 1;
 
 export const ScorecardSupplierSchema = z.object({
   name: z.string().trim().min(1).max(120),
   segment: z.string().trim().max(120).optional().default(''),
   scores: z.record(z.string(), z.number().min(0).max(10)),
+  strategicCapabilities: z.array(z.string().trim().max(60)).max(9).optional(),
 });
 export type ScorecardSupplier = z.infer<typeof ScorecardSupplierSchema>;
 
@@ -934,7 +961,11 @@ export const ScorecardParamsSchema = z
     scorecardName: z.string().trim().min(1).max(200),
     period: z.string().trim().max(120).optional().default(''),
     notes: z.string().trim().max(2000).optional().default(''),
-    criteria: z.array(ScorecardCriterionSchema).min(1).max(15),
+    // Escala das notas por critério. Default 10 preserva runs antigos (params
+    // salvo sem o campo). 5 é a escala da planilha `Mudanças v1.xlsx`
+    // ("pontuações disponíveis entre 1 e 5").
+    scale: z.union([z.literal(5), z.literal(10)]).default(10),
+    criteria: z.array(ScorecardCriterionSchema).min(1).max(48),
     suppliers: z.array(ScorecardSupplierSchema).min(1).max(100),
     thresholds: z
       .object({ strategic: z.number().min(1).max(100), development: z.number().min(0).max(99) })
@@ -944,6 +975,10 @@ export const ScorecardParamsSchema = z
   .refine(
     (p) => p.suppliers.every((s) => p.criteria.every((c) => typeof s.scores[c.id] === 'number')),
     { message: 'every supplier must have a score for every criterion' },
+  )
+  .refine(
+    (p) => p.suppliers.every((s) => p.criteria.every((c) => (s.scores[c.id] ?? 0) <= p.scale)),
+    { message: 'every score must be within [0, scale]' },
   )
   .refine(
     (p) => new Set(p.criteria.map((c) => c.id)).size === p.criteria.length,
@@ -958,7 +993,8 @@ export const ScorecardRequestSchema = z.object({
 export type ScorecardRequest = z.infer<typeof ScorecardRequestSchema>;
 
 export type ClassifiedSupplier = ScorecardSupplier & {
-  weightedScore: number; // 0–100
+  weightedScore: number; // 0–100 (já inclui o bônus de capacidades estratégicas)
+  bonusPoints: number; // pontos de bônus somados (auditável) — SCORECARD_CAPABILITY_BONUS_POINTS × nº marcado
   rank: number; // 1 = best
   band: ScorecardBand;
 };

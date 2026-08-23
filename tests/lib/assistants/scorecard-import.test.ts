@@ -73,6 +73,19 @@ describe('parseScorecardXlsx', () => {
     expect(criteria[0]!.weight).toBe(100);
   });
 
+  it('splits "Grupo: Critério" headers into group + label (Batch J)', async () => {
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet('Scorecard');
+    ws.addRow(['Fornecedor', 'Requisitos: Compatibilidade técnica', 'Preço']);
+    ws.addRow(['A', 4, 8]);
+    const b = Buffer.from((await wb.xlsx.writeBuffer()) as ArrayBuffer);
+    const { criteria } = await parseScorecardXlsx(b);
+    expect(criteria[0]!.group).toBe('Requisitos');
+    expect(criteria[0]!.label).toBe('Compatibilidade técnica');
+    expect(criteria[1]!.group).toBe(''); // no colon → ungrouped
+    expect(criteria[1]!.label).toBe('Preço');
+  });
+
   it('preserves detected criteria when there are no supplier rows', async () => {
     const wb = new ExcelJS.Workbook();
     const ws = wb.addWorksheet('Scorecard');

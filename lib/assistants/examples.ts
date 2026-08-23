@@ -78,46 +78,125 @@ export const SCORECARD_EXAMPLES: FormExample<ScorecardParams>[] = [
       period: 'Q2–Q3 2026',
       notes:
         'Avaliação trimestral dos 6 fornecedores ativos de filmes laminados e coextrudados. Pesos refletem estratégia de redução de risco via diversificação e inovação em barreiras.',
+      scale: 10,
       criteria: [
-        { id: 'qualidade', label: 'Qualidade & Conformidade', weight: 30 },
-        { id: 'prazo', label: 'Prazo de Entrega', weight: 15 },
-        { id: 'preco', label: 'Preço / Competitividade', weight: 25 },
-        { id: 'sustentabilidade', label: 'Sustentabilidade / ESG', weight: 20 },
-        { id: 'inovacao', label: 'Inovação em Barreiras', weight: 10 },
+        { id: 'qualidade', label: 'Qualidade & Conformidade', weight: 30, group: '', basis: '' },
+        { id: 'prazo', label: 'Prazo de Entrega', weight: 15, group: '', basis: '' },
+        { id: 'preco', label: 'Preço / Competitividade', weight: 25, group: '', basis: '' },
+        { id: 'sustentabilidade', label: 'Sustentabilidade / ESG', weight: 20, group: '', basis: '' },
+        { id: 'inovacao', label: 'Inovação em Barreiras', weight: 10, group: '', basis: '' },
       ],
       suppliers: [
         {
           name: 'Polifilm Indústria',
           segment: 'Multinacional — coextrudados',
           scores: { qualidade: 9, prazo: 8, preco: 6, sustentabilidade: 8, inovacao: 7 },
+          strategicCapabilities: [],
         },
         {
           name: 'BarrierPack Brasil',
           segment: 'Multinacional — estruturas com barreira',
           scores: { qualidade: 8, prazo: 7, preco: 6, sustentabilidade: 9, inovacao: 9 },
+          strategicCapabilities: [],
         },
         {
           name: 'Laminados Andina',
           segment: 'Nacional — laminados OPP/PE',
           scores: { qualidade: 7, prazo: 9, preco: 8, sustentabilidade: 6, inovacao: 5 },
+          strategicCapabilities: [],
         },
         {
           name: 'EmbalaSul',
           segment: 'Nacional — filmes laminados',
           scores: { qualidade: 7, prazo: 8, preco: 8, sustentabilidade: 5, inovacao: 4 },
+          strategicCapabilities: [],
         },
         {
           name: 'FlexFilms Co.',
           segment: 'Multinacional — BOPP biaxial',
           scores: { qualidade: 8, prazo: 7, preco: 5, sustentabilidade: 7, inovacao: 8 },
+          strategicCapabilities: [],
         },
         {
           name: 'NordPack Soluções',
           segment: 'Multinacional — barreira avançada',
           scores: { qualidade: 9, prazo: 9, preco: 5, sustentabilidade: 9, inovacao: 9 },
+          strategicCapabilities: [],
         },
       ],
       thresholds: { strategic: 75, development: 55 },
+    },
+  },
+  {
+    // Batch J (backlog do diretor 21/08) — modelo da planilha `Mudanças v1.xlsx`:
+    // 8 grupos de critérios, escala 1–5, "base para pontuação" por sub-critério
+    // e capacidades estratégicas como bônus. 2 sub-critérios por grupo aqui
+    // (a planilha original tem 4–10) para manter o exemplo legível.
+    id: 'planilha-diretor-selecao-software',
+    label: 'Planilha do diretor — seleção de fornecedor de software (RFP)',
+    params: {
+      scorecardName: 'Seleção de Fornecedor — Sistema de Gestão (RFP)',
+      period: '2026',
+      notes:
+        'Modelo adotado da planilha "Mudanças v1.xlsx" do diretor: 8 grupos de critérios em escala 1–5, com base qualitativa de pontuação por sub-critério e bônus por capacidades estratégicas.',
+      scale: 5,
+      criteria: [
+        { id: 'pontualidade', label: 'Pontualidade', weight: 2.5, group: 'Adesão às instruções do RFP', basis: 'Entrega dentro do prazo recebe todos os pontos' },
+        { id: 'integralidade', label: 'Integralidade', weight: 2.5, group: 'Adesão às instruções do RFP', basis: 'Seções concluídas na mesma ordem que o RFP recebe todos os pontos' },
+        { id: 'viabilidade-financeira', label: 'Viabilidade financeira', weight: 2.5, group: 'Informações da empresa', basis: 'Comprovante de viabilidade financeira (ex.: relatório Dun & Bradstreet) recebe todos os pontos' },
+        { id: 'referencias', label: 'Referências', weight: 2.5, group: 'Informações da empresa', basis: 'Referências positivas de clientes verificados recebem todos os pontos' },
+        { id: 'compreensao-objetivos', label: 'Compreensão dos objetivos do projeto', weight: 10, group: 'Compreensão do projeto', basis: 'Seção escrita mostra compreensão' },
+        { id: 'compreensao-visao', label: 'Compreensão da visão executiva', weight: 10, group: 'Compreensão do projeto', basis: 'Seção escrita mostra compreensão' },
+        { id: 'integridade-resposta', label: 'Integridade da resposta do vendedor', weight: 15, group: 'Requisitos', basis: 'Resposta totalmente compatível tecnicamente' },
+        { id: 'capacidade-requisitos', label: 'Capacidade de atender aos requisitos', weight: 15, group: 'Requisitos', basis: 'Detalhes da capacidade do vendedor de atender aos requisitos' },
+        { id: 'roteiro-produto', label: 'Roteiro do produto', weight: 2.5, group: 'Viabilidade e histórico do produto', basis: 'Roteiro detalhado para o desenvolvimento futuro' },
+        { id: 'ciclo-vida', label: 'Ciclo de vida do desenvolvimento', weight: 2.5, group: 'Viabilidade e histórico do produto', basis: 'Ciclo de vida realista para atualizações do produto' },
+        { id: 'termos-condicoes', label: 'Termos e condições favoráveis', weight: 2.5, group: 'Termos e condições', basis: 'Termos e condições favoráveis ao comprador' },
+        { id: 'detalhes-contrato', label: 'Detalhes do contrato de compra', weight: 2.5, group: 'Termos e condições', basis: 'Descreve claramente os detalhes da compra' },
+        { id: 'facilidade-uso', label: 'Facilidade de uso', weight: 12.5, group: 'Demonstração do vendedor', basis: 'Fluxo simples e intuitivo na demonstração' },
+        { id: 'desempenho-sistema', label: 'Desempenho do sistema', weight: 12.5, group: 'Demonstração do vendedor', basis: 'Sistema responde sem lentidão perceptível na demo' },
+        { id: 'taxas-licenca', label: 'Taxas de licença', weight: 2.5, group: 'Resumo da taxa', basis: 'Estrutura de licenciamento clara e competitiva' },
+        { id: 'cronograma-pagamento', label: 'Cronograma de pagamento', weight: 2.5, group: 'Resumo da taxa', basis: 'Cronograma de pagamento alinhado ao fluxo de caixa' },
+      ],
+      suppliers: [
+        {
+          name: 'Vendedor 1',
+          segment: 'Incumbente — ERP consolidado',
+          scores: {
+            pontualidade: 5, integralidade: 5, 'viabilidade-financeira': 5, referencias: 2,
+            'compreensao-objetivos': 5, 'compreensao-visao': 2, 'integridade-resposta': 5,
+            'capacidade-requisitos': 1, 'roteiro-produto': 5, 'ciclo-vida': 2,
+            'termos-condicoes': 1, 'detalhes-contrato': 2, 'facilidade-uso': 5,
+            'desempenho-sistema': 1, 'taxas-licenca': 5, 'cronograma-pagamento': 2,
+          },
+          strategicCapabilities: [],
+        },
+        {
+          name: 'Vendedor 2',
+          segment: 'Desafiante — plataforma cloud-native',
+          scores: {
+            pontualidade: 5, integralidade: 3, 'viabilidade-financeira': 5, referencias: 5,
+            'compreensao-objetivos': 5, 'compreensao-visao': 4, 'integridade-resposta': 5,
+            'capacidade-requisitos': 5, 'roteiro-produto': 3, 'ciclo-vida': 4,
+            'termos-condicoes': 5, 'detalhes-contrato': 4, 'facilidade-uso': 4,
+            'desempenho-sistema': 2, 'taxas-licenca': 5, 'cronograma-pagamento': 4,
+          },
+          strategicCapabilities: ['pd-forte', 'melhoria-continua'],
+        },
+        {
+          name: 'Vendedor 3',
+          segment: 'Nicho — especialista no setor',
+          scores: {
+            pontualidade: 5, integralidade: 2, 'viabilidade-financeira': 5, referencias: 3,
+            'compreensao-objetivos': 5, 'compreensao-visao': 3, 'integridade-resposta': 5,
+            'capacidade-requisitos': 4, 'roteiro-produto': 2, 'ciclo-vida': 3,
+            'termos-condicoes': 4, 'detalhes-contrato': 3, 'facilidade-uso': 3,
+            'desempenho-sistema': 3, 'taxas-licenca': 5, 'cronograma-pagamento': 3,
+          },
+          strategicCapabilities: ['ideias-economia-custos'],
+        },
+      ],
+      thresholds: { strategic: 70, development: 40 },
     },
   },
 ];

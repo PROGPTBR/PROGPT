@@ -73,7 +73,9 @@ export function ScorecardImportDialog({ open, onClose, onImported }: Props) {
         </div>
         <p className="text-xs text-muted-foreground">
           Planilha .xlsx: primeira coluna <strong>Fornecedor</strong>, demais colunas = um
-          critério cada (nota 0–10 por célula). Pesos são distribuídos igualmente na importação.{' '}
+          critério cada (nota 0–10 por célula). Pesos são distribuídos igualmente na importação.
+          Cabeçalho no formato <strong>&quot;Grupo: Critério&quot;</strong> (ex.: &quot;Requisitos:
+          Compatibilidade técnica&quot;) organiza o critério dentro de um grupo — opcional.{' '}
           <a
             href="/templates/scorecard-template.xlsx"
             download="scorecard-template.xlsx"

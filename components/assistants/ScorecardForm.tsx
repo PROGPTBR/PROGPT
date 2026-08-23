@@ -10,6 +10,7 @@ import { SCORECARD_EXAMPLES } from '@/lib/assistants/examples';
 import {
   DEFAULT_SCORECARD_CRITERIA,
   SCORECARD_DEFAULT_THRESHOLDS,
+  SCORECARD_STRATEGIC_CAPABILITIES,
 } from '@/lib/assistants/types';
 import type { ScorecardCriterion, ScorecardSupplier, ScorecardParams } from '@/lib/assistants/types';
 
@@ -29,6 +30,8 @@ type CriterionDraft = {
   id: string; // stable — slug of original label; kept when label changes
   label: string;
   weight: string; // string for input, coerced on submit
+  group: string; // '' = sem grupo (modo simples) — Batch J
+  basis: string; // "base para pontuação" — Batch J
 };
 
 type SupplierDraft = {
@@ -36,6 +39,7 @@ type SupplierDraft = {
   name: string;
   segment: string;
   scores: Record<string, string>; // criterionId → string (number input value)
+  strategicCapabilities: string[]; // ids marcados — Batch J (bônus no score)
 };
 
 function labelToId(label: string): string {
@@ -54,15 +58,23 @@ function makeEmptyCriteria(): CriterionDraft[] {
     id: c.id,
     label: c.label,
     weight: String(c.weight),
+    group: '',
+    basis: '',
   }));
 }
 
-function makeEmptySupplier(criteria: CriterionDraft[], i = 0): SupplierDraft {
+function makeEmptySupplier(criteria: CriterionDraft[], i = 0, scale = 10): SupplierDraft {
   const scores: Record<string, string> = {};
   for (const c of criteria) {
-    scores[c.id] = '5';
+    scores[c.id] = String(Math.ceil(scale / 2));
   }
-  return { id: `fornecedor-${Date.now()}-${i}`, name: '', segment: '', scores };
+  return {
+    id: `fornecedor-${Date.now()}-${i}`,
+    name: '',
+    segment: '',
+    scores,
+    strategicCapabilities: [],
+  };
 }
 
 export function ScorecardForm({ onSubmit }: { onSubmit: (v: ScorecardFormValues) => void }) {
@@ -76,6 +88,7 @@ export function ScorecardForm({ onSubmit }: { onSubmit: (v: ScorecardFormValues)
   const [developmentThreshold, setDevelopmentThreshold] = useState(
     String(SCORECARD_DEFAULT_THRESHOLDS.development),
   );
+  const [scale, setScale] = useState<'5' | '10'>('10');
   const [criteria, setCriteria] = useState<CriterionDraft[]>(makeEmptyCriteria);
   const [suppliers, setSuppliers] = useState<SupplierDraft[]>(() => [
     makeEmptySupplier(makeEmptyCriteria(), 0),
@@ -107,6 +120,25 @@ export function ScorecardForm({ onSubmit }: { onSubmit: (v: ScorecardFormValues)
     void fetchTemplates();
   }, [fetchTemplates]);
 
+  // ── Scale (Batch J) ───────────────────────────────────────────────────────
+  // Trocar a escala re-clampa as notas já digitadas para o novo teto — evita
+  // que um score "8" sobreviva silenciosamente numa escala 1–5.
+  function handleScaleChange(next: '5' | '10') {
+    const nextMax = Number(next);
+    setSuppliers((prev) =>
+      prev.map((s) => ({
+        ...s,
+        scores: Object.fromEntries(
+          Object.entries(s.scores).map(([cid, v]) => [
+            cid,
+            String(Math.min(nextMax, Math.max(0, Number(v) || 0))),
+          ]),
+        ),
+      })),
+    );
+    setScale(next);
+  }
+
   // ── Criteria editor helpers ──────────────────────────────────────────────
 
   function updateCriterionLabel(i: number, label: string) {
@@ -120,12 +152,27 @@ export function ScorecardForm({ onSubmit }: { onSubmit: (v: ScorecardFormValues)
     setCriteria((prev) => prev.map((c, idx) => (idx === i ? { ...c, weight } : c)));
   }
 
+  function updateCriterionGroup(i: number, group: string) {
+    setCriteria((prev) => prev.map((c, idx) => (idx === i ? { ...c, group } : c)));
+  }
+
+  function updateCriterionBasis(i: number, basis: string) {
+    setCriteria((prev) => prev.map((c, idx) => (idx === i ? { ...c, basis } : c)));
+  }
+
   function addCriterion() {
-    const newC: CriterionDraft = { id: `criterio-${Date.now()}`, label: '', weight: '10' };
+    const newC: CriterionDraft = {
+      id: `criterio-${Date.now()}`,
+      label: '',
+      weight: '10',
+      group: '',
+      basis: '',
+    };
     setCriteria((prev) => [...prev, newC]);
     // Add default score for new criterion to all suppliers
+    const mid = String(Math.ceil(Number(scale) / 2));
     setSuppliers((prev) =>
-      prev.map((s) => ({ ...s, scores: { ...s.scores, [newC.id]: '5' } })),
+      prev.map((s) => ({ ...s, scores: { ...s.scores, [newC.id]: mid } })),
     );
   }
 
@@ -162,7 +209,22 @@ export function ScorecardForm({ onSubmit }: { onSubmit: (v: ScorecardFormValues)
   }
 
   function addSupplier() {
-    setSuppliers((prev) => [...prev, makeEmptySupplier(criteria)]);
+    setSuppliers((prev) => [...prev, makeEmptySupplier(criteria, prev.length, Number(scale))]);
+  }
+
+  function toggleSupplierCapability(supplierIdx: number, capabilityId: string) {
+    setSuppliers((prev) =>
+      prev.map((s, idx) => {
+        if (idx !== supplierIdx) return s;
+        const has = s.strategicCapabilities.includes(capabilityId);
+        return {
+          ...s,
+          strategicCapabilities: has
+            ? s.strategicCapabilities.filter((id) => id !== capabilityId)
+            : [...s.strategicCapabilities, capabilityId],
+        };
+      }),
+    );
   }
 
   function removeSupplier(i: number) {
@@ -181,10 +243,15 @@ export function ScorecardForm({ onSubmit }: { onSubmit: (v: ScorecardFormValues)
         description: result.warnings.slice(0, 3).join(' · '),
       });
     }
+    // Import continua assumindo escala 0–10 (a escala do arquivo enviado não
+    // é detectável na grade) — reseta a escala do form para 10.
+    setScale('10');
     const newCriteria: CriterionDraft[] = result.criteria.map((c) => ({
       id: c.id,
       label: c.label,
       weight: String(c.weight),
+      group: c.group ?? '',
+      basis: c.basis ?? '',
     }));
     const importTs = Date.now();
     const newSuppliers: SupplierDraft[] = result.suppliers.map((s, i) => {
@@ -192,20 +259,29 @@ export function ScorecardForm({ onSubmit }: { onSubmit: (v: ScorecardFormValues)
       for (const c of newCriteria) {
         scores[c.id] = String(s.scores[c.id] ?? 5);
       }
-      return { id: `fornecedor-${importTs}-${i}`, name: s.name, segment: s.segment ?? '', scores };
+      return {
+        id: `fornecedor-${importTs}-${i}`,
+        name: s.name,
+        segment: s.segment ?? '',
+        scores,
+        strategicCapabilities: [],
+      };
     });
     setCriteria(newCriteria);
     setSuppliers(newSuppliers);
   }
 
-  function loadExample() {
-    const ex = SCORECARD_EXAMPLES[0];
+  function loadExample(exampleIndex: number) {
+    const ex = SCORECARD_EXAMPLES[exampleIndex];
     if (!ex) return;
     const p = ex.params;
+    const exScale = p.scale === 5 ? '5' : '10';
     const newCriteria: CriterionDraft[] = p.criteria.map((c) => ({
       id: c.id,
       label: c.label,
       weight: String(c.weight),
+      group: c.group ?? '',
+      basis: c.basis ?? '',
     }));
     const ts = Date.now();
     const newSuppliers: SupplierDraft[] = p.suppliers.map((s, i) => {
@@ -213,8 +289,15 @@ export function ScorecardForm({ onSubmit }: { onSubmit: (v: ScorecardFormValues)
       for (const c of newCriteria) {
         scores[c.id] = String(s.scores[c.id] ?? 5);
       }
-      return { id: `fornecedor-${ts}-${i}`, name: s.name, segment: s.segment ?? '', scores };
+      return {
+        id: `fornecedor-${ts}-${i}`,
+        name: s.name,
+        segment: s.segment ?? '',
+        scores,
+        strategicCapabilities: [...(s.strategicCapabilities ?? [])],
+      };
     });
+    setScale(exScale);
     setCriteria(newCriteria);
     setSuppliers(newSuppliers);
     setScorecardName(p.scorecardName);
@@ -272,22 +355,35 @@ export function ScorecardForm({ onSubmit }: { onSubmit: (v: ScorecardFormValues)
       }
       assignedIds.add(finalId);
       idMap[c.id] = finalId;
-      return { id: finalId, label: c.label.trim(), weight: Number(c.weight) || 0 };
+      return {
+        id: finalId,
+        label: c.label.trim(),
+        weight: Number(c.weight) || 0,
+        group: c.group.trim(),
+        basis: c.basis.trim(),
+      };
     });
 
+    const scaleNum = Number(scale) as 5 | 10;
     const finalSuppliers: ScorecardSupplier[] = validSuppliers.map((s) => {
       const scores: Record<string, number> = {};
       for (const c of validCriteria) {
         const finalId = idMap[c.id] ?? c.id;
-        scores[finalId] = Math.min(10, Math.max(0, Number(s.scores[c.id]) || 0));
+        scores[finalId] = Math.min(scaleNum, Math.max(0, Number(s.scores[c.id]) || 0));
       }
-      return { name: s.name.trim(), segment: s.segment.trim(), scores };
+      return {
+        name: s.name.trim(),
+        segment: s.segment.trim(),
+        scores,
+        strategicCapabilities: s.strategicCapabilities,
+      };
     });
 
     const params: ScorecardParams = {
       scorecardName: scorecardName.trim(),
       period: period.trim(),
       notes: notes.trim(),
+      scale: scaleNum,
       criteria: finalCriteria,
       suppliers: finalSuppliers,
       thresholds: { strategic: strategicNum, development: developmentNum },
@@ -326,6 +422,28 @@ export function ScorecardForm({ onSubmit }: { onSubmit: (v: ScorecardFormValues)
             placeholder="Ex: Q2 2026, Jan-Jun 2026"
             maxLength={120}
           />
+        </div>
+        <div>
+          <label className="text-xs font-medium block mb-1">Escala das notas</label>
+          <div className="flex items-center gap-1 rounded-md border border-input p-0.5 w-fit">
+            {(['10', '5'] as const).map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => handleScaleChange(s)}
+                className={`px-3 py-1.5 text-xs rounded ${
+                  scale === s
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:bg-accent'
+                }`}
+              >
+                0–{s}
+              </button>
+            ))}
+          </div>
+          <p className="text-[10px] text-muted-foreground mt-1">
+            1–5 segue a planilha do diretor (Batch J); trocar re-ajusta notas já digitadas.
+          </p>
         </div>
       </div>
 
@@ -385,9 +503,12 @@ export function ScorecardForm({ onSubmit }: { onSubmit: (v: ScorecardFormValues)
               )
             </span>
           </label>
-          <div className="flex items-center gap-2">
-            <Button type="button" variant="outline" size="sm" onClick={loadExample}>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button type="button" variant="outline" size="sm" onClick={() => loadExample(0)}>
               Carregar exemplo
+            </Button>
+            <Button type="button" variant="outline" size="sm" onClick={() => loadExample(1)}>
+              Carregar planilha do diretor
             </Button>
             <Button type="button" size="sm" onClick={addCriterion}>
               <Plus className="h-3.5 w-3.5 mr-1" />
@@ -400,8 +521,10 @@ export function ScorecardForm({ onSubmit }: { onSubmit: (v: ScorecardFormValues)
           <table className="w-full text-xs">
             <thead className="bg-muted/40">
               <tr>
+                <th className="text-left p-2 font-medium">Grupo</th>
                 <th className="text-left p-2 font-medium">Critério</th>
                 <th className="text-right p-2 font-medium w-28">Peso (%)</th>
+                <th className="text-left p-2 font-medium">Base para pontuação</th>
                 <th className="p-2 w-8"></th>
               </tr>
             </thead>
@@ -410,10 +533,19 @@ export function ScorecardForm({ onSubmit }: { onSubmit: (v: ScorecardFormValues)
                 <tr key={c.id} className="border-t border-border">
                   <td className="p-1">
                     <input
+                      value={c.group}
+                      onChange={(e) => updateCriterionGroup(i, e.target.value)}
+                      placeholder="(opcional)"
+                      className="w-full min-w-[100px] bg-transparent px-1.5 py-1 rounded border border-transparent focus:border-input focus:outline-none focus:ring-1 focus:ring-ring text-muted-foreground"
+                      maxLength={80}
+                    />
+                  </td>
+                  <td className="p-1">
+                    <input
                       value={c.label}
                       onChange={(e) => updateCriterionLabel(i, e.target.value)}
                       placeholder="Ex: Qualidade"
-                      className="w-full bg-transparent px-1.5 py-1 rounded border border-transparent focus:border-input focus:outline-none focus:ring-1 focus:ring-ring"
+                      className="w-full min-w-[120px] bg-transparent px-1.5 py-1 rounded border border-transparent focus:border-input focus:outline-none focus:ring-1 focus:ring-ring"
                       maxLength={80}
                     />
                   </td>
@@ -427,6 +559,15 @@ export function ScorecardForm({ onSubmit }: { onSubmit: (v: ScorecardFormValues)
                       max={100}
                       step={1}
                       className="w-full text-right bg-transparent px-1.5 py-1 rounded border border-transparent focus:border-input focus:outline-none focus:ring-1 focus:ring-ring tabular-nums"
+                    />
+                  </td>
+                  <td className="p-1">
+                    <input
+                      value={c.basis}
+                      onChange={(e) => updateCriterionBasis(i, e.target.value)}
+                      placeholder="Ex: Comprovante técnico recebe todos os pontos"
+                      className="w-full min-w-[180px] bg-transparent px-1.5 py-1 rounded border border-transparent focus:border-input focus:outline-none focus:ring-1 focus:ring-ring text-muted-foreground"
+                      maxLength={300}
                     />
                   </td>
                   <td className="p-1 text-right">
@@ -444,7 +585,7 @@ export function ScorecardForm({ onSubmit }: { onSubmit: (v: ScorecardFormValues)
               ))}
               {criteria.length === 0 && (
                 <tr>
-                  <td colSpan={3} className="text-center text-sm text-muted-foreground p-4">
+                  <td colSpan={5} className="text-center text-sm text-muted-foreground p-4">
                     Nenhum critério. Clique &quot;Adicionar critério&quot; para começar.
                   </td>
                 </tr>
@@ -452,6 +593,9 @@ export function ScorecardForm({ onSubmit }: { onSubmit: (v: ScorecardFormValues)
             </tbody>
           </table>
         </div>
+        <p className="text-[10px] text-muted-foreground mt-1">
+          Grupo e base para pontuação são opcionais — usados no relatório e nas planilhas exportadas para organizar critérios em grupos (ex.: Requisitos, Termos e condições) com uma justificativa qualitativa por critério.
+        </p>
         {totalWeight === 0 && criteria.length > 0 && (
           <p className="text-xs text-destructive mt-1">
             A soma dos pesos não pode ser zero.
@@ -487,13 +631,18 @@ export function ScorecardForm({ onSubmit }: { onSubmit: (v: ScorecardFormValues)
                   <th
                     key={c.id}
                     className="p-2 font-medium text-center whitespace-nowrap"
-                    title={c.label || '(sem nome)'}
+                    title={c.group ? `${c.group} — ${c.label || '(sem nome)'}` : c.label || '(sem nome)'}
                   >
+                    {c.group && (
+                      <span className="block text-[9px] font-normal text-muted-foreground normal-case">
+                        {c.group.slice(0, 16)}
+                      </span>
+                    )}
                     {c.label.length > 0
                       ? c.label.slice(0, 12) + (c.label.length > 12 ? '…' : '')
                       : '—'}
                     <span className="block text-[9px] font-normal text-muted-foreground">
-                      0–10
+                      0–{scale}
                     </span>
                   </th>
                 ))}
@@ -527,7 +676,7 @@ export function ScorecardForm({ onSubmit }: { onSubmit: (v: ScorecardFormValues)
                         type="number"
                         inputMode="decimal"
                         min={0}
-                        max={10}
+                        max={Number(scale)}
                         step={0.5}
                         value={s.scores[c.id] ?? '5'}
                         onChange={(e) => updateSupplierScore(si, c.id, e.target.value)}
@@ -562,8 +711,68 @@ export function ScorecardForm({ onSubmit }: { onSubmit: (v: ScorecardFormValues)
           </table>
         </div>
         <p className="text-[10px] text-muted-foreground mt-1">
-          Notas de 0 a 10 (step 0,5). O assistente calcula o score ponderado e classifica cada fornecedor na faixa correspondente.
+          Notas de 0 a {scale} (step 0,5). O assistente calcula o score ponderado e classifica cada fornecedor na faixa correspondente.
         </p>
+      </div>
+
+      {/* ── Capacidades estratégicas (Batch J) ─────────────────────────────── */}
+      <div>
+        <label className="text-sm font-medium block mb-2">
+          Capacidades estratégicas{' '}
+          <span className="text-xs font-normal text-muted-foreground">
+            (opcional — cada item marcado soma +{1} ponto ao score final do fornecedor)
+          </span>
+        </label>
+        <div className="rounded-md border border-border overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead className="bg-muted/40">
+              <tr>
+                <th className="text-left p-2 font-medium whitespace-nowrap">Fornecedor</th>
+                {SCORECARD_STRATEGIC_CAPABILITIES.map((cap) => (
+                  <th
+                    key={cap.id}
+                    className="p-2 font-medium text-center"
+                    title={cap.label}
+                  >
+                    <span className="block max-w-[90px] mx-auto leading-tight normal-case font-normal text-muted-foreground">
+                      {cap.label}
+                    </span>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {suppliers.filter((s) => s.name.trim().length > 0).map((s) => {
+                const si = suppliers.findIndex((x) => x.id === s.id);
+                return (
+                  <tr key={s.id} className="border-t border-border">
+                    <td className="p-2 font-medium whitespace-nowrap">{s.name}</td>
+                    {SCORECARD_STRATEGIC_CAPABILITIES.map((cap) => (
+                      <td key={cap.id} className="p-2 text-center">
+                        <input
+                          type="checkbox"
+                          checked={s.strategicCapabilities.includes(cap.id)}
+                          onChange={() => toggleSupplierCapability(si, cap.id)}
+                          aria-label={`${s.name} — ${cap.label}`}
+                        />
+                      </td>
+                    ))}
+                  </tr>
+                );
+              })}
+              {validSuppliers.length === 0 && (
+                <tr>
+                  <td
+                    colSpan={SCORECARD_STRATEGIC_CAPABILITIES.length + 1}
+                    className="text-center text-sm text-muted-foreground p-4"
+                  >
+                    Nomeie os fornecedores acima para marcar capacidades estratégicas.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* ── Notes ────────────────────────────────────────────────────────── */}

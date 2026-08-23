@@ -104,9 +104,11 @@ export function ScorecardAssistant() {
             Supplier Scorecard <span className="text-brand">.</span>
           </h1>
           <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
-            Configure critérios com pesos, insira notas por fornecedor (0–10) e defina os
-            thresholds de faixa. O sistema calcula o score ponderado, gera ranking com faixas
-            Estratégico / Desenvolvimento / Saída e plano de ação — pronto para .docx e .xlsx.
+            Configure critérios com pesos (agrupáveis, com base de pontuação), insira notas por
+            fornecedor na escala 0–10 ou 1–5, marque capacidades estratégicas como bônus e
+            defina os thresholds de faixa. O sistema calcula o score ponderado, gera ranking com
+            faixas Estratégico / Desenvolvimento / Saída e plano de ação — pronto para .docx e
+            .xlsx.
           </p>
         </div>
         {phase === 'form' && (

@@ -7,7 +7,7 @@ import { renderScorecardChartPng } from '@/lib/assistants/scorecard-chart';
 
 function params(overrides: Partial<ScorecardParams> = {}): ScorecardParams {
   return {
-    scorecardName: 'Aço plano', period: '', notes: '',
+    scorecardName: 'Aço plano', period: '', notes: '', scale: 10,
     thresholds: SCORECARD_DEFAULT_THRESHOLDS,
     criteria: [
       { id: 'qualidade', label: 'Qualidade', weight: 50 },
@@ -105,6 +105,84 @@ describe('buildScorecardPrompt', () => {
     expect(user).toContain('Forn A');
     expect(user).toContain('Estratégico');
     expect(user).toMatch(/classifica|ranking/i);
+  });
+});
+
+describe('scoreSuppliers — backward compat with pre-Batch-J runs', () => {
+  it('falls back to scale 10 when params.scale is absent (old DB row, not re-parsed via zod)', () => {
+    const legacyParams = params();
+    // Simulate a run persisted before Batch J: no `scale` key in the JSONB at all.
+    delete (legacyParams as Partial<ScorecardParams>).scale;
+    const out = scoreSuppliers(legacyParams);
+    expect(out[0]!.weightedScore).toBe(100);
+    expect(Number.isNaN(out[0]!.weightedScore)).toBe(false);
+  });
+});
+
+describe('scoreSuppliers — scale (Batch J)', () => {
+  it('normalizes a 1-5 scale scorecard to 0-100 the same way as 0-10', () => {
+    const out = scoreSuppliers(params({
+      scale: 5,
+      criteria: [
+        { id: 'qualidade', label: 'Qualidade', weight: 50 },
+        { id: 'preco', label: 'Preço', weight: 50 },
+      ],
+      suppliers: [{ name: 'X', segment: '', scores: { qualidade: 5, preco: 2.5 } }],
+    }));
+    expect(out[0]!.weightedScore).toBe(75); // (5/5*0.5 + 2.5/5*0.5) * 100
+  });
+});
+
+describe('scoreSuppliers — capacidades estratégicas bônus (Batch J)', () => {
+  it('adds +1 point per marked strategic capability, capped at 100', () => {
+    const withCaps = params({
+      suppliers: [
+        { name: 'A', segment: '', scores: { qualidade: 10, preco: 10 }, strategicCapabilities: ['pd-forte', 'melhoria-continua'] },
+      ],
+    });
+    const out = scoreSuppliers(withCaps);
+    expect(out[0]!.bonusPoints).toBe(2);
+    expect(out[0]!.weightedScore).toBe(100); // already 100, bonus is capped
+  });
+  it('reflects the bonus in a score that is not already at the ceiling', () => {
+    const out = scoreSuppliers(params({
+      suppliers: [
+        { name: 'A', segment: '', scores: { qualidade: 5, preco: 5 }, strategicCapabilities: ['pd-forte'] },
+      ],
+    }));
+    expect(out[0]!.bonusPoints).toBe(1);
+    expect(out[0]!.weightedScore).toBe(51); // 50 base + 1 bonus
+  });
+  it('bonus is 0 with no capabilities marked', () => {
+    const out = scoreSuppliers(params());
+    expect(out.every((s) => s.bonusPoints === 0)).toBe(true);
+  });
+});
+
+describe('buildScorecardPrompt — grupo/base/escala (Batch J)', () => {
+  it('prefixes criterion lines with the group and shows the basis when present', () => {
+    const p = params({
+      scale: 5,
+      criteria: [
+        { id: 'q', label: 'Qualidade', weight: 100, group: 'Requisitos', basis: 'Comprovante técnico' },
+      ],
+      suppliers: [{ name: 'A', segment: '', scores: { q: 5 } }],
+    });
+    const { user } = buildScorecardPrompt(p, scoreSuppliers(p), tpl, [], null);
+    expect(user).toContain('Requisitos — Qualidade');
+    expect(user).toContain('_(base: Comprovante técnico)_');
+    expect(user).toContain('Escala das notas**: 1–5');
+  });
+  it('shows a Bônus column only when some supplier has strategic capabilities marked', () => {
+    const p = params({
+      suppliers: [
+        { name: 'A', segment: '', scores: { qualidade: 8, preco: 8 }, strategicCapabilities: ['pd-forte'] },
+        { name: 'B', segment: '', scores: { qualidade: 5, preco: 5 } },
+      ],
+    });
+    const { user } = buildScorecardPrompt(p, scoreSuppliers(p), tpl, [], null);
+    expect(user).toContain('Bônus');
+    expect(user).toContain('+1');
   });
 });
 

@@ -65,11 +65,31 @@ export async function buildScorecardXlsxBuffer(
     titleRow.height = 28;
   }
 
-  // Header row: Fornecedor | Criteria (label + weight%) | Score | Rank | Faixa
+  // Optional "Grupo" row (Batch J) — one cell per criterion column, blank when
+  // the criterion has no group (modo simples/legado). Not merged: contiguity
+  // of same-group criteria isn't guaranteed, and an unmerged row is robust.
+  const hasGroups = params.criteria.some((c) => c.group);
+  if (hasGroups) {
+    const groupRow = scorecard.addRow(['Grupo', ...params.criteria.map((c) => c.group || '—')]);
+    groupRow.eachCell((cell) => {
+      cell.font = { italic: true, size: 9, color: { argb: 'FF616161' } };
+      cell.alignment = { horizontal: 'center' };
+    });
+  }
+
+  // Header row: Fornecedor | Criteria (label + weight%) | Score | Bônus | Rank | Faixa
   const criteriaHeaders = params.criteria.map(
     (c) => `${c.label} (${c.weight}%)`,
   );
-  const headerValues = ['Fornecedor', ...criteriaHeaders, 'Score', 'Rank', 'Faixa'];
+  const hasBonus = classified.some((s) => s.bonusPoints > 0);
+  const headerValues = [
+    'Fornecedor',
+    ...criteriaHeaders,
+    'Score',
+    ...(hasBonus ? ['Bônus'] : []),
+    'Rank',
+    'Faixa',
+  ];
   const headerRow = scorecard.addRow(headerValues);
   styleHeader(headerRow);
 
@@ -79,9 +99,14 @@ export async function buildScorecardXlsxBuffer(
     scorecard.getColumn(2 + idx).width = 18; // criteria columns
   });
   const scoreCol = 2 + params.criteria.length;
-  scorecard.getColumn(scoreCol).width = 10;     // Score
-  scorecard.getColumn(scoreCol + 1).width = 8;  // Rank
-  scorecard.getColumn(scoreCol + 2).width = 22; // Faixa
+  scorecard.getColumn(scoreCol).width = 10; // Score
+  let col = scoreCol + 1;
+  if (hasBonus) {
+    scorecard.getColumn(col).width = 9; // Bônus
+    col++;
+  }
+  scorecard.getColumn(col).width = 8;     // Rank
+  scorecard.getColumn(col + 1).width = 22; // Faixa
 
   // Data rows
   for (const s of classified) {
@@ -90,6 +115,7 @@ export async function buildScorecardXlsxBuffer(
       s.name,
       ...criteriaScores,
       s.weightedScore,
+      ...(hasBonus ? [s.bonusPoints] : []),
       s.rank,
       SCORECARD_BAND_LABELS[s.band],
     ];
@@ -97,7 +123,22 @@ export async function buildScorecardXlsxBuffer(
     row.eachCell({ includeEmpty: true }, thinBorders);
   }
 
-  scorecard.views = [{ state: 'frozen', ySplit: params.scorecardName ? 2 : 1 }];
+  // "Base para pontuação" footnote block (planilha, coluna E) — só quando
+  // algum critério tem justificativa qualitativa cadastrada.
+  const criteriaWithBasis = params.criteria.filter((c) => c.basis);
+  if (criteriaWithBasis.length > 0) {
+    scorecard.addRow([]);
+    const basisTitle = scorecard.addRow(['Base para pontuação']);
+    basisTitle.getCell(1).font = { bold: true, size: 10 };
+    for (const c of criteriaWithBasis) {
+      const row = scorecard.addRow([c.label, c.basis]);
+      row.getCell(1).font = { bold: true, size: 9 };
+      row.getCell(2).font = { size: 9 };
+      row.getCell(2).alignment = { wrapText: true };
+    }
+  }
+
+  scorecard.views = [{ state: 'frozen', ySplit: (params.scorecardName ? 1 : 0) + (hasGroups ? 1 : 0) + 1 }];
 
   // ─── Sheet 2 — Ranking ───────────────────────────────────────────────────
   const ranking = wb.addWorksheet('Ranking', {

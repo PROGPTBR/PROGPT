@@ -5,9 +5,13 @@ import type { ScorecardCriterion, ScorecardSupplier } from './types';
 //
 // Spreadsheet shape:
 //   Row 1 = headers: col 1 = supplier-name column (header text ignored),
-//           cols 2..n = criterion labels.
+//           cols 2..n = criterion labels. A header may optionally be
+//           "Grupo: Critério" (Batch J) to carry the criterion's group —
+//           no colon means ungrouped (legacy format, still fully supported).
 //   Row 2+ = data rows: col 1 = supplier name (skip if blank),
-//            cols 2..n = numeric 0–10 scores.
+//            cols 2..n = numeric 0–10 scores. Scores are always clamped to
+//            0–10 on import regardless of the scorecard's configured scale —
+//            the uploaded file's own scale isn't detectable from the grid.
 //
 // Uses 'Scorecard' worksheet if present; falls back to first sheet.
 
@@ -81,12 +85,16 @@ export async function parseScorecardXlsx(
   // avoids phantom styled columns (overcount) and undercount from sparse sheets.
   const lastCol = ws.actualColumnCount || ws.columnCount || 1;
 
-  // Build criteria from cols 2..lastCol
+  // Build criteria from cols 2..lastCol. "Grupo: Critério" splits into group +
+  // label (Batch J); no colon → ungrouped, same as before.
   const criteria: ScorecardCriterion[] = [];
   for (let col = 2; col <= lastCol; col++) {
     const raw = String(headerRow.getCell(col).value ?? '').trim();
-    const id = raw ? slug(raw) || `criterio-${col - 1}` : `criterio-${col - 1}`;
-    criteria.push({ id, label: raw || `Critério ${col - 1}`, weight: 0 });
+    const colonIdx = raw.indexOf(':');
+    const group = colonIdx > 0 ? raw.slice(0, colonIdx).trim() : '';
+    const label = colonIdx > 0 ? raw.slice(colonIdx + 1).trim() : raw;
+    const id = label ? slug(label) || `criterio-${col - 1}` : `criterio-${col - 1}`;
+    criteria.push({ id, label: label || `Critério ${col - 1}`, weight: 0, group, basis: '' });
   }
 
   if (criteria.length === 0) {
@@ -142,7 +150,7 @@ export async function parseScorecardXlsx(
     }
 
     // `segment` é definido pelo scorecard de avaliação, não vem da planilha.
-    suppliers.push({ name, segment: '', scores });
+    suppliers.push({ name, segment: '', scores, strategicCapabilities: [] });
   }
 
   if (suppliers.length === 0) {

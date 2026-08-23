@@ -16,10 +16,13 @@ Fonte: dois arquivos entregues pelo diretor em 21/08/2026.
 financeira 12 → 15 indicadores.
 
 **Batches D–I** estão entregues (D–G = `8084c07`, H = `03e2adb`, I = esta rodada) — ver o
-Rastreamento no fim deste doc. Pendências externas: provisionar `PORTAL_TRANSPARENCIA_TOKEN`
-no Railway (sem ele a 3ª base do Batch E fica dormente) e rodar
-`python scripts/insert_template_rfq_padrao.py` pra o template da RFQ em produção passar a
-usar os placeholders comerciais do Batch I.
+Rastreamento no fim deste doc. **Batch J** está em andamento na árvore de trabalho (schema,
+scoring, form, import e exports feitos; gráficos extra ficam de fora desta rodada). Pendências
+externas: provisionar `PORTAL_TRANSPARENCIA_TOKEN` no Railway (sem ele a 3ª base do Batch E fica
+dormente), rodar `python scripts/insert_template_rfq_padrao.py` pra o template da RFQ em
+produção passar a usar os placeholders comerciais do Batch I, e rodar
+`python scripts/insert_template_scorecard.py` pra o parágrafo de doutrina do Batch J chegar no
+template do Scorecard em produção.
 
 ## Ordem de execução
 
@@ -31,7 +34,7 @@ usar os placeholders comerciais do Batch I.
 | **G** ✅ | Pesquisa de Preços: "Buscar preço e NCM aproximado" via LLM + web search | M | D (disclaimer) |
 | **H** ✅ | SWOT: perguntas no Contexto Comercial + gráfico 2×2 no relatório | M | — |
 | **I** ✅ | RFQ/RFP: mais campos + anexo + abrir e-mail com o arquivo anexado | M | — |
-| **J** | Supplier Scorecard: adotar a planilha `Mudanças v1.xlsx` | G | — |
+| **J** 🟡 | Supplier Scorecard: adotar a planilha `Mudanças v1.xlsx` | G | — |
 | **K** | Indicadores: ampliar fontes com link/fonte/data + tabela categoria→referência | G | D (disclaimer) |
 | **L** | Base do cliente: materiais + vendor list (upload, atualizável, autofill) | G | — |
 | **M** | Bug "assistente travado em uma operação" (diagnóstico) | ? | precisa repro |
@@ -301,6 +304,44 @@ capacidades estratégicas, equações, prompt base).
 leitura para runs antigos e testes de round-trip (params antigos → view; params novos →
 docx/xlsx/chart).
 
+**Estado (22/08/2026 — ainda não commitado)**: passos 1–2 e 4–7 entregues; passo 3 (bônus
+de capacidades estratégicas) entregue como somatório simples, não como abas separadas.
+
+- ✅ **Schema hierárquico sem quebrar contrato**: em vez de introduzir uma estrutura de grupos
+  paralela, `ScorecardCriterion` ganhou `group`/`basis` **opcionais** (sem `.default()` — a
+  saída do zod permanece `string | undefined`, então nenhum literal existente em testes/exemplos
+  precisou mudar) e `ScorecardParams` ganhou `scale: 5 | 10` (esse sim com `.default(10)`, igual
+  a `period`/`notes`). O motor de pesos continua por-critério (soma normalizada) — group é só
+  metadado de organização, um superset estrito do modelo da planilha (lá o peso é só por grupo).
+- ✅ **`scoreSuppliers`** normaliza por `raw / scale` em vez de `raw / 10` fixo — com
+  **fallback defensivo `params.scale ?? 10`** porque runs salvos antes deste batch são lidos
+  direto do DB (`getRunForOwner` faz cast, não reparse via zod) e não têm a chave `scale` no
+  JSONB. Testado explicitamente (`scoreSuppliers — backward compat com pre-Batch-J runs`).
+- ✅ **Capacidades estratégicas**: 9 itens de `SCORECARD_STRATEGIC_CAPABILITIES`, marcáveis por
+  fornecedor, somam `+1` ponto cada ao score final (capado em 100) — bônus auditável exposto em
+  `ClassifiedSupplier.bonusPoints`, nunca peso oculto.
+- ✅ **Prompt**: doutrina da planilha (qualidade × quantidade, scorecard como incentivo, KPIs e
+  equações de referência) incorporada ao `SCORECARD_SYSTEM_PROMPT`; `buildScorecardPrompt` mostra
+  grupo + base para pontuação por critério e a coluna Bônus quando aplicável.
+- ✅ **Import**: header `"Grupo: Critério"` (dois-pontos) carrega o grupo — sem dois-pontos
+  continua ungrouped, formato antigo 100% preservado. O layout bruto da planilha do diretor
+  (fornecedores como COLUNAS, critérios como LINHAS, seções de grupo intercaladas) é uma
+  orientação diferente da nossa grade (fornecedores como linhas) — não foi feito parser 1:1 para
+  esse layout; a convenção `"Grupo: Critério"` é o caminho de adoção.
+- ✅ **Exports**: `.xlsx` ganha linha "Grupo" (não mesclada), rodapé "Base para pontuação" e
+  coluna "Bônus" quando há capacidades marcadas.
+- ✅ **Form**: seletor de escala (0–10 / 1–5, re-clampa notas ao trocar), colunas Grupo/Base no
+  editor de critérios, grade de capacidades estratégicas por fornecedor, botão "Carregar planilha
+  do diretor" (exemplo com os 8 grupos reais, 2 sub-critérios por grupo — a planilha original tem
+  4–10, reduzido para caber num exemplo legível).
+- ⬜ **Pendente**: gráficos adicionais (radar por fornecedor / barras empilhadas por grupo —
+  sugestão do passo 6, mantém só o ranking atual); rodar
+  `python scripts/insert_template_scorecard.py` para o parágrafo de doutrina do template chegar
+  em produção; decidir com o diretor se vale ampliar `suppliers.max(100)`.
+- **Decisão #5 resolvida na implementação** (ver seção de decisões): a escala não migrou
+  globalmente — é um campo por-run (`scale: 5 | 10`, default 10), então 0–10 e 1–5 coexistem sem
+  quebrar runs salvos.
+
 ---
 
 ## Batch K — Indicadores: ampliar fontes, com link/fonte/data
@@ -421,7 +462,7 @@ presa, Spend Analysis em polling, ou o chat).
 | 7 | SWOT como perguntas + gráfico no relatório | H | ✅ |
 | 8 | Financeira 12 → 15 indicadores | Batch C | ✅ #227 |
 | 9 | Financeira: tipo de negócio, pendências, tempo de mercado | F | ✅ |
-| 10 | Scorecard com a planilha `Mudanças v1.xlsx` | J | ⬜ |
+| 10 | Scorecard com a planilha `Mudanças v1.xlsx` | J | 🟡 schema/scoring/form/export/import feitos; gráficos extra e push do template em produção ficam de fora desta rodada |
 | 11 | Homologação como SOB DEMANDA | D | ✅ |
 | 12 | Preço + NCM aproximado via LLM | G | ✅ |
 | 13 | Disclaimer de preços/NCM | D | ✅ |
@@ -450,11 +491,12 @@ presa, Spend Analysis em polling, ou o chat).
    campo manual `pendencias` no form com links de consulta (CENPROT / e-SAJ TJSP) **e**
    busca web rotulada indicativa/não-oficial atrás de `FINANCIAL_WEBSEARCH` (default ON,
    operação de custo própria `assistant-financial-reputacao`).
+5. ✅ **Escala do Scorecard**: não migrou — virou campo por-run (`scale: 5 | 10`, default 10 via
+   fallback defensivo em `scoreSuppliers`). Runs 0–10 salvos continuam abrindo normalmente; novos
+   runs escolhem a escala no form. 0–10 e 1–5 coexistem sem conversão nem migration.
 
 ### Em aberto
 
-5. **Escala do Scorecard**: migrar tudo para 1–5 (como a planilha) ou manter 0–10 e converter
-   na exibição? Afeta runs já salvos.
 6. **Tier 3 dos indicadores** (ANP, ANTT, CEPEA, Pink Sheet): aceita entrar como fonte
    referenciada com link nesta rodada?
 

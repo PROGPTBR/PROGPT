@@ -81,7 +81,7 @@ Este scorecard foi gerado com base em avaliação multidimensional de fornecedor
 | Desenvolvimento | 40–69 | SDP — plano de melhoria formalizado, reavaliação em 90 dias |
 | Saída | < 40 | Gestão de risco — substituição programada ou plano corretivo urgente |
 
-> Os pesos e limiares acima são defaults; o assistente adapta conforme informações fornecidas pelo usuário na etapa de configuração.
+> Os pesos e limiares acima são defaults; o assistente adapta conforme informações fornecidas pelo usuário na etapa de configuração. Quando os critérios vierem organizados em **grupos** (com uma **base para pontuação** qualitativa por critério) e/ou notas em **escala 1–5**, siga a organização enviada em vez do modelo de 4 dimensões acima. Quando houver **capacidades estratégicas** marcadas por fornecedor, elas já entram como bônus no score — destaque-as como diferencial no diagnóstico, sem recalcular nada.
 
 ---
 
