@@ -382,127 +382,132 @@ export function NovaLanding({
           NAV
       ====================================================== */}
 
-      <nav className={styles.nav}>
-        <Link
-          href="/"
-          className={styles.logo}
-          aria-label="2B Supply - início"
-        >
-          <Image
-            src={
-              isDark
-                ? '/2bsupply-logo.png'
-                : '/2bsupply-logo-dark.png'
-            }
-            alt="2B Supply"
-            width={168}
-            height={48}
-            priority
-          />
-        </Link>
+    <nav className={styles.nav}>
+  {/* LOGO */}
+  <Link
+    href="/"
+    className={styles.logo}
+    aria-label="2B Supply - início"
+  >
+    <Image
+      src={
+        isDark
+          ? '/2bsupply-logo.png'
+          : '/2bsupply-logo-dark.png'
+      }
+      alt="2B Supply"
+      width={168}
+      height={48}
+      priority
+    />
+  </Link>
 
-        <div
-          className={`${styles.navlinks} ${
-            menu ? styles.navOpen : ''
-          }`}
-        >
-          <a
-            href="#sobre"
-            className={navClass('sobre')}
-            onClick={() => {
-              setActiveSection('sobre');
-              setMenu(false);
-            }}
-          >
-            Sobre
-          </a>
+  {/* MENU DESKTOP / MENU ABERTO NO MOBILE */}
+  <div
+    className={`${styles.navlinks} ${
+      menu ? styles.navOpen : ''
+    }`}
+  >
+    <a
+      href="#sobre"
+      className={navClass('sobre')}
+      onClick={() => {
+        setActiveSection('sobre');
+        setMenu(false);
+      }}
+    >
+      Sobre
+    </a>
 
-          <a
-            href="#recursos"
-            className={navClass('recursos')}
-            onClick={() => {
-              setActiveSection('recursos');
-              setMenu(false);
-            }}
-          >
-            Recursos
-          </a>
+    <a
+      href="#recursos"
+      className={navClass('recursos')}
+      onClick={() => {
+        setActiveSection('recursos');
+        setMenu(false);
+      }}
+    >
+      Recursos
+    </a>
 
-          <a
-            href="#planos"
-            className={navClass('planos')}
-            onClick={() => {
-              setActiveSection('planos');
-              setMenu(false);
-            }}
-          >
-            Planos
-          </a>
+    <a
+      href="#planos"
+      className={navClass('planos')}
+      onClick={() => {
+        setActiveSection('planos');
+        setMenu(false);
+      }}
+    >
+      Planos
+    </a>
 
-          <a
-            href="#faq"
-            className={navClass('faq')}
-            onClick={() => {
-              setActiveSection('faq');
-              setMenu(false);
-            }}
-          >
-            FAQ
-          </a>
-        </div>
+    <a
+      href="#faq"
+      className={navClass('faq')}
+      onClick={() => {
+        setActiveSection('faq');
+        setMenu(false);
+      }}
+    >
+      FAQ
+    </a>
+  </div>
 
-        <button
-          type="button"
-          onClick={() =>
-            setTheme(
-              isDark ? 'light' : 'dark'
-            )
-          }
-          className={styles.themeToggle}
-          aria-label={
-            isDark
-              ? 'Mudar para tema claro'
-              : 'Mudar para tema escuro'
-          }
-          title={
-            isDark
-              ? 'Tema claro'
-              : 'Tema escuro'
-          }
-        >
-          {isDark ? (
-            <Sun
-              size={18}
-              aria-hidden="true"
-            />
-          ) : (
-            <Moon
-              size={18}
-              aria-hidden="true"
-            />
-          )}
-        </button>
+  {/* AÇÕES DO TOPO */}
+  <div className={styles.navActions}>
+    <button
+      type="button"
+      onClick={() =>
+        setTheme(isDark ? 'light' : 'dark')
+      }
+      className={styles.themeToggle}
+      aria-label={
+        isDark
+          ? 'Mudar para tema claro'
+          : 'Mudar para tema escuro'
+      }
+      title={
+        isDark
+          ? 'Tema claro'
+          : 'Tema escuro'
+      }
+    >
+      {isDark ? (
+        <Sun size={18} aria-hidden="true" />
+      ) : (
+        <Moon size={18} aria-hidden="true" />
+      )}
+    </button>
 
-        <Link
-          href="/login"
-          className={styles.topLogin}
-        >
-          <LogIn size={17} />
-          Entrar
-        </Link>
+    <Link
+      href="/login"
+      className={styles.topLogin}
+    >
+      <LogIn size={18} />
+      <span>Entrar</span>
+    </Link>
 
-        <Button className={styles.navCta}>
-          COMEÇAR AGORA
-        </Button>
+    <Button className={styles.navCta}>
+      COMEÇAR AGORA
+    </Button>
 
-        <button
-          className={styles.menuButton}
-          onClick={() => setMenu(!menu)}
-          aria-label="Abrir menu"
-        >
-          {menu ? <X /> : <Menu />}
-        </button>
-      </nav>
+    <button
+      type="button"
+      className={styles.menuButton}
+      onClick={() => setMenu(!menu)}
+      aria-label={
+        menu ? 'Fechar menu' : 'Abrir menu'
+      }
+      aria-expanded={menu}
+    >
+      {menu ? (
+        <X size={26} />
+      ) : (
+        <Menu size={28} />
+      )}
+    </button>
+  </div>
+</nav>
 
       {/* ======================================================
           HERO

@@ -1,13 +1,21 @@
 import { NextResponse } from 'next/server';
+
 import { z } from 'zod';
+
 import { getCurrentUser } from '@/lib/auth';
+
 import { getRunForOwner } from '@/lib/assistants/runs';
+
 import { buildRunDocx } from '@/lib/assistants/run-docx';
+
 import { buildEml } from '@/lib/email/eml';
+
 import { markdownToPlainText } from '@/lib/email/mailto';
+
 import { getUserCompany } from '@/lib/db/user-company';
 
 export const runtime = 'nodejs';
+
 export const dynamic = 'force-dynamic';
 
 // GET /api/assistants/runs/[id]/eml — backlog do diretor (2026-08-19, Batch I).
@@ -28,6 +36,7 @@ const DOCX_MIME =
 
 // Corpo do e-mail: só a abertura. O documento completo vai no anexo, então
 // despejar o markdown inteiro no corpo duplicaria tudo.
+
 const MAX_BODY_CHARS = 1200;
 
 const ToParam = z
@@ -41,62 +50,140 @@ const ToParam = z
       .slice(0, 20),
   );
 
-export async function GET(req: Request, { params }: { params: { id: string } }) {
+export async function GET(
+  req: Request,
+  { params }: { params: { id: string } },
+) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
 
-  const run = await getRunForOwner(params.id, user.id);
-  if (!run) return new NextResponse('Not Found', { status: 404 });
-  if (run.status !== 'done' || !run.output_md) {
-    return NextResponse.json({ error: 'not_ready', status: run.status }, { status: 409 });
+  if (!user) {
+    return NextResponse.json(
+      { error: 'unauthorized' },
+      { status: 401 },
+    );
   }
 
-  const rawTo = new URL(req.url).searchParams.get('to') ?? '';
-  const to = rawTo ? ToParam.parse(rawTo) : [];
+  const run = await getRunForOwner(
+    params.id,
+    user.id,
+  );
 
-  const [{ buffer, filename, title }, company] = await Promise.all([
+  if (!run) {
+    return new NextResponse(
+      'Not Found',
+      { status: 404 },
+    );
+  }
+
+  if (
+    run.status !== 'done' ||
+    !run.output_md
+  ) {
+    return NextResponse.json(
+      {
+        error: 'not_ready',
+        status: run.status,
+      },
+      { status: 409 },
+    );
+  }
+
+  const rawTo =
+    new URL(req.url).searchParams.get('to') ??
+    '';
+
+  const to = rawTo
+    ? ToParam.parse(rawTo)
+    : [];
+
+  const [
+    { buffer, filename, title },
+    company,
+  ] = await Promise.all([
     buildRunDocx(run, user.id),
     getUserCompany(user.id),
   ]);
 
-  const bodyText = buildBodyText(title, markdownToPlainText(run.output_md), {
-    companyName: company?.company_name ?? null,
-    companyEmail: company?.company_email ?? null,
-    filename,
-  });
+  const bodyText = buildBodyText(
+    title,
+    markdownToPlainText(run.output_md),
+    {
+      companyName:
+        company?.company_name ?? null,
+      companyEmail:
+        company?.company_email ?? null,
+      filename,
+    },
+  );
 
   const eml = buildEml({
     to,
     subject: title,
     bodyText,
-    attachments: [{ filename, contentType: DOCX_MIME, content: buffer }],
+    attachments: [
+      {
+        filename,
+        contentType: DOCX_MIME,
+        content: buffer,
+      },
+    ],
   });
 
-  const emlBuffer = Buffer.from(eml, 'utf8');
-  const emlFilename = filename.replace(/\.docx$/, '.eml');
+  const emlBuffer = Buffer.from(
+    eml,
+    'utf8',
+  );
 
-  return new NextResponse(emlBuffer as unknown as BodyInit, {
-    status: 200,
-    headers: {
-      'Content-Type': 'message/rfc822',
-      'Content-Disposition': `attachment; filename="${emlFilename}"`,
-      'Content-Length': String(emlBuffer.length),
+  const emlFilename = filename.replace(
+    /\.docx$/,
+    '.eml',
+  );
+
+  return new NextResponse(
+    emlBuffer as unknown as BodyInit,
+    {
+      status: 200,
+      headers: {
+        'Content-Type':
+          'message/rfc822',
+        'Content-Disposition':
+          `attachment; filename="${emlFilename}"`,
+        'Content-Length': String(
+          emlBuffer.length,
+        ),
+      },
     },
-  });
+  );
 }
 
 /**
- * Carta de encaminhamento curta. O conteúdo completo é o anexo — o corpo só
- * precisa dizer o que é, o que se espera de volta e de quem veio.
+ * Carta de encaminhamento curta.
+ * O conteúdo completo é o anexo — o corpo só
+ * precisa dizer o que é, o que se espera de volta
+ * e de quem veio.
  */
-export function buildBodyText(
+function buildBodyText(
   title: string,
   outputPlain: string,
-  ctx: { companyName: string | null; companyEmail: string | null; filename: string },
+  ctx: {
+    companyName: string | null;
+    companyEmail: string | null;
+    filename: string;
+  },
 ): string {
-  const abstract = outputPlain.slice(0, MAX_BODY_CHARS).trimEnd();
-  const truncated = outputPlain.length > MAX_BODY_CHARS;
-  const signature = [ctx.companyName, ctx.companyEmail].filter(Boolean).join('\n');
+  const abstract = outputPlain
+    .slice(0, MAX_BODY_CHARS)
+    .trimEnd();
+
+  const truncated =
+    outputPlain.length > MAX_BODY_CHARS;
+
+  const signature = [
+    ctx.companyName,
+    ctx.companyEmail,
+  ]
+    .filter(Boolean)
+    .join('\n');
 
   return [
     'Prezados,',
@@ -105,7 +192,9 @@ export function buildBodyText(
     '',
     'Resumo:',
     '',
-    truncated ? `${abstract}\n\n[...] O documento completo está no anexo.` : abstract,
+    truncated
+      ? `${abstract}\n\n[...] O documento completo está no anexo.`
+      : abstract,
     '',
     'Ficamos à disposição para esclarecimentos.',
     '',
