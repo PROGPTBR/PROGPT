@@ -29,6 +29,12 @@ describe('detectAssistantToolCTA', () => {
     expect(detectAssistantToolCTA('/assistants/negotiation')).toBe('negotiation');
   });
 
+  it('returns grafico_rapido when text mentions /assistants/grafico_rapido (underscore path)', () => {
+    expect(
+      detectAssistantToolCTA('Use /assistants/grafico_rapido pra gerar o gráfico.'),
+    ).toBe('grafico_rapido');
+  });
+
   it('returns null for suppliers (handled by supplier_search intent CTA)', () => {
     expect(
       detectAssistantToolCTA('Use /assistants/suppliers pra buscar.'),
@@ -112,6 +118,12 @@ describe('stripAssistantPaths', () => {
   it('strips the scorecard path', () => {
     expect(stripAssistantPaths('monte em /assistants/scorecard hoje')).toBe(
       'monte hoje',
+    );
+  });
+
+  it('strips the grafico_rapido path', () => {
+    expect(stripAssistantPaths('gere em /assistants/grafico_rapido agora')).toBe(
+      'gere agora',
     );
   });
 

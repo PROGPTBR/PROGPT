@@ -13,7 +13,8 @@ export type AssistantPreviewKey =
   | 'pesquisa_precos'
   | 'indicadores'
   | 'simulador_tributario'
-  | 'simulador_logistico';
+  | 'simulador_logistico'
+  | 'grafico_rapido';
 
 export type AssistantDefinition = {
   id: string;
@@ -300,5 +301,22 @@ export const ASSISTANTS: readonly AssistantDefinition[] = [
       'Melhor cenário de compra interestadual',
     ],
     previewKey: 'simulador_logistico',
+  },
+
+  {
+    id: 'grafico_rapido',
+    step: 10,
+    stepCategory: 'Utilitários',
+    href: '/assistants/graficos',
+    title: 'Gráfico Rápido',
+    short:
+      'Cole uma tabela de dados (ou suba uma planilha CSV/XLSX) e receba um gráfico pronto para baixar e inserir em qualquer documento ou apresentação.',
+    sideSubtitle: 'Transforme um dado solto em gráfico',
+    bullets: [
+      'Cole a tabela direto no formulário ou anexe CSV/XLSX',
+      'Detecta categoria, valor e o melhor tipo de gráfico sozinho',
+      'Baixe o PNG pronto — sem depender de outro assistente',
+    ],
+    previewKey: 'grafico_rapido',
   },
 ];
