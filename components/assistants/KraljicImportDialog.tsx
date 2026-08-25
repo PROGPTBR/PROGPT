@@ -66,7 +66,7 @@ export function KraljicImportDialog({ open, onClose, onImported }: Props) {
       }
       if (data.items.length === 0) {
         toast.error('Nenhum item importado', {
-          description: 'Confira se a aba "DADOS" segue o template Procurement Garage ou tem cabeçalhos reconhecíveis.',
+          description: 'Confira se a aba "DADOS" segue o template ou tem cabeçalhos reconhecíveis.',
         });
       } else {
         onImported(data.items.map(toDraft));
@@ -98,7 +98,7 @@ export function KraljicImportDialog({ open, onClose, onImported }: Props) {
           </button>
         </div>
         <p className="text-xs text-muted-foreground">
-          Aceita o template <strong>Procurement Garage</strong> direto (aba DADOS reconhecida automaticamente) ou qualquer .xlsx com cabeçalhos como &quot;Item&quot;, &quot;Spend&quot;, &quot;Criticidade&quot;, &quot;Estrutura&quot;, &quot;Rivalidade&quot;, etc.
+          Aceita o template  direto (aba DADOS reconhecida automaticamente) ou qualquer .xlsx com cabeçalhos como &quot;Item&quot;, &quot;Spend&quot;, &quot;Criticidade&quot;, &quot;Estrutura&quot;, &quot;Rivalidade&quot;, etc.
         </p>
 
         <label className="flex items-center justify-center gap-2 text-sm cursor-pointer rounded-md border border-dashed border-input bg-background px-4 py-6 hover:bg-accent disabled:opacity-50">

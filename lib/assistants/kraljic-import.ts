@@ -5,7 +5,7 @@ import { KraljicItemSchema } from './types';
 // Sub-projeto 27 — Parse an uploaded .xlsx into a KraljicItem[].
 //
 // Two parsing strategies:
-//   1. **Procurement Garage layout** — first worksheet is the "DADOS" sheet
+//   1. **layout** — first worksheet is the "DADOS" sheet
 //      of the PG template; header is on rows 6-7, data starts at row 9,
 //      column positions match the template exactly.
 //   2. **Generic header-match** — first sheet's first row is read as

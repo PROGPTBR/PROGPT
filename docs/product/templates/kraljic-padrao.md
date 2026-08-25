@@ -66,7 +66,7 @@ Esta análise segue a Matriz de Kraljic (Peter Kraljic, *HBR*, 1983) com extens�
 | **Impacto no Negócio** | Quanto a categoria afeta resultado financeiro/operacional | Spend (40%), Nível de Criticidade (30%), Especificações Técnicas (15%), Valor Percebido pelo Cliente Final (15%) |
 | **Complexidade do Mercado Fornecedor** | Quão difícil é mudar / encontrar alternativas | Estrutura do Mercado (25%), Rivalidade do Mercado (25%), Poder de Barganha do Fornecedor (25%), Substituição de Fornecedor (25%) |
 
-**Cortes do quadrante** (validados contra metodologia Procurement Garage):
+**Cortes do quadrante** (validados contra metodologia PROGPT):
 - Impacto > 2,5 → alto impacto
 - Complexidade ≥ 2,5 → alta complexidade
 

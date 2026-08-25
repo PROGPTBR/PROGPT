@@ -252,7 +252,7 @@ export function AbcForm({
               Importar planilha de spend (XLSX, XLS ou CSV)
             </h3>
             <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
-              Aceita o template Procurement Garage (aba &quot;Relação de
+              Aceita o template (aba &quot;Relação de
               Pedidos&quot;) ou qualquer planilha com cabeçalho contendo
               colunas de nome/material e spend/valor/preço. Cap 10 MB.
             </p>

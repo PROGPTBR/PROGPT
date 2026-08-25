@@ -14,7 +14,6 @@ ADMIN_USER_ID = '5efba61c-6b36-49d1-b443-b235b003ad54'  # rgoalves@gmail.com
 TEMPLATE_NAME = 'Template padrão'
 TEMPLATE_DESCRIPTION = (
     'Template padrão para análise de portfólio via Matriz de Kraljic. Segue a '
-    'metodologia Procurement Garage (4 critérios por eixo, escala 1-4). '
     'Inclui resumo executivo + plano por quadrante + recomendação por item + '
     'apêndice com metodologia e confidencialidade.'
 )

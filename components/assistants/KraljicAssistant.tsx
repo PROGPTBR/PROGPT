@@ -142,7 +142,7 @@ export function KraljicAssistant() {
             href="/templates/kraljic-template.xlsx"
             filename="Kraljic-template.xlsx"
             format=".xlsx"
-            description="Template Procurement Garage com sheets de instruções, dados, scoring agregado e matriz 2×2. Você lista até 30 categorias e o Excel calcula os quadrantes automaticamente."
+            description="Template com sheets de instruções, dados, scoring agregado e matriz 2×2. Você lista até 30 categorias e o Excel calcula os quadrantes automaticamente."
           />
         )}
       </div>

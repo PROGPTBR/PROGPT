@@ -5,7 +5,7 @@ import { AbcItemSchema, type AbcItem } from './types';
 // Sub-projeto 31 — Import de planilha de spend → AbcItem[].
 //
 // Suporta dois layouts:
-//   1. Template Procurement Garage (aba "Relação de Pedidos") com colunas
+//   1. Template (aba "Relação de Pedidos") com colunas
 //      fixas: Fornecedor | Doc.compra | Texto breve Material | Qtd.pedido
 //      | Unid. | Moeda | Preço líq. | %  | % Acumulado
 //   2. Genérico por nome de header (fuzzy match em nome/material/sku +

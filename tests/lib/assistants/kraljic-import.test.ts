@@ -58,7 +58,7 @@ describe('parseImportedItems', () => {
     expect(warnings.length).toBe(0);
   });
 
-  it('detects Procurement Garage format (DADOS sheet + row positions)', async () => {
+  it('detects format (DADOS sheet + row positions)', async () => {
     const buf = await makePgFormatBuffer();
     const { items, warnings } = await parseImportedItems(buf);
     expect(items.length).toBe(1);

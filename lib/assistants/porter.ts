@@ -18,7 +18,6 @@ import { splitTemplateBody, renderPlaceholders } from './template-assembly';
 import type { CompanyData } from '@/lib/db/user-company';
 
 // Sub-projeto 29 v2 — Assistente das 5 Forças de Porter
-// (modelo Procurement Garage).
 //
 // Diferente da v1 (puro LLM), agora segue o padrão do Kraljic:
 //   - Form quantitativo com 35 afirmações canônicas (peso 0-3 + nota 1-5)

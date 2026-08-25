@@ -12,7 +12,7 @@ import type { CompanyData } from '@/lib/db/user-company';
 
 // Sub-projeto 27 — Assistente de Matriz de Kraljic.
 //
-// Methodology mirrors the Procurement Garage RFQ-Kraljic template:
+// Methodology mirrors the RFQ-Kraljic template:
 //   - Eixo Y "Impacto no Negócio" (4 critérios, escala 1-4, peso 100%):
 //       Spend 40% / Criticidade 30% / Especificações Técnicas 15% /
 //       Valor Percebido pelo Cliente 15%.

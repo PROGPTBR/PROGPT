@@ -128,7 +128,7 @@ export function AbcAssistant() {
             href="/templates/abc-template.xls"
             filename="Exercicio-Curva-ABC.xls"
             format=".xls"
-            description="Template Procurement Garage com colunas para nome, fornecedor, quantidade, preço unitário e cálculo automático de spend acumulado. Preencha offline e faça upload aqui."
+            description="Template com colunas para nome, fornecedor, quantidade, preço unitário e cálculo automático de spend acumulado. Preencha offline e faça upload aqui."
           />
         )}
       </div>

@@ -58,7 +58,6 @@ describe('classifyItems', () => {
   });
 
   it('classifies high/high as Estratégico (matches PG template example R9)', () => {
-    // R9 Matéria-Prima 1 from the Procurement Garage template: high spend
     // (60 of 500MM portfolio share), criticality=4, technicalSpec=1, customerValue=4
     // → impacto 3.55, complex 3.75, quadrant=Estratégico
     const items: KraljicItem[] = [

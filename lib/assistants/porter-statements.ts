@@ -1,7 +1,7 @@
 import type { PorterForce } from './types';
 
 // Sub-projeto 29 v2 — As 35 afirmações canônicas das 5 Forças de Porter,
-// traduzidas e adaptadas do template Procurement Garage 2026
+// traduzidas e adaptadas do template 2026
 // ("2 Porter + Pestal 11 English.xlsm", aba "5 FORCES").
 //
 // Pra cada afirmação o usuário atribui:

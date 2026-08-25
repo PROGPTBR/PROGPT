@@ -129,7 +129,7 @@ export type RfpRequest = z.infer<typeof RfpRequestSchema>;
 // ── Kraljic params (form input) ──────────────────────────────────────────
 // Sub-projeto 27 — Matriz de Kraljic.
 //
-// Methodology mirrors the Procurement Garage template:
+// Methodology mirrors template:
 //   - Eixo Y (Impacto no Negócio): 4 critérios escala 1-4
 //   - Eixo X (Complexidade Mercado Fornecedor): 4 critérios escala 1-4
 //   - Spend é input numérico (R$ MM); score derivado server-side via
