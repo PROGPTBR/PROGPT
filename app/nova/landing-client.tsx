@@ -4,6 +4,9 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
 import { PricingTable } from '@/components/billing/PricingTable';
+import { FaWhatsapp } from "react-icons/fa";
+import { FiMail, FiFileText } from "react-icons/fi";
+
 
 import {
   ArrowRight,
@@ -519,8 +522,11 @@ export function NovaLanding({
         <div className={styles.heroCopy}>
           <div className={styles.eyebrow}>
             <Sparkles size={15} />
-            PROGPT · uma plataforma 2B Supply
+            PROGPT · uma plataforma 2BSUPPLY
           </div>
+
+    
+
 
           <h1>
             Onde decisões{' '}
@@ -1186,6 +1192,31 @@ onClick={() => {
               priority
             />
           </Link>
+          <p>Na 2BSUPPLY, desenvolvemos soluções sob medida para a cadeia de suprimentos de Pequenas e Médias Empresas que precisam ganhar eficiência sem perder agilidade.</p>
+       
+       
+<div className="elementor-widget-container">
+
+<ul className="footer-contact-list">
+  <li>
+    <FaWhatsapp className="footer-contact-icon" aria-hidden="true" />
+
+    <span>+55 (21) 99979-2912</span>
+  </li>
+
+  <li>
+    <FiMail className="footer-contact-icon" aria-hidden="true" />
+
+    <span>comercial@2bsupply.com.br</span>
+  </li>
+
+  <li>
+    <FiFileText className="footer-contact-icon" aria-hidden="true" />
+
+    <span>CNPJ: 36.335.299/0001-82</span>
+  </li>
+</ul>
+</div>
         </div>
 
         <div>
