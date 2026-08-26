@@ -15,7 +15,7 @@ import { getServerSupabase } from '@/lib/db/supabase';
 import type { TraceLevel } from '@/lib/observability/types';
 import { getRunForOwner } from '@/lib/assistants/runs';
 import type { ProfileParams } from '@/lib/assistants/types';
-import { detectAssistantToolCTA } from '@/components/chat/AssistantToolCTA';
+import { detectAssistantToolCTA } from '@/components/chat/assistant-tool-cta-shared';
 
 export const runtime = 'nodejs';
 

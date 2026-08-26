@@ -61,6 +61,42 @@ describe('parsePastedTable', () => {
     expect(warnings[0]).toMatch(/cabeçalho.*linha de dado/);
   });
 
+  it('skips a prose preamble before a tab-delimited table (chat message case)', () => {
+    // Reproduz o texto real de uma mensagem do chat: frase + tabela colada
+    // logo abaixo, sem separador especial entre as duas.
+    const { table, warnings } = parsePastedTable(
+      'Monte um gráfico com esses dados:\nFornecedor\tGasto\nACME Ltda\t120000\nGlobex SA\t80500',
+    );
+    expect(table.headers).toEqual(['Fornecedor', 'Gasto']);
+    expect(table.rows).toEqual([
+      ['ACME Ltda', '120000'],
+      ['Globex SA', '80500'],
+    ]);
+    expect(warnings).toEqual([]);
+  });
+
+  it('skips a prose preamble before a markdown table', () => {
+    const md = [
+      'Aqui está o gráfico que você pediu:',
+      '| Fornecedor | Gasto |',
+      '| --- | --- |',
+      '| ACME | 120000 |',
+    ].join('\n');
+    const { table } = parsePastedTable(md);
+    expect(table.headers).toEqual(['Fornecedor', 'Gasto']);
+    expect(table.rows).toEqual([['ACME', '120000']]);
+  });
+
+  it('does not let an incidental comma in the preamble hijack the header detection', () => {
+    // A vírgula em "Segue, com os dados abaixo" não deve virar cabeçalho —
+    // a tabela real (tab-delimitada) começa na linha seguinte.
+    const { table } = parsePastedTable(
+      'Segue, com os dados abaixo:\nCategoria\tValor\nTI\t1000\nFacilities\t500',
+    );
+    expect(table.headers).toEqual(['Categoria', 'Valor']);
+    expect(table.rows.length).toBe(2);
+  });
+
   it('caps at 500 rows with a warning', () => {
     const lines = ['A\tB', ...Array.from({ length: 600 }, (_, i) => `l${i}\t${i}`)];
     const { table, warnings } = parsePastedTable(lines.join('\n'));
