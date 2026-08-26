@@ -89,6 +89,11 @@ export function MessageList({
           const supplierSearchQuery = pickSupplierSearchQuery(m);
           const assistantCTA = pickAssistantCTA(m);
           const isLast = i === lastIdx;
+          // Gráfico Rápido gera o PNG no lugar a partir do texto que o
+          // usuário colou na mensagem imediatamente anterior — só faz
+          // sentido oferecer isso quando essa mensagem existe e é do user.
+          const previousUserContent =
+            i > 0 && messages[i - 1]?.role === 'user' ? messages[i - 1]!.content : undefined;
           return (
             <Message
               key={m.id ?? i}
@@ -101,6 +106,7 @@ export function MessageList({
               followups={followups}
               supplierSearchQuery={supplierSearchQuery}
               assistantCTA={assistantCTA}
+              previousUserContent={previousUserContent}
               isLast={isLast}
               onPickFollowup={onPickFollowup}
             />

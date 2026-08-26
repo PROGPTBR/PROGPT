@@ -172,6 +172,22 @@ describe('Message — assistant tool CTA derived from content', () => {
     expect(card!.textContent).toMatch(/Scorecard/i);
   });
 
+  it('renders InlineQuickChart (not the generic link card) for grafico_rapido', () => {
+    render(
+      <Message
+        role="assistant"
+        isStreaming={false}
+        content="Use a ferramenta dedicada em /assistants/grafico_rapido."
+        previousUserContent="Fornecedor\tGasto\nACME\t100"
+      />,
+    );
+    expect(screen.getByRole('button', { name: /gerar gráfico/i })).toBeTruthy();
+    const genericLink = screen
+      .queryAllByRole('link')
+      .find((a) => a.getAttribute('href') === '/assistants/grafico_rapido');
+    expect(genericLink).toBeUndefined();
+  });
+
   it('honors an explicit backend annotation even when content has no path', () => {
     render(
       <Message

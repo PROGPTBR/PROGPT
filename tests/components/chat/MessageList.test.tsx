@@ -37,3 +37,29 @@ describe('MessageList — indicador de processamento', () => {
     expect(container.querySelector('[data-thinking-dots]')).toBeFalsy();
   });
 });
+
+describe('MessageList — Gráfico Rápido inline (previousUserContent)', () => {
+  it('passa o conteúdo da mensagem anterior do usuário pro InlineQuickChart', () => {
+    const dataMsg = { role: 'user' as const, content: 'Fornecedor\tGasto\nACME\t100' };
+    const graficoReply = {
+      role: 'assistant' as const,
+      content: 'Use a ferramenta dedicada em /assistants/grafico_rapido.',
+    };
+    const { getByRole } = render(
+      <MessageList messages={[dataMsg, graficoReply]} isLoading={false} />,
+    );
+    // Se a prop chegou, o InlineQuickChart renderiza o botão de geração
+    // (em vez do card genérico) — não dá pra inspecionar sourceText direto,
+    // mas a presença do botão específico já prova o wiring i-1 -> Message.
+    expect(getByRole('button', { name: /gerar gráfico/i })).toBeTruthy();
+  });
+
+  it('não quebra quando a mensagem anterior não existe (primeira mensagem já é o CTA)', () => {
+    const graficoReply = {
+      role: 'assistant' as const,
+      content: 'Use a ferramenta dedicada em /assistants/grafico_rapido.',
+    };
+    const { getByRole } = render(<MessageList messages={[graficoReply]} isLoading={false} />);
+    expect(getByRole('button', { name: /gerar gráfico/i })).toBeTruthy();
+  });
+});

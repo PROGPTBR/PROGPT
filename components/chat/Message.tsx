@@ -5,6 +5,7 @@ import remarkGfm from 'remark-gfm';
 import { MessageActions } from './MessageActions';
 import { FollowupChips } from './FollowupChips';
 import { SupplierSearchCTA } from './SupplierSearchCTA';
+import { InlineQuickChart } from './InlineQuickChart';
 import { ThinkingDots } from './ThinkingDots';
 import {
   AssistantToolCTA,
@@ -23,6 +24,7 @@ type Props = {
   followups?: string[];
   supplierSearchQuery?: string;
   assistantCTA?: AssistantToolType;
+  previousUserContent?: string;
   isLast?: boolean;
   onPickFollowup?: (text: string) => void;
 };
@@ -37,6 +39,7 @@ export function Message({
   followups,
   supplierSearchQuery,
   assistantCTA,
+  previousUserContent,
   isLast,
   onPickFollowup,
 }: Props) {
@@ -81,7 +84,10 @@ export function Message({
         {!isStreaming && supplierSearchQuery ? (
           <SupplierSearchCTA query={supplierSearchQuery} />
         ) : null}
-        {!isStreaming && cta && !supplierSearchQuery ? (
+        {!isStreaming && cta === 'grafico_rapido' && !supplierSearchQuery ? (
+          <InlineQuickChart sourceText={previousUserContent ?? ''} />
+        ) : null}
+        {!isStreaming && cta && cta !== 'grafico_rapido' && !supplierSearchQuery ? (
           <AssistantToolCTA type={cta} />
         ) : null}
         {!isStreaming && traceId && sessionId ? (
