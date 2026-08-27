@@ -14,6 +14,10 @@ function mockParsers(opts: {
   parseSourceThrows?: Error;
   xlsx?: string;
   visionText?: string | null;
+  // Fallback de invoice (só relevante quando parseSourceThrows é setado
+  // pra PDF) — undefined = extractInvoiceFromPdf nunca é chamado no teste.
+  invoiceFields?: Record<string, unknown>;
+  invoiceThrows?: Error;
 }) {
   const parseSource = vi.fn().mockImplementation(async () => {
     if (opts.parseSourceThrows) throw opts.parseSourceThrows;
@@ -44,11 +48,17 @@ function mockParsers(opts: {
     describeImageWithVision,
   }));
 
+  const extractInvoiceFromPdf = vi.fn().mockImplementation(async () => {
+    if (opts.invoiceThrows) throw opts.invoiceThrows;
+    return opts.invoiceFields ?? {};
+  });
+  vi.doMock('@/lib/spend/invoice-extract', () => ({ extractInvoiceFromPdf }));
+
   vi.doMock('@/lib/observability/api-usage', () => ({
     recordApiUsage: vi.fn(),
   }));
 
-  return { parseSource, parseXlsxToMarkdown, describeImageWithVision };
+  return { parseSource, parseXlsxToMarkdown, describeImageWithVision, extractInvoiceFromPdf };
 }
 
 describe('parseChatAttachment dispatcher', () => {
@@ -84,6 +94,62 @@ describe('parseChatAttachment dispatcher', () => {
     expect(out.parsedText).toContain('| a |');
     expect(out.parsedText).toContain('a chart');
     expect(out.parsedText).toContain('Tbl');
+  });
+
+  it('falls back to invoice extraction when the generic PDF parser fails entirely (scanned nota fiscal case)', async () => {
+    const m = mockParsers({
+      parseSourceThrows: new Error(
+        'Conteúdo muito curto — PDF parece escaneado / OCR necessário (texto extraído < 500 caracteres) | Multimodal também falhou: multimodal parse produced no usable blocks after repair',
+      ),
+      invoiceFields: {
+        supplier: 'ACME Ltda',
+        invoiceNumber: '12345',
+        total: 4500.9,
+        currency: 'BRL',
+        invoiceDate: '2026-08-20',
+        ocrUsed: true,
+      },
+    });
+    const { parseChatAttachment } = await import('@/lib/chat-attachments');
+    const out = await parseChatAttachment({
+      buf: Buffer.from('fake scanned pdf'),
+      mime: 'application/pdf',
+      filename: 'nota.pdf',
+    });
+    expect(out.parser).toBe('invoice-fallback');
+    expect(out.parsedText).toContain('ACME Ltda');
+    expect(out.parsedText).toContain('12345');
+    expect(out.parsedText).toContain('4500.9');
+    expect(out.parsedText).toContain('escaneado/fotografado');
+    expect(out.parsedText).toContain('Simulador Logístico (DIFAL)');
+    expect(m.extractInvoiceFromPdf).toHaveBeenCalledWith(
+      expect.objectContaining({ filename: 'nota.pdf', operation: 'chat-attachment-parse' }),
+    );
+  });
+
+  it('throws a combined error when both the generic parser AND the invoice fallback fail', async () => {
+    mockParsers({
+      parseSourceThrows: new Error('generic parse failed'),
+      invoiceThrows: new Error('PDF muito pequeno ou vazio — verifique o arquivo.'),
+    });
+    const { parseChatAttachment, AttachmentParseError } = await import('@/lib/chat-attachments');
+    await expect(
+      parseChatAttachment({ buf: Buffer.from('x'), mime: 'application/pdf', filename: 'x.pdf' }),
+    ).rejects.toBeInstanceOf(AttachmentParseError);
+    await expect(
+      parseChatAttachment({ buf: Buffer.from('x'), mime: 'application/pdf', filename: 'x.pdf' }),
+    ).rejects.toThrow(/generic parse failed.*Extração de nota fiscal também falhou.*muito pequeno/s);
+  });
+
+  it('treats an invoice extraction with no usable field as a failure (not a false success)', async () => {
+    mockParsers({
+      parseSourceThrows: new Error('generic parse failed'),
+      invoiceFields: { poNumber: 'Sem PO', paymentTerms: 'Não informado' },
+    });
+    const { parseChatAttachment, AttachmentParseError } = await import('@/lib/chat-attachments');
+    await expect(
+      parseChatAttachment({ buf: Buffer.from('x'), mime: 'application/pdf', filename: 'x.pdf' }),
+    ).rejects.toBeInstanceOf(AttachmentParseError);
   });
 
   it('routes DOCX through parseSource with kind=docx', async () => {

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { getOpenAI, getOpenAIModel } from '@/lib/llm/openai';
-import { recordApiUsage } from '@/lib/observability/api-usage';
+import { recordApiUsage, type ApiOperation } from '@/lib/observability/api-usage';
 import { SPEND_CATEGORIES, coerceSpendCategory } from './taxonomy';
 import type { SpendInvoiceFields } from './types';
 
@@ -86,6 +86,12 @@ export class SpendExtractError extends Error {
 export async function extractInvoiceFromPdf(input: {
   buf: Buffer;
   filename: string;
+  // Sub-projeto do Gráfico Rápido/anexo de chat reusa este extractor como
+  // fallback pra PDF fiscal que o parser genérico (lib/ingest/parse-source)
+  // não conseguiu ler — permite atribuir o custo ao op correto em vez de
+  // aparecer como Spend Analysis no /admin/costs. Default preserva o
+  // call site original (lib/spend/pipeline.ts).
+  operation?: ApiOperation;
 }): Promise<SpendInvoiceFields> {
   if (input.buf.length < 1024) {
     throw new SpendExtractError(
@@ -147,7 +153,7 @@ export async function extractInvoiceFromPdf(input: {
     ).usage;
     void recordApiUsage({
       provider: 'openai',
-      operation: 'assistant-spend-extract',
+      operation: input.operation ?? 'assistant-spend-extract',
       model,
       tokensIn: usage?.input_tokens ?? 0,
       tokensOut: usage?.output_tokens ?? 0,
