@@ -162,7 +162,7 @@ export async function GET(
  * precisa dizer o que é, o que se espera de volta
  * e de quem veio.
  */
-export function buildBodyText(
+function buildBodyText(
   title: string,
   outputPlain: string,
   ctx: {
