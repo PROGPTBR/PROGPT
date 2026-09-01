@@ -8,7 +8,19 @@ import { ShieldCheck, CheckCircle2 } from "lucide-react";
  // "Cancele quando quiser",
 //];
 
-export default function StepPlan() {
+type StepPlanProps = {
+  planPrice: number;
+  trialDays: number;
+};
+
+function fmtPrice(value: number) {
+  return `R$ ${value.toFixed(2).replace(".", ",")}`;
+}
+
+export default function StepPlan({ planPrice, trialDays }: StepPlanProps) {
+  const trialLabel = trialDays === 1 ? "1 dia" : `${trialDays} dias`;
+  const ordinalDay = `${trialDays}º dia`;
+
   return (
     <div className="space-y-8">
 
@@ -29,7 +41,7 @@ export default function StepPlan() {
 
     <div className="flex items-center gap-3">
         <ShieldCheck className="h-5 w-5 text-brand"/>
-        <span>Cobrança somente após 3 dias.</span>
+        <span>Cobrança somente após {trialLabel}.</span>
 
     </div>
 
@@ -51,7 +63,7 @@ export default function StepPlan() {
 
     <span>Primeira cobrança</span>
 
-    <strong>Após o 3º dia</strong>
+    <strong>Após o {ordinalDay}</strong>
 
   </div>
 
@@ -59,7 +71,7 @@ export default function StepPlan() {
 
     <span>Depois</span>
 
-    <strong>R$ 73,00/mês</strong>
+    <strong>{fmtPrice(planPrice)}/mês</strong>
 
   </div>
 

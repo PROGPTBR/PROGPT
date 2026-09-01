@@ -16,7 +16,12 @@ import StepPlan from "./StepPlan";
 
 import { useRef, useState } from 'react';
 
-export function SignupWizard() {
+type SignupWizardProps = {
+  planPrice: number;
+  trialDays: number;
+};
+
+export function SignupWizard({ planPrice, trialDays }: SignupWizardProps) {
   
   
 const errorRef = useRef<HTMLDivElement>(null);
@@ -254,7 +259,7 @@ if (signupSuccess) {
             {step === 1 && <StepAccount form={form} setForm={setForm} />}
             {error && ( <div ref={errorRef} className={`${ERROR_CLASS} mt-4`}>  {error} </div> )}
             {step === 2 && ( <StepProfile form={form} setForm={setForm} /> )}
-            {step === 3 && ( <StepPlan /> )}
+            {step === 3 && ( <StepPlan planPrice={planPrice} trialDays={trialDays} /> )}
             {step === 4 && ( <StepPayment form={form}  setForm={setForm} /> )}
 
            <NavigationButtons
