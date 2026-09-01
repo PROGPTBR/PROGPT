@@ -137,6 +137,33 @@ export const STRATEGY_EXAMPLES: StrategyExample[] = [
         'Reestruturar como retainer fix + success fee (10% upside no saving capturado). Reduz risco do comprador e dá upside ao fornecedor.',
     },
   },
+  {
+    id: 'plastpack-embalagens',
+    label: 'PlastPack Embalagens — Renovação de contrato (alavancável)',
+    params: {
+      supplierName: 'PlastPack Embalagens',
+      category: 'Embalagens plásticas e papelão',
+      supplierWebsite: '',
+      annualSpend: 'R$ 8.500.000',
+      supplierShare: '',
+      marketPosition: 'seguidor',
+      kraljicQuadrant: 'alavancavel',
+      currentPrice: 'R$ 8.500.000/ano',
+      supplierDesiredPrice: 'R$ 8.500.000/ano (manutenção do valor atual)',
+      targetPrice: 'R$ 7.900.000/ano',
+      walkawayPrice:
+        'R$ 8.100.000/ano (piso sinalizado pelo fornecedor em condições normais)',
+      strategicObjective: 'reducao-custos',
+      contractStatus:
+        'Contrato vigente com fornecedor único da linha. Ele resiste a descontos acima de ~4,7% sobre o valor atual, mas o preço da resina plástica caiu recentemente no mercado.',
+      priceScenario:
+        'Queda recente da resina plástica abre espaço pra negociar desconto sobre o contrato atual. Ancorar próximo ao piso sinalizado pelo fornecedor (R$ 8,1MM) sem pressionar prazo de pagamento acima de 90 dias, volume abaixo de 40% da demanda dele, SLAs sem tolerância mútua, ou congelamento de preço sem indexador.',
+      mustHaves:
+        'Prazo de pagamento de até 90 dias; volume contratado igual ou acima de 40% da demanda do fornecedor; SLA com cláusula de tolerância mútua; mecanismo de revisão caso resina ou papelão oscilem acima de 10%.',
+      purchaseType: 'contrato',
+      negotiationTechnique: 'planejamento',
+    },
+  },
 ];
 
 // Exemplos pro setup do simulator (Tela 6).
@@ -178,6 +205,17 @@ export const SIMULATOR_SETUP_EXAMPLES: SimulatorSetupExample[] = [
         'Aplicar reajuste IGP-M conforme contrato master. Empurrar módulos adicionais (Ariba, Concur). Não negociar termos de cancelamento.',
       supplierWalkaway:
         'Reajuste mínimo IPCA. Não há flexibilidade no preço de lista; só via inclusão de produtos novos no escopo. Suporte premium 24x7 é não-negociável.',
+    },
+  },
+  {
+    id: 'plastpack-pragmatico',
+    label: 'PlastPack — Comercial pragmático',
+    setup: {
+      personaProfile: 'pragmatico',
+      supplierObjectives:
+        'Preservar a margem de contribuição da conta sem perder o volume atual. Aceita ceder no preço se o comprador garantir volume e prazo, evitando repasse total de custo sem indexador.',
+      supplierWalkaway:
+        'Ponto de Saída Absoluto (Walk-Away Price): R$ 7.750.000 — abaixo deste valor a operação passa a queimar margem de contribuição direta, inviabilizando os custos fixos da planta. Preço Mínimo Aceitável em condições normais: R$ 8.100.000 (desconto de ~4,7% sobre o valor atual, preservando margem operacional diante da queda da resina plástica). Fatores não financeiros que também disparam a saída do vendedor: (1) Prazo de pagamento acima de 90 dias sem compensação em taxa financeira ou volume adicional; (2) Redução do volume contratado para menos de 40% da demanda total da empresa, o que tira a prioridade da conta na linha produtiva; (3) Penalidades e SLAs inflexíveis — multas severas por atrasos causados por volatilidade externa de matéria-prima, sem cláusula de tolerância mútua; (4) Repasse total de custos sem indexador — congelamento estrito de preços sem mecanismo de revisão caso resina e papelão oscilem acima de 10%.',
     },
   },
 ];
