@@ -1,6 +1,6 @@
 -- Níveis de acesso (Admin / Gestor / Usuário) + ajuste do preço.
 -- Decisões do dono (2026-07-13): papel Gestor = "quase-admin"; acesso liberado
--- só pra admin neste momento; preço cobrado = R$ 197,99.
+-- só pra admin neste momento; preço cobrado = R$ 73,00.
 --
 -- Nota: o dashboard de monitoramento (/admin/monitor) NÃO depende de nenhuma
 -- função SQL — ele agrega em JS via service-role. Esta migration só precisa
@@ -30,8 +30,8 @@ alter table profiles
 
 -- ─────────────────────────────────────────────────────────────────────────
 -- 2) Preço: o signup passou a LER billing_settings.plan_price (antes cobrava
--- 197,99 hardcoded). A linha singleton foi semeada com o default antigo
--- (127,99). O VALOR da linha já foi corrigido pra 197,99 via service-role;
+-- 73,00 hardcoded). A linha singleton foi semeada com o default antigo
+-- (127,99). O VALOR da linha já foi corrigido pra 73,00 via service-role;
 -- aqui só alinhamos o DEFAULT da coluna pra futuros inserts (não deve haver,
 -- é singleton) e reforçamos a linha, preservando um valor já customizado.
 alter table billing_settings alter column plan_price set default 197.99;

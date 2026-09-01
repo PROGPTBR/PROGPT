@@ -59,7 +59,7 @@ export default function StepPlan() {
 
     <span>Depois</span>
 
-    <strong>R$ 197,99/mês</strong>
+    <strong>R$ 73,00/mês</strong>
 
   </div>
 
