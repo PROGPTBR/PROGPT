@@ -1,34 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/db/supabase-server';
-import { getServerSupabase } from '@/lib/db/supabase';
-import { sendEmail } from '@/lib/email/client';
-import { buildWelcomeEmail } from '@/lib/email/templates';
+import { ensureWelcomeEmailSent } from '@/lib/email/welcome';
 import { type EmailOtpType } from '@supabase/supabase-js';
 import { configuredAppUrl } from '@/lib/app-url';
 
-async function maybeSendWelcome(userId: string, email: string) {
-  const svc = getServerSupabase();
-
-  const { data } = await svc
-    .from('profiles')
-    .update({
-      welcome_email_sent_at: new Date().toISOString(),
-    })
-    .eq('id', userId)
-    .is('welcome_email_sent_at', null)
-    .select('id');
-
-  if (!data?.length) return;
-
-  const tpl = buildWelcomeEmail({ email });
-
-  await sendEmail({
-    to: email,
-    subject: tpl.subject,
-    html: tpl.html,
-    idempotencyKey: `welcome:${userId}`,
-  });
-}
+// Lógica de envio do welcome email (idempotente via
+// profiles.welcome_email_sent_at) centralizada em lib/email/welcome.ts.
 
 // Só aceita caminho relativo interno (começando com "/" e não "//") — evita
 // open-redirect via ?next=https://site-malicioso.
@@ -65,7 +42,7 @@ export async function GET(req: NextRequest) {
   }
 
   if (type === 'signup' && data.user?.id && data.user.email) {
-    void maybeSendWelcome(data.user.id, data.user.email);
+    void ensureWelcomeEmailSent(data.user.id, data.user.email);
   }
 
   // Recuperação E convite: o usuário precisa DEFINIR uma senha → tela de

@@ -58,6 +58,17 @@ function ChatRootMounted() {
     useChatSessions();
 
   /* ==========================================================
+     WELCOME EMAIL (fallback) — ver lib/email/welcome.ts. Idempotente
+     no servidor, então disparar 1x por mount do /chat é seguro/barato.
+  ========================================================== */
+
+  useEffect(() => {
+    fetch('/api/account/welcome-email', { method: 'POST' }).catch(() => {
+      /* fail-soft — não é crítico pro chat funcionar */
+    });
+  }, []);
+
+  /* ==========================================================
      SIDEBAR
   ========================================================== */
 
