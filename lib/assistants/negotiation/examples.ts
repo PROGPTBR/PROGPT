@@ -220,9 +220,8 @@ export const SIMULATOR_SETUP_EXAMPLES: SimulatorSetupExample[] = [
   },
 ];
 
-// "Deals" nomeados — permitem forçar um caso específico via query param em
-// vez do sorteio aleatório padrão (?deal=plastpack), útil pra demo/apresentação
-// onde não dá pra depender de sorte no botão "Gerar Exemplo".
+// "Deals" nomeados — permitem forçar um caso específico via query param
+// (?deal=plastpack). Usado pelo default abaixo e por links de demo.
 export const DEMO_SCENARIOS: Record<
   string,
   { strategyId: string; setupId: string }
@@ -233,17 +232,27 @@ export const DEMO_SCENARIOS: Record<
   },
 };
 
-/** Resolve o exemplo a devolver pro botão "Gerar Exemplo". Com `deal` válido
- * (registrado em DEMO_SCENARIOS e existente na lista), devolve sempre o
- * mesmo caso — senão sorteia como antes. */
+// Decisão do dono do produto (2026-09-01, véspera da apresentação pro
+// cliente): o botão "Gerar Exemplo" passa a devolver SEMPRE a PlastPack por
+// padrão — não é mais sorteio. Os outros 5 casos continuam na lista (e o
+// sorteio de verdade continua acessível via `?deal=` com um valor que não
+// exista em DEMO_SCENARIOS, ex. `?deal=sorteio`) até decidirem voltar a
+// variar o padrão.
+const DEFAULT_DEAL = 'plastpack';
+
+/** Resolve o exemplo a devolver pro botão "Gerar Exemplo". Sem `deal` (ou
+ * com um `deal` que bate em DEMO_SCENARIOS), devolve sempre o cenário
+ * default combinado — um `deal` desconhecido cai no sorteio entre todos os
+ * casos cadastrados. */
 export function pickExample(
   kind: 'strategy' | 'setup',
   deal?: string | null,
 ): StrategyExample | SimulatorSetupExample | undefined {
   const list = kind === 'setup' ? SIMULATOR_SETUP_EXAMPLES : STRATEGY_EXAMPLES;
+  const effectiveDeal = deal ?? DEFAULT_DEAL;
 
-  if (deal) {
-    const scenario = DEMO_SCENARIOS[deal];
+  if (effectiveDeal) {
+    const scenario = DEMO_SCENARIOS[effectiveDeal];
     const id =
       scenario && (kind === 'setup' ? scenario.setupId : scenario.strategyId);
     const found = id ? list.find((e) => e.id === id) : undefined;

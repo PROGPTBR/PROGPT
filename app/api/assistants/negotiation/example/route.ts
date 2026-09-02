@@ -5,13 +5,15 @@ import { recordApiUsage } from '@/lib/observability/api-usage';
 
 export const runtime = 'nodejs';
 
-// "✨ Gerar Exemplo" do Deal Sim. V1 retorna um dos cases pre-curados
-// random (cobre a Tela 1 form do Strategy Builder + Tela 6 setup do
-// Simulator). V2 pode gerar via LLM dinamicamente.
+// "✨ Gerar Exemplo" do Deal Sim (cobre a Tela 1 form do Strategy Builder +
+// Tela 6 setup do Simulator). Devolve sempre o cenário default combinado
+// em pickExample() (decisão do dono do produto, 2026-09-01) — não é mais
+// sorteio por padrão.
 //
 // Query params: `kind=strategy|setup` (default `strategy`), `deal=<slug>`
-// opcional — força um cenário nomeado (DEMO_SCENARIOS) em vez do sorteio,
-// pra demos/apresentações onde o resultado precisa ser determinístico.
+// opcional — força um cenário nomeado (DEMO_SCENARIOS) específico, ou volta
+// ao sorteio entre todos os casos com um valor que não exista no registro
+// (ex. `?deal=sorteio`).
 
 export async function GET(req: Request): Promise<Response> {
   try {
