@@ -81,3 +81,43 @@ describe('Sidebar rename', () => {
     ).toBeNull();
   });
 });
+
+describe('Sidebar search', () => {
+  it('filters the conversation list by title as the user types', async () => {
+    const user = userEvent.setup();
+    renderSidebar();
+    expect(screen.getByText('Conversa A')).toBeTruthy();
+    expect(screen.getByText('Conversa B')).toBeTruthy();
+
+    await user.type(screen.getByRole('textbox', { name: /buscar conversas/i }), 'Conversa A');
+
+    expect(screen.getByText('Conversa A')).toBeTruthy();
+    expect(screen.queryByText('Conversa B')).toBeNull();
+  });
+
+  it('shows an empty state when no conversation matches the search', async () => {
+    const user = userEvent.setup();
+    renderSidebar();
+
+    await user.type(
+      screen.getByRole('textbox', { name: /buscar conversas/i }),
+      'não existe nenhuma conversa assim',
+    );
+
+    expect(screen.getByText(/nenhuma conversa encontrada/i)).toBeTruthy();
+  });
+
+  it('clear button resets the search and restores the full list', async () => {
+    const user = userEvent.setup();
+    renderSidebar();
+
+    const input = screen.getByRole('textbox', { name: /buscar conversas/i });
+    await user.type(input, 'Conversa A');
+    expect(screen.queryByText('Conversa B')).toBeNull();
+
+    await user.click(screen.getByRole('button', { name: /limpar busca/i }));
+
+    expect(screen.getByText('Conversa A')).toBeTruthy();
+    expect(screen.getByText('Conversa B')).toBeTruthy();
+  });
+});

@@ -16,6 +16,8 @@ import {
   PanelLeftOpen,
   ChevronRight,
   Phone,
+  Search,
+  X,
 } from 'lucide-react';
 
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -129,6 +131,22 @@ export function Sidebar({
 
   const [draft, setDraft] =
     useState('');
+
+  const [search, setSearch] =
+    useState('');
+
+  const filteredSessions =
+    search.trim()
+      ? sessions.filter((s) =>
+          s.title
+            .toLowerCase()
+            .includes(
+              search
+                .trim()
+                .toLowerCase(),
+            ),
+        )
+      : sessions;
 
   function startEdit(
     s: StoredSession,
@@ -629,9 +647,71 @@ export function Sidebar({
           CONVERSAS
       ========================================================= */}
 
-      <ScrollArea className="flex-1">
+      <div className="border-b border-border p-2">
+        <div className="relative">
+          <Search
+            className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
+            aria-hidden="true"
+          />
+
+          <input
+            type="text"
+            value={search}
+            onChange={(e) =>
+              setSearch(e.target.value)
+            }
+            placeholder="Buscar conversas"
+            aria-label="Buscar conversas"
+            className="
+              w-full
+              rounded-lg
+              border
+              border-border
+              bg-background
+              py-1.5
+              pl-8
+              pr-7
+              text-xs
+              text-foreground
+              placeholder-muted-foreground
+              outline-none
+              transition-colors
+
+              focus:border-brand
+            "
+          />
+
+          {search && (
+            <button
+              type="button"
+              onClick={() => setSearch('')}
+              aria-label="Limpar busca"
+              className="
+                absolute
+                right-2
+                top-1/2
+                -translate-y-1/2
+                text-muted-foreground
+                transition-colors
+
+                hover:text-foreground
+              "
+            >
+              <X className="h-3.5 w-3.5" aria-hidden="true" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      <ScrollArea className="min-h-0 flex-1">
         <ul className="space-y-0.5 p-2">
-          {sessions.map(
+          {filteredSessions.length === 0 && (
+            <li className="px-3 py-6 text-center text-xs text-muted-foreground">
+              Nenhuma conversa encontrada
+            </li>
+          )}
+
+          {filteredSessions.map(
             (s) => {
               const active =
                 s.id ===
