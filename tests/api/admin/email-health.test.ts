@@ -2,9 +2,19 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 
 beforeEach(() => {
   vi.resetModules();
-  delete process.env.RESEND_API_KEY;
+  delete process.env.SMTP_HOST;
+  delete process.env.SMTP_PORT;
+  delete process.env.SMTP_USER;
+  delete process.env.SMTP_PASSWORD;
   delete process.env.EMAIL_FROM;
 });
+
+function setSmtpEnv() {
+  process.env.SMTP_HOST = 'smtp.titan.email';
+  process.env.SMTP_PORT = '587';
+  process.env.SMTP_USER = 'comercial@2bsupply.com.br';
+  process.env.SMTP_PASSWORD = 'secret';
+}
 
 function mockAdmin(isAdmin: boolean) {
   vi.doMock('@/lib/auth', () => {
@@ -31,7 +41,7 @@ describe('GET /api/admin/email-health', () => {
     expect(res.status).toBe(404);
   });
 
-  it('flags missing RESEND_API_KEY', async () => {
+  it('flags missing SMTP credentials', async () => {
     mockAdmin(true);
     const { GET } = await import('@/app/api/admin/email-health/route');
     const res = await GET();
@@ -40,20 +50,20 @@ describe('GET /api/admin/email-health', () => {
     expect(body.warning).toMatch(/ausente/);
   });
 
-  it('flags sandbox EMAIL_FROM even when key is set', async () => {
-    process.env.RESEND_API_KEY = 'test-key';
+  it('flags a From that does not match SMTP_USER even when credentials are set', async () => {
+    setSmtpEnv();
+    process.env.EMAIL_FROM = 'PROGPT <outra-caixa@2bsupply.com.br>';
     mockAdmin(true);
     const { GET } = await import('@/app/api/admin/email-health/route');
     const res = await GET();
     const body = await res.json();
     expect(body.hasKey).toBe(true);
     expect(body.isSandboxFrom).toBe(true);
-    expect(body.warning).toMatch(/sandbox/);
+    expect(body.warning).toMatch(/não bate/);
   });
 
   it('reports clean state with real domain configured', async () => {
-    process.env.RESEND_API_KEY = 'test-key';
-    process.env.EMAIL_FROM = 'PROGPT <noreply@2bsupply.com.br>';
+    setSmtpEnv();
     mockAdmin(true);
     const { GET } = await import('@/app/api/admin/email-health/route');
     const res = await GET();

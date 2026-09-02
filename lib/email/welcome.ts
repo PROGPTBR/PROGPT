@@ -60,10 +60,8 @@ export async function ensureWelcomeEmailSent(
 // Reenvio manual (admin), sem passar pelo lock de "1x por usuário" — usado
 // quando o cliente relata que não recebeu (ex.: cadastrou antes do fix do
 // gatilho, ou quer forçar um novo magic link porque o antigo expirou).
-// idempotencyKey é sufixado com o timestamp pra NÃO colidir com o
-// `welcome:${userId}` do primeiro envio (Resend rejeita idempotency_key
-// duplicada por 24h — sem isso um reenvio de verdade seria descartado
-// silenciosamente como duplicata do envio original).
+// idempotencyKey segue sufixado com o timestamp por clareza de log (o
+// campo é ignorado pelo client SMTP — ver lib/email/client.ts).
 export async function resendWelcomeEmail(
   userId: string,
   email: string,

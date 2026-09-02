@@ -2,61 +2,65 @@ import { describe, expect, it, beforeEach, vi } from 'vitest';
 
 beforeEach(() => {
   vi.resetModules();
-  delete process.env.RESEND_API_KEY;
+  delete process.env.SMTP_HOST;
+  delete process.env.SMTP_PORT;
+  delete process.env.SMTP_USER;
+  delete process.env.SMTP_PASSWORD;
   delete process.env.EMAIL_FROM;
 });
 
+function mockTransport(sendMail: ReturnType<typeof vi.fn>) {
+  const createTransport = vi.fn().mockReturnValue({ sendMail });
+  vi.doMock('nodemailer', () => ({ default: { createTransport } }));
+  return { createTransport };
+}
+
+function setSmtpEnv() {
+  process.env.SMTP_HOST = 'smtp.titan.email';
+  process.env.SMTP_PORT = '587';
+  process.env.SMTP_USER = 'comercial@2bsupply.com.br';
+  process.env.SMTP_PASSWORD = 'secret';
+}
+
 describe('sendEmail', () => {
-  it('returns ok:false when RESEND_API_KEY missing (fail-soft)', async () => {
+  it('returns ok:false when SMTP env is missing (fail-soft)', async () => {
     const { sendEmail } = await import('@/lib/email/client');
     const r = await sendEmail({ to: 'x@y.com', subject: 's', html: '<p>x</p>' });
     expect(r.ok).toBe(false);
   });
 
-  it('sends via Resend when key is set', async () => {
-    process.env.RESEND_API_KEY = 'test-key';
-    const sendSpy = vi.fn().mockResolvedValue({ data: { id: 'msg_1' }, error: null });
-    vi.doMock('resend', () => ({
-      Resend: vi.fn().mockImplementation(() => ({ emails: { send: sendSpy } })),
-    }));
+  it('sends via SMTP when credentials are set', async () => {
+    setSmtpEnv();
+    const sendMail = vi.fn().mockResolvedValue({ messageId: 'msg_1' });
+    mockTransport(sendMail);
     const { sendEmail } = await import('@/lib/email/client');
     const r = await sendEmail({ to: 'x@y.com', subject: 's', html: '<p>x</p>' });
     expect(r.ok).toBe(true);
     expect(r.id).toBe('msg_1');
-    expect(sendSpy).toHaveBeenCalledWith(
+    expect(sendMail).toHaveBeenCalledWith(
       expect.objectContaining({ to: 'x@y.com', subject: 's', html: '<p>x</p>' }),
-      undefined,
     );
   });
 
-  it('forwards idempotencyKey to Resend', async () => {
-    process.env.RESEND_API_KEY = 'test-key';
-    const sendSpy = vi.fn().mockResolvedValue({ data: { id: 'msg_2' }, error: null });
-    vi.doMock('resend', () => ({
-      Resend: vi.fn().mockImplementation(() => ({ emails: { send: sendSpy } })),
-    }));
+  it('accepts idempotencyKey without forwarding it (SMTP has no dedupe)', async () => {
+    setSmtpEnv();
+    const sendMail = vi.fn().mockResolvedValue({ messageId: 'msg_2' });
+    mockTransport(sendMail);
     const { sendEmail } = await import('@/lib/email/client');
-    await sendEmail({
+    const r = await sendEmail({
       to: 'x@y.com',
       subject: 's',
       html: '<p>x</p>',
       idempotencyKey: 'welcome:user-1',
     });
-    expect(sendSpy).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({ idempotencyKey: 'welcome:user-1' }),
-    );
+    expect(r.ok).toBe(true);
+    expect(sendMail.mock.calls[0]?.[0]).not.toHaveProperty('idempotencyKey');
   });
 
-  it('returns ok:false when Resend returns error (fail-soft)', async () => {
-    process.env.RESEND_API_KEY = 'test-key';
-    vi.doMock('resend', () => ({
-      Resend: vi.fn().mockImplementation(() => ({
-        emails: {
-          send: vi.fn().mockResolvedValue({ data: null, error: { message: 'rate limited' } }),
-        },
-      })),
-    }));
+  it('returns ok:false when SMTP rejects the send (fail-soft)', async () => {
+    setSmtpEnv();
+    const sendMail = vi.fn().mockRejectedValue(new Error('rate limited'));
+    mockTransport(sendMail);
     const { sendEmail } = await import('@/lib/email/client');
     const r = await sendEmail({ to: 'x@y.com', subject: 's', html: '<p>x</p>' });
     expect(r.ok).toBe(false);
@@ -64,48 +68,59 @@ describe('sendEmail', () => {
   });
 
   it('swallows exceptions (fail-soft)', async () => {
-    process.env.RESEND_API_KEY = 'test-key';
-    vi.doMock('resend', () => ({
-      Resend: vi.fn().mockImplementation(() => ({
-        emails: { send: vi.fn().mockRejectedValue(new Error('network down')) },
-      })),
-    }));
+    setSmtpEnv();
+    const sendMail = vi.fn().mockRejectedValue(new Error('network down'));
+    mockTransport(sendMail);
     const { sendEmail } = await import('@/lib/email/client');
     const r = await sendEmail({ to: 'x@y.com', subject: 's', html: '<p>x</p>' });
     expect(r.ok).toBe(false);
   });
 
   it('uses EMAIL_FROM env override', async () => {
-    process.env.RESEND_API_KEY = 'test-key';
+    setSmtpEnv();
     process.env.EMAIL_FROM = 'PROGPT <hello@2bsupply.com.br>';
-    const sendSpy = vi.fn().mockResolvedValue({ data: { id: 'x' }, error: null });
-    vi.doMock('resend', () => ({
-      Resend: vi.fn().mockImplementation(() => ({ emails: { send: sendSpy } })),
-    }));
+    const sendMail = vi.fn().mockResolvedValue({ messageId: 'x' });
+    mockTransport(sendMail);
     const { sendEmail } = await import('@/lib/email/client');
     await sendEmail({ to: 'x@y.com', subject: 's', html: '<p>x</p>' });
-    expect(sendSpy).toHaveBeenCalledWith(
+    expect(sendMail).toHaveBeenCalledWith(
       expect.objectContaining({ from: 'PROGPT <hello@2bsupply.com.br>' }),
-      undefined,
+    );
+  });
+
+  it('defaults From to the authenticated SMTP_USER when EMAIL_FROM is unset', async () => {
+    setSmtpEnv();
+    const sendMail = vi.fn().mockResolvedValue({ messageId: 'x' });
+    mockTransport(sendMail);
+    const { sendEmail } = await import('@/lib/email/client');
+    await sendEmail({ to: 'x@y.com', subject: 's', html: '<p>x</p>' });
+    expect(sendMail).toHaveBeenCalledWith(
+      expect.objectContaining({ from: 'PROGPT <comercial@2bsupply.com.br>' }),
     );
   });
 });
 
 describe('getEmailConfigStatus', () => {
-  it('flags missing key and default sandbox from', async () => {
+  it('flags missing credentials', async () => {
     const { getEmailConfigStatus } = await import('@/lib/email/client');
     const status = getEmailConfigStatus();
     expect(status.hasKey).toBe(false);
-    expect(status.isSandboxFrom).toBe(true);
-    expect(status.from).toBe('PROGPT <onboarding@resend.dev>');
   });
 
-  it('reports a real domain as non-sandbox', async () => {
-    process.env.RESEND_API_KEY = 'test-key';
-    process.env.EMAIL_FROM = 'PROGPT <noreply@2bsupply.com.br>';
+  it('reports a From matching SMTP_USER as not mismatched', async () => {
+    setSmtpEnv();
     const { getEmailConfigStatus } = await import('@/lib/email/client');
     const status = getEmailConfigStatus();
     expect(status.hasKey).toBe(true);
     expect(status.isSandboxFrom).toBe(false);
+    expect(status.from).toBe('PROGPT <comercial@2bsupply.com.br>');
+  });
+
+  it('flags a From that does not match SMTP_USER', async () => {
+    setSmtpEnv();
+    process.env.EMAIL_FROM = 'PROGPT <outra-caixa@2bsupply.com.br>';
+    const { getEmailConfigStatus } = await import('@/lib/email/client');
+    const status = getEmailConfigStatus();
+    expect(status.isSandboxFrom).toBe(true);
   });
 });

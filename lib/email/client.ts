@@ -1,47 +1,71 @@
-import { Resend } from 'resend';
+import nodemailer from 'nodemailer';
 import { configuredAppUrl } from '@/lib/app-url';
 
-// Sub-projeto 30 — wrapper do Resend.
+// Wrapper de envio via SMTP (Hostgator/Titan) — substitui o Resend
+// (2026-09-02): a caixa comercial@2bsupply.com.br já existe e é
+// administrada pelo time, então não faz sentido manter uma segunda fonte
+// de envio de e-mail transacional pro mesmo domínio.
 //
 // Fail-soft: email transacional NUNCA quebra fluxo principal (signup,
 // webhook, cancel). Erros são logados e engolidos. Pattern espelha
 // `recordApiUsage` (sub-projeto 19).
 //
 // Env vars:
-//   RESEND_API_KEY — token gerado em resend.com → API Keys
-//   EMAIL_FROM     — sender. Default: 'PROGPT <onboarding@resend.dev>'
-//                    (resend.dev funciona sem DNS setup — use enquanto
-//                    SPF/DKIM do 2bsupply.com.br não tá pronto).
-//                    Prod: 'PROGPT <noreply@2bsupply.com.br>'
+//   SMTP_HOST      — ex.: smtp.titan.email
+//   SMTP_PORT      — ex.: 587 (STARTTLS) ou 465 (TLS implícito). Default 587.
+//   SMTP_USER      — caixa autenticada, ex.: comercial@2bsupply.com.br
+//   SMTP_PASSWORD  — senha da caixa
+//   EMAIL_FROM     — sender exibido. Default: 'PROGPT <SMTP_USER>' — a
+//                    maioria dos provedores SMTP (Titan incluso) rejeita ou
+//                    marca spam quando o From não bate com a caixa
+//                    autenticada, então o default usa a própria caixa.
 //   APP_URL        — usado pra construir links em templates. O domínio
 //                    desativado é rejeitado e cai no domínio canônico.
 
-const DEFAULT_FROM = 'PROGPT <onboarding@resend.dev>';
-let _client: Resend | null = null;
+const FALLBACK_FROM = 'PROGPT <comercial@2bsupply.com.br>';
+let _transporter: nodemailer.Transporter | null = null;
 
-// Diagnóstico da config estática (sem chamar a API) — usado por
+function smtpUser(): string | undefined {
+  return process.env.SMTP_USER || undefined;
+}
+
+function defaultFrom(): string {
+  const user = smtpUser();
+  return user ? `PROGPT <${user}>` : FALLBACK_FROM;
+}
+
+// Diagnóstico da config estática (sem abrir conexão SMTP) — usado por
 // /api/admin/email-health e por qualquer envio que precise explicar UM
-// "falhou" pro admin em vez de um 502 mudo. isSandboxFrom sinaliza o caso
-// mais comum: EMAIL_FROM ainda no domínio sandbox do Resend, que só
-// entrega pro dono da conta — nunca pra um cliente real, mesmo com a API
-// respondendo 200.
+// "falhou" pro admin em vez de um 502 mudo. `isSandboxFrom` (nome mantido
+// por compat com callers existentes) sinaliza o gotcha real do SMTP: From
+// que não bate com a caixa autenticada — muitos provedores (Titan
+// incluso) rejeitam ou jogam pra spam nesse caso.
 export function getEmailConfigStatus(): {
   hasKey: boolean;
   from: string;
   isSandboxFrom: boolean;
 } {
-  const hasKey = !!process.env.RESEND_API_KEY;
-  const from = process.env.EMAIL_FROM ?? DEFAULT_FROM;
-  const isSandboxFrom = from === DEFAULT_FROM || from.includes('@resend.dev');
+  const hasKey = !!(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASSWORD);
+  const from = process.env.EMAIL_FROM ?? defaultFrom();
+  const user = smtpUser();
+  const isSandboxFrom = !!user && !from.includes(user);
   return { hasKey, from, isSandboxFrom };
 }
 
-function getClient(): Resend | null {
-  if (_client) return _client;
-  const key = process.env.RESEND_API_KEY;
-  if (!key) return null;
-  _client = new Resend(key);
-  return _client;
+function getTransporter(): nodemailer.Transporter | null {
+  if (_transporter) return _transporter;
+  const host = process.env.SMTP_HOST;
+  const user = process.env.SMTP_USER;
+  const pass = process.env.SMTP_PASSWORD;
+  if (!host || !user || !pass) return null;
+  const port = Number(process.env.SMTP_PORT ?? 587);
+  _transporter = nodemailer.createTransport({
+    host,
+    port,
+    secure: port === 465,
+    auth: { user, pass },
+  });
+  return _transporter;
 }
 
 export function getAppUrl(): string {
@@ -53,42 +77,38 @@ export type EmailInput = {
   subject: string;
   html: string;
   /**
-   * Idempotency key (string única por (user, event)). Resend rejeita
-   * duplicate `idempotency_key` em 24h, evitando double-send se webhook
-   * Asaas dispara mesmo evento 2x.
+   * Reservado por compat com callers existentes (o Resend deduplicava por
+   * 24h via esse campo). SMTP não tem dedupe embutido — os callers já têm
+   * proteção própria contra double-send (billing_webhook_events dedup por
+   * evento; welcome usa lock em profiles.welcome_email_sent_at). Ignorado
+   * aqui de propósito.
    */
   idempotencyKey?: string;
 };
 
 /**
- * Envia email transacional. Fail-soft: retorna `{ ok: false }` em qualquer
- * erro (env missing, Resend 5xx, exception) sem propagar. Caller deve
- * sempre checar mas nunca abortar fluxo principal por causa de email.
+ * Envia email transacional via SMTP. Fail-soft: retorna `{ ok: false }` em
+ * qualquer erro (env missing, SMTP 4xx/5xx, exception) sem propagar.
+ * Caller deve sempre checar mas nunca abortar fluxo principal por causa de
+ * email.
  */
 export async function sendEmail(
   input: EmailInput,
 ): Promise<{ ok: boolean; id?: string; error?: string }> {
-  const client = getClient();
-  if (!client) {
-    console.warn('[email] RESEND_API_KEY missing — email skipped:', input.subject);
-    return { ok: false, error: 'RESEND_API_KEY ausente' };
+  const transporter = getTransporter();
+  if (!transporter) {
+    console.warn('[email] SMTP não configurado — email skipped:', input.subject);
+    return { ok: false, error: 'SMTP_HOST/SMTP_USER/SMTP_PASSWORD ausente' };
   }
-  const from = process.env.EMAIL_FROM ?? DEFAULT_FROM;
+  const from = process.env.EMAIL_FROM ?? defaultFrom();
   try {
-    const { data, error } = await client.emails.send(
-      {
-        from,
-        to: input.to,
-        subject: input.subject,
-        html: input.html,
-      },
-      input.idempotencyKey ? { idempotencyKey: input.idempotencyKey } : undefined,
-    );
-    if (error) {
-      console.warn('[email] Resend error:', error.message);
-      return { ok: false, error: error.message };
-    }
-    return { ok: true, id: data?.id };
+    const info = await transporter.sendMail({
+      from,
+      to: input.to,
+      subject: input.subject,
+      html: input.html,
+    });
+    return { ok: true, id: info.messageId };
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.warn('[email] sendEmail swallowed:', msg);

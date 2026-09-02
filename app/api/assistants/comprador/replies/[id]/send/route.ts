@@ -19,7 +19,7 @@ function bodyToHtml(body: string): string {
   )}</div>`;
 }
 
-// POST — APROVA e ENVIA a resposta ao fornecedor (via Resend). Só aqui sai
+// POST — APROVA e ENVIA a resposta ao fornecedor (via SMTP). Só aqui sai
 // e-mail de verdade — a aprovação humana é obrigatória.
 export async function POST(_req: Request, { params }: { params: { id: string } }) {
   const user = await getCurrentUser();

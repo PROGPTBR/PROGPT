@@ -6,16 +6,15 @@ import { sendEmail, getEmailConfigStatus } from '@/lib/email/client';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-// GET /api/admin/email-health — diagnóstico admin do Resend (mesmo padrão
-// de /api/admin/fiscal-health). Nunca expõe a key, só se ela existe e qual
-// remetente está configurado — o ponto principal é sinalizar quando
-// EMAIL_FROM ainda está no domínio sandbox (onboarding@resend.dev), que o
-// Resend só entrega pro próprio dono da conta, nunca pra cliente real (ver
-// docs/product/go-live-readiness.md).
+// GET /api/admin/email-health — diagnóstico admin do SMTP (mesmo padrão de
+// /api/admin/fiscal-health). Nunca expõe a senha, só se as credenciais
+// estão presentes e qual remetente está configurado — o ponto principal é
+// sinalizar quando EMAIL_FROM não bate com a caixa SMTP autenticada
+// (SMTP_USER), gotcha comum que faz o provedor rejeitar ou marcar spam.
 //
 // POST { to: string } — envia um e-mail de teste de verdade via sendEmail()
-// e devolve o resultado cru do Resend, pra confirmar entrega além da
-// config estática.
+// e devolve o resultado cru do SMTP, pra confirmar entrega além da config
+// estática.
 export async function GET() {
   try {
     await requireAdmin();
@@ -31,9 +30,9 @@ export async function GET() {
     from,
     isSandboxFrom,
     warning: !hasKey
-      ? 'RESEND_API_KEY ausente — todo envio é silenciosamente pulado (fail-soft).'
+      ? 'SMTP_HOST/SMTP_USER/SMTP_PASSWORD ausente — todo envio é silenciosamente pulado (fail-soft).'
       : isSandboxFrom
-        ? 'EMAIL_FROM está no domínio sandbox do Resend (onboarding@resend.dev). Nesse modo o Resend só entrega pro e-mail dono da conta — clientes reais NÃO recebem, mesmo com a API respondendo 200.'
+        ? `EMAIL_FROM (${from}) não bate com a caixa SMTP autenticada (SMTP_USER). Muitos provedores (Titan/Hostgator incluso) rejeitam ou marcam spam nesse caso.`
         : null,
   });
 }
@@ -56,7 +55,7 @@ export async function POST(req: Request) {
   const result = await sendEmail({
     to: parsed.data.to,
     subject: 'PROGPT — teste de entrega (admin)',
-    html: '<p>Se você recebeu isso, o envio via Resend está funcionando ponta a ponta.</p>',
+    html: '<p>Se você recebeu isso, o envio via SMTP está funcionando ponta a ponta.</p>',
   });
 
   return NextResponse.json(result);

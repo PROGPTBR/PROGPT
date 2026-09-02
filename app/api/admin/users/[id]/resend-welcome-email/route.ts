@@ -35,7 +35,7 @@ export async function POST(
 
   const result = await resendWelcomeEmail(params.id, data.email);
   if (!result.ok) {
-    // Sinaliza a causa mais provável junto do erro cru do Resend, pra não
+    // Sinaliza a causa mais provável junto do erro cru do SMTP, pra não
     // obrigar o admin a ir checar /api/admin/email-health à parte.
     const config = getEmailConfigStatus();
     return NextResponse.json(
@@ -43,9 +43,9 @@ export async function POST(
         error: 'send_failed',
         detail: result.error ?? null,
         hint: !config.hasKey
-          ? 'RESEND_API_KEY ausente no ambiente.'
+          ? 'SMTP_HOST/SMTP_USER/SMTP_PASSWORD ausente no ambiente.'
           : config.isSandboxFrom
-            ? `EMAIL_FROM (${config.from}) está no domínio sandbox do Resend — só entrega pro dono da conta, nunca pra cliente real.`
+            ? `EMAIL_FROM (${config.from}) não bate com a caixa SMTP autenticada — o provedor pode rejeitar ou marcar spam.`
             : null,
       },
       { status: 502 },

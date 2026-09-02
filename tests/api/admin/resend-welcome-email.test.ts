@@ -92,11 +92,15 @@ describe('POST /api/admin/users/[id]/resend-welcome-email', () => {
     expect(res.status).toBe(502);
   });
 
-  it('includes a sandbox hint on 502 when EMAIL_FROM is still the Resend sandbox domain', async () => {
-    const prevKey = process.env.RESEND_API_KEY;
+  it('includes a From-mismatch hint on 502 when EMAIL_FROM does not match SMTP_USER', async () => {
+    const prevHost = process.env.SMTP_HOST;
+    const prevUser = process.env.SMTP_USER;
+    const prevPassword = process.env.SMTP_PASSWORD;
     const prevFrom = process.env.EMAIL_FROM;
-    process.env.RESEND_API_KEY = 'test-key';
-    delete process.env.EMAIL_FROM;
+    process.env.SMTP_HOST = 'smtp.titan.email';
+    process.env.SMTP_USER = 'comercial@2bsupply.com.br';
+    process.env.SMTP_PASSWORD = 'secret';
+    process.env.EMAIL_FROM = 'PROGPT <outra-caixa@2bsupply.com.br>';
     try {
       mockAdmin(true);
       mockLookup({ email: 'kelly@empresa.com' });
@@ -110,10 +114,14 @@ describe('POST /api/admin/users/[id]/resend-welcome-email', () => {
       const body = await res.json();
       expect(res.status).toBe(502);
       expect(body.detail).toBe('blocked');
-      expect(body.hint).toMatch(/sandbox/);
+      expect(body.hint).toMatch(/não bate/);
     } finally {
-      if (prevKey === undefined) delete process.env.RESEND_API_KEY;
-      else process.env.RESEND_API_KEY = prevKey;
+      if (prevHost === undefined) delete process.env.SMTP_HOST;
+      else process.env.SMTP_HOST = prevHost;
+      if (prevUser === undefined) delete process.env.SMTP_USER;
+      else process.env.SMTP_USER = prevUser;
+      if (prevPassword === undefined) delete process.env.SMTP_PASSWORD;
+      else process.env.SMTP_PASSWORD = prevPassword;
       if (prevFrom === undefined) delete process.env.EMAIL_FROM;
       else process.env.EMAIL_FROM = prevFrom;
     }
