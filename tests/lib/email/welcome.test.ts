@@ -103,3 +103,56 @@ describe('ensureWelcomeEmailSent', () => {
     ).resolves.toBeUndefined();
   });
 });
+
+describe('resendWelcomeEmail', () => {
+  function setupResendMocks(opts: {
+    sendResult?: { ok: boolean };
+    updateError?: { message: string } | null;
+  }) {
+    const eq = vi.fn().mockResolvedValue({ error: opts.updateError ?? null });
+    const update = vi.fn().mockReturnValue({ eq });
+    vi.doMock('@/lib/db/supabase', () => ({
+      getServerSupabase: () => ({ from: () => ({ update }) }),
+    }));
+    const sendEmail = vi
+      .fn()
+      .mockResolvedValue(opts.sendResult ?? { ok: true, id: 'msg_1' });
+    vi.doMock('@/lib/email/client', () => ({ sendEmail }));
+    vi.doMock('@/lib/email/templates', () => ({
+      buildWelcomeEmail: () => ({ subject: 's', html: '<p>x</p>' }),
+    }));
+    vi.doMock('@/lib/email/magic-link', () => ({
+      generateMagicLink: vi.fn().mockResolvedValue('https://x/verify?token=abc'),
+    }));
+    return { update, eq, sendEmail };
+  }
+
+  it('always sends (ignores any prior lock) with a resend-specific idempotency key', async () => {
+    const { update, sendEmail } = setupResendMocks({});
+    const { resendWelcomeEmail } = await import('@/lib/email/welcome');
+    const result = await resendWelcomeEmail('u1', 'x@y.com');
+    expect(result.ok).toBe(true);
+    expect(sendEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: 'x@y.com',
+        idempotencyKey: expect.stringMatching(/^welcome-resend:u1:\d+$/),
+      }),
+    );
+    expect(update).toHaveBeenCalledWith(
+      expect.objectContaining({ welcome_email_sent_at: expect.any(String) }),
+    );
+  });
+
+  it('returns ok:false when sendEmail fails', async () => {
+    setupResendMocks({ sendResult: { ok: false } });
+    const { resendWelcomeEmail } = await import('@/lib/email/welcome');
+    const result = await resendWelcomeEmail('u1', 'x@y.com');
+    expect(result.ok).toBe(false);
+  });
+
+  it('does not throw when the timestamp update errors', async () => {
+    setupResendMocks({ updateError: { message: 'db down' } });
+    const { resendWelcomeEmail } = await import('@/lib/email/welcome');
+    await expect(resendWelcomeEmail('u1', 'x@y.com')).resolves.toEqual({ ok: true });
+  });
+});

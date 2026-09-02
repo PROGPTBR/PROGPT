@@ -56,3 +56,39 @@ export async function ensureWelcomeEmailSent(
     console.warn('[welcome-email] sendEmail falhou pra', userId);
   }
 }
+
+// Reenvio manual (admin), sem passar pelo lock de "1x por usuário" — usado
+// quando o cliente relata que não recebeu (ex.: cadastrou antes do fix do
+// gatilho, ou quer forçar um novo magic link porque o antigo expirou).
+// idempotencyKey é sufixado com o timestamp pra NÃO colidir com o
+// `welcome:${userId}` do primeiro envio (Resend rejeita idempotency_key
+// duplicada por 24h — sem isso um reenvio de verdade seria descartado
+// silenciosamente como duplicata do envio original).
+export async function resendWelcomeEmail(
+  userId: string,
+  email: string,
+): Promise<{ ok: boolean }> {
+  const svc = getServerSupabase();
+
+  const magicLink = await generateMagicLink(email);
+  const tpl = buildWelcomeEmail({ email, magicLink });
+  const result = await sendEmail({
+    to: email,
+    subject: tpl.subject,
+    html: tpl.html,
+    idempotencyKey: `welcome-resend:${userId}:${Date.now()}`,
+  });
+
+  const { error } = await svc
+    .from('profiles')
+    .update({ welcome_email_sent_at: new Date().toISOString() })
+    .eq('id', userId);
+  if (error) {
+    console.warn('[welcome-email] resend: falha ao atualizar timestamp:', error.message);
+  }
+
+  if (!result.ok) {
+    console.warn('[welcome-email] resend: sendEmail falhou pra', userId);
+  }
+  return { ok: result.ok };
+}

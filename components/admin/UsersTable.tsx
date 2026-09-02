@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import { MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -90,6 +91,24 @@ export function UsersTable({ users, currentUserId }: Props) {
     }
   }
 
+  async function resendWelcomeEmail(user_id: string) {
+    setBusy(user_id);
+    try {
+      const res = await fetch(`/api/admin/users/${user_id}/resend-welcome-email`, {
+        method: 'POST',
+      });
+      if (res.ok) {
+        toast.success('E-mail de boas-vindas reenviado.');
+      } else {
+        toast.error('Falha ao reenviar o e-mail.');
+      }
+    } catch {
+      toast.error('Falha ao reenviar o e-mail.');
+    } finally {
+      setBusy(null);
+    }
+  }
+
   const adminCount = users.filter((u) => u.role === 'admin').length;
   const pendingCount = users.filter((u) => !u.last_sign_in_at).length;
 
@@ -155,6 +174,11 @@ export function UsersTable({ users, currentUserId }: Props) {
                         {!pending && u.role !== 'user' && u.id !== currentUserId && (
                           <DropdownMenuItem onClick={() => patchRole(u.id, 'user')}>
                             Rebaixar a usuário
+                          </DropdownMenuItem>
+                        )}
+                        {!pending && (
+                          <DropdownMenuItem onClick={() => resendWelcomeEmail(u.id)}>
+                            Reenviar e-mail de boas-vindas
                           </DropdownMenuItem>
                         )}
                       </DropdownMenuContent>
