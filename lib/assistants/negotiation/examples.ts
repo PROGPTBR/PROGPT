@@ -219,3 +219,36 @@ export const SIMULATOR_SETUP_EXAMPLES: SimulatorSetupExample[] = [
     },
   },
 ];
+
+// "Deals" nomeados — permitem forçar um caso específico via query param em
+// vez do sorteio aleatório padrão (?deal=plastpack), útil pra demo/apresentação
+// onde não dá pra depender de sorte no botão "Gerar Exemplo".
+export const DEMO_SCENARIOS: Record<
+  string,
+  { strategyId: string; setupId: string }
+> = {
+  plastpack: {
+    strategyId: 'plastpack-embalagens',
+    setupId: 'plastpack-pragmatico',
+  },
+};
+
+/** Resolve o exemplo a devolver pro botão "Gerar Exemplo". Com `deal` válido
+ * (registrado em DEMO_SCENARIOS e existente na lista), devolve sempre o
+ * mesmo caso — senão sorteia como antes. */
+export function pickExample(
+  kind: 'strategy' | 'setup',
+  deal?: string | null,
+): StrategyExample | SimulatorSetupExample | undefined {
+  const list = kind === 'setup' ? SIMULATOR_SETUP_EXAMPLES : STRATEGY_EXAMPLES;
+
+  if (deal) {
+    const scenario = DEMO_SCENARIOS[deal];
+    const id =
+      scenario && (kind === 'setup' ? scenario.setupId : scenario.strategyId);
+    const found = id ? list.find((e) => e.id === id) : undefined;
+    if (found) return found;
+  }
+
+  return list[Math.floor(Math.random() * list.length)];
+}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import type {
@@ -66,6 +67,9 @@ type Phase =
 export function NegotiationAssistant() {
   const [phase, setPhase] = useState<Phase>({ kind: 'form' });
   const [overlayStrategy, setOverlayStrategy] = useState(false);
+  // ?deal=<slug> força um cenário nomeado (DEMO_SCENARIOS) no botão "Gerar
+  // Exemplo" em vez do sorteio — usado pra demos/apresentações.
+  const dealParam = useSearchParams().get('deal');
 
   async function handleStrategy(params: NegotiationStrategyParams) {
     setPhase({ kind: 'generating-strategy', params });
@@ -247,6 +251,7 @@ export function NegotiationAssistant() {
       <NegotiationStrategyForm
         onSubmit={handleStrategy}
         isLoading={false}
+        dealParam={dealParam}
       />
     );
   }
@@ -276,6 +281,7 @@ export function NegotiationAssistant() {
         }
         onStart={handleSetup}
         isLoading={false}
+        dealParam={dealParam}
       />
     );
   }

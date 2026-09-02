@@ -16,6 +16,7 @@ type Props = {
   onBack: () => void;
   onStart: (setup: NegotiationSimulatorSetup) => void;
   isLoading: boolean;
+  dealParam?: string | null;
 };
 
 const LABEL_CLASS = 'block text-xs font-medium text-foreground/80 mb-1.5';
@@ -28,6 +29,7 @@ export function NegotiationSimulatorSetupView({
   onBack,
   onStart,
   isLoading,
+  dealParam,
 }: Props) {
   const [personaProfile, setPersonaProfile] = useState<NegotiationPersonaProfile | ''>(
     initial?.personaProfile ?? '',
@@ -43,7 +45,10 @@ export function NegotiationSimulatorSetupView({
   async function fillExample() {
     setLoadingExample(true);
     try {
-      const res = await fetch('/api/assistants/negotiation/example?kind=setup');
+      const dealQs = dealParam ? `&deal=${encodeURIComponent(dealParam)}` : '';
+      const res = await fetch(
+        `/api/assistants/negotiation/example?kind=setup${dealQs}`,
+      );
       if (!res.ok) {
         toast.error('Falha ao gerar exemplo');
         return;

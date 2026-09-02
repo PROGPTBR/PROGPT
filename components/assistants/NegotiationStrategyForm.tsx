@@ -71,6 +71,7 @@ type Props = {
   initial?: Partial<NegotiationStrategyParams>;
   onSubmit: (params: NegotiationStrategyParams) => void;
   isLoading: boolean;
+  dealParam?: string | null;
 };
 
 const KRALJIC_OPTIONS: { value: KraljicQuadrant; label: string }[] = [
@@ -91,6 +92,7 @@ export function NegotiationStrategyForm({
   initial,
   onSubmit,
   isLoading,
+  dealParam,
 }: Props) {
   const [supplierName, setSupplierName] = useState(initial?.supplierName ?? '');
   const [category, setCategory] = useState(initial?.category ?? '');
@@ -156,7 +158,10 @@ export function NegotiationStrategyForm({
   async function fillExample() {
     setLoadingExample(true);
     try {
-      const res = await fetch('/api/assistants/negotiation/example?kind=strategy');
+      const dealQs = dealParam ? `&deal=${encodeURIComponent(dealParam)}` : '';
+      const res = await fetch(
+        `/api/assistants/negotiation/example?kind=strategy${dealQs}`,
+      );
       if (!res.ok) {
         toast.error('Falha ao gerar exemplo');
         return;
