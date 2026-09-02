@@ -1,6 +1,7 @@
 import { getServerSupabase } from '@/lib/db/supabase';
 import { sendEmail } from '@/lib/email/client';
 import { buildWelcomeEmail } from '@/lib/email/templates';
+import { generateMagicLink } from '@/lib/email/magic-link';
 
 // Envia o welcome email 1x por usuário, idempotente via
 // profiles.welcome_email_sent_at (lock-then-send: marca ANTES de enviar —
@@ -38,7 +39,12 @@ export async function ensureWelcomeEmailSent(
     return;
   }
 
-  const tpl = buildWelcomeEmail({ email });
+  // Fail-soft: se a geração do magic link falhar, o template cai no botão
+  // de sempre (/chat) — nunca bloqueia o envio do welcome email por causa
+  // disso.
+  const magicLink = await generateMagicLink(email);
+
+  const tpl = buildWelcomeEmail({ email, magicLink });
   const result = await sendEmail({
     to: email,
     subject: tpl.subject,

@@ -67,18 +67,28 @@ function h(text: string): string {
 
 // ─── 1. Welcome (pós primeira entrada confirmada) ────────────────────────
 
-export function buildWelcomeEmail(args: { email: string }): {
+export function buildWelcomeEmail(args: { email: string; magicLink?: string | null }): {
   subject: string;
   html: string;
 } {
   const subject = 'Bem-vindo ao PROGPT';
+  // Com magic link: CTA principal já entra logado, sem digitar nada — "compra
+  // assertiva, sem burocracia". Sem magic link (geração falhou — fail-soft),
+  // cai no botão antigo pro /chat (login normal se a sessão já expirou).
+  const primaryHref = args.magicLink ?? `${getAppUrl()}/chat`;
+  const primaryLabel = args.magicLink ? 'Entrar automaticamente' : 'Abrir PROGPT';
   const content = `
 ${h(`Bem-vindo, ${args.email.split('@')[0]} 👋`)}
 ${p('Sua conta no PROGPT está pronta. Você já pode usar o chat ilimitadamente e tem 1 execução grátis de cada uma das dezenas de assistentes (lifetime) — RFP, Kraljic, Porter, ABC, Negociação, Análise Financeira e Perfil de Categoria.')}
 ${p('Comece pelo chat — pergunte como faria pra um colega sênior. Ou vá direto pra um assistente se quiser um artefato pronto em .docx/.xlsx.')}
 <div style="text-align:center;margin:24px 0;">
-${button(`${getAppUrl()}/chat`, 'Abrir PROGPT')}
+${button(primaryHref, primaryLabel)}
 </div>
+${
+  args.magicLink
+    ? p(`Prefere digitar seu e-mail e senha? <a href="${getAppUrl()}/login" style="color:${BRAND_COLOR};">Acesse o login</a>.`)
+    : ''
+}
 ${p(`Precisa de ajuda? Responda este email ou escreva pra <a href="mailto:${LEGAL_CONTACT_EMAIL}" style="color:${BRAND_COLOR};">${LEGAL_CONTACT_EMAIL}</a>.`)}
 `;
   return { subject, html: shell(content, 'Sua conta no PROGPT está pronta.') };

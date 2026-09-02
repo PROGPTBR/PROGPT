@@ -7,12 +7,23 @@ import {
 } from '@/lib/email/templates';
 
 describe('buildWelcomeEmail', () => {
-  it('includes PROGPT, the username part of the email, and a link to /chat', () => {
+  it('includes PROGPT, the username part of the email, and a link to /chat when there is no magic link', () => {
     const { subject, html } = buildWelcomeEmail({ email: 'maria@empresa.com' });
     expect(subject).toMatch(/PROGPT/);
     expect(html).toContain('maria');
     expect(html).toContain('/chat');
     expect(html).toContain('PROGPT');
+    expect(html).not.toContain('/login');
+  });
+
+  it('uses the magic link as the primary CTA and still offers /login when one is provided', () => {
+    const { html } = buildWelcomeEmail({
+      email: 'maria@empresa.com',
+      magicLink: 'https://x.supabase.co/auth/v1/verify?type=magiclink&token=abc',
+    });
+    expect(html).toContain('https://x.supabase.co/auth/v1/verify?type=magiclink&token=abc');
+    expect(html).toContain('Entrar automaticamente');
+    expect(html).toContain('/login');
   });
 });
 
