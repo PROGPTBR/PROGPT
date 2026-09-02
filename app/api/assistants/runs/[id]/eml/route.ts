@@ -10,6 +10,8 @@ import { buildRunDocx } from '@/lib/assistants/run-docx';
 
 import { buildEml } from '@/lib/email/eml';
 
+import { buildBodyText } from '@/lib/email/eml-body';
+
 import { markdownToPlainText } from '@/lib/email/mailto';
 
 import { getUserCompany } from '@/lib/db/user-company';
@@ -33,11 +35,6 @@ export const dynamic = 'force-dynamic';
 
 const DOCX_MIME =
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-
-// Corpo do e-mail: só a abertura. O documento completo vai no anexo, então
-// despejar o markdown inteiro no corpo duplicaria tudo.
-
-const MAX_BODY_CHARS = 1200;
 
 const ToParam = z
   .string()
@@ -154,53 +151,4 @@ export async function GET(
       },
     },
   );
-}
-
-/**
- * Carta de encaminhamento curta.
- * O conteúdo completo é o anexo — o corpo só
- * precisa dizer o que é, o que se espera de volta
- * e de quem veio.
- */
-export function buildBodyText(
-  title: string,
-  outputPlain: string,
-  ctx: {
-    companyName: string | null;
-    companyEmail: string | null;
-    filename: string;
-  },
-): string {
-  const abstract = outputPlain
-    .slice(0, MAX_BODY_CHARS)
-    .trimEnd();
-
-  const truncated =
-    outputPlain.length > MAX_BODY_CHARS;
-
-  const signature = [
-    ctx.companyName,
-    ctx.companyEmail,
-  ]
-    .filter(Boolean)
-    .join('\n');
-
-  return [
-    'Prezados,',
-    '',
-    `Segue em anexo o documento "${title}" (${ctx.filename}) para análise e retorno.`,
-    '',
-    'Resumo:',
-    '',
-    truncated
-      ? `${abstract}\n\n[...] O documento completo está no anexo.`
-      : abstract,
-    '',
-    'Ficamos à disposição para esclarecimentos.',
-    '',
-    'Atenciosamente,',
-    signature || '',
-  ]
-    .join('\n')
-    .trimEnd();
 }

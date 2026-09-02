@@ -111,9 +111,7 @@ describe('GET /api/assistants/runs/[id]/eml', () => {
 describe('buildBodyText', () => {
   it('names the attachment and signs with the buyer company', async () => {
     mockBase();
-    const { buildBodyText } = await import(
-      '@/app/api/assistants/runs/[id]/eml/route'
-    );
+    const { buildBodyText } = await import('@/lib/email/eml-body');
     const out = buildBodyText('RFQ Embalagens', 'Resumo do documento.', {
       companyName: 'ACME S.A.',
       companyEmail: 'compras@acme.com.br',
@@ -128,9 +126,7 @@ describe('buildBodyText', () => {
 
   it('truncates a long document and points to the attachment', async () => {
     mockBase();
-    const { buildBodyText } = await import(
-      '@/app/api/assistants/runs/[id]/eml/route'
-    );
+    const { buildBodyText } = await import('@/lib/email/eml-body');
     const out = buildBodyText('T', 'x'.repeat(5000), {
       companyName: null,
       companyEmail: null,
