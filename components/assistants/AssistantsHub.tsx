@@ -59,7 +59,11 @@ const PREVIEWS: Record<AssistantPreviewKey, ComponentType> = {
   grafico_rapido: GraficoRapidoPreview,
 };
 
-export function AssistantsHub() {
+export function AssistantsHub({
+  isAdmin = false,
+}: {
+  isAdmin?: boolean;
+}) {
   return (
     <div className="space-y-12">
       {/* ───── Header ───── */}
@@ -74,7 +78,15 @@ export function AssistantsHub() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {ASSISTANTS.map((assistant) => {
             const Preview = PREVIEWS[assistant.previewKey];
-            const badge = assistant.badge;
+
+            /**
+             * "Em breve" fica destravado para admins testarem antes
+             * do lançamento pro público — vira um badge "Em teste"
+             * em vez de travar o card.
+             */
+            const isAdminPreview =
+              assistant.badge === 'em_breve' && isAdmin;
+            const badge = isAdminPreview ? undefined : assistant.badge;
 
             const inner = (
               <>
@@ -85,6 +97,12 @@ export function AssistantsHub() {
                   {badge && (
                     <span className="absolute right-2 top-2 rounded-full bg-brand-gradient px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-black shadow">
                       {BADGE_LABEL[badge]}
+                    </span>
+                  )}
+
+                  {isAdminPreview && (
+                    <span className="absolute right-2 top-2 rounded-full bg-amber-500 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-black shadow">
+                      Em teste
                     </span>
                   )}
                 </div>

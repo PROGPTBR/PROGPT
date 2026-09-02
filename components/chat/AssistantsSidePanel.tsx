@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
   ArrowRight,
@@ -14,6 +15,7 @@ import {
 } from 'lucide-react';
 
 import { ASSISTANTS } from '@/components/assistants/assistants-data';
+import { supabaseBrowser } from '@/lib/db/supabase-browser';
 
 type Props = {
   onClose: () => void;
@@ -42,16 +44,40 @@ const ASSISTANT_ICONS = {
 } as const;
 
 export function AssistantsSidePanel({ onClose }: Props) {
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const sb = supabaseBrowser();
+    sb.auth.getUser().then(async ({ data }) => {
+      const u = data.user;
+      if (!u) return;
+      const { data: profile } = await sb
+        .from('profiles')
+        .select('role')
+        .eq('id', u.id)
+        .maybeSingle();
+      const role = (profile as { role?: string } | null)?.role ?? 'user';
+      setIsAdmin(role === 'admin');
+    });
+  }, []);
+
+  // "Em breve" fica destravado pra admin testar antes do
+  // lançamento pro público — mesmo critério do Hub (/assistants).
+  const isUnlockedForAdmin = (
+    assistant: (typeof ASSISTANTS)[number],
+  ) => assistant.badge === 'em_breve' && isAdmin;
+
   const availableAssistants = ASSISTANTS.filter(
     (assistant) =>
       assistant.showInSidePanel !== false &&
-      !assistant.badge
+      (!assistant.badge || isUnlockedForAdmin(assistant))
   );
 
   const upcomingAssistants = ASSISTANTS.filter(
     (assistant) =>
       assistant.showInSidePanel !== false &&
-      assistant.badge
+      assistant.badge &&
+      !isUnlockedForAdmin(assistant)
   );
 
   return (
