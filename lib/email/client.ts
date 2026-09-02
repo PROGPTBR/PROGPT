@@ -19,6 +19,23 @@ import { configuredAppUrl } from '@/lib/app-url';
 const DEFAULT_FROM = 'PROGPT <onboarding@resend.dev>';
 let _client: Resend | null = null;
 
+// Diagnóstico da config estática (sem chamar a API) — usado por
+// /api/admin/email-health e por qualquer envio que precise explicar UM
+// "falhou" pro admin em vez de um 502 mudo. isSandboxFrom sinaliza o caso
+// mais comum: EMAIL_FROM ainda no domínio sandbox do Resend, que só
+// entrega pro dono da conta — nunca pra um cliente real, mesmo com a API
+// respondendo 200.
+export function getEmailConfigStatus(): {
+  hasKey: boolean;
+  from: string;
+  isSandboxFrom: boolean;
+} {
+  const hasKey = !!process.env.RESEND_API_KEY;
+  const from = process.env.EMAIL_FROM ?? DEFAULT_FROM;
+  const isSandboxFrom = from === DEFAULT_FROM || from.includes('@resend.dev');
+  return { hasKey, from, isSandboxFrom };
+}
+
 function getClient(): Resend | null {
   if (_client) return _client;
   const key = process.env.RESEND_API_KEY;
@@ -48,11 +65,13 @@ export type EmailInput = {
  * erro (env missing, Resend 5xx, exception) sem propagar. Caller deve
  * sempre checar mas nunca abortar fluxo principal por causa de email.
  */
-export async function sendEmail(input: EmailInput): Promise<{ ok: boolean; id?: string }> {
+export async function sendEmail(
+  input: EmailInput,
+): Promise<{ ok: boolean; id?: string; error?: string }> {
   const client = getClient();
   if (!client) {
     console.warn('[email] RESEND_API_KEY missing — email skipped:', input.subject);
-    return { ok: false };
+    return { ok: false, error: 'RESEND_API_KEY ausente' };
   }
   const from = process.env.EMAIL_FROM ?? DEFAULT_FROM;
   try {
@@ -67,12 +86,12 @@ export async function sendEmail(input: EmailInput): Promise<{ ok: boolean; id?: 
     );
     if (error) {
       console.warn('[email] Resend error:', error.message);
-      return { ok: false };
+      return { ok: false, error: error.message };
     }
     return { ok: true, id: data?.id };
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.warn('[email] sendEmail swallowed:', msg);
-    return { ok: false };
+    return { ok: false, error: msg };
   }
 }

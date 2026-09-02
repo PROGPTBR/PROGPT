@@ -1,12 +1,10 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireAdmin, NotAdmin } from '@/lib/auth';
-import { sendEmail } from '@/lib/email/client';
+import { sendEmail, getEmailConfigStatus } from '@/lib/email/client';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-
-const SANDBOX_FROM = 'PROGPT <onboarding@resend.dev>';
 
 // GET /api/admin/email-health — diagnóstico admin do Resend (mesmo padrão
 // de /api/admin/fiscal-health). Nunca expõe a key, só se ela existe e qual
@@ -26,9 +24,7 @@ export async function GET() {
     throw err;
   }
 
-  const hasKey = !!process.env.RESEND_API_KEY;
-  const from = process.env.EMAIL_FROM ?? SANDBOX_FROM;
-  const isSandboxFrom = from === SANDBOX_FROM || from.includes('@resend.dev');
+  const { hasKey, from, isSandboxFrom } = getEmailConfigStatus();
 
   return NextResponse.json({
     hasKey,

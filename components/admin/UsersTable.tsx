@@ -100,7 +100,11 @@ export function UsersTable({ users, currentUserId }: Props) {
       if (res.ok) {
         toast.success('E-mail de boas-vindas reenviado.');
       } else {
-        toast.error('Falha ao reenviar o e-mail.');
+        const body = (await res.json().catch(() => null)) as {
+          hint?: string | null;
+          detail?: string | null;
+        } | null;
+        toast.error(body?.hint ?? body?.detail ?? 'Falha ao reenviar o e-mail.');
       }
     } catch {
       toast.error('Falha ao reenviar o e-mail.');

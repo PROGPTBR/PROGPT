@@ -60,6 +60,7 @@ describe('sendEmail', () => {
     const { sendEmail } = await import('@/lib/email/client');
     const r = await sendEmail({ to: 'x@y.com', subject: 's', html: '<p>x</p>' });
     expect(r.ok).toBe(false);
+    expect(r.error).toBe('rate limited');
   });
 
   it('swallows exceptions (fail-soft)', async () => {
@@ -87,5 +88,24 @@ describe('sendEmail', () => {
       expect.objectContaining({ from: 'PROGPT <hello@2bsupply.com.br>' }),
       undefined,
     );
+  });
+});
+
+describe('getEmailConfigStatus', () => {
+  it('flags missing key and default sandbox from', async () => {
+    const { getEmailConfigStatus } = await import('@/lib/email/client');
+    const status = getEmailConfigStatus();
+    expect(status.hasKey).toBe(false);
+    expect(status.isSandboxFrom).toBe(true);
+    expect(status.from).toBe('PROGPT <onboarding@resend.dev>');
+  });
+
+  it('reports a real domain as non-sandbox', async () => {
+    process.env.RESEND_API_KEY = 'test-key';
+    process.env.EMAIL_FROM = 'PROGPT <noreply@2bsupply.com.br>';
+    const { getEmailConfigStatus } = await import('@/lib/email/client');
+    const status = getEmailConfigStatus();
+    expect(status.hasKey).toBe(true);
+    expect(status.isSandboxFrom).toBe(false);
   });
 });

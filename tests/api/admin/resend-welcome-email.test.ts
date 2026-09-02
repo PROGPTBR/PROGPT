@@ -91,4 +91,31 @@ describe('POST /api/admin/users/[id]/resend-welcome-email', () => {
     const res = await POST(buildReq(), { params: { id: 'u1' } });
     expect(res.status).toBe(502);
   });
+
+  it('includes a sandbox hint on 502 when EMAIL_FROM is still the Resend sandbox domain', async () => {
+    const prevKey = process.env.RESEND_API_KEY;
+    const prevFrom = process.env.EMAIL_FROM;
+    process.env.RESEND_API_KEY = 'test-key';
+    delete process.env.EMAIL_FROM;
+    try {
+      mockAdmin(true);
+      mockLookup({ email: 'kelly@empresa.com' });
+      vi.doMock('@/lib/email/welcome', () => ({
+        resendWelcomeEmail: vi.fn().mockResolvedValue({ ok: false, error: 'blocked' }),
+      }));
+      const { POST } = await import(
+        '@/app/api/admin/users/[id]/resend-welcome-email/route'
+      );
+      const res = await POST(buildReq(), { params: { id: 'u1' } });
+      const body = await res.json();
+      expect(res.status).toBe(502);
+      expect(body.detail).toBe('blocked');
+      expect(body.hint).toMatch(/sandbox/);
+    } finally {
+      if (prevKey === undefined) delete process.env.RESEND_API_KEY;
+      else process.env.RESEND_API_KEY = prevKey;
+      if (prevFrom === undefined) delete process.env.EMAIL_FROM;
+      else process.env.EMAIL_FROM = prevFrom;
+    }
+  });
 });

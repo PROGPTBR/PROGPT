@@ -67,7 +67,7 @@ export async function ensureWelcomeEmailSent(
 export async function resendWelcomeEmail(
   userId: string,
   email: string,
-): Promise<{ ok: boolean }> {
+): Promise<{ ok: boolean; error?: string }> {
   const svc = getServerSupabase();
 
   const magicLink = await generateMagicLink(email);
@@ -88,7 +88,7 @@ export async function resendWelcomeEmail(
   }
 
   if (!result.ok) {
-    console.warn('[welcome-email] resend: sendEmail falhou pra', userId);
+    console.warn('[welcome-email] resend: sendEmail falhou pra', userId, result.error);
   }
-  return { ok: result.ok };
+  return { ok: result.ok, error: result.error };
 }
