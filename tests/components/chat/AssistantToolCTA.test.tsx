@@ -82,6 +82,21 @@ describe('detectAssistantToolCTA', () => {
     );
   });
 
+  it('detects simulador_tributario via its custom path (not under /assistants/)', () => {
+    expect(
+      detectAssistantToolCTA('Use o simulador em /simulador agora.'),
+    ).toBe('simulador_tributario');
+  });
+
+  it('does not confuse /simulador with /simulador-logistico (longer path wins when present)', () => {
+    expect(
+      detectAssistantToolCTA('Veja /simulador-logistico pra isso.'),
+    ).toBe('simulador_logistico');
+    expect(detectAssistantToolCTA('Veja /simulador pra isso.')).toBe(
+      'simulador_tributario',
+    );
+  });
+
   it('first-mention semantics hold across /assistants/ and custom paths', () => {
     expect(
       detectAssistantToolCTA(
@@ -157,5 +172,14 @@ describe('stripAssistantPaths', () => {
     expect(stripAssistantPaths('/simulador-logistico fica')).toBe(
       'fica',
     );
+  });
+
+  it('strips the simulador_tributario custom path (/simulador) without eating /simulador-logistico', () => {
+    expect(stripAssistantPaths('use a ferramenta em /simulador agora')).toBe(
+      'use a ferramenta agora',
+    );
+    expect(
+      stripAssistantPaths('use a ferramenta em /simulador-logistico agora'),
+    ).toBe('use a ferramenta agora');
   });
 });

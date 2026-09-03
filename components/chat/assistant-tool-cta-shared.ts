@@ -4,6 +4,7 @@ import {
   Coins,
   FileText,
   ImageIcon,
+  Landmark,
   Layers,
   LineChart,
   MessageCircle,
@@ -47,7 +48,8 @@ export type AssistantToolType =
   | 'indicadores'
   | 'simulador_logistico'
   | 'grafico_rapido'
-  | 'comprador';
+  | 'comprador'
+  | 'simulador_tributario';
 
 export type AssistantToolMeta = {
   title: string;
@@ -145,6 +147,13 @@ export const META: Record<AssistantToolType, AssistantToolMeta> = {
       'Chegaram as cotações? Jogue as propostas dos fornecedores aqui: ele compara por TCO (preço + frete + impostos), aponta quem não atende a política ou está fora do padrão, e já monta o rascunho do Pedido de Compra.',
     Icon: Scale,
   },
+  simulador_tributario: {
+    title: 'Simulador Tributário',
+    blurb:
+      'Compare o Simples Nacional com o novo modelo da Reforma Tributária (IBS/CBS) — carga tributária e impacto no status contábil, com consulta de CNPJ pra preencher os dados.',
+    Icon: Landmark,
+    path: '/simulador',
+  },
 };
 
 export function pathFor(type: AssistantToolType): string {
@@ -166,6 +175,7 @@ const VALID_TYPES = new Set<AssistantToolType>([
   'simulador_logistico',
   'grafico_rapido',
   'comprador',
+  'simulador_tributario',
 ]);
 
 // Tipos cuja rota NÃO segue `/assistants/<type>` (ver `path` em META) —
