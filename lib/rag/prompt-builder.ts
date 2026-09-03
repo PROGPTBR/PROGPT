@@ -112,7 +112,9 @@ Além dos caminhos acima (que você indica em texto e viram um card), você tem 
 
 - **preco_referencia** — quando o usuário perguntar quanto custa, qual o preço de mercado/referência, ou quanto deveria pagar por um item ou material específico, CHAME esta ferramenta com a descrição do item ANTES de responder. Baseie a resposta nos números reais que ela devolver (mediana, faixa, nº de amostras). Ainda pode mencionar /assistants/pesquisa_precos ao final pra quem precisar analisar vários itens de uma vez ou exportar planilha — mas a resposta em si já deve trazer o preço de verdade, não só apontar a ferramenta.
 - **responder_fora_do_escopo** — chame ANTES de responder quando a pergunta for CLARAMENTE sobre um assunto sem nenhuma relação com compras/suprimentos (esporte, entretenimento, curiosidade geral, vida pessoal, matemática, tradução, etc.) — NÃO para uma dúvida de procurement que a base simplesmente não cobre (essa continua na regra "não tenho fonte" abaixo). Depois de chamar, responda normalmente com seu conhecimento geral.
-- **web_search** — use junto com responder_fora_do_escopo quando a pergunta fora do escopo também for tempo-sensível (notícia, placar, cotação do dia, evento recente). Nunca use pra tentar preencher uma lacuna da base de procurement — isso violaria a regra de "não tenho fonte" abaixo.
+- **web_search** — use junto com responder_fora_do_escopo quando a pergunta fora do escopo também for tempo-sensível (notícia, placar, cotação do dia, evento recente). Você sabe a data de hoje (informada no início da mensagem do usuário) — use-a pra interpretar "hoje"/"ontem"/"esta semana" e pra julgar se o resultado da busca é recente o suficiente. Nunca use pra tentar preencher uma lacuna da base de procurement — isso violaria a regra de "não tenho fonte" abaixo.
+
+Se uma dessas ferramentas falhar ou não trouxer informação suficiente (ex.: pedido de uma tabela/lista completa que a busca não retorna estruturada), diga isso literalmente e sem rodeio ("não consegui buscar isso agora" / "a busca não trouxe um resultado confiável") — NUNCA invente um motivo técnico específico e não-verificável (ex.: "o site está com instabilidade", "a API caiu") nem invente o dado que a busca não confirmou.
 
 ## Quando o usuário referencia um material que não está na mensagem
 
@@ -136,6 +138,24 @@ const NO_CONTEXT_MARKER_PT =
   '## Contexto da base de conhecimento\n\n(nenhum trecho relevante encontrado para esta pergunta — siga a regra "quando não há fonte na base")';
 const NO_CONTEXT_MARKER_EN =
   '## Knowledge base context\n\n(no relevant passage was retrieved for this question — follow the "no source on file" rule)';
+
+// Injetado na mensagem do USER (reconstruída a cada turno) — nunca no
+// SYSTEM_PROMPT, que precisa ficar byte-estável pro prefix cache. Sem isto o
+// modelo não tem como julgar "atual"/"ontem"/"esta semana" ao decidir se
+// chama preco_referencia/web_search nem ao formular a busca — achado real
+// (2026-09-03): placar de jogo devolvido pela busca ficou desatualizado
+// porque nem o modelo nem a chamada de busca sabiam que dia era hoje.
+function todayLabel(isEN: boolean): string {
+  const now = new Date();
+  const formatted = now.toLocaleDateString(isEN ? 'en-US' : 'pt-BR', {
+    timeZone: 'America/Sao_Paulo',
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+  return isEN ? `Today is ${formatted}.` : `Hoje é ${formatted}.`;
+}
 
 // Sub-projeto 34 — bloco emitido SÓ no user message quando o usuário tem
 // um Perfil da Categoria ativo (selecionado via Pill acima do Composer).
@@ -189,7 +209,7 @@ export function buildPrompt(
 
   const isEN = classification.language === 'en';
 
-  const userParts: string[] = [];
+  const userParts: string[] = [todayLabel(isEN)];
   // Active profile block goes FIRST so the LLM reads the category lens
   // before the retrieved chunks. Cache stays warm because the block is
   // in the user message, not the system.

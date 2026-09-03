@@ -103,6 +103,23 @@ describe('handlePersonalChatTurn', () => {
     expect(args.maxSteps).toBe(1);
   });
 
+  it('injects today\'s date into the system prompt (real bug 2026-09-03: model had no way to judge stale search results)', async () => {
+    mockRateLimit(true);
+    mockCommon();
+    vi.doMock('@/lib/observability/api-usage', () => ({ recordApiUsage: vi.fn() }));
+    const streamTextSpy = vi.fn().mockReturnValue({
+      toDataStreamResponse: vi.fn(() => new Response('ok')),
+    });
+    mockAi(streamTextSpy);
+
+    const { handlePersonalChatTurn } = await import('@/lib/chat/personal-assistant');
+    await handlePersonalChatTurn({ userId: 'u1', messages: [{ role: 'user', content: 'oi' }] });
+
+    const isoToday = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+    const args = streamTextSpy.mock.calls[0]![0];
+    expect(args.system).toContain(isoToday);
+  });
+
   it('includes the web_search tool by default, whose execute() records usage and returns the search text', async () => {
     mockRateLimit(true);
     const create = vi.fn().mockResolvedValue({

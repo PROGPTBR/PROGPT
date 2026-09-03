@@ -16,6 +16,16 @@ import { recordApiUsage, type ApiOperation } from '@/lib/observability/api-usage
 
 const WEBSEARCH_TIMEOUT_MS = 25_000;
 
+// Esta chamada a responses.create é stateless (sem histórico de conversa) —
+// sem isto, nem a busca nem o resumo que ela devolve tem qualquer noção de
+// "hoje", então "qual foi o placar de ontem" podia devolver um resultado de
+// dias atrás sem nenhum sinal de que estava desatualizado (achado real,
+// 2026-09-03). en-CA formata AAAA-MM-DD, sem ambiguidade de locale.
+function todayContextPrefix(): string {
+  const iso = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+  return `Hoje é ${iso}. Priorize resultados recentes/atuais (de hoje ou dos últimos dias) sobre esta busca — se o resultado mais relevante for antigo, diga a data dele: `;
+}
+
 export function createWebSearchTool(ctx: {
   sessionId?: string;
   usedRef: { current: boolean };
@@ -38,7 +48,11 @@ export function createWebSearchTool(ctx: {
         // lib/fiscal/reputacao.ts.
         const model = getOpenAIModel('routing');
         const res = await ai.responses.create(
-          { model, tools: [{ type: 'web_search' } as never], input: query },
+          {
+            model,
+            tools: [{ type: 'web_search' } as never],
+            input: todayContextPrefix() + query,
+          },
           { signal: controller.signal },
         );
         const out = res as {
@@ -61,7 +75,7 @@ export function createWebSearchTool(ctx: {
         // stream inteiro. Devolve uma explicação pro modelo seguir sem a
         // busca.
         const msg = err instanceof Error ? err.message : String(err);
-        return `A busca ao vivo falhou (${msg}). Responda com seu conhecimento geral e avise que não conseguiu confirmar com uma fonte atual.`;
+        return `A busca ao vivo falhou (${msg}). Responda com seu conhecimento geral e avise CLARAMENTE que não conseguiu confirmar com uma fonte atual — NÃO invente um motivo técnico específico (ex.: "o site está instável") que você não pode verificar; diga só que a busca falhou agora.`;
       } finally {
         clearTimeout(timer);
       }

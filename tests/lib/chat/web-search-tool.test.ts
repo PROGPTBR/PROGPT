@@ -13,6 +13,22 @@ function mockOpenAI(create: ReturnType<typeof vi.fn>) {
 }
 
 describe('createWebSearchTool', () => {
+  it('date-anchors the query sent to responses.create (real bug 2026-09-03: stale search result with no recency signal)', async () => {
+    const create = vi.fn().mockResolvedValue({ output_text: 'ok', usage: {} });
+    mockOpenAI(create);
+    vi.doMock('@/lib/observability/api-usage', () => ({ recordApiUsage: vi.fn() }));
+
+    const { createWebSearchTool } = await import('@/lib/chat/web-search-tool');
+    const t = createWebSearchTool({ usedRef: { current: false }, operation: 'chat-tool-websearch' });
+    await t.execute!({ query: 'placar do jogo do vasco' }, { toolCallId: 'x', messages: [] });
+
+    const isoToday = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+    const createArg = create.mock.calls[0]![0] as { input: string };
+    expect(createArg.input).toContain(isoToday);
+    expect(createArg.input).toContain('placar do jogo do vasco');
+    expect(createArg.input.indexOf(isoToday)).toBeLessThan(createArg.input.indexOf('placar do jogo do vasco'));
+  });
+
   it('calls the search and records usage with the CALLER-SUPPLIED operation label', async () => {
     const create = vi.fn().mockResolvedValue({
       output_text: 'Time X venceu por 3 a 0.',

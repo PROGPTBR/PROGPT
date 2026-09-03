@@ -106,6 +106,19 @@ describe('rag prompt-builder', () => {
     expect(a.system).toBe(d.system);
   });
 
+  it('injects today\'s date into the USER message (never into the cache-stable system prompt)', async () => {
+    const { buildPrompt } = await import('@/lib/rag/prompt-builder');
+    const isoToday = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+    const yyyy = isoToday.slice(0, 4);
+    const ptResult = buildPrompt('q', [], ptClass);
+    expect(ptResult.user).toMatch(/^Hoje é/);
+    expect(ptResult.user).toContain(yyyy);
+    expect(ptResult.system).not.toMatch(/Hoje é/);
+
+    const enResult = buildPrompt('q', [], enClass);
+    expect(enResult.user).toMatch(/^Today is/);
+  });
+
   it('system prompt is large enough to clear OpenAI’s 1024-token prefix-cache threshold (chars/4 is a conservative proxy)', async () => {
     const { SYSTEM_PROMPT } = await import('@/lib/rag/prompt-builder');
     const approxTokens = Math.round(SYSTEM_PROMPT.length / 4);
