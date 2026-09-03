@@ -65,6 +65,20 @@ function h(text: string): string {
   return `<h1 style="font-size:20px;font-weight:600;color:${TEXT_PRIMARY};margin:0 0 16px 0;">${text}</h1>`;
 }
 
+const MONO_FONT = "'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace";
+
+// Cartão estilo "status de sistema" (fundo escuro + mono) — mostra a conta
+// (e-mail) de forma explícita, num visual mais "tech"/dashboard do que uma
+// frase solta em prosa.
+function accountCard(email: string): string {
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#0b0f19;border-radius:10px;margin:20px 0;">
+<tr><td style="padding:16px 20px;">
+<div style="color:#34d399;font-size:11px;font-family:${MONO_FONT};letter-spacing:0.08em;text-transform:uppercase;">● conta ativa</div>
+<div style="color:#e5e7eb;font-size:13px;font-family:${MONO_FONT};margin-top:6px;word-break:break-all;">usuário: <span style="color:${BRAND_COLOR};">${email}</span></div>
+</td></tr>
+</table>`;
+}
+
 // ─── 1. Welcome (pós primeira entrada confirmada) ────────────────────────
 
 export function buildWelcomeEmail(args: { email: string; magicLink?: string | null }): {
@@ -80,15 +94,12 @@ export function buildWelcomeEmail(args: { email: string; magicLink?: string | nu
   const content = `
 ${h(`Bem-vindo, ${args.email.split('@')[0]} 👋`)}
 ${p('Sua conta no PROGPT está pronta. Você já pode usar o chat ilimitadamente e tem 1 execução grátis de cada uma das dezenas de assistentes (lifetime) — RFP, Kraljic, Porter, ABC, Negociação, Análise Financeira e Perfil de Categoria.')}
+${accountCard(args.email)}
 ${p('Comece pelo chat — pergunte como faria pra um colega sênior. Ou vá direto pra um assistente se quiser um artefato pronto em .docx/.xlsx.')}
 <div style="text-align:center;margin:24px 0;">
 ${button(primaryHref, primaryLabel)}
 </div>
-${
-  args.magicLink
-    ? p(`Prefere digitar seu e-mail e senha? <a href="${getAppUrl()}/login" style="color:${BRAND_COLOR};">Acesse o login</a>.`)
-    : ''
-}
+${p(`Prefere entrar com e-mail e senha? <a href="${getAppUrl()}/login" style="color:${BRAND_COLOR};">Acesse o login</a> · Esqueceu ou ainda não tem uma senha? <a href="${getAppUrl()}/forgot-password" style="color:${BRAND_COLOR};">Redefinir senha</a>.`)}
 ${p(`Precisa de ajuda? Responda este email ou escreva pra <a href="mailto:${LEGAL_CONTACT_EMAIL}" style="color:${BRAND_COLOR};">${LEGAL_CONTACT_EMAIL}</a>.`)}
 `;
   return { subject, html: shell(content, 'Sua conta no PROGPT está pronta.') };
