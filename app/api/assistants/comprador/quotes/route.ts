@@ -16,6 +16,7 @@ const Body = z.object({
   escopo: z.string().trim().max(8000).optional().default(''),
   propostas: z.string().trim().min(1).max(60000),
   politica: z.string().trim().max(8000).optional().default(''),
+  pedido_cotacao: z.string().trim().max(60000).optional().default(''),
 });
 
 // POST — analisa as propostas e SALVA a cotação na caixa.
@@ -49,6 +50,7 @@ export async function POST(req: Request) {
       escopo: parsed.escopo,
       propostas: parsed.propostas,
       politica: parsed.politica,
+      pedidoCotacao: parsed.pedido_cotacao,
     });
     analysis = out.result;
     usage = out.usage;
@@ -82,6 +84,7 @@ export async function POST(req: Request) {
       escopo: parsed.escopo,
       propostas: parsed.propostas,
       politica: parsed.politica,
+      pedido_cotacao: parsed.pedido_cotacao,
       analysis,
       severidade: analysis.severidade,
       status: 'analyzed',

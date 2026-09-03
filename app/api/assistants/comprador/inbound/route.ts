@@ -133,7 +133,7 @@ export async function POST(req: Request) {
 
   // 6) Analisa
   try {
-    const out = await analyzeComprador({ escopo: '', propostas, politica: '' });
+    const out = await analyzeComprador({ escopo: '', propostas, politica: '', pedidoCotacao: '' });
     void recordApiUsage({
       provider: 'openai',
       operation: 'comprador-analyze',

@@ -210,6 +210,10 @@ async function equalizacao(ctx: Proc2PayContext): Promise<ExecResult> {
     escopo: reqResumo(ctx.requisicao),
     propostas,
     politica: '',
+    // TODO: alimentar com o artefato da etapa rfq_rfp (ctx.rfq_rfp) daria o
+    // comparativo item-a-item também no Proc2Pay — fora do escopo desta
+    // mudança (feita no Equalizador standalone), fica pra uma iteração futura.
+    pedidoCotacao: '',
   });
   const md = [
     `## Equalização técnica e comercial`,

@@ -22,6 +22,8 @@ const analysis: CompradorResult = {
   pontos_negociacao: ['Pedir desconto de 5%', 'Confirmar prazo de 25 dias'],
   alertas: ['Fornecedor B com imposto +12%'],
   desvios_politica: ['Fornecedor B não homologado'],
+  comparativo_itens: [],
+  itens_nao_solicitados: [],
   pedido_compra: {
     numero: 'PO-RASCUNHO',
     fornecedor: 'EcoPallets',

@@ -20,7 +20,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { CompradorImportDialog } from '@/components/assistants/CompradorImportDialog';
 import { CompradorPriceChart } from '@/components/assistants/CompradorPriceChart';
-import type { CompradorResult } from '@/lib/assistants/comprador';
+import { buildComparisonMatrix } from '@/lib/assistants/comprador-comparison';
+import type { CompradorResult, ItemStatus } from '@/lib/assistants/comprador';
 
 const brl = (n: number) =>
   Number.isFinite(n) ? n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '—';
@@ -39,6 +40,7 @@ type FullQuote = QuoteSummary & {
   escopo: string;
   propostas: string;
   politica: string;
+  pedido_cotacao: string;
   analysis: CompradorResult | null;
 };
 type Reply = {
@@ -69,6 +71,16 @@ const STATUS_LABEL: Record<string, string> = {
   awaiting_reply: 'Resposta pronta',
   replied: 'Respondida',
   closed: 'Fechada',
+};
+
+const ITEM_STATUS_BADGE: Record<ItemStatus, { label: string; cls: string }> = {
+  correto: { label: 'Correto', cls: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-300' },
+  ausente: { label: 'Ausente', cls: 'border-red-500/40 bg-red-500/10 text-red-600 dark:text-red-300' },
+  quantidade_divergente: { label: 'Qtd. divergente', cls: 'border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-300' },
+  especificacao_alterada: { label: 'Especificação alterada', cls: 'border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-300' },
+  marca_diferente: { label: 'Marca diferente', cls: 'border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-300' },
+  condicao_diferente: { label: 'Condição diferente', cls: 'border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-300' },
+  outro: { label: 'Outro', cls: 'border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-300' },
 };
 
 type View = 'list' | 'new' | 'detail' | 'settings';
@@ -237,22 +249,29 @@ function QuotesList({
 
 // ─────────────────────────────── Nova cotação ───────────────────────────────
 const EXEMPLO = {
+  pedidoCotacao:
+    'Pedido de Cotação PC-0042\n' +
+    '1) 200 paletes PBR (1200x1000mm), madeira de pinus tratada — qtd 200un\n' +
+    '2) Cantoneira de proteção de carga, papelão reforçado — qtd 400un\n' +
+    'Entrega: Porto de Santos, em até 30 dias. Pagamento: 28 ddl.',
   escopo: '200 paletes PBR (1200x1000), entrega no Porto de Santos, até 30 dias.',
   propostas:
-    'Fornecedor A (Madeireira Litoral): R$ 95,00/un, frete R$ 1.200, impostos inclusos, prazo 20 dias, 28 ddl.\n' +
-    'Fornecedor B (PaletPro): R$ 88,00/un, frete R$ 2.500, impostos +12%, prazo 35 dias, à vista.\n' +
-    'Fornecedor C (EcoPallets): R$ 91,50/un, frete grátis, impostos inclusos, prazo 25 dias, 14 ddl.',
+    'Fornecedor A (Madeireira Litoral): 200 paletes PBR R$ 95,00/un, frete R$ 1.200, impostos inclusos, prazo 20 dias, 28 ddl. Não cotou as cantoneiras.\n' +
+    'Fornecedor B (PaletPro): 180 paletes PBR (madeira de eucalipto) R$ 88,00/un, frete R$ 2.500, impostos +12%, prazo 35 dias, à vista. Cantoneira de plástico 400un R$ 3,00/un.\n' +
+    'Fornecedor C (EcoPallets): 200 paletes PBR R$ 91,50/un, frete grátis, impostos inclusos, prazo 25 dias, 14 ddl. Cantoneira de papelão 400un R$ 2,20/un.',
   politica: 'Alçada de aprovação automática: R$ 50.000. Exigir 3 cotações. Homologados: Madeireira Litoral, PaletPro.',
 };
 
 function NewQuote({ onCancel, onCreated }: { onCancel: () => void; onCreated: (id: string) => void }) {
   const [supplierName, setSupplierName] = useState('');
   const [supplierEmail, setSupplierEmail] = useState('');
+  const [pedidoCotacao, setPedidoCotacao] = useState('');
   const [escopo, setEscopo] = useState('');
   const [propostas, setPropostas] = useState('');
   const [politica, setPolitica] = useState('');
   const [loading, setLoading] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [importRfqOpen, setImportRfqOpen] = useState(false);
   const lbl = 'text-xs font-medium text-muted-foreground';
 
   async function criar() {
@@ -265,6 +284,7 @@ function NewQuote({ onCancel, onCreated }: { onCancel: () => void; onCreated: (i
         body: JSON.stringify({
           supplier_name: supplierName || undefined,
           supplier_email: supplierEmail || undefined,
+          pedido_cotacao: pedidoCotacao,
           escopo,
           propostas,
           politica,
@@ -291,7 +311,7 @@ function NewQuote({ onCancel, onCreated }: { onCancel: () => void; onCreated: (i
           <ArrowLeft className="h-4 w-4" /> Voltar
         </button>
         <button
-          onClick={() => { setEscopo(EXEMPLO.escopo); setPropostas(EXEMPLO.propostas); setPolitica(EXEMPLO.politica); setSupplierName('Madeireira Litoral'); }}
+          onClick={() => { setPedidoCotacao(EXEMPLO.pedidoCotacao); setEscopo(EXEMPLO.escopo); setPropostas(EXEMPLO.propostas); setPolitica(EXEMPLO.politica); setSupplierName('Madeireira Litoral'); }}
           className="text-xs text-muted-foreground underline hover:text-foreground"
         >
           Carregar exemplo
@@ -309,6 +329,20 @@ function NewQuote({ onCancel, onCreated }: { onCancel: () => void; onCreated: (i
         </div>
       </div>
 
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between">
+          <label className={lbl}>Pedido de Cotação (RFQ) — documento de referência (opcional)</label>
+          <Button type="button" variant="outline" size="sm" onClick={() => setImportRfqOpen(true)}>
+            <Paperclip className="h-3.5 w-3.5 mr-1" /> Importar (PDF/Excel)
+          </Button>
+        </div>
+        <Textarea
+          value={pedidoCotacao}
+          onChange={(e) => setPedidoCotacao(e.target.value)}
+          rows={6}
+          placeholder="Cole ou importe o Pedido de Cotação original — itens, quantidades, especificações e condições pedidas. Com isso, o Equalizador compara cada proposta item a item contra o que foi solicitado."
+        />
+      </div>
       <div className="space-y-1.5">
         <label className={lbl}>Escopo / requisição</label>
         <Input value={escopo} onChange={(e) => setEscopo(e.target.value)} placeholder="O que comprar, quantidade, prazo, local…" />
@@ -339,6 +373,11 @@ function NewQuote({ onCancel, onCreated }: { onCancel: () => void; onCreated: (i
         open={importOpen}
         onClose={() => setImportOpen(false)}
         onImported={(t) => setPropostas((p) => (p ? p + '\n\n' : '') + t)}
+      />
+      <CompradorImportDialog
+        open={importRfqOpen}
+        onClose={() => setImportRfqOpen(false)}
+        onImported={(t) => setPedidoCotacao((p) => (p ? p + '\n\n' : '') + t)}
       />
     </div>
   );
@@ -421,6 +460,78 @@ function QuoteDetail({ id, onBack }: { id: string; onBack: () => void }) {
                 <CompradorPriceChart ranking={a.ranking} recommended={a.recomendacao_fornecedor} />
               ) : null}
 
+              {/* Comparativo item a item contra o Pedido de Cotação (só quando um foi fornecido) */}
+              {a.comparativo_itens?.length ? (
+                <div className="rounded-2xl border border-border bg-card overflow-hidden">
+                  <div className="px-4 py-2 border-b border-border text-xs font-medium text-muted-foreground">
+                    Comparativo de itens × Pedido de Cotação
+                  </div>
+                  <div className="overflow-x-auto">
+                    {(() => {
+                      const matrix = buildComparisonMatrix(a.comparativo_itens);
+                      return (
+                        <table className="w-full min-w-[640px] text-left text-xs">
+                          <thead>
+                            <tr className="text-muted-foreground border-b border-border">
+                              <th className="px-3 py-2 font-medium">Item</th>
+                              <th className="px-3 py-2 font-medium">Qtd. solicitada</th>
+                              {matrix.fornecedores.map((f) => (
+                                <th key={f} className="px-3 py-2 font-medium">{f}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {matrix.rows.map((row, i) => (
+                              <tr key={i} className="border-b border-border/50 align-top">
+                                <td className="px-3 py-2 font-medium">
+                                  {row.item}
+                                  {row.especificacaoSolicitada ? (
+                                    <div className="font-normal text-muted-foreground">{row.especificacaoSolicitada}</div>
+                                  ) : null}
+                                </td>
+                                <td className="px-3 py-2 text-muted-foreground">{row.quantidadeSolicitada}</td>
+                                {matrix.fornecedores.map((f) => {
+                                  const cell = row.porFornecedor[f];
+                                  if (!cell) {
+                                    return (
+                                      <td key={f} className="px-3 py-2 text-muted-foreground">—</td>
+                                    );
+                                  }
+                                  const badge = ITEM_STATUS_BADGE[cell.status];
+                                  return (
+                                    <td key={f} className="px-3 py-2">
+                                      <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium ${badge.cls}`}>
+                                        {badge.label}
+                                      </span>
+                                      {cell.detalhe ? (
+                                        <div className="mt-1 text-muted-foreground">{cell.detalhe}</div>
+                                      ) : null}
+                                    </td>
+                                  );
+                                })}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      );
+                    })()}
+                  </div>
+                </div>
+              ) : null}
+
+              {a.itens_nao_solicitados?.length ? (
+                <div className="rounded-2xl border border-red-500/40 bg-card p-5">
+                  <div className="text-xs font-medium text-red-600 dark:text-red-400 mb-2">Itens cotados mas não solicitados</div>
+                  <ul className="space-y-1 text-sm">
+                    {a.itens_nao_solicitados.map((it, i) => (
+                      <li key={i} className="text-red-600 dark:text-red-400">
+                        ⛔ {it.fornecedor} — {it.item}{it.detalhe ? `: ${it.detalhe}` : ''}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+
               {/* Comparativo completo de condições comerciais */}
               <div className="rounded-2xl border border-border bg-card overflow-hidden">
                 <div className="px-4 py-2 border-b border-border text-xs font-medium text-muted-foreground">
@@ -468,6 +579,13 @@ function QuoteDetail({ id, onBack }: { id: string; onBack: () => void }) {
                   </table>
                 </div>
               </div>
+
+              {a.alertas?.length ? (
+                <div className="rounded-2xl border border-amber-500/40 bg-card p-5">
+                  <div className="text-xs font-medium text-amber-600 dark:text-amber-400 mb-2">Alertas</div>
+                  <ul className="space-y-1 text-sm">{a.alertas.map((al, i) => <li key={i} className="text-amber-600 dark:text-amber-400">⚠ {al}</li>)}</ul>
+                </div>
+              ) : null}
 
               {a.desvios_politica?.length ? (
                 <div className="rounded-2xl border border-red-500/40 bg-card p-5">
