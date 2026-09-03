@@ -35,6 +35,12 @@ describe('detectAssistantToolCTA', () => {
     ).toBe('grafico_rapido');
   });
 
+  it('returns comprador when text mentions /assistants/comprador', () => {
+    expect(
+      detectAssistantToolCTA('Use o equalizador em /assistants/comprador pra comparar.'),
+    ).toBe('comprador');
+  });
+
   it('returns null for suppliers (handled by supplier_search intent CTA)', () => {
     expect(
       detectAssistantToolCTA('Use /assistants/suppliers pra buscar.'),
@@ -124,6 +130,12 @@ describe('stripAssistantPaths', () => {
   it('strips the grafico_rapido path', () => {
     expect(stripAssistantPaths('gere em /assistants/grafico_rapido agora')).toBe(
       'gere agora',
+    );
+  });
+
+  it('strips the comprador path', () => {
+    expect(stripAssistantPaths('compare em /assistants/comprador agora')).toBe(
+      'compare agora',
     );
   });
 

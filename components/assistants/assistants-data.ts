@@ -14,7 +14,8 @@ export type AssistantPreviewKey =
   | 'indicadores'
   | 'simulador_tributario'
   | 'simulador_logistico'
-  | 'grafico_rapido';
+  | 'grafico_rapido'
+  | 'comprador';
 
 export type AssistantDefinition = {
   id: string;
@@ -163,6 +164,23 @@ export const ASSISTANTS: readonly AssistantDefinition[] = [
       'Chat de refinamento',
     ],
     previewKey: 'rfp',
+  },
+
+  {
+    id: 'comprador',
+    step: 4,
+    stepCategory: 'Engajamento',
+    href: '/assistants/comprador',
+    title: 'Equalizador de Propostas',
+    short:
+      'Chegaram as cotações? Jogue as propostas dos fornecedores aqui e ele compara por TCO (preço + frete + impostos), aponta quem não atende a política ou está fora do padrão, e já monta o rascunho do Pedido de Compra — com sua aprovação.',
+    sideSubtitle: 'Compare propostas de fornecedores por TCO',
+    bullets: [
+      'Sobe/cola propostas de vários fornecedores de uma vez',
+      'Ranking por custo total (TCO) + alertas de política',
+      'Rascunho de Pedido de Compra pronto pra revisão',
+    ],
+    previewKey: 'comprador',
   },
 
   {

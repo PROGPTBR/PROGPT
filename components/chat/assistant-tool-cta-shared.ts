@@ -8,6 +8,7 @@ import {
   LineChart,
   MessageCircle,
   Receipt,
+  Scale,
   Star,
   TrendingUp,
   Truck,
@@ -45,7 +46,8 @@ export type AssistantToolType =
   | 'spend_analysis'
   | 'indicadores'
   | 'simulador_logistico'
-  | 'grafico_rapido';
+  | 'grafico_rapido'
+  | 'comprador';
 
 export type AssistantToolMeta = {
   title: string;
@@ -137,6 +139,12 @@ export const META: Record<AssistantToolType, AssistantToolMeta> = {
       'Cole uma tabela de dados (ou suba uma planilha CSV/XLSX) e receba um gráfico pronto pra baixar e inserir em qualquer documento ou apresentação.',
     Icon: ImageIcon,
   },
+  comprador: {
+    title: 'Equalizador de Propostas',
+    blurb:
+      'Chegaram as cotações? Jogue as propostas dos fornecedores aqui: ele compara por TCO (preço + frete + impostos), aponta quem não atende a política ou está fora do padrão, e já monta o rascunho do Pedido de Compra.',
+    Icon: Scale,
+  },
 };
 
 export function pathFor(type: AssistantToolType): string {
@@ -157,6 +165,7 @@ const VALID_TYPES = new Set<AssistantToolType>([
   'indicadores',
   'simulador_logistico',
   'grafico_rapido',
+  'comprador',
 ]);
 
 // Tipos cuja rota NÃO segue `/assistants/<type>` (ver `path` em META) —
@@ -203,7 +212,7 @@ export function detectAssistantToolCTA(text: string): AssistantToolType | null {
 // Tipos cujo caminho cru removemos do texto exibido (o card assume o CTA).
 // Inclui `suppliers` (caminho válido) pra não deixar o path feio na frase.
 const STRIP_TYPES =
-  'rfp|kraljic|porter|abc|financial|scorecard|profile|negotiation|homologacao|pesquisa_precos|spend_analysis|indicadores|grafico_rapido|suppliers';
+  'rfp|kraljic|porter|abc|financial|scorecard|profile|negotiation|homologacao|pesquisa_precos|spend_analysis|indicadores|grafico_rapido|comprador|suppliers';
 const ASSISTANTS_OR_CUSTOM = CUSTOM_PATH_ALTERNATION
   ? `/assistants/(?:${STRIP_TYPES})|${CUSTOM_PATH_ALTERNATION}`
   : `/assistants/(?:${STRIP_TYPES})`;

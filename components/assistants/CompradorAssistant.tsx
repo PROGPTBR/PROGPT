@@ -111,7 +111,7 @@ export function CompradorAssistant() {
           </div>
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">
-              Robô Comprador <span className="text-brand">.</span>
+              Equalizador de Propostas <span className="text-brand">.</span>
             </h1>
             <p className="text-sm text-muted-foreground">
               Sua caixa de cotações: compara por TCO, aponta desvios e responde aos fornecedores — com sua aprovação.

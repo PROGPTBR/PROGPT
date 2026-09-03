@@ -26,6 +26,7 @@ import { DashboardPreview } from './previews/DashboardPreview';
 import { SimuladorTributarioPreview } from './previews/SimuladorTributarioPreview';
 import { SimuladorLogisticoPreview } from './previews/SimuladorLogisticoPreview';
 import { GraficoRapidoPreview } from './previews/GraficoRapidoPreview';
+import { CompradorPreview } from './previews/CompradorPreview';
 
 /**
  * Relaciona o previewKey definido em assistants-data.ts
@@ -57,6 +58,7 @@ const PREVIEWS: Record<AssistantPreviewKey, ComponentType> = {
   simulador_tributario: SimuladorTributarioPreview,
   simulador_logistico: SimuladorLogisticoPreview,
   grafico_rapido: GraficoRapidoPreview,
+  comprador: CompradorPreview,
 };
 
 export function AssistantsHub({
