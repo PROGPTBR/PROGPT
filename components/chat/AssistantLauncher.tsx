@@ -9,6 +9,7 @@ import {
   Grid2x2,
   Layers,
   MessageCircle,
+  Scale,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -32,6 +33,7 @@ const ENTRIES: LauncherEntry[] = [
   { href: '/assistants/suppliers', label: 'Fornecedores', Icon: Factory },
   { href: '/assistants/kraljic', label: 'Kraljic', Icon: Grid2x2 },
   { href: '/assistants/rfp', label: 'RFP', Icon: FileText },
+  { href: '/assistants/comprador', label: 'Equalizador', Icon: Scale },
   { href: '/assistants/negotiation', label: 'Negociação', Icon: MessageCircle },
   { href: '/assistants/financial', label: 'Financeiro', Icon: DollarSign },
 ];
