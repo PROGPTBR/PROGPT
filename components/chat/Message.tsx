@@ -3,6 +3,7 @@
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Globe, Search } from 'lucide-react';
+import { looksLikeRefusal } from './refusal-cta';
 import { MessageActions } from './MessageActions';
 import { FollowupChips } from './FollowupChips';
 import { SupplierSearchCTA } from './SupplierSearchCTA';
@@ -31,6 +32,8 @@ type Props = {
   /** Assistente Pessoal — modo livre, sem restrição de domínio. */
   mode?: 'personal';
   webSearchUsed?: boolean;
+  /** Chamado com a pergunta original quando o usuário aceita tentar de novo no Modo Pessoal. */
+  onTryPersonalMode?: (question: string) => void;
 };
 
 export function Message({
@@ -48,6 +51,7 @@ export function Message({
   onPickFollowup,
   mode,
   webSearchUsed,
+  onTryPersonalMode,
 }: Props) {
   if (role === 'user') {
     return (
@@ -65,6 +69,20 @@ export function Message({
   // mentions a tool — including reloaded sessions.
   const cta: AssistantToolType | undefined =
     assistantCTA ?? detectAssistantToolCTA(content) ?? undefined;
+
+  // Recusa por falta de fonte na base ("Não tenho fonte sobre isso...") — o
+  // Assistente Pessoal (sem restrição de domínio + busca na web) resolve boa
+  // parte desses casos (pergunta fora de procurement, ou dado factual que a
+  // base não cobre). Só oferece quando não há um CTA de ferramenta melhor e
+  // a própria resposta já não veio do modo pessoal (evita sugerir a si mesmo).
+  const showTryPersonalMode =
+    !isStreaming &&
+    mode !== 'personal' &&
+    !cta &&
+    !supplierSearchQuery &&
+    !!onTryPersonalMode &&
+    !!previousUserContent &&
+    looksLikeRefusal(content);
 
   return (
     <li className="flex justify-start">
@@ -109,6 +127,16 @@ export function Message({
         ) : null}
         {!isStreaming && cta && cta !== 'grafico_rapido' && !supplierSearchQuery ? (
           <AssistantToolCTA type={cta} />
+        ) : null}
+        {showTryPersonalMode ? (
+          <button
+            type="button"
+            onClick={() => onTryPersonalMode!(previousUserContent!)}
+            className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-brand/30 bg-brand/5 hover:bg-brand/10 hover:border-brand/60 px-3 py-1.5 text-xs font-medium text-brand transition-all duration-300 active:scale-95"
+          >
+            <Globe className="h-3.5 w-3.5" aria-hidden="true" />
+            Tentar no Modo Pessoal (busca na web)
+          </button>
         ) : null}
         {!isStreaming && traceId && sessionId ? (
           <MessageActions

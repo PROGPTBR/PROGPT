@@ -182,6 +182,20 @@ export function ChatSession({
     void append({ role: 'user', content: text }, { body: chatCallBody() });
   };
 
+  // CTA "Tentar no Modo Pessoal" embaixo de uma recusa por falta de fonte —
+  // liga o toggle E reenvia a MESMA pergunta já em modo pessoal. Monta o
+  // body com mode:'personal' explícito em vez de chamar chatCallBody(),
+  // porque setPersonalMode acima ainda não refletiu no próximo render
+  // (setState é assíncrono) quando o append roda logo em seguida.
+  const onTryPersonalMode = (question: string) => {
+    if (isLoading) return;
+    setPersonalMode(true);
+    void append(
+      { role: 'user', content: question },
+      { body: { perfilId: session.activePerfilId ?? null, mode: 'personal' as const } },
+    );
+  };
+
   // Sub-projeto 35 — conversa por voz em tempo real. Ao encerrar, o transcript
   // vira histórico normal da sessão (continuidade voz↔texto + persistência).
   const [voiceOpen, setVoiceOpen] = useState(false);
@@ -240,6 +254,7 @@ export function ChatSession({
             sessionId={session.id}
             initialRatings={initialRatings}
             onPickFollowup={onPickFollowup}
+            onTryPersonalMode={onTryPersonalMode}
           />
           <AssistantLauncher variant="compact" />
           <Composer

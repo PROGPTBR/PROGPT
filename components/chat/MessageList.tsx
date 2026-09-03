@@ -26,6 +26,7 @@ type Props = {
   sessionId?: string;
   initialRatings?: Map<string, 'up' | 'down'>;
   onPickFollowup?: (text: string) => void;
+  onTryPersonalMode?: (question: string) => void;
 };
 
 const STICK_THRESHOLD_PX = 80;
@@ -77,6 +78,7 @@ export function MessageList({
   sessionId,
   initialRatings,
   onPickFollowup,
+  onTryPersonalMode,
 }: Props) {
   const ref = useRef<HTMLDivElement | null>(null);
 
@@ -130,6 +132,7 @@ export function MessageList({
               previousUserContent={previousUserContent}
               isLast={isLast}
               onPickFollowup={onPickFollowup}
+              onTryPersonalMode={onTryPersonalMode}
             />
           );
         })}

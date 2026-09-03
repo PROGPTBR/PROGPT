@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, expect, it, afterEach } from 'vitest';
+import { describe, expect, it, afterEach, vi } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
 import { Message } from '@/components/chat/Message';
 
@@ -201,5 +201,88 @@ describe('Message — assistant tool CTA derived from content', () => {
       .getAllByRole('link')
       .find((a) => a.getAttribute('href') === '/assistants/financial');
     expect(card).toBeTruthy();
+  });
+});
+
+describe('Message — "Tentar no Modo Pessoal" CTA on a refusal', () => {
+  it('shows the CTA when the answer refuses for lack of source, and clicking it calls back with the triggering question', () => {
+    const onTryPersonalMode = vi.fn();
+    render(
+      <Message
+        role="assistant"
+        isStreaming={false}
+        content="Não tenho fonte na minha base para consultar resultado de jogo em tempo real ou de ontem."
+        previousUserContent="qual foi o resultado do jogo do vasco ontem?"
+        onTryPersonalMode={onTryPersonalMode}
+      />,
+    );
+    const button = screen.getByRole('button', { name: /Modo Pessoal/i });
+    button.click();
+    expect(onTryPersonalMode).toHaveBeenCalledWith('qual foi o resultado do jogo do vasco ontem?');
+  });
+
+  it('does NOT show the CTA when the answer is not a refusal', () => {
+    render(
+      <Message
+        role="assistant"
+        isStreaming={false}
+        content="Kraljic foi publicado na HBR em 1983."
+        previousUserContent="quem criou a matriz de Kraljic?"
+        onTryPersonalMode={vi.fn()}
+      />,
+    );
+    expect(screen.queryByRole('button', { name: /Modo Pessoal/i })).toBeNull();
+  });
+
+  it('does NOT show the CTA on a refusal that already came from Modo Pessoal', () => {
+    render(
+      <Message
+        role="assistant"
+        isStreaming={false}
+        content="Não tenho fonte sobre isso."
+        previousUserContent="pergunta qualquer"
+        mode="personal"
+        onTryPersonalMode={vi.fn()}
+      />,
+    );
+    expect(screen.queryByRole('button', { name: /Modo Pessoal/i })).toBeNull();
+  });
+
+  it('does NOT show the CTA while streaming', () => {
+    render(
+      <Message
+        role="assistant"
+        isStreaming
+        content="Não tenho fonte sobre isso."
+        previousUserContent="pergunta qualquer"
+        onTryPersonalMode={vi.fn()}
+      />,
+    );
+    expect(screen.queryByRole('button', { name: /Modo Pessoal/i })).toBeNull();
+  });
+
+  it('does NOT show the CTA when a dedicated-tool CTA already applies (avoids double CTA)', () => {
+    render(
+      <Message
+        role="assistant"
+        isStreaming={false}
+        content="Não tenho fonte sobre isso — use a ferramenta dedicada em /assistants/rfp."
+        previousUserContent="pergunta qualquer"
+        onTryPersonalMode={vi.fn()}
+      />,
+    );
+    expect(screen.queryByRole('button', { name: /Modo Pessoal/i })).toBeNull();
+  });
+
+  it('does NOT show the CTA without a callback prop (no handler wired)', () => {
+    render(
+      <Message
+        role="assistant"
+        isStreaming={false}
+        content="Não tenho fonte sobre isso."
+        previousUserContent="pergunta qualquer"
+      />,
+    );
+    expect(screen.queryByRole('button', { name: /Modo Pessoal/i })).toBeNull();
   });
 });
