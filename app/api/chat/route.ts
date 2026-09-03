@@ -16,6 +16,7 @@ import type { TraceLevel } from '@/lib/observability/types';
 import { getRunForOwner } from '@/lib/assistants/runs';
 import type { ProfileParams } from '@/lib/assistants/types';
 import { detectAssistantToolCTA } from '@/components/chat/assistant-tool-cta-shared';
+import { handlePersonalChatTurn } from '@/lib/chat/personal-assistant';
 
 export const runtime = 'nodejs';
 
@@ -33,6 +34,10 @@ const Body = z
     // Sub-projeto 34 — Perfil da Categoria ativo no chat.
     // null/undefined = sem categoria (comportamento default).
     perfilId: z.string().uuid().nullable().optional(),
+    // Assistente Pessoal (modo livre, com busca na web) — ausente = fluxo
+    // procurement normal. Mesma URL de propósito (trocar a `api` do useChat
+    // quebraria o cache SWR interno do hook) — ver lib/chat/personal-assistant.ts.
+    mode: z.enum(['personal']).optional(),
   })
   .refine(
     (b) => b.messages.length > 0 && b.messages[b.messages.length - 1]!.role === 'user',
@@ -76,6 +81,18 @@ export async function POST(req: Request): Promise<Response> {
   // Acesso liberado a todo usuário logado (decisão 2026-07-07: cartão no
   // cadastro ⇒ sem bloqueio de pagamento in-app; cobrança fica no Asaas).
   // Gate antigo (hasAccess → 402 no_access) removido — ver git para reabilitar.
+
+  // Assistente Pessoal — despacha ANTES de qualquer coisa RAG-específica
+  // (rate-limit, perfil, trace, runRag). Isolado num módulo próprio de
+  // propósito: nunca deve tocar classifier/runRag/CTA/followups/título, que
+  // assumem resposta fundamentada na base de procurement.
+  if (parsed.mode === 'personal') {
+    return handlePersonalChatTurn({
+      userId: user.id,
+      messages: parsed.messages,
+      sessionId: parsed.sessionId,
+    });
+  }
 
   const rl = await checkChatRateLimit();
   if (!rl.allowed) {

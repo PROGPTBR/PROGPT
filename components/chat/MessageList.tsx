@@ -11,6 +11,8 @@ type Annotation = {
   followups?: string[];
   supplierSearch?: { query: string };
   assistantCTA?: AssistantToolType;
+  mode?: 'personal';
+  webSearchUsed?: boolean;
 };
 
 type UIMessage = ChatMessage & {
@@ -54,6 +56,21 @@ function pickAssistantCTA(m: UIMessage): AssistantToolType | undefined {
   return found?.assistantCTA;
 }
 
+// Modo Pessoal — lê primeiro da annotation (turno ao vivo, streaming);
+// cai pro campo persistido `m.mode` (sessão recarregada do banco) quando não
+// há annotation (histórico antigo não tem annotations no reload).
+function pickMode(m: UIMessage): 'personal' | undefined {
+  const ann = m.annotations as Annotation[] | undefined;
+  const found = ann?.find((a) => a?.mode === 'personal');
+  return found?.mode ?? m.mode;
+}
+
+function pickWebSearchUsed(m: UIMessage): boolean {
+  const ann = m.annotations as Annotation[] | undefined;
+  const found = ann?.find((a) => typeof a?.webSearchUsed === 'boolean');
+  return found?.webSearchUsed ?? false;
+}
+
 export function MessageList({
   messages,
   isLoading,
@@ -88,6 +105,8 @@ export function MessageList({
           const followups = pickFollowups(m);
           const supplierSearchQuery = pickSupplierSearchQuery(m);
           const assistantCTA = pickAssistantCTA(m);
+          const mode = pickMode(m);
+          const webSearchUsed = pickWebSearchUsed(m);
           const isLast = i === lastIdx;
           // Gráfico Rápido gera o PNG no lugar a partir do texto que o
           // usuário colou na mensagem imediatamente anterior — só faz
@@ -106,6 +125,8 @@ export function MessageList({
               followups={followups}
               supplierSearchQuery={supplierSearchQuery}
               assistantCTA={assistantCTA}
+              mode={mode}
+              webSearchUsed={webSearchUsed}
               previousUserContent={previousUserContent}
               isLast={isLast}
               onPickFollowup={onPickFollowup}

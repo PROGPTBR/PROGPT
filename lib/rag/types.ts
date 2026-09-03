@@ -61,6 +61,9 @@ export const SAFE_DEFAULT_CLASSIFICATION: Classification = {
 export type ChatMessage = {
   role: 'user' | 'assistant';
   content: string;
+  // Assistente Pessoal (modo livre) — ausente = procurement (default).
+  // Aditivo/opcional de propósito: sem migration, JSONB aceita de graça.
+  mode?: 'personal';
 };
 
 // Sub-projeto 34 — Perfil da Categoria ativo no chat.

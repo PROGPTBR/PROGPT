@@ -10,6 +10,12 @@ export const RATE_LIMIT_PER_HOUR = 60;
 export const ANON_RATE_PER_MIN = 3;
 export const ANON_RATE_PER_HOUR = 10;
 
+// Assistente Pessoal — modo livre do /chat (busca na web). Mais restritivo que
+// o bucket 'chat' geral porque cada turno pode disparar uma chamada de busca
+// extra (custo maior por request). Substitui, não soma, o rate-limit geral.
+export const PERSONAL_RATE_LIMIT_PER_MIN = 5;
+export const PERSONAL_RATE_LIMIT_PER_HOUR = 40;
+
 export type RateLimitResult =
   | { allowed: true }
   | { allowed: false; retryAfterSecs: number };
@@ -29,6 +35,24 @@ export async function checkChatRateLimit(): Promise<RateLimitResult> {
   // than the risk of the product being unusable due to an RPC regression.
   if (error || !Array.isArray(data) || data.length === 0) {
     if (error) console.warn('[rate-limit] RPC failed, fail-open:', error.message);
+    return { allowed: true };
+  }
+
+  const row = data[0] as RpcRow;
+  if (row.allowed) return { allowed: true };
+  return { allowed: false, retryAfterSecs: row.retry_after_secs };
+}
+
+export async function checkPersonalChatRateLimit(): Promise<RateLimitResult> {
+  const sb = supabaseServer();
+  const { data, error } = await sb.rpc('check_rate_limit', {
+    p_endpoint: 'chat-personal',
+    p_per_min: PERSONAL_RATE_LIMIT_PER_MIN,
+    p_per_hour: PERSONAL_RATE_LIMIT_PER_HOUR,
+  });
+
+  if (error || !Array.isArray(data) || data.length === 0) {
+    if (error) console.warn('[rate-limit] personal RPC failed, fail-open:', error.message);
     return { allowed: true };
   }
 

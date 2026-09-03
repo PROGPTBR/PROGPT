@@ -28,6 +28,11 @@ type Props = {
   onStop: () => void;
 
   onVoiceMode?: () => void;
+
+  /** Assistente Pessoal — passthrough pro Composer interno. */
+  personalMode?: boolean;
+  onTogglePersonalMode?: () => void;
+  placeholder?: string;
 };
 
 export function EmptyState({
@@ -37,6 +42,9 @@ export function EmptyState({
   isLoading,
   onStop,
   onVoiceMode,
+  personalMode,
+  onTogglePersonalMode,
+  placeholder,
 }: Props) {
   return (
     <div className="relative flex-1 flex flex-col items-center px-6 py-8 overflow-y-auto">
@@ -76,8 +84,10 @@ export function EmptyState({
             isLoading={isLoading}
             onStop={onStop}
             variant="hero"
-            placeholder="Escreva a sua dúvida"
+            placeholder={placeholder ?? 'Escreva a sua dúvida'}
             onVoiceMode={onVoiceMode}
+            personalMode={personalMode}
+            onTogglePersonalMode={onTogglePersonalMode}
           />
         </div>
 

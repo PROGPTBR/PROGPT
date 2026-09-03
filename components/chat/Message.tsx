@@ -2,6 +2,7 @@
 
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { Globe, Search } from 'lucide-react';
 import { MessageActions } from './MessageActions';
 import { FollowupChips } from './FollowupChips';
 import { SupplierSearchCTA } from './SupplierSearchCTA';
@@ -27,6 +28,9 @@ type Props = {
   previousUserContent?: string;
   isLast?: boolean;
   onPickFollowup?: (text: string) => void;
+  /** Assistente Pessoal — modo livre, sem restrição de domínio. */
+  mode?: 'personal';
+  webSearchUsed?: boolean;
 };
 
 export function Message({
@@ -42,6 +46,8 @@ export function Message({
   previousUserContent,
   isLast,
   onPickFollowup,
+  mode,
+  webSearchUsed,
 }: Props) {
   if (role === 'user') {
     return (
@@ -63,6 +69,20 @@ export function Message({
   return (
     <li className="flex justify-start">
       <div className="bg-card dark:bg-card border border-border max-w-[85%] rounded-2xl px-5 py-4">
+        {mode === 'personal' ? (
+          <div className="flex items-center gap-1.5 mb-2">
+            <span className="inline-flex items-center gap-1 rounded-full bg-brand/10 text-brand px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
+              <Globe className="h-3 w-3" aria-hidden="true" />
+              Modo Pessoal
+            </span>
+            {webSearchUsed ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-muted text-muted-foreground px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
+                <Search className="h-3 w-3" aria-hidden="true" />
+                Busca ao vivo
+              </span>
+            ) : null}
+          </div>
+        ) : null}
         <div className="prose prose-sm dark:prose-invert max-w-none prose-a:text-brand prose-code:text-brand prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none prose-blockquote:border-l-brand prose-headings:text-foreground prose-strong:text-foreground prose-p:text-foreground/90 prose-li:text-foreground/90">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>
             {stripAssistantPaths(content)}

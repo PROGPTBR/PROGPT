@@ -23,10 +23,27 @@ type Props = {
   onTitleChange?: (title: string) => void;
 };
 
+// Assistente Pessoal — a annotation `{ mode: 'personal' }` (anexada pelo
+// onFinish de lib/chat/personal-assistant.ts) decora a mensagem do
+// assistant daquele turno. Ao persistir, viramos isso no campo `mode` do
+// ChatMessage; ao recarregar a sessão, re-embutimos como annotation
+// sintética em `initialMessages` (abaixo) pro mesmo `pickMode` funcionar
+// tanto ao vivo quanto após reload.
+type ModeAnnotation = { mode?: 'personal' };
+
+function pickMode(m: AIMessage): 'personal' | undefined {
+  const ann = m.annotations as ModeAnnotation[] | undefined;
+  return ann?.find((a) => a?.mode === 'personal')?.mode;
+}
+
 function toChatMessages(messages: AIMessage[]): ChatMessage[] {
   return messages
     .filter((m): m is AIMessage & { role: 'user' | 'assistant' } => m.role === 'user' || m.role === 'assistant')
-    .map((m) => ({ role: m.role, content: m.content }));
+    .map((m) => ({
+      role: m.role,
+      content: m.content,
+      ...(pickMode(m) ? { mode: 'personal' as const } : {}),
+    }));
 }
 
 type SessionTitleAnnotation = { sessionTitle?: string };
@@ -87,6 +104,8 @@ export function ChatSession({
       id: `${session.id}-${i}`,
       role: m.role,
       content: m.content,
+      // Reidrata o badge "Modo Pessoal" após reload — ver pickMode acima.
+      ...(m.mode === 'personal' ? { annotations: [{ mode: 'personal' as const }] } : {}),
     })),
     onResponse: async (res) => {
       if (res.status === 402) {
@@ -146,13 +165,21 @@ export function ChatSession({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading, messages]);
 
-  const perfilBody = () => ({
+  // Assistente Pessoal — toggle local, reseta a cada montagem de sessão
+  // (mesmo padrão de `voiceOpen` abaixo). `useChat`'s `api` NUNCA muda —
+  // trocar a URL dinamicamente quebraria o cache SWR interno do hook
+  // (chave [api, chatId]). O modo viaja como campo no body de cada request;
+  // app/api/chat/route.ts despacha cedo pra lib/chat/personal-assistant.ts.
+  const [personalMode, setPersonalMode] = useState(false);
+
+  const chatCallBody = () => ({
     perfilId: session.activePerfilId ?? null,
+    ...(personalMode ? { mode: 'personal' as const } : {}),
   });
 
   const onPickFollowup = (text: string) => {
     if (isLoading) return;
-    void append({ role: 'user', content: text }, { body: perfilBody() });
+    void append({ role: 'user', content: text }, { body: chatCallBody() });
   };
 
   // Sub-projeto 35 — conversa por voz em tempo real. Ao encerrar, o transcript
@@ -176,13 +203,13 @@ export function ChatSession({
     attachment?: ChatAttachment,
   ) => {
     if (!attachment) {
-      handleSubmit(e, { body: perfilBody() });
+      handleSubmit(e, { body: chatCallBody() });
       return;
     }
     e?.preventDefault();
     const wrapped = wrapWithAttachment(input, attachment);
     setInput('');
-    void append({ role: 'user', content: wrapped }, { body: perfilBody() });
+    void append({ role: 'user', content: wrapped }, { body: chatCallBody() });
   };
 
   return (
@@ -196,6 +223,9 @@ export function ChatSession({
           isLoading={isLoading}
           onStop={stop}
           onVoiceMode={() => setVoiceOpen(true)}
+          personalMode={personalMode}
+          onTogglePersonalMode={() => setPersonalMode((v) => !v)}
+          placeholder={personalMode ? 'Pergunte qualquer coisa…' : undefined}
         />
       ) : (
         <>
@@ -219,6 +249,9 @@ export function ChatSession({
             isLoading={isLoading}
             onStop={stop}
             onVoiceMode={() => setVoiceOpen(true)}
+            personalMode={personalMode}
+            onTogglePersonalMode={() => setPersonalMode((v) => !v)}
+            placeholder={personalMode ? 'Pergunte qualquer coisa…' : undefined}
           />
         </>
       )}

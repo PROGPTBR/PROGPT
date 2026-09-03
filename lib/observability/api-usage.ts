@@ -89,7 +89,9 @@ export type ApiOperation =
   | 'proc2pay-escopo'
   | 'proc2pay-followup'
   | 'proc2pay-avaliacao'
-  | 'quick-chart-infer';
+  | 'quick-chart-infer'
+  | 'chat-personal-generate'
+  | 'chat-personal-websearch';
 
 export type RecordUsageInput = {
   provider: ApiProvider;

@@ -48,3 +48,47 @@ describe('checkChatRateLimit', () => {
     });
   });
 });
+
+describe('checkPersonalChatRateLimit', () => {
+  it('returns { allowed: true } when RPC reports allowed', async () => {
+    mockSupabaseRpc(() => ({ data: [{ allowed: true, retry_after_secs: 0 }], error: null }));
+    const { checkPersonalChatRateLimit } = await import('@/lib/rate-limit');
+    await expect(checkPersonalChatRateLimit()).resolves.toEqual({ allowed: true });
+  });
+
+  it('returns { allowed: false, retryAfterSecs } when RPC reports blocked', async () => {
+    mockSupabaseRpc(() => ({ data: [{ allowed: false, retry_after_secs: 120 }], error: null }));
+    const { checkPersonalChatRateLimit } = await import('@/lib/rate-limit');
+    await expect(checkPersonalChatRateLimit()).resolves.toEqual({
+      allowed: false,
+      retryAfterSecs: 120,
+    });
+  });
+
+  it('fails open when the RPC errors out', async () => {
+    mockSupabaseRpc(() => ({ data: null, error: { message: 'boom' } }));
+    const { checkPersonalChatRateLimit } = await import('@/lib/rate-limit');
+    await expect(checkPersonalChatRateLimit()).resolves.toEqual({ allowed: true });
+  });
+
+  it('fails open when the RPC returns an empty array', async () => {
+    mockSupabaseRpc(() => ({ data: [], error: null }));
+    const { checkPersonalChatRateLimit } = await import('@/lib/rate-limit');
+    await expect(checkPersonalChatRateLimit()).resolves.toEqual({ allowed: true });
+  });
+
+  it('passes a stricter, separate bucket (chat-personal) to the RPC', async () => {
+    const rpc = mockSupabaseRpc(() => ({ data: [{ allowed: true, retry_after_secs: 0 }], error: null }));
+    const {
+      checkPersonalChatRateLimit,
+      PERSONAL_RATE_LIMIT_PER_MIN,
+      PERSONAL_RATE_LIMIT_PER_HOUR,
+    } = await import('@/lib/rate-limit');
+    await checkPersonalChatRateLimit();
+    expect(rpc).toHaveBeenCalledWith('check_rate_limit', {
+      p_endpoint: 'chat-personal',
+      p_per_min: PERSONAL_RATE_LIMIT_PER_MIN,
+      p_per_hour: PERSONAL_RATE_LIMIT_PER_HOUR,
+    });
+  });
+});

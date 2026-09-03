@@ -13,6 +13,7 @@ import {
 
 import {
   AudioLines,
+  Globe,
   Loader2,
   Paperclip,
   Plus,
@@ -59,6 +60,14 @@ type Props = {
 
   /** Conversa por voz em tempo real */
   onVoiceMode?: () => void;
+
+  /**
+   * Assistente Pessoal — modo livre, sem restrição de domínio, com busca na
+   * web. `personalMode` controla o estado visual (botão "ativo"); só
+   * aparece o botão quando `onTogglePersonalMode` é passado.
+   */
+  personalMode?: boolean;
+  onTogglePersonalMode?: () => void;
 };
 
 const ACCEPT_ATTR =
@@ -98,6 +107,8 @@ export function Composer({
   variant = 'inline',
   placeholder,
   onVoiceMode,
+  personalMode,
+  onTogglePersonalMode,
 }: Props) {
   const fileInputRef =
     useRef<HTMLInputElement>(null);
@@ -781,6 +792,58 @@ export function Composer({
                   </button>
                 )}
 
+                {onTogglePersonalMode && (
+                  <button
+                    type="button"
+                    onClick={
+                      onTogglePersonalMode
+                    }
+                    aria-pressed={
+                      !!personalMode
+                    }
+                    aria-label="Modo Pessoal — pergunte qualquer coisa, com busca ao vivo"
+                    title="Modo Pessoal — pergunte qualquer coisa, com busca ao vivo"
+                    className={
+                      personalMode
+                        ? `
+                      inline-flex
+                      h-9
+                      w-9
+                      items-center
+                      justify-center
+                      rounded-full
+                      bg-brand/15
+                      text-brand
+                      transition-colors
+
+                      hover:bg-brand/25
+
+                      active:scale-95
+                    `
+                        : `
+                      inline-flex
+                      h-9
+                      w-9
+                      items-center
+                      justify-center
+                      rounded-full
+                      text-muted-foreground
+                      transition-colors
+
+                      hover:bg-brand/10
+                      hover:text-brand
+
+                      active:scale-95
+                    `
+                    }
+                  >
+                    <Globe
+                      className="h-4 w-4"
+                      aria-hidden="true"
+                    />
+                  </button>
+                )}
+
                 {isLoading ? (
                   <button
                     type="button"
@@ -1005,6 +1068,68 @@ export function Composer({
                 "
               >
                 <AudioLines
+                  className="h-4 w-4"
+                  aria-hidden="true"
+                />
+              </button>
+            )}
+
+            {/* Modo Pessoal */}
+            {onTogglePersonalMode && (
+              <button
+                type="button"
+                onClick={
+                  onTogglePersonalMode
+                }
+                aria-pressed={
+                  !!personalMode
+                }
+                aria-label="Modo Pessoal — pergunte qualquer coisa, com busca ao vivo"
+                title="Modo Pessoal — pergunte qualquer coisa, com busca ao vivo"
+                className={
+                  personalMode
+                    ? `
+                  inline-flex
+                  h-11
+                  w-11
+                  flex-shrink-0
+                  items-center
+                  justify-center
+                  rounded-full
+                  border
+                  border-brand/60
+                  bg-brand/15
+                  text-brand
+                  transition-all
+                  duration-300
+
+                  hover:bg-brand/25
+
+                  active:scale-95
+                `
+                    : `
+                  inline-flex
+                  h-11
+                  w-11
+                  flex-shrink-0
+                  items-center
+                  justify-center
+                  rounded-full
+                  border
+                  border-border
+                  bg-muted/40
+                  text-muted-foreground
+                  transition-all
+                  duration-300
+
+                  hover:bg-brand/10
+                  hover:text-brand
+
+                  active:scale-95
+                `
+                }
+              >
+                <Globe
                   className="h-4 w-4"
                   aria-hidden="true"
                 />
