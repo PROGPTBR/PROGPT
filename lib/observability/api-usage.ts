@@ -91,7 +91,8 @@ export type ApiOperation =
   | 'proc2pay-avaliacao'
   | 'quick-chart-infer'
   | 'chat-personal-generate'
-  | 'chat-personal-websearch';
+  | 'chat-personal-websearch'
+  | 'chat-tool-websearch';
 
 export type RecordUsageInput = {
   provider: ApiProvider;

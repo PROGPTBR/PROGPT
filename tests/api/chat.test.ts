@@ -28,6 +28,7 @@ describe('POST /api/chat', () => {
     vi.doMock('@/lib/rag/condenser', () => ({ condenseQuery: vi.fn() }));
     vi.doMock('@/lib/rag', () => ({ runRag: vi.fn() }));
     vi.doMock('ai', () => ({
+      tool: (config: unknown) => config,
       streamText: vi.fn(),
       StreamData: class {
         appendMessageAnnotation = vi.fn();
@@ -49,6 +50,7 @@ describe('POST /api/chat', () => {
     vi.doMock('@/lib/rag/condenser', () => ({ condenseQuery: vi.fn() }));
     vi.doMock('@/lib/rag', () => ({ runRag: vi.fn() }));
     vi.doMock('ai', () => ({
+      tool: (config: unknown) => config,
       streamText: vi.fn(),
       StreamData: class {
         appendMessageAnnotation = vi.fn();
@@ -100,6 +102,7 @@ describe('POST /api/chat', () => {
     const annotationSpy = vi.fn();
     const closeSpy = vi.fn();
     vi.doMock('ai', () => ({
+      tool: (config: unknown) => config,
       streamText: streamTextSpy,
       StreamData: class {
         appendMessageAnnotation = annotationSpy;
@@ -157,6 +160,7 @@ describe('POST /api/chat', () => {
       runRag: vi.fn().mockRejectedValue(new Error('boom')),
     }));
     vi.doMock('ai', () => ({
+      tool: (config: unknown) => config,
       streamText: vi.fn(),
       StreamData: class {
         appendMessageAnnotation = vi.fn();
@@ -178,6 +182,7 @@ describe('POST /api/chat', () => {
     vi.doMock('@/lib/rag/condenser', () => ({ condenseQuery: vi.fn() }));
     vi.doMock('@/lib/rag', () => ({ runRag: vi.fn() }));
     vi.doMock('ai', () => ({
+      tool: (config: unknown) => config,
       streamText: vi.fn(),
       StreamData: class {
         appendMessageAnnotation = vi.fn();
@@ -203,6 +208,7 @@ describe('POST /api/chat', () => {
     vi.doMock('@/lib/rag/condenser', () => ({ condenseQuery: vi.fn() }));
     vi.doMock('@/lib/rag', () => ({ runRag: vi.fn() }));
     vi.doMock('ai', () => ({
+      tool: (config: unknown) => config,
       streamText: vi.fn(),
       StreamData: class {
         appendMessageAnnotation = vi.fn();
@@ -256,6 +262,7 @@ describe('POST /api/chat', () => {
 
     const appendMessageAnnotation = vi.fn();
     vi.doMock('ai', () => ({
+      tool: (config: unknown) => config,
       streamText: vi.fn(() => ({
         toDataStreamResponse: () => new Response('ok', { status: 200 }),
       })),
@@ -353,6 +360,7 @@ describe('POST /api/chat — followups annotation', () => {
     const onFinishCapture: { fn?: (a: OnFinishArg) => Promise<void> } = {};
     const annotationSpy = vi.fn();
     vi.doMock('ai', () => ({
+      tool: (config: unknown) => config,
       streamText: vi.fn((cfg: { onFinish?: (a: OnFinishArg) => Promise<void> }) => {
         onFinishCapture.fn = cfg.onFinish;
         return { toDataStreamResponse: vi.fn(() => new Response('ok', { status: 200 })) };
@@ -391,6 +399,7 @@ describe('POST /api/chat — followups annotation', () => {
     const onFinishCapture: { fn?: (a: OnFinishArg) => Promise<void> } = {};
     const annotationSpy = vi.fn();
     vi.doMock('ai', () => ({
+      tool: (config: unknown) => config,
       streamText: vi.fn((cfg: { onFinish?: (a: OnFinishArg) => Promise<void> }) => {
         onFinishCapture.fn = cfg.onFinish;
         return { toDataStreamResponse: vi.fn(() => new Response('ok', { status: 200 })) };
@@ -421,6 +430,7 @@ describe('POST /api/chat — followups annotation', () => {
 
     const onFinishCapture: { fn?: (a: OnFinishArg) => Promise<void> } = {};
     vi.doMock('ai', () => ({
+      tool: (config: unknown) => config,
       streamText: vi.fn((cfg: { onFinish?: (a: OnFinishArg) => Promise<void> }) => {
         onFinishCapture.fn = cfg.onFinish;
         return { toDataStreamResponse: vi.fn(() => new Response('ok', { status: 200 })) };
@@ -449,6 +459,7 @@ describe('POST /api/chat — followups annotation', () => {
 
     const onFinishCapture: { fn?: (a: OnFinishArg) => Promise<void> } = {};
     vi.doMock('ai', () => ({
+      tool: (config: unknown) => config,
       streamText: vi.fn((cfg: { onFinish?: (a: OnFinishArg) => Promise<void> }) => {
         onFinishCapture.fn = cfg.onFinish;
         return { toDataStreamResponse: vi.fn(() => new Response('ok', { status: 200 })) };
@@ -483,6 +494,7 @@ describe('POST /api/chat — followups annotation', () => {
 
     const onFinishCapture: { fn?: (a: OnFinishArg) => Promise<void> } = {};
     vi.doMock('ai', () => ({
+      tool: (config: unknown) => config,
       streamText: vi.fn((cfg: { onFinish?: (a: OnFinishArg) => Promise<void> }) => {
         onFinishCapture.fn = cfg.onFinish;
         return { toDataStreamResponse: vi.fn(() => new Response('ok', { status: 200 })) };
@@ -523,6 +535,7 @@ describe('POST /api/chat — followups annotation', () => {
 
     const onFinishCapture: { fn?: (a: OnFinishArg) => Promise<void> } = {};
     vi.doMock('ai', () => ({
+      tool: (config: unknown) => config,
       streamText: vi.fn((cfg: { onFinish?: (a: OnFinishArg) => Promise<void> }) => {
         onFinishCapture.fn = cfg.onFinish;
         return { toDataStreamResponse: vi.fn(() => new Response('ok', { status: 200 })) };
@@ -548,5 +561,232 @@ describe('POST /api/chat — followups annotation', () => {
     const generate = spans.find((s) => s.name === 'generate');
     expect(generate?.output.tokens_cached).toBe(0);
     expect(generate?.output.cached_pct).toBe(0);
+  });
+});
+
+describe('POST /api/chat — piloto de tools automáticas (Pesquisa de Preços + fallback do Assistente Pessoal)', () => {
+  type OnFinishArg = {
+    text: string;
+    usage: { promptTokens: number; completionTokens: number };
+    finishReason: string;
+    providerMetadata?: { openai?: { cachedPromptTokens?: number } };
+  };
+
+  // Mocks fake tool factories — o comportamento REAL de cada tool já tem
+  // cobertura própria em tests/lib/chat/{inline-chat-tools,web-search-tool}
+  // .test.ts. Aqui testamos só a FIAÇÃO em route.ts: os refs viram
+  // annotation certa no onFinish.
+  function mockInlineTools(
+    opts: { offBase?: boolean; webSearch?: boolean; preco?: boolean } = {},
+  ) {
+    vi.doMock('@/lib/chat/inline-chat-tools', () => ({
+      isOffTopicFallbackEnabled: () => opts.offBase ?? true,
+      isChatToolWebSearchEnabled: () => opts.webSearch ?? true,
+      isPrecoReferenciaToolEnabled: () => opts.preco ?? true,
+      createOffBaseMarkerTool: (ref: { current: boolean }) => ({
+        execute: async () => {
+          ref.current = true;
+          return 'ok';
+        },
+      }),
+      createPrecoReferenciaTool: (ctx: { usedRef: { current: boolean } }) => ({
+        execute: async () => {
+          ctx.usedRef.current = true;
+          return 'preco ok';
+        },
+      }),
+    }));
+    vi.doMock('@/lib/chat/web-search-tool', () => ({
+      createWebSearchTool: (ctx: { usedRef: { current: boolean } }) => ({
+        execute: async () => {
+          ctx.usedRef.current = true;
+          return 'search ok';
+        },
+      }),
+    }));
+  }
+
+  function setupBase() {
+    vi.doMock('@/lib/auth', () => ({ getCurrentUser: vi.fn().mockResolvedValue({ id: 'u' }) }));
+    vi.doMock('@/lib/rate-limit', () => ({
+      checkChatRateLimit: vi.fn().mockResolvedValue({ allowed: true }),
+    }));
+    vi.doMock('@/lib/observability/langfuse', () => ({
+      startTrace: vi.fn().mockResolvedValue(NOOP_TRACE),
+      flushAsync: vi.fn().mockResolvedValue(undefined),
+    }));
+    vi.doMock('@/lib/rag/condenser', () => ({ condenseQuery: vi.fn().mockResolvedValue('q') }));
+    vi.doMock('@/lib/rag', () => ({
+      runRag: vi.fn().mockResolvedValue({
+        classification: { theory: null, intent: 'definition', language: 'pt', needsRetrieval: true },
+        chunks: [],
+        sources: [],
+        system: 'sys',
+        user: 'user q',
+        debug: { classifyMs: 0, embedMs: 0, vectorMs: 0, ftsMs: 0, rerankMs: 0, totalMs: 0 },
+      }),
+    }));
+    vi.doMock('@/lib/rag/followups', () => ({ suggestFollowups: vi.fn().mockResolvedValue([]) }));
+  }
+
+  it('passes the 3 tools and maxSteps:5 to streamText when all kill-switches are on', async () => {
+    setupBase();
+    mockInlineTools();
+    const streamTextSpy = vi.fn().mockReturnValue({
+      toDataStreamResponse: vi.fn(() => new Response('ok', { status: 200 })),
+    });
+    vi.doMock('ai', () => ({
+      tool: (config: unknown) => config,
+      streamText: streamTextSpy,
+      StreamData: class {
+        appendMessageAnnotation = vi.fn();
+        close = vi.fn();
+      },
+    }));
+    vi.doMock('@ai-sdk/openai', () => ({ createOpenAI: vi.fn(() => () => 'm') }));
+
+    const { POST } = await import('@/app/api/chat/route');
+    await POST(makeReq({ messages: [{ role: 'user', content: 'oi' }] }));
+
+    const args = streamTextSpy.mock.calls[0]![0];
+    expect(Object.keys(args.tools)).toEqual(
+      expect.arrayContaining(['responder_fora_do_escopo', 'web_search', 'preco_referencia']),
+    );
+    expect(args.maxSteps).toBe(5);
+  });
+
+  it('omits tools and uses maxSteps:1 when all 3 kill-switches are off', async () => {
+    setupBase();
+    mockInlineTools({ offBase: false, webSearch: false, preco: false });
+    const streamTextSpy = vi.fn().mockReturnValue({
+      toDataStreamResponse: vi.fn(() => new Response('ok', { status: 200 })),
+    });
+    vi.doMock('ai', () => ({
+      tool: (config: unknown) => config,
+      streamText: streamTextSpy,
+      StreamData: class {
+        appendMessageAnnotation = vi.fn();
+        close = vi.fn();
+      },
+    }));
+    vi.doMock('@ai-sdk/openai', () => ({ createOpenAI: vi.fn(() => () => 'm') }));
+
+    const { POST } = await import('@/app/api/chat/route');
+    await POST(makeReq({ messages: [{ role: 'user', content: 'oi' }] }));
+
+    const args = streamTextSpy.mock.calls[0]![0];
+    expect(args.tools).toBeUndefined();
+    expect(args.maxSteps).toBe(1);
+  });
+
+  it('annotates mode:"personal" (reusing the Assistente Pessoal badge) when responder_fora_do_escopo fires', async () => {
+    setupBase();
+    mockInlineTools();
+    const annotationSpy = vi.fn();
+    const onFinishCapture: { fn?: (a: OnFinishArg) => Promise<void> } = {};
+    let capturedTools: Record<string, { execute: () => Promise<string> }> | undefined;
+    vi.doMock('ai', () => ({
+      tool: (config: unknown) => config,
+      streamText: vi.fn((cfg: { onFinish?: (a: OnFinishArg) => Promise<void>; tools?: typeof capturedTools }) => {
+        onFinishCapture.fn = cfg.onFinish;
+        capturedTools = cfg.tools;
+        return { toDataStreamResponse: vi.fn(() => new Response('ok', { status: 200 })) };
+      }),
+      StreamData: class {
+        appendMessageAnnotation = annotationSpy;
+        close = vi.fn();
+      },
+    }));
+    vi.doMock('@ai-sdk/openai', () => ({ createOpenAI: vi.fn(() => () => 'm') }));
+
+    const { POST } = await import('@/app/api/chat/route');
+    await POST(makeReq({ messages: [{ role: 'user', content: 'qual foi o placar do jogo' }] }));
+
+    // Simula o modelo chamando a tool durante a geração.
+    await capturedTools!.responder_fora_do_escopo!.execute();
+    await onFinishCapture.fn!({
+      text: 'O jogo terminou 2 a 1.',
+      usage: { promptTokens: 10, completionTokens: 5 },
+      finishReason: 'stop',
+    });
+
+    expect(annotationSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ mode: 'personal' }),
+    );
+  });
+
+  it('annotates assistantCTA:"pesquisa_precos" when preco_referencia fires, and skips the text-based CTA detector', async () => {
+    setupBase();
+    mockInlineTools();
+    const annotationSpy = vi.fn();
+    const onFinishCapture: { fn?: (a: OnFinishArg) => Promise<void> } = {};
+    let capturedTools: Record<string, { execute: () => Promise<string> }> | undefined;
+    vi.doMock('ai', () => ({
+      tool: (config: unknown) => config,
+      streamText: vi.fn((cfg: { onFinish?: (a: OnFinishArg) => Promise<void>; tools?: typeof capturedTools }) => {
+        onFinishCapture.fn = cfg.onFinish;
+        capturedTools = cfg.tools;
+        return { toDataStreamResponse: vi.fn(() => new Response('ok', { status: 200 })) };
+      }),
+      StreamData: class {
+        appendMessageAnnotation = annotationSpy;
+        close = vi.fn();
+      },
+    }));
+    vi.doMock('@ai-sdk/openai', () => ({ createOpenAI: vi.fn(() => () => 'm') }));
+
+    const { POST } = await import('@/app/api/chat/route');
+    await POST(makeReq({ messages: [{ role: 'user', content: 'quanto custa papel A4' }] }));
+
+    await capturedTools!.preco_referencia!.execute();
+    // A resposta menciona um caminho de OUTRA ferramenta no texto — não deve
+    // vencer o CTA forçado pela tool de preço.
+    await onFinishCapture.fn!({
+      text: 'A mediana é R$ 25. Veja também /assistants/rfp se quiser gerar uma cotação formal.',
+      usage: { promptTokens: 10, completionTokens: 5 },
+      finishReason: 'stop',
+    });
+
+    const ctaCalls = annotationSpy.mock.calls.filter((c) => 'assistantCTA' in (c[0] as object));
+    expect(ctaCalls).toHaveLength(1);
+    expect(ctaCalls[0]![0]).toEqual({ assistantCTA: 'pesquisa_precos' });
+  });
+
+  it('records off_base_used/preco_referencia_used on the chat-generate usage metadata', async () => {
+    setupBase();
+    mockInlineTools();
+    const recordApiUsage = vi.fn();
+    vi.doMock('@/lib/observability/api-usage', () => ({ recordApiUsage }));
+    const onFinishCapture: { fn?: (a: OnFinishArg) => Promise<void> } = {};
+    let capturedTools: Record<string, { execute: () => Promise<string> }> | undefined;
+    vi.doMock('ai', () => ({
+      tool: (config: unknown) => config,
+      streamText: vi.fn((cfg: { onFinish?: (a: OnFinishArg) => Promise<void>; tools?: typeof capturedTools }) => {
+        onFinishCapture.fn = cfg.onFinish;
+        capturedTools = cfg.tools;
+        return { toDataStreamResponse: vi.fn(() => new Response('ok', { status: 200 })) };
+      }),
+      StreamData: class {
+        appendMessageAnnotation = vi.fn();
+        close = vi.fn();
+      },
+    }));
+    vi.doMock('@ai-sdk/openai', () => ({ createOpenAI: vi.fn(() => () => 'm') }));
+
+    const { POST } = await import('@/app/api/chat/route');
+    await POST(makeReq({ messages: [{ role: 'user', content: 'quanto custa papel A4' }] }));
+    await capturedTools!.preco_referencia!.execute();
+    await onFinishCapture.fn!({
+      text: 'A mediana é R$ 25.',
+      usage: { promptTokens: 10, completionTokens: 5 },
+      finishReason: 'stop',
+    });
+
+    expect(recordApiUsage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        operation: 'chat-generate',
+        metadata: expect.objectContaining({ off_base_used: false, preco_referencia_used: true }),
+      }),
+    );
   });
 });

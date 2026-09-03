@@ -9,15 +9,13 @@
 // chama por baixo o MESMO shape já comprovado em lib/fiscal/reputacao.ts
 // (openai.responses.create com o tool hospedado `web_search`, não-streaming).
 
-import { tool, streamText, StreamData } from 'ai';
-import { z } from 'zod';
-import { getOpenAI, getOpenAIModel, getStreamingOpenAI } from '@/lib/llm/openai';
+import { streamText, StreamData } from 'ai';
+import { getOpenAIModel, getStreamingOpenAI } from '@/lib/llm/openai';
 import { recordApiUsage } from '@/lib/observability/api-usage';
 import { startTrace, flushAsync } from '@/lib/observability/langfuse';
 import { checkPersonalChatRateLimit } from '@/lib/rate-limit';
+import { createWebSearchTool } from '@/lib/chat/web-search-tool';
 import type { ChatMessage } from '@/lib/rag/types';
-
-const WEBSEARCH_TIMEOUT_MS = 25_000;
 
 export function isPersonalChatEnabled(): boolean {
   return process.env.PERSONAL_CHAT_ENABLED !== 'false';
@@ -49,54 +47,6 @@ Regras:
 6. Seja honesto sobre incerteza. Não invente placares, números ou fatos — se não tiver certeza e a
    busca não ajudou, diga que não tem certeza.`;
 
-function createWebSearchTool(ctx: { sessionId?: string; usedRef: { current: boolean } }) {
-  return tool({
-    description:
-      'Busca informações atuais na web: notícias, placares de jogos, cotações, preços, eventos recentes, ou qualquer fato que possa ter mudado depois do seu treinamento. Use sempre que a pergunta for sobre algo atual/tempo-sensível ou você não tiver certeza.',
-    parameters: z.object({
-      query: z.string().describe('A busca em linguagem natural que trará os melhores resultados.'),
-    }),
-    execute: async ({ query }: { query: string }) => {
-      ctx.usedRef.current = true;
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), WEBSEARCH_TIMEOUT_MS);
-      try {
-        const ai = getOpenAI();
-        // Extração factual curta, não prosa — tier barato, mesmo critério de
-        // lib/fiscal/reputacao.ts.
-        const model = getOpenAIModel('routing');
-        const res = await ai.responses.create(
-          { model, tools: [{ type: 'web_search' } as never], input: query },
-          { signal: controller.signal },
-        );
-        const out = res as {
-          output_text?: string;
-          usage?: { input_tokens?: number; output_tokens?: number };
-        };
-        void recordApiUsage({
-          provider: 'openai',
-          operation: 'chat-personal-websearch',
-          model,
-          tokensIn: out.usage?.input_tokens ?? 0,
-          tokensOut: out.usage?.output_tokens ?? 0,
-          metadata: { web_search: true, session_id: ctx.sessionId ?? null },
-        });
-        return (
-          (out.output_text ?? '').trim() || 'Nenhum resultado relevante encontrado na busca.'
-        );
-      } catch (err) {
-        // Fail-soft: NUNCA lançar de dentro de execute() — abortaria o
-        // stream inteiro. Devolve uma explicação pro modelo seguir sem a
-        // busca (a regra 3 do system prompt instrui ele a avisar o usuário).
-        const msg = err instanceof Error ? err.message : String(err);
-        return `A busca ao vivo falhou (${msg}). Responda com seu conhecimento geral e avise que não conseguiu confirmar com uma fonte atual.`;
-      } finally {
-        clearTimeout(timer);
-      }
-    },
-  });
-}
-
 export async function handlePersonalChatTurn(input: {
   userId: string;
   messages: ChatMessage[];
@@ -125,7 +75,13 @@ export async function handlePersonalChatTurn(input: {
 
   const usedRef = { current: false };
   const tools = isPersonalWebSearchEnabled()
-    ? { web_search: createWebSearchTool({ sessionId: input.sessionId, usedRef }) }
+    ? {
+        web_search: createWebSearchTool({
+          sessionId: input.sessionId,
+          usedRef,
+          operation: 'chat-personal-websearch',
+        }),
+      }
     : undefined;
 
   const data = new StreamData();

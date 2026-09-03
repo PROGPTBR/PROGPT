@@ -76,6 +76,7 @@ function commonMocks(opts: {
     }),
   }));
   vi.doMock('ai', () => ({
+    tool: (config: unknown) => config,
     streamText: vi.fn().mockReturnValue({
       toDataStreamResponse: vi.fn(
         () => new Response('streamed', { status: 200 }),

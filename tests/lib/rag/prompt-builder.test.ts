@@ -122,6 +122,29 @@ describe('rag prompt-builder', () => {
     expect(SYSTEM_PROMPT).toMatch(/S2P|Source-to-Pay/i);
   });
 
+  // ── piloto de tools automáticas: Pesquisa de Preços + fallback do
+  // Assistente Pessoal (chamadas via tool-calling do AI SDK, não um intent
+  // novo do classificador — ver lib/chat/inline-chat-tools.ts) ────────────
+
+  it('instructs the model to call preco_referencia for price questions', async () => {
+    const { SYSTEM_PROMPT } = await import('@/lib/rag/prompt-builder');
+    expect(SYSTEM_PROMPT).toMatch(/preco_referencia/);
+  });
+
+  it('instructs the model to call responder_fora_do_escopo only for CLEARLY non-procurement topics, not for procurement gaps', async () => {
+    const { SYSTEM_PROMPT } = await import('@/lib/rag/prompt-builder');
+    expect(SYSTEM_PROMPT).toMatch(/responder_fora_do_escopo/);
+    // The refusal section must keep the split explicit: procurement-gap
+    // still refuses, only genuinely off-topic calls the fallback tool.
+    expect(SYSTEM_PROMPT).toMatch(/Se NÃO consegue E o tema É de procurement/);
+    expect(SYSTEM_PROMPT).toMatch(/Se o tema NÃO é de procurement/);
+  });
+
+  it('mentions web_search as the pair tool for time-sensitive off-topic questions', async () => {
+    const { SYSTEM_PROMPT } = await import('@/lib/rag/prompt-builder');
+    expect(SYSTEM_PROMPT).toMatch(/web_search/);
+  });
+
   // ── senior-expertise rules (sub-projeto 15) ──────────────────────────────
   // These rules exist to fight the "B-grade textbook answer" failure mode:
   // model produces structurally-correct but generic responses that don't

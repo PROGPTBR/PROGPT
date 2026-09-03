@@ -17,6 +17,14 @@ import { getRunForOwner } from '@/lib/assistants/runs';
 import type { ProfileParams } from '@/lib/assistants/types';
 import { detectAssistantToolCTA } from '@/components/chat/assistant-tool-cta-shared';
 import { handlePersonalChatTurn } from '@/lib/chat/personal-assistant';
+import { createWebSearchTool } from '@/lib/chat/web-search-tool';
+import {
+  createOffBaseMarkerTool,
+  createPrecoReferenciaTool,
+  isChatToolWebSearchEnabled,
+  isOffTopicFallbackEnabled,
+  isPrecoReferenciaToolEnabled,
+} from '@/lib/chat/inline-chat-tools';
 
 export const runtime = 'nodejs';
 
@@ -186,6 +194,34 @@ export async function POST(req: Request): Promise<Response> {
 
     const generateSpan = trace.span('generate', { systemLen: rag.system.length });
 
+    // Piloto "agentes acionados automaticamente" (Pesquisa de Preços +
+    // fallback do Assistente Pessoal) — o modelo decide sozinho, guiado
+    // pelas instruções em rag.system, quando chamar cada tool durante a
+    // própria geração. classifier.ts/runRag NÃO são tocados por isto; as
+    // tools operam ortogonalmente à classificação/retrieval normal. Ver
+    // lib/chat/inline-chat-tools.ts.
+    const offBaseRef = { current: false };
+    const webSearchRef = { current: false };
+    const precoRef = { current: false };
+    const chatTools = {
+      ...(isOffTopicFallbackEnabled()
+        ? { responder_fora_do_escopo: createOffBaseMarkerTool(offBaseRef) }
+        : {}),
+      ...(isChatToolWebSearchEnabled()
+        ? {
+            web_search: createWebSearchTool({
+              sessionId: parsed.sessionId,
+              usedRef: webSearchRef,
+              operation: 'chat-tool-websearch' as const,
+            }),
+          }
+        : {}),
+      ...(isPrecoReferenciaToolEnabled()
+        ? { preco_referencia: createPrecoReferenciaTool({ usedRef: precoRef }) }
+        : {}),
+    };
+    const tools = Object.keys(chatTools).length > 0 ? chatTools : undefined;
+
     const result = streamText({
       model: openai(getOpenAIModel('generation')),
       // Sem temperatura explícita o default da OpenAI é 1.0 — alto demais pra
@@ -196,6 +232,10 @@ export async function POST(req: Request): Promise<Response> {
       temperature: 0.3,
       system: rag.system,
       messages: llmMessages,
+      tools,
+      // Folga pra até duas tools + resposta final (ex.: responder_fora_do_escopo
+      // + web_search + texto).
+      maxSteps: tools ? 5 : 1,
       onFinish: async ({ text, usage, finishReason, providerMetadata }) => {
         // OpenAI's automatic prompt caching exposes `cached_tokens` via
         // providerMetadata (the AI SDK pulls it from
@@ -235,11 +275,30 @@ export async function POST(req: Request): Promise<Response> {
             // Atribui o custo à sessão → dashboard "gastos por sessão"
             // (/admin/monitor). O chat-generate é o custo dominante do turno.
             session_id: parsed.sessionId ?? null,
+            off_base_used: offBaseRef.current,
+            preco_referencia_used: precoRef.current,
           },
         });
         const aborted = finishReason === 'error';
         const level: TraceLevel = aborted ? 'WARNING' : 'DEFAULT';
         if (aborted) trace.setTag('aborted');
+
+        // Piloto de tools automáticas: reaproveita o MESMO badge "Modo
+        // Pessoal" que o Assistente Pessoal já usa (Message.tsx/
+        // MessageList.tsx leem esta annotation desde ontem) — zero código
+        // novo de UI necessário. O botão "Tentar no Modo Pessoal"
+        // (refusal-cta.ts) já se desliga sozinho em respostas com
+        // mode:'personal', então não aparece duplicado.
+        if (offBaseRef.current) {
+          data.appendMessageAnnotation({ mode: 'personal', webSearchUsed: webSearchRef.current });
+          trace.setTag('off-base-fallback:used');
+        }
+        // CTA forçado quando a tool de preço rodou de verdade — mais
+        // confiável que depender do modelo escrever o caminho no texto.
+        if (precoRef.current) {
+          data.appendMessageAnnotation({ assistantCTA: 'pesquisa_precos' });
+          trace.setTag('preco-referencia-tool:used');
+        }
 
         // Sub-projeto 34 — persist the resolved perfilId on the session
         // row so reloads remember the active category. We persist EVEN
@@ -267,7 +326,9 @@ export async function POST(req: Request): Promise<Response> {
         // e anexar annotation pra UI renderizar um CTA card grande no
         // lugar do link "aqui" pequeno (feedback beta 2026-05-22: link
         // markdown era pequeno demais no mobile + LLM hallucinava URL).
-        if (!aborted && finishReason === 'stop' && text.length >= 20) {
+        // Pulado quando a tool de preço já anotou um CTA acima — evita
+        // dois cards conflitantes na mesma resposta.
+        if (!precoRef.current && !aborted && finishReason === 'stop' && text.length >= 20) {
           const ctaType = detectAssistantToolCTA(text);
           if (ctaType) {
             data.appendMessageAnnotation({ assistantCTA: ctaType });
