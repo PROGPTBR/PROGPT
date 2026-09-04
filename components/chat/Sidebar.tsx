@@ -55,26 +55,31 @@ const NAV_ITEMS = [
   {
     href: '/painel',
     label: 'Painel',
+    description: 'Visão geral do ambiente.',
     icon: LayoutDashboard,
   },
   {
     href: '/dashboard',
     label: 'Dashboard',
+    description: 'Indicadores, análises e acompanhamento.',
     icon: BarChart3,
   },
   {
     href: '/assistants',
     label: 'Assistentes',
+    description: null,
     icon: Sparkles,
   },
   {
     href: '/fornecedores',
     label: 'Fornecedores',
+    description: 'Cadastro, avaliação, homologação e histórico.',
     icon: Building2,
   },
   {
     href: '/prompts',
     label: 'Biblioteca de Prompts',
+    description: null,
     icon: BookOpen,
   },
 ] as const;
@@ -516,6 +521,7 @@ export function Sidebar({
   ({
     href,
     label,
+    description,
     icon: Icon,
   }) => {
     const isAssistants =
@@ -607,13 +613,11 @@ export function Sidebar({
         className="
           group
           flex
-          items-center
+          items-start
           gap-3
           rounded-xl
           px-3
           py-2.5
-          text-sm
-          font-medium
           text-foreground/80
           transition-colors
 
@@ -623,6 +627,7 @@ export function Sidebar({
       >
         <Icon
           className="
+            mt-0.5
             h-4
             w-4
             shrink-0
@@ -634,74 +639,127 @@ export function Sidebar({
           aria-hidden="true"
         />
 
-        <span className="truncate">
-          {label}
-        </span>
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-sm font-medium">
+            {label}
+          </div>
+
+          {description && (
+            <div className="mt-0.5 text-[11px] font-normal leading-4 text-[#8fb3d9]">
+              {description}
+            </div>
+          )}
+        </div>
       </Link>
     );
   }
 )}
       </nav>
 
-      {/* ========================================================
-          CONVERSAS
-      ========================================================= */}
+  {/* ========================================================
+    CONVERSAS
+========================================================= */}
 
-      <div className="border-b border-border p-2">
-        <div className="relative">
-          <Search
-            className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
-            aria-hidden="true"
-          />
+<div className="p-2">
+  {/* Título da seção */}
+{/* Título da seção + Nova conversa */}
+<div className="mb-2 flex items-center justify-between px-1">
+  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+    Conversas
+  </div>
 
-          <input
-            type="text"
-            value={search}
-            onChange={(e) =>
-              setSearch(e.target.value)
-            }
-            placeholder="Buscar conversas"
-            aria-label="Buscar conversas"
-            className="
-              w-full
-              rounded-lg
-              border
-              border-border
-              bg-background
-              py-1.5
-              pl-8
-              pr-7
-              text-xs
-              text-foreground
-              placeholder-muted-foreground
-              outline-none
-              transition-colors
+  <button
+    type="button"
+    onClick={onNew}
+    aria-label="Nova conversa"
+    title="Nova conversa"
+    className="
+      brand-glow
+      inline-flex
+      h-8
+      w-8
+      shrink-0
+      items-center
+      justify-center
+      rounded-full
+      bg-brand-gradient
+      text-black
+      transition-all
 
-              focus:border-brand
-            "
-          />
+      hover:brightness-110
+      active:scale-95
+    "
+  >
+    <Plus
+      className="h-4 w-4"
+      aria-hidden="true"
+    />
+  </button>
+</div>
 
-          {search && (
-            <button
-              type="button"
-              onClick={() => setSearch('')}
-              aria-label="Limpar busca"
-              className="
-                absolute
-                right-2
-                top-1/2
-                -translate-y-1/2
-                text-muted-foreground
-                transition-colors
+{/* Histórico */}
+<div className="border-b border-border px-1 pb-2 text-[11px] font-medium text-muted-foreground">
+  Histórico de conversas
+</div>
 
-                hover:text-foreground
-              "
-            >
-              <X className="h-3.5 w-3.5" aria-hidden="true" />
-            </button>
-          )}
-        </div>
-      </div>
+  {/* Busca */}
+  <div className="relative mt-3">
+    <Search
+      className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
+      aria-hidden="true"
+    />
+
+    <input
+      type="text"
+      value={search}
+      onChange={(e) =>
+        setSearch(e.target.value)
+      }
+      placeholder="Buscar conversas"
+      aria-label="Buscar conversas"
+      className="
+        w-full
+        rounded-lg
+        border
+        border-border
+        bg-background
+        py-1.5
+        pl-8
+        pr-7
+        text-xs
+        text-foreground
+        placeholder-muted-foreground
+        outline-none
+        transition-colors
+
+        focus:border-brand
+      "
+    />
+
+    {search && (
+      <button
+        type="button"
+        onClick={() => setSearch('')}
+        aria-label="Limpar busca"
+        className="
+          absolute
+          right-2
+          top-1/2
+          -translate-y-1/2
+          text-muted-foreground
+          transition-colors
+
+          hover:text-foreground
+        "
+      >
+        <X
+          className="h-3.5 w-3.5"
+          aria-hidden="true"
+        />
+      </button>
+    )}
+  </div>
+</div>
 
       <ScrollArea className="min-h-0 flex-1">
         <ul className="space-y-0.5 p-2">
