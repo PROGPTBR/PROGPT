@@ -969,7 +969,7 @@ export function Composer({
               Mantido com a estrutura original
           ==================================================== */
 
-          <div className="flex items-end gap-2">
+          <div className="flex items-end gap-1 sm:gap-1.5">
             <input
               ref={fileInputRef}
               type="file"
@@ -994,8 +994,10 @@ export function Composer({
               title="Anexar arquivo (PDF, DOCX, XLSX, PNG, JPG)"
               className="
                 inline-flex
-                h-11
-                w-11
+                h-9
+                w-9
+                sm:h-10
+                sm:w-10
                 flex-shrink-0
                 items-center
                 justify-center
@@ -1024,7 +1026,7 @@ export function Composer({
 
             {/* Microfone */}
             <MicRecorderButton
-              size="lg"
+              size="sm"
               onTranscript={
                 handleTranscript
               }
@@ -1045,8 +1047,8 @@ export function Composer({
                 title="Conversar por voz — fale com o assistente em tempo real"
                 className="
                   inline-flex
-                  h-11
-                  w-11
+                  h-9
+                  w-9
                   flex-shrink-0
                   items-center
                   justify-center
@@ -1090,8 +1092,8 @@ export function Composer({
                   personalMode
                     ? `
                   inline-flex
-                  h-11
-                  w-11
+                  h-9
+                  w-9
                   flex-shrink-0
                   items-center
                   justify-center
@@ -1109,8 +1111,8 @@ export function Composer({
                 `
                     : `
                   inline-flex
-                  h-11
-                  w-11
+                  h-9
+                  w-9
                   flex-shrink-0
                   items-center
                   justify-center
@@ -1156,6 +1158,7 @@ export function Composer({
               }
               rows={1}
               className="
+                min-w-0
                 flex-1
                 resize-none
                 overflow-y-auto
@@ -1163,8 +1166,10 @@ export function Composer({
                 border
                 border-border
                 bg-muted/40
-                px-4
-                py-3
+                px-3
+                py-2.5
+                sm:px-4
+                sm:py-3
                 text-sm
                 text-foreground
                 placeholder-muted-foreground
@@ -1185,8 +1190,10 @@ export function Composer({
                 title="Parar"
                 className="
                   inline-flex
-                  h-11
-                  w-11
+                  h-9
+                  w-9
+                  sm:h-10
+                  sm:w-10
                   flex-shrink-0
                   items-center
                   justify-center
@@ -1221,8 +1228,10 @@ export function Composer({
                 }
                 className="
                   inline-flex
-                  h-11
-                  w-11
+                  h-9
+                  w-9
+                  sm:h-10
+                  sm:w-10
                   flex-shrink-0
                   items-center
                   justify-center
