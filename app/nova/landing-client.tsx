@@ -241,7 +241,7 @@ type Plan = {
 ============================================================ */
 
 const Button = ({
-  children = 'QUERO ACESSAR AGORA',
+  children = 'QUERO CONHECER O PROGPT',
   className = '',
 }: {
   children?: React.ReactNode;
@@ -529,25 +529,23 @@ export function NovaLanding({
 
 
           <h1>
-            Onde decisões{' '}
+           IA feita para quem{' '}
             <span>
-              ganham profundidade.
+              compra, negocia e decide.
             </span>
           </h1>
 
-          <p>
-            Um especialista de procurement
-            com a clareza de quem leu
-            Kraljic, Porter, Monczka e
-            Cousins — e a velocidade da IA.
+          <p className='mb-3'>
+           Uma IA especializada em Compras e Suprimentos para apoiar análises de propostas, fornecedores, TCO, contratos, riscos, negociação e Strategic Sourcing.
+<br/><br/>
+Menos trabalho operacional. Mais capacidade para decidir melhor.
           </p>
 
           <Button />
 
           <small>
             <ShieldCheck size={15} />
-            Comece grátis. Cancele quando
-            quiser.
+          Acesse e veja como a IA pode apoiar sua rotina de Compras.
           </small>
         </div>
 
@@ -594,7 +592,7 @@ export function NovaLanding({
         <div>
           <strong>+1.000</strong>
           <span>
-            profissionais impactados
+            profissionais capacitados em IA para Suprimentos
           </span>
         </div>
 
@@ -603,7 +601,7 @@ export function NovaLanding({
         <div>
           <strong>+30</strong>
           <span>
-            assistentes especialistas
+            assistentes especializados em Suprimentos
           </span>
         </div>
 
@@ -612,7 +610,7 @@ export function NovaLanding({
         <div>
           <strong>24/7</strong>
           <span>
-            disponível para sua equipe
+            apoio disponível para sua equipe
           </span>
         </div>
       </section>
@@ -671,15 +669,13 @@ export function NovaLanding({
             >
               <span>CONHECIMENTO</span>
 
-              <h3>Chat especialista</h3>
+              <h3>Especialista em Suprimentos ao seu lado</h3>
 
               <p>
-                Centenas de artigos
-                canônicos — Kraljic, Porter,
-                Monczka e Cousins — viraram
-                a memória do seu time.
-                Pergunte como faria para um
-                colega sênior.
+                Acesse conhecimento aplicado em Strategic Sourcing, Kraljic, Porter, negociação, fornecedores, contratos e custos.
+                <br />
+                <br />
+                Pergunte como faria a um profissional sênior da área e receba apoio para analisar, estruturar e decidir melhor.
               </p>
             </div>
           </article>
@@ -731,17 +727,17 @@ export function NovaLanding({
               <span>EXECUÇÃO</span>
 
               <h3>
-                Dezenas de assistentes que
-                executam
+                Assistentes que trabalham junto com você
               </h3>
 
               <p>
-                Perfil de Categoria, ABC,
-                Porter, Busca de
-                Fornecedores, Kraljic, RFP,
-                Negociação e Análise
-                Financeira — cada passo com
-                um assistente próprio.
+                Conte com assistentes especializados para diferentes etapas de Compras.
+                 <br />
+                  <br />
+Análise de categoria, fornecedores, RFP, propostas, TCO, negociação, contratos, riscos e análise financeira.
+ <br />
+  <br />
+Menos trabalho manual. Mais velocidade para transformar dados em decisão.
               </p>
             </div>
           </article>
@@ -775,22 +771,27 @@ export function NovaLanding({
             >
               <span>CONFIANÇA</span>
 
-              <h3>Base curada</h3>
+              <h3>Respostas com mais segurança</h3>
 
               <p>
-                A IA pesquisa fontes externas
-                selecionadas e confiáveis
-                para responder com mais
-                segurança. Cada resposta
-                passa por uma verificação de
-                relevância e inclui a fonte
-                consultada.
+                O ProGpt pode consultar fontes selecionadas, cruzar informações e indicar as referências utilizadas na análise.
+<br />
                 <br />
+Quando não encontra base suficiente para responder, sinaliza a limitação em vez de simplesmente inventar uma resposta.
+<br />
                 <br />
-                Se não encontrar uma fonte
-                confiável, ela informa com
-                transparência, sem criar uma
-                resposta.
+Mais confiança para usar IA em decisões reais de Compras.
+<br />
+                <br />
+Eu também mudaria o título superior de:
+<br />
+                <br />
+“Inteligência invisível acelerando cada um dos 8 passos do Strategic Sourcing.”
+<br />
+                <br />
+para:
+“Do diagnóstico à negociação: IA apoiando os 8 passos do Strategic Sourcing.”
+                
               </p>
             </div>
           </article>

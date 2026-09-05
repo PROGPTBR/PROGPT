@@ -1785,7 +1785,7 @@
     justify-self:end
 }
  .hero h1{
-    font-size:clamp(48px,4vw,61px)
+    font-size:clamp(48px,4vw,55px)
 }
  .hero h1 span{
     white-space:nowrap

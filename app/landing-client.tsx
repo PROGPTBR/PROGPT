@@ -41,9 +41,9 @@ const NAV_LINKS = [
 
 const FEATURE_CARDS = [
   {
-    title: 'Chat especialista',
+    title: 'Especialista em Suprimentos ao seu lado',
     blurb:
-      'Centenas de artigos canônicos (Kraljic, Porter, Monczka, Cousins) viraram a memória do seu time. Pergunte como faria para um colega sênior.',
+      'Acesse conhecimento aplicado em Strategic Sourcing, Kraljic, Porter, negociação, fornecedores, contratos e custos.<br/>Pergunte como faria a um profissional sênior da área e receba apoio para analisar, estruturar e decidir melhor.',
     image:
       'https://images.unsplash.com/photo-1568667256549-094345857637?w=800&h=600&q=80&auto=format&fit=crop',
     alt: 'Biblioteca em espiral repleta de livros — base de conhecimento curada',
