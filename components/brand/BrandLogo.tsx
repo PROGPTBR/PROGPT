@@ -41,7 +41,7 @@ export function BrandLogo({
       className={`inline-flex items-center rounded-lg ${PAD_CLASS[size]} ${className} bg-[#0b1222] dark:bg-transparent`}
     >
       <Image
-        src="/2bsupply-logo.png"
+        src="/progpt-logo-white.png"
         alt="2BSUPPLY"
         width={241}
         height={57}
