@@ -631,10 +631,10 @@ Menos trabalho operacional. Mais capacidade para decidir melhor.
           <span>Sobre</span>
 
           <h2>
-            Inteligência invisível{' '}
+            Do diagnóstico à negociação:{' '}
             <em>
-              acelerando cada um dos 8
-              passos do Strategic Sourcing.
+              IA apoiando os 8 passos 
+              do Strategic Sourcing.
             </em>
           </h2>
         </div>
@@ -781,16 +781,7 @@ Quando não encontra base suficiente para responder, sinaliza a limitação em v
 <br />
                 <br />
 Mais confiança para usar IA em decisões reais de Compras.
-<br />
-                <br />
-Eu também mudaria o título superior de:
-<br />
-                <br />
-“Inteligência invisível acelerando cada um dos 8 passos do Strategic Sourcing.”
-<br />
-                <br />
-para:
-“Do diagnóstico à negociação: IA apoiando os 8 passos do Strategic Sourcing.”
+
                 
               </p>
             </div>
