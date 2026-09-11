@@ -186,7 +186,7 @@ inputMode="numeric"
         onChange={(e) => {
   const value = e.target.value
     .replace(/\D/g, "")
-    .slice(0, 3);
+    .slice(0, 4);
 
   setForm((prev) => ({
     ...prev,
@@ -194,8 +194,8 @@ inputMode="numeric"
   }));
 }}
         className={INPUT_CLASS}
-        placeholder="123"
-maxLength={3}
+        placeholder={cardBrand === "amex" ? "1234" : "123"}
+maxLength={4}
 inputMode="numeric"
       />
 

@@ -211,7 +211,7 @@ creditCardHolderInfo: {
   name: body.name,
   email: body.email,
   cpfCnpj: cpf,
-  postalCode: body.postalCode,
+  postalCode: body.postalCode.replace(/\D/g, ""),
   addressNumber: body.addressNumber,
   phone: body.phone.replace(/\D/g, ""),
   mobilePhone: body.phone.replace(/\D/g, ""),

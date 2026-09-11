@@ -157,6 +157,40 @@ if (!form.state.trim()) {
 
   return "";
 }
+function validateStep4() {
+  const cardDigits = form.cardNumber.replace(/\D/g, "");
+
+  if (cardDigits.length < 13) {
+    return "Informe um número de cartão válido.";
+  }
+
+  if (!form.cardHolder.trim()) {
+    return "Informe o nome impresso no cartão.";
+  }
+
+  if (!/^\d{2}\/\d{2}$/.test(form.cardExpiry)) {
+    return "Informe a validade do cartão (MM/AA).";
+  }
+
+  const expMonth = Number(form.cardExpiry.slice(0, 2));
+  const expYear = Number(form.cardExpiry.slice(3, 5));
+  const now = new Date();
+  const currentYear = now.getFullYear() % 100;
+  const currentMonth = now.getMonth() + 1;
+
+  if (
+    expYear < currentYear ||
+    (expYear === currentYear && expMonth < currentMonth)
+  ) {
+    return "Cartão vencido — confira a validade informada.";
+  }
+
+  if (form.cardCvv.length < 3) {
+    return "Informe o CVV do cartão (3 dígitos, ou 4 para Amex).";
+  }
+
+  return "";
+}
 
 const nextStep = async () => {
  console.log("NEXT STEP", new Date().toISOString());
@@ -181,6 +215,15 @@ if (step === 2) {
     return;
   }
 }
+
+  if (step === 4) {
+    const validation = validateStep4();
+
+    if (validation) {
+      showError(validation);
+      return;
+    }
+  }
 
   if (step < 4) {
     setStep((s) => s + 1);
