@@ -29,8 +29,22 @@ const ITEMS = [
   { href: '/admin/ingest', label: 'Ingestão', Icon: Upload },
   { href: '/admin/feedback', label: 'Feedback', Icon: MessageSquare },
   { href: '/admin/funnel', label: 'Funil', Icon: TrendingUp },
+
   { href: '/admin/costs', label: 'Custos', Icon: DollarSign },
-  { href: '/admin/billing', label: 'Faturamento', Icon: CreditCard, adminOnly: true },
+
+  {
+    href: '/admin/profitability',
+    label: 'Rentabilidade',
+    Icon: TrendingUp,
+    adminOnly: true,
+  },
+
+  {
+    href: '/admin/billing',
+    label: 'Faturamento',
+    Icon: CreditCard,
+    adminOnly: true,
+  },
 ];
 
 export function AdminSidebar({ role = 'admin' }: { role?: 'admin' | 'gestor' }) {

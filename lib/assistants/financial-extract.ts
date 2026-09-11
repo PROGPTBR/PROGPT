@@ -1,23 +1,22 @@
 import { z } from 'zod';
-import { getOpenAI, getOpenAIModel } from '@/lib/llm/openai';
-import { recordApiUsage } from '@/lib/observability/api-usage';
-import type { FinancialIndicators } from './types';
 
-// Sub-projeto 30 — Extração estruturada dos 12 indicadores financeiros
-// de um PDF (Balanço Patrimonial + DRE) via OpenAI Responses API.
-//
-// Mesmo padrão do `lib/ingest/multimodal-parse.ts`: input_file inline
-// (base64 PDF) quando < 10 MB; >= 10 MB usa Files API. Retorna apenas
-// os valores numéricos; o cálculo de score acontece em
-// `lib/assistants/financial.ts` deterministicamente.
+import {
+  getOpenAI,
+  getOpenAIModel,
+} from '@/lib/llm/openai';
+
+import {
+  recordApiUsage,
+} from '@/lib/observability/api-usage';
+
+import type {
+  FinancialIndicators,
+} from './types';
 
 const INLINE_LIMIT_BYTES = 10 * 1024 * 1024;
-const TIMEOUT_MS = 180_000; // PDFs grandes podem levar tempo
+const TIMEOUT_MS = 180_000;
 const MAX_OUTPUT_TOKENS = 4096;
 
-// Zod schema da resposta estruturada. Tudo opcional — quando o PDF não
-// trouxer o número, omitimos a chave e o pillar correspondente entra
-// como N/D no scoring.
 const ExtractedSchema = z.object({
   receitaLiquida: z.number().nullable().optional(),
   ebitda: z.number().nullable().optional(),
@@ -34,8 +33,7 @@ const ExtractedSchema = z.object({
   coberturaJuros: z.number().nullable().optional(),
   endividamentoGeralPct: z.number().nullable().optional(),
   fluxoCaixaOperacional: z.number().nullable().optional(),
-  // Optional metadata fields surfaced for diagnostics — not returned to
-  // the API caller, but useful in Langfuse traces.
+
   detectedYear: z.string().nullable().optional(),
   detectedCnpj: z.string().nullable().optional(),
   notes: z.string().nullable().optional(),
@@ -76,17 +74,38 @@ REGRAS DE EXTRAÇÃO:
 
 Retorne APENAS o JSON conforme o schema. Sem preâmbulo.`;
 
-type InlineFilePart = { type: 'input_file'; filename: string; file_data: string };
-type RemoteFilePart = { type: 'input_file'; file_id: string };
-type PdfPart = InlineFilePart | RemoteFilePart;
+type InlineFilePart = {
+  type: 'input_file';
+  filename: string;
+  file_data: string;
+};
+
+type RemoteFilePart = {
+  type: 'input_file';
+  file_id: string;
+};
+
+type PdfPart =
+  | InlineFilePart
+  | RemoteFilePart;
 
 export class FinancialExtractError extends Error {
-  readonly code: 'too_small' | 'timeout' | 'parse_failed' | 'empty';
+  readonly code:
+    | 'too_small'
+    | 'timeout'
+    | 'parse_failed'
+    | 'empty';
+
   constructor(
-    code: 'too_small' | 'timeout' | 'parse_failed' | 'empty',
+    code:
+      | 'too_small'
+      | 'timeout'
+      | 'parse_failed'
+      | 'empty',
     message: string,
   ) {
     super(message);
+
     this.code = code;
     this.name = 'FinancialExtractError';
   }
@@ -99,9 +118,17 @@ export type ExtractFinancialResult = {
   notes?: string;
 };
 
+/* =========================================================
+   EXTRAÇÃO FINANCEIRA
+
+   O userId é obrigatório para impedir que novos custos
+   sejam gravados sem vínculo com o usuário.
+========================================================= */
+
 export async function extractFinancialFromPdf(input: {
   buf: Buffer;
   filename: string;
+  userId: string;
 }): Promise<ExtractFinancialResult> {
   if (input.buf.length < 1024) {
     throw new FinancialExtractError(
@@ -111,111 +138,283 @@ export async function extractFinancialFromPdf(input: {
   }
 
   const ai = getOpenAI();
-  const model = getOpenAIModel('generation');
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+
+  const model = getOpenAIModel(
+    'generation',
+  );
+
+  const controller =
+    new AbortController();
+
+  const timer = setTimeout(
+    () => controller.abort(),
+    TIMEOUT_MS,
+  );
 
   try {
-    // PDFs grandes vão pela Files API; pequenos ficam inline em base64.
     let pdfPart: PdfPart;
-    if (input.buf.length < INLINE_LIMIT_BYTES) {
-      const base64 = input.buf.toString('base64');
+
+    /* =====================================================
+       PDF INLINE OU FILES API
+    ===================================================== */
+
+    if (
+      input.buf.length <
+      INLINE_LIMIT_BYTES
+    ) {
+      const base64 =
+        input.buf.toString(
+          'base64',
+        );
+
       pdfPart = {
         type: 'input_file',
         filename: input.filename,
-        file_data: `data:application/pdf;base64,${base64}`,
+        file_data:
+          `data:application/pdf;base64,${base64}`,
       };
     } else {
-      const file = await ai.files.create({
-        file: new File([new Uint8Array(input.buf)], input.filename, {
-          type: 'application/pdf',
-        }),
-        purpose: 'user_data',
-      });
-      pdfPart = { type: 'input_file', file_id: file.id };
+      const file =
+        await ai.files.create({
+          file: new File(
+            [
+              new Uint8Array(
+                input.buf,
+              ),
+            ],
+            input.filename,
+            {
+              type:
+                'application/pdf',
+            },
+          ),
+
+          purpose:
+            'user_data',
+        });
+
+      pdfPart = {
+        type: 'input_file',
+        file_id: file.id,
+      };
     }
 
-    const res = await ai.responses.create(
-      {
-        model,
-        input: [
-          {
-            role: 'user',
-            content: [
-              { type: 'input_text', text: EXTRACT_SYSTEM_PROMPT },
-              pdfPart as never,
-            ],
-          },
-        ],
-        text: { format: { type: 'json_object' } },
-        max_output_tokens: MAX_OUTPUT_TOKENS,
-      },
-      { signal: controller.signal },
-    );
+    /* =====================================================
+       OPENAI
+    ===================================================== */
 
-    const usage = (
-      res as {
-        usage?: {
-          input_tokens?: number;
-          output_tokens?: number;
-          input_tokens_details?: { cached_tokens?: number };
-        };
-      }
-    ).usage;
+    const res =
+      await ai.responses.create(
+        {
+          model,
+
+          input: [
+            {
+              role: 'user',
+
+              content: [
+                {
+                  type:
+                    'input_text',
+
+                  text:
+                    EXTRACT_SYSTEM_PROMPT,
+                },
+
+                pdfPart as never,
+              ],
+            },
+          ],
+
+          text: {
+            format: {
+              type:
+                'json_object',
+            },
+          },
+
+          max_output_tokens:
+            MAX_OUTPUT_TOKENS,
+        },
+
+        {
+          signal:
+            controller.signal,
+        },
+      );
+
+    /* =====================================================
+       USO DA API
+
+       Agora SEMPRE associado ao usuário autenticado.
+    ===================================================== */
+
+    const usage =
+      (
+        res as {
+          usage?: {
+            input_tokens?: number;
+
+            output_tokens?: number;
+
+            input_tokens_details?: {
+              cached_tokens?: number;
+            };
+          };
+        }
+      ).usage;
+
     void recordApiUsage({
-      provider: 'openai',
-      operation: 'assistant-financial-extract',
+      userId:
+        input.userId,
+
+      provider:
+        'openai',
+
+      operation:
+        'assistant-financial-extract',
+
       model,
-      tokensIn: usage?.input_tokens ?? 0,
-      tokensOut: usage?.output_tokens ?? 0,
-      tokensCached: usage?.input_tokens_details?.cached_tokens ?? 0,
-      metadata: { filename: input.filename, bytes: input.buf.length },
+
+      tokensIn:
+        usage?.input_tokens ??
+        0,
+
+      tokensOut:
+        usage?.output_tokens ??
+        0,
+
+      tokensCached:
+        usage
+          ?.input_tokens_details
+          ?.cached_tokens ??
+        0,
+
+      metadata: {
+        filename:
+          input.filename,
+
+        bytes:
+          input.buf.length,
+      },
     });
 
-    const raw = extractText(res);
-    if (!raw || raw.trim().length === 0) {
+    /* =====================================================
+       PARSE DA RESPOSTA
+    ===================================================== */
+
+    const raw =
+      extractText(
+        res,
+      );
+
+    if (
+      !raw ||
+      raw.trim().length === 0
+    ) {
       throw new FinancialExtractError(
         'empty',
         'A IA não retornou conteúdo. Tente um PDF mais legível.',
       );
     }
 
-    let parsed: ExtractedShape;
+    let parsed:
+      ExtractedShape;
+
     try {
-      parsed = ExtractedSchema.parse(JSON.parse(raw));
+      parsed =
+        ExtractedSchema.parse(
+          JSON.parse(
+            raw,
+          ),
+        );
     } catch (err) {
       throw new FinancialExtractError(
         'parse_failed',
-        `Não foi possível interpretar a resposta da IA: ${err instanceof Error ? err.message : 'unknown'}`,
+
+        `Não foi possível interpretar a resposta da IA: ${
+          err instanceof Error
+            ? err.message
+            : 'unknown'
+        }`,
       );
     }
 
     return {
-      indicators: stripNulls(parsed),
-      detectedYear: parsed.detectedYear ?? undefined,
-      detectedCnpj: parsed.detectedCnpj ?? undefined,
-      notes: parsed.notes ?? undefined,
+      indicators:
+        stripNulls(
+          parsed,
+        ),
+
+      detectedYear:
+        parsed.detectedYear ??
+        undefined,
+
+      detectedCnpj:
+        parsed.detectedCnpj ??
+        undefined,
+
+      notes:
+        parsed.notes ??
+        undefined,
     };
   } catch (err) {
-    if (err instanceof FinancialExtractError) throw err;
-    if ((err as { name?: string })?.name === 'AbortError') {
+    if (
+      err instanceof
+      FinancialExtractError
+    ) {
+      throw err;
+    }
+
+    if (
+      (
+        err as {
+          name?: string;
+        }
+      )?.name ===
+      'AbortError'
+    ) {
       throw new FinancialExtractError(
         'timeout',
-        `A extração excedeu ${TIMEOUT_MS / 1000}s. PDFs muito grandes podem precisar de redução.`,
+
+        `A extração excedeu ${
+          TIMEOUT_MS / 1000
+        }s. PDFs muito grandes podem precisar de redução.`,
       );
     }
-    const message = err instanceof Error ? err.message : String(err);
-    throw new FinancialExtractError('parse_failed', message);
+
+    const message =
+      err instanceof Error
+        ? err.message
+        : String(
+            err,
+          );
+
+    throw new FinancialExtractError(
+      'parse_failed',
+      message,
+    );
   } finally {
-    clearTimeout(timer);
+    clearTimeout(
+      timer,
+    );
   }
 }
 
-/** Strip null/undefined from the zod-parsed shape, returning a clean
- *  FinancialIndicators object (no diagnostic fields). */
-function stripNulls(p: ExtractedShape): FinancialIndicators {
-  const out: FinancialIndicators = {};
-  const keys: Array<keyof FinancialIndicators> = [
+/* =========================================================
+   LIMPEZA DOS INDICADORES
+========================================================= */
+
+function stripNulls(
+  p: ExtractedShape,
+): FinancialIndicators {
+  const out:
+    FinancialIndicators =
+      {};
+
+  const keys: Array<
+    keyof FinancialIndicators
+  > = [
     'receitaLiquida',
     'ebitda',
     'lucroLiquido',
@@ -232,28 +431,71 @@ function stripNulls(p: ExtractedShape): FinancialIndicators {
     'endividamentoGeralPct',
     'fluxoCaixaOperacional',
   ];
+
   for (const k of keys) {
-    const v = p[k];
-    if (typeof v === 'number' && Number.isFinite(v)) out[k] = v;
+    const v =
+      p[k];
+
+    if (
+      typeof v ===
+        'number' &&
+      Number.isFinite(v)
+    ) {
+      out[k] = v;
+    }
   }
+
   return out;
 }
 
-function extractText(res: unknown): string {
-  const r = res as {
-    output_text?: string;
-    output?: Array<{ content?: Array<{ type?: string; text?: string }> }>;
-  };
-  if (typeof r.output_text === 'string' && r.output_text.length > 0) {
+/* =========================================================
+   EXTRAÇÃO DO TEXTO DA RESPONSE API
+========================================================= */
+
+function extractText(
+  res: unknown,
+): string {
+  const r =
+    res as {
+      output_text?:
+        string;
+
+      output?: Array<{
+        content?: Array<{
+          type?: string;
+          text?: string;
+        }>;
+      }>;
+    };
+
+  if (
+    typeof r.output_text ===
+      'string' &&
+    r.output_text.length > 0
+  ) {
     return r.output_text;
   }
-  const blocks = r.output ?? [];
+
+  const blocks =
+    r.output ??
+    [];
+
   for (const b of blocks) {
-    for (const c of b.content ?? []) {
-      if (c.type?.startsWith('output_text') && typeof c.text === 'string') {
+    for (
+      const c
+      of b.content ?? []
+    ) {
+      if (
+        c.type?.startsWith(
+          'output_text',
+        ) &&
+        typeof c.text ===
+          'string'
+      ) {
         return c.text;
       }
     }
   }
+
   return '';
 }
