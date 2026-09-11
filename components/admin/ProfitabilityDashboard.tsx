@@ -1250,83 +1250,36 @@ export function ProfitabilityDashboard() {
      EXPORTAR CSV
   ======================================================= */
 
-  function exportCsv() {
-    if (
-      !filteredCustomers.length
-    ) {
-      toast.error(
-        'Não há clientes para exportar',
-      );
+  type CsvValue =
+    | string
+    | number
+    | null
+    | undefined;
 
-      return;
-    }
-
-    const rows = [
-      [
-        'Cliente',
-        'Plano',
-        'Receita',
-        'Custo API',
-        'Infraestrutura',
-        'Custo total',
-        'Lucro',
-        'Margem',
-        'Chamadas',
-      ],
-
-      ...filteredCustomers.map(
-        (customer) => [
-          customer.email,
-
-          customer.plan,
-
-          customer.periodRevenue.toFixed(
-            2,
-          ),
-
-          customer.apiCostBrl.toFixed(
-            2,
-          ),
-
-          customer.periodInfra.toFixed(
-            2,
-          ),
-
-          customer.periodTotalCost.toFixed(
-            2,
-          ),
-
-          customer.periodProfit.toFixed(
-            2,
-          ),
-
-          customer.periodMargin.toFixed(
-            2,
-          ),
-
-          String(
-            customer.calls,
-          ),
-        ],
-      ),
-    ];
-
+  function downloadCsv(
+    filename: string,
+    rows: CsvValue[][],
+  ) {
     const escape = (
-      value: string,
-    ) =>
-      `"${value.replace(
+      value: CsvValue,
+    ) => {
+      const text =
+        value == null
+          ? ''
+          : String(value);
+
+      return `"${text.replace(
         /"/g,
         '""',
       )}"`;
+    };
 
     const csv =
       '\uFEFF' +
       rows
         .map((row) =>
           row
-            .map(
-              escape,
-            )
+            .map(escape)
             .join(';'),
         )
         .join('\n');
@@ -1353,18 +1306,247 @@ export function ProfitabilityDashboard() {
       url;
 
     anchor.download =
-      `rentabilidade-${range}-dias.csv`;
+      filename;
 
     document.body.appendChild(
       anchor,
     );
 
     anchor.click();
-
     anchor.remove();
 
     URL.revokeObjectURL(
       url,
+    );
+  }
+
+  function exportCustomersCsv() {
+    if (
+      !filteredCustomers.length
+    ) {
+      toast.error(
+        'Não há clientes para exportar',
+      );
+
+      return;
+    }
+
+    downloadCsv(
+      `rentabilidade-clientes-${range}-dias.csv`,
+      [
+        [
+          'Cliente',
+          'Plano',
+          'Receita (R$)',
+          'Custo API (R$)',
+          'Infraestrutura (R$)',
+          'Custo total (R$)',
+          'Lucro (R$)',
+          'Margem (%)',
+          'Chamadas',
+        ],
+
+        ...filteredCustomers.map(
+          (customer) => [
+            customer.email,
+            customer.plan,
+            customer.periodRevenue.toFixed(2),
+            customer.apiCostBrl.toFixed(2),
+            customer.periodInfra.toFixed(2),
+            customer.periodTotalCost.toFixed(2),
+            customer.periodProfit.toFixed(2),
+            customer.periodMargin.toFixed(2),
+            customer.calls,
+          ],
+        ),
+      ],
+    );
+  }
+
+  function exportProvidersCsv() {
+    if (!data) {
+      toast.error(
+        'Os dados ainda não foram carregados',
+      );
+
+      return;
+    }
+
+    if (
+      !data.apiUsage.byProvider.length
+    ) {
+      toast.error(
+        'Não há custos de IA para exportar',
+      );
+
+      return;
+    }
+
+    downloadCsv(
+      `custos-variaveis-ia-${range}-dias.csv`,
+      [
+        [
+          'Provedor',
+          'Custo USD',
+          'Custo R$',
+          'Chamadas',
+          'Tokens in',
+          'Tokens out',
+        ],
+
+        ...data.apiUsage.byProvider.map(
+          (provider) => [
+            provider.provider,
+            provider.costUsd.toFixed(6),
+            provider.costBrl.toFixed(2),
+            provider.calls,
+            provider.tokensIn,
+            provider.tokensOut,
+          ],
+        ),
+
+        [
+          'Total',
+          data.apiUsage.costUsd.toFixed(6),
+          data.apiUsage.costBrl.toFixed(2),
+          data.apiUsage.calls,
+          data.apiUsage.tokensIn,
+          data.apiUsage.tokensOut,
+        ],
+      ],
+    );
+  }
+
+  function exportOperationsCsv() {
+    if (!data) {
+      toast.error(
+        'Os dados ainda não foram carregados',
+      );
+
+      return;
+    }
+
+    const operations =
+      (
+        data.apiUsage.byOperation ??
+        []
+      ).slice(0, 10);
+
+    if (!operations.length) {
+      toast.error(
+        'Não há operações para exportar',
+      );
+
+      return;
+    }
+
+    downloadCsv(
+      `top-operacoes-custo-${range}-dias.csv`,
+      [
+        [
+          'Operação',
+          'Provedor',
+          'Custo USD',
+          'Custo R$',
+          'Chamadas',
+          'Tokens in',
+          'Tokens out',
+        ],
+
+        ...operations.map(
+          (operation) => [
+            operation.operation,
+            operation.provider,
+            operation.costUsd.toFixed(6),
+            operation.costBrl.toFixed(2),
+            operation.calls,
+            operation.tokensIn,
+            operation.tokensOut,
+          ],
+        ),
+      ],
+    );
+  }
+
+  function exportFixedCostsCsv() {
+    if (!data) {
+      toast.error(
+        'Os dados ainda não foram carregados',
+      );
+
+      return;
+    }
+
+    if (!data.fixedCosts.length) {
+      toast.error(
+        'Não há custos fixos para exportar',
+      );
+
+      return;
+    }
+
+    downloadCsv(
+      'infraestrutura-servicos-fixos.csv',
+      [
+        [
+          'Serviço',
+          'Descrição',
+          'Moeda',
+          'Valor cobrado',
+          'Periodicidade',
+          'Equiv. mensal (moeda original)',
+          'Equiv. mensal (R$)',
+          'Status',
+          'Ordem',
+        ],
+
+        ...data.fixedCosts.map(
+          (cost) => {
+            const currency =
+              getCostCurrency(
+                cost,
+              );
+
+            const billingCycle =
+              getBillingCycle(
+                cost,
+              );
+
+            return [
+              cost.name,
+              cost.description ?? '',
+              currency,
+              getBillingAmount(
+                cost,
+              ).toFixed(2),
+              billingCycle === 'annual'
+                ? 'Anual'
+                : 'Mensal',
+              cost.monthlyAmount.toFixed(2),
+              getMonthlyAmountBrl(
+                cost,
+                data.currency.usdBrl,
+              ).toFixed(2),
+              cost.active
+                ? 'Ativo'
+                : 'Inativo',
+              cost.sortOrder,
+            ];
+          },
+        ),
+
+        [
+          'Total mensal considerado',
+          '',
+          'BRL',
+          '',
+          '',
+          '',
+          data.totals.monthlyFixedCostsBrl.toFixed(2),
+          '',
+          '',
+        ],
+      ],
     );
   }
 
@@ -1628,25 +1810,34 @@ export function ProfitabilityDashboard() {
             ALERTA CUSTO NÃO ATRIBUÍDO
         ================================================= */}
 
-       {data.totals.unattributedApiCostBrl > 0 && (
-  <div className="flex items-start gap-3 rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3">
-    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
+        {data.totals
+          .unattributedApiCostBrl >
+          0 && (
+          <div className="flex items-start gap-3 rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
 
-    <div>
-      <div className="text-sm font-medium">
-        Existe custo de API sem vínculo com usuário
-      </div>
+            <div>
+              <div className="text-sm font-medium">
+                Existe custo de
+                API não atribuído a
+                usuários
+              </div>
 
-      <div className="mt-0.5 text-xs text-muted-foreground">
-        {fmtBrl(
-          data.totals.unattributedApiCostBrl,
-        )}{' '}
-        em chamadas de API no período não pôde ser associado a um cliente
-        e foi considerado como custo geral da plataforma.
-      </div>
-    </div>
-  </div>
-)}
+              <div className="mt-0.5 text-xs text-muted-foreground">
+                {fmtBrl(
+                  data.totals
+                    .unattributedApiCostBrl,
+                )}{' '}
+                no período
+                selecionado foi
+                classificado como
+                custo geral da
+                plataforma.
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* =================================================
             COMPARATIVO
         ================================================= */}
@@ -1804,7 +1995,7 @@ export function ProfitabilityDashboard() {
                 variant="outline"
                 size="sm"
                 onClick={
-                  exportCsv
+                  exportCustomersCsv
                 }
               >
                 <Download className="mr-2 h-4 w-4" />
@@ -1980,6 +2171,16 @@ export function ProfitabilityDashboard() {
   title="Custos variáveis de IA"
   description="Consumo automático registrado pelas APIs no período selecionado."
   icon={CircleDollarSign}
+  actions={
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={exportProvidersCsv}
+    >
+      <Download className="mr-2 h-4 w-4" />
+      Exportar CSV
+    </Button>
+  }
 >
   <div className="overflow-x-auto">
     <Table>
@@ -2123,12 +2324,23 @@ export function ProfitabilityDashboard() {
           description="Operações que mais consumiram APIs no período selecionado."
           icon={TrendingUp}
           actions={
-            <a
-              href="/admin/costs"
-              className="inline-flex h-9 items-center justify-center rounded-md border border-border bg-background px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-            >
-              Ver todos em Custos
-            </a>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={exportOperationsCsv}
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Exportar CSV
+              </Button>
+
+              <a
+                href="/admin/costs"
+                className="inline-flex h-9 items-center justify-center rounded-md border border-border bg-background px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              >
+                Ver todos em Custos
+              </a>
+            </div>
           }
         >
           <div className="overflow-x-auto">
@@ -2218,16 +2430,27 @@ export function ProfitabilityDashboard() {
             Server
           }
           actions={
-            <Button
-              size="sm"
-              onClick={
-                openNewCostModal
-              }
-            >
-              <Plus className="mr-2 h-4 w-4" />
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={exportFixedCostsCsv}
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Exportar CSV
+              </Button>
 
-              Adicionar custo
-            </Button>
+              <Button
+                size="sm"
+                onClick={
+                  openNewCostModal
+                }
+              >
+                <Plus className="mr-2 h-4 w-4" />
+
+                Adicionar custo
+              </Button>
+            </div>
           }
         >
           <div className="overflow-x-auto">
