@@ -11,6 +11,7 @@ type EnrichedUser = {
   last_sign_in_at: string | null;
   session_count: number;
   created_at: string;
+  active: boolean;
 };
 
 export default async function AdminUsersPage() {
@@ -23,7 +24,7 @@ export default async function AdminUsersPage() {
 
   const { data: rows, error } = await svc
     .from('profiles_with_email')
-    .select('id, email, role, last_sign_in_at, created_at')
+    .select('id, email, role, last_sign_in_at, created_at, banned_until')
     .order('created_at', { ascending: false });
   if (error) {
     return <p className="text-sm text-destructive">Falha ao carregar usuários: {error.message}</p>;
@@ -35,14 +36,19 @@ export default async function AdminUsersPage() {
     map.set(r.user_id, Number(r.session_count));
   }
 
-  const users: EnrichedUser[] = (rows ?? []).map((r: Record<string, unknown>) => ({
-    id: r.id as string,
-    email: r.email as string,
-    role: (r.role as 'admin' | 'user') ?? 'user',
-    last_sign_in_at: (r.last_sign_in_at as string | null) ?? null,
-    created_at: r.created_at as string,
-    session_count: map.get(r.id as string) ?? 0,
-  }));
+  const now = Date.now();
+  const users: EnrichedUser[] = (rows ?? []).map((r: Record<string, unknown>) => {
+    const bannedUntil = r.banned_until as string | null;
+    return {
+      id: r.id as string,
+      email: r.email as string,
+      role: (r.role as 'admin' | 'user') ?? 'user',
+      last_sign_in_at: (r.last_sign_in_at as string | null) ?? null,
+      created_at: r.created_at as string,
+      session_count: map.get(r.id as string) ?? 0,
+      active: !bannedUntil || new Date(bannedUntil).getTime() <= now,
+    };
+  });
 
   return <UsersTable users={users} currentUserId={user.id} />;
 }

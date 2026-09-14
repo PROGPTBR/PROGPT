@@ -21,6 +21,7 @@ type AdminUser = {
   last_sign_in_at: string | null;
   session_count: number;
   created_at: string;
+  active: boolean;
 };
 
 type Props = {
@@ -91,6 +92,48 @@ export function UsersTable({ users, currentUserId }: Props) {
     }
   }
 
+  async function toggleActive(user_id: string, active: boolean) {
+    setBusy(user_id);
+    try {
+      const res = await fetch(`/api/admin/users/${user_id}/toggle-active`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ active }),
+      });
+      if (res.ok) {
+        toast.success(active ? 'Acesso reativado.' : 'Acesso desativado — o login fica bloqueado.');
+        router.refresh();
+      } else {
+        const body = (await res.json().catch(() => null)) as { error?: string } | null;
+        toast.error(
+          body?.error === 'cannot_deactivate_self'
+            ? 'Você não pode desativar a própria conta.'
+            : 'Falha ao atualizar o acesso.',
+        );
+      }
+    } catch {
+      toast.error('Falha ao atualizar o acesso.');
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function sendPasswordReset(user_id: string) {
+    setBusy(user_id);
+    try {
+      const res = await fetch(`/api/admin/users/${user_id}/reset-password`, { method: 'POST' });
+      if (res.ok) {
+        toast.success('E-mail de redefinição de senha enviado.');
+      } else {
+        toast.error('Falha ao enviar o e-mail de redefinição.');
+      }
+    } catch {
+      toast.error('Falha ao enviar o e-mail de redefinição.');
+    } finally {
+      setBusy(null);
+    }
+  }
+
   async function resendWelcomeEmail(user_id: string) {
     setBusy(user_id);
     try {
@@ -146,7 +189,14 @@ export function UsersTable({ users, currentUserId }: Props) {
                 <TableRow key={u.id}>
                   <TableCell className={pending ? 'text-muted-foreground' : ''}>{u.email}</TableCell>
                   <TableCell>
-                    <RolePill role={u.role} pending={pending} />
+                    <div className="flex items-center gap-1.5">
+                      <RolePill role={u.role} pending={pending} />
+                      {!u.active && (
+                        <span className="inline-block px-2 py-0.5 rounded-full text-xs bg-destructive/10 text-destructive">
+                          Inativo
+                        </span>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell>{formatRelative(u.last_sign_in_at)}</TableCell>
                   <TableCell className="text-right tabular-nums">{u.session_count}</TableCell>
@@ -183,6 +233,16 @@ export function UsersTable({ users, currentUserId }: Props) {
                         {!pending && (
                           <DropdownMenuItem onClick={() => resendWelcomeEmail(u.id)}>
                             Reenviar e-mail de boas-vindas
+                          </DropdownMenuItem>
+                        )}
+                        {!pending && (
+                          <DropdownMenuItem onClick={() => sendPasswordReset(u.id)}>
+                            Enviar redefinição de senha
+                          </DropdownMenuItem>
+                        )}
+                        {u.id !== currentUserId && (
+                          <DropdownMenuItem onClick={() => toggleActive(u.id, !u.active)}>
+                            {u.active ? 'Desativar acesso' : 'Ativar acesso'}
                           </DropdownMenuItem>
                         )}
                       </DropdownMenuContent>
