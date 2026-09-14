@@ -110,7 +110,8 @@ export async function middleware(req: NextRequest) {
     .select(`
       status,
       trial_end,
-      current_period_end
+      current_period_end,
+      cancel_at_period_end
     `)
     .eq('user_id', user.id)
     .maybeSingle();
@@ -130,6 +131,19 @@ export async function middleware(req: NextRequest) {
   const now = Date.now();
 
   // ============================================================
+  // VERIFICA SE O PERÍODO PAGO AINDA ESTÁ VÁLIDO
+  // ============================================================
+
+  const periodEndTimestamp = subscription?.current_period_end
+    ? new Date(subscription.current_period_end).getTime()
+    : null;
+
+  const periodStillValid =
+    periodEndTimestamp !== null &&
+    !Number.isNaN(periodEndTimestamp) &&
+    periodEndTimestamp > now;
+
+  // ============================================================
   // ASSINATURA PAGA ATIVA
   // ============================================================
 
@@ -137,10 +151,41 @@ export async function middleware(req: NextRequest) {
     subscription?.status === 'active' &&
     (
       !subscription.current_period_end ||
-      new Date(subscription.current_period_end).getTime() > now
+      periodStillValid
     );
 
   if (subscriptionActive) {
+    return res;
+  }
+
+  // ============================================================
+  // ASSINATURA CANCELADA
+  //
+  // O cliente cancelou a renovação, mas já pagou o período atual.
+  // Mantém o acesso até current_period_end.
+  // ============================================================
+
+  const cancelledButPaid =
+    subscription?.status === 'cancelled' &&
+    subscription.cancel_at_period_end === true &&
+    periodStillValid;
+
+  if (cancelledButPaid) {
+    return res;
+  }
+
+  // ============================================================
+  // PAGAMENTO COM PENDÊNCIA
+  //
+  // Mantém acesso enquanto o período que já foi pago ainda
+  // estiver dentro de current_period_end.
+  // ============================================================
+
+  const pastDueButPeriodValid =
+    subscription?.status === 'past_due' &&
+    periodStillValid;
+
+  if (pastDueButPeriodValid) {
     return res;
   }
 
@@ -158,7 +203,7 @@ export async function middleware(req: NextRequest) {
   }
 
   // ============================================================
-  // TRIAL ACABOU E NÃO POSSUI ASSINATURA ATIVA
+  // SEM PERÍODO VÁLIDO
   // ============================================================
 
   const url = new URL('/planos', req.url);
