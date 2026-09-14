@@ -1,6 +1,4 @@
-import {
-  NextResponse,
-} from 'next/server';
+import { NextResponse } from 'next/server';
 
 import {
   requireUser,
@@ -11,24 +9,21 @@ import {
   getSubscription,
 } from '@/lib/billing/subscription';
 
-export const runtime =
-  'nodejs';
+export const runtime = 'nodejs';
 
-export const dynamic =
-  'force-dynamic';
+export const dynamic = 'force-dynamic';
 
 // ============================================================
 // GET /api/billing/status
 //
-// Retorna somente o status da assinatura do usuário autenticado.
+// Retorna o status da assinatura do usuário autenticado.
 //
-// Essa rota é usada pela página:
+// Usado pela página:
 //
 // /account/billing/confirmando
 //
-// para aguardar:
-//
-// pending → active
+// A regra de acesso deve acompanhar a mesma lógica
+// utilizada pelo middleware.
 // ============================================================
 
 export async function GET() {
@@ -39,20 +34,13 @@ export async function GET() {
   let user;
 
   try {
-    user =
-      await requireUser();
+    user = await requireUser();
   } catch (err) {
-    if (
-      err instanceof
-      NotAuthenticated
-    ) {
+    if (err instanceof NotAuthenticated) {
       return NextResponse.json(
         {
-          error:
-            'unauthorized',
-
-          message:
-            'Você precisa estar autenticado.',
+          error: 'unauthorized',
+          message: 'Você precisa estar autenticado.',
         },
         {
           status: 401,
@@ -67,11 +55,8 @@ export async function GET() {
 
     return NextResponse.json(
       {
-        error:
-          'authentication_error',
-
-        message:
-          'Não foi possível validar sua sessão.',
+        error: 'authentication_error',
+        message: 'Não foi possível validar sua sessão.',
       },
       {
         status: 500,
@@ -84,10 +69,7 @@ export async function GET() {
   // ==========================================================
 
   try {
-    const subscription =
-      await getSubscription(
-        user.id,
-      );
+    const subscription = await getSubscription(user.id);
 
     // --------------------------------------------------------
     // AINDA NÃO EXISTE ASSINATURA
@@ -98,7 +80,6 @@ export async function GET() {
         {
           status: null,
           accessGranted: false,
-
           message:
             'Ainda não encontramos uma assinatura para esta conta.',
         },
@@ -112,28 +93,56 @@ export async function GET() {
     }
 
     // --------------------------------------------------------
-    // STATUS
+    // DADOS DA ASSINATURA
     // --------------------------------------------------------
 
     const status =
-      subscription.status ??
-      null;
+      subscription.status?.toLowerCase() ?? '';
 
-    // --------------------------------------------------------
-    // PAGAMENTO CONFIRMADO
-    // --------------------------------------------------------
+    const now = Date.now();
 
-    if (status === 'active') {
+    const currentPeriodEnd =
+      subscription.current_period_end
+        ? new Date(
+            subscription.current_period_end,
+          ).getTime()
+        : null;
+
+    const trialEnd =
+      subscription.trial_end
+        ? new Date(
+            subscription.trial_end,
+          ).getTime()
+        : null;
+
+    const periodStillValid =
+      currentPeriodEnd !== null &&
+      !Number.isNaN(currentPeriodEnd) &&
+      currentPeriodEnd > now;
+
+    const trialStillValid =
+      trialEnd !== null &&
+      !Number.isNaN(trialEnd) &&
+      trialEnd > now;
+
+    // ========================================================
+    // ASSINATURA ATIVA
+    // ========================================================
+
+    const activeAccess =
+      status === 'active' &&
+      (
+        !subscription.current_period_end ||
+        periodStillValid
+      );
+
+    if (activeAccess) {
       return NextResponse.json(
         {
-          status:
-            'active',
-
-          accessGranted:
-            true,
-
+          status,
+          accessGranted: true,
           message:
-            'Pagamento confirmado. Seu acesso foi liberado.',
+            'Pagamento confirmado. Seu acesso está liberado.',
         },
         {
           headers: {
@@ -144,21 +153,103 @@ export async function GET() {
       );
     }
 
-    // --------------------------------------------------------
-    // PAGAMENTO EM PROCESSAMENTO
-    // --------------------------------------------------------
+    // ========================================================
+    // TRIAL ATIVO
+    // ========================================================
 
-    if (
-      status === 'pending' ||
-      status === 'trialing'
-    ) {
+    const trialAccess =
+      status === 'trialing' &&
+      trialStillValid;
+
+    if (trialAccess) {
       return NextResponse.json(
         {
           status,
+          accessGranted: true,
+          message:
+            'Seu período de teste está ativo.',
+        },
+        {
+          headers: {
+            'Cache-Control':
+              'no-store, no-cache, must-revalidate',
+          },
+        },
+      );
+    }
 
-          accessGranted:
-            false,
+    // ========================================================
+    // ASSINATURA CANCELADA, MAS PERÍODO JÁ PAGO AINDA VÁLIDO
+    //
+    // Exemplo:
+    //
+    // pagamento: 05/09
+    // cancelamento: 14/09
+    // período pago até: 05/10
+    //
+    // O cancelamento impede a renovação, mas não remove
+    // o acesso ao período já pago.
+    // ========================================================
 
+    const cancelledButPaid =
+      (
+        status === 'cancelled' ||
+        status === 'canceled'
+      ) &&
+      subscription.cancel_at_period_end === true &&
+      periodStillValid;
+
+    if (cancelledButPaid) {
+      return NextResponse.json(
+        {
+          status,
+          accessGranted: true,
+          message:
+            'Sua assinatura foi cancelada para renovação, mas seu acesso permanece ativo até o fim do período já pago.',
+        },
+        {
+          headers: {
+            'Cache-Control':
+              'no-store, no-cache, must-revalidate',
+          },
+        },
+      );
+    }
+
+    // ========================================================
+    // PAGAMENTO EM ATRASO, MAS PERÍODO ANTERIOR AINDA VÁLIDO
+    // ========================================================
+
+    const pastDueButValid =
+      status === 'past_due' &&
+      periodStillValid;
+
+    if (pastDueButValid) {
+      return NextResponse.json(
+        {
+          status,
+          accessGranted: true,
+          message:
+            'Existe uma pendência de pagamento, mas seu período atual ainda está válido.',
+        },
+        {
+          headers: {
+            'Cache-Control':
+              'no-store, no-cache, must-revalidate',
+          },
+        },
+      );
+    }
+
+    // ========================================================
+    // PAGAMENTO EM PROCESSAMENTO
+    // ========================================================
+
+    if (status === 'pending') {
+      return NextResponse.json(
+        {
+          status,
+          accessGranted: false,
           message:
             'Estamos aguardando a confirmação do pagamento.',
         },
@@ -171,23 +262,17 @@ export async function GET() {
       );
     }
 
-    // --------------------------------------------------------
-    // PAGAMENTO EM ATRASO
-    // --------------------------------------------------------
+    // ========================================================
+    // TRIAL ENCERRADO
+    // ========================================================
 
-    if (
-      status === 'past_due'
-    ) {
+    if (status === 'trialing') {
       return NextResponse.json(
         {
-          status:
-            'past_due',
-
-          accessGranted:
-            false,
-
+          status,
+          accessGranted: false,
           message:
-            'O pagamento ainda não foi confirmado.',
+            'Seu período de teste terminou.',
         },
         {
           headers: {
@@ -198,23 +283,42 @@ export async function GET() {
       );
     }
 
-    // --------------------------------------------------------
+    // ========================================================
+    // PAGAMENTO EM ATRASO E PERÍODO ENCERRADO
+    // ========================================================
+
+    if (status === 'past_due') {
+      return NextResponse.json(
+        {
+          status,
+          accessGranted: false,
+          message:
+            'O pagamento está pendente e seu período de acesso terminou.',
+        },
+        {
+          headers: {
+            'Cache-Control':
+              'no-store, no-cache, must-revalidate',
+          },
+        },
+      );
+    }
+
+    // ========================================================
     // CANCELADA / EXPIRADA
-    // --------------------------------------------------------
+    // ========================================================
 
     if (
       status === 'cancelled' ||
+      status === 'canceled' ||
       status === 'expired'
     ) {
       return NextResponse.json(
         {
           status,
-
-          accessGranted:
-            false,
-
+          accessGranted: false,
           message:
-            'Esta assinatura não está ativa.',
+            'Esta assinatura não possui mais um período de acesso válido.',
         },
         {
           headers: {
@@ -225,17 +329,14 @@ export async function GET() {
       );
     }
 
-    // --------------------------------------------------------
+    // ========================================================
     // QUALQUER OUTRO STATUS
-    // --------------------------------------------------------
+    // ========================================================
 
     return NextResponse.json(
       {
         status,
-
-        accessGranted:
-          false,
-
+        accessGranted: false,
         message:
           'Aguardando atualização da assinatura.',
       },
@@ -254,9 +355,7 @@ export async function GET() {
 
     return NextResponse.json(
       {
-        error:
-          'subscription_status_error',
-
+        error: 'subscription_status_error',
         message:
           'Não foi possível consultar o status da assinatura.',
       },
