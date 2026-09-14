@@ -4,7 +4,6 @@ import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { INPUT_CLASS, LABEL_CLASS } from "./constants";
 import type { SignupForm } from "./types";
-import { TurnstileWidget } from "./TurnstileWidget";
 
 
 type StepAccountProps = {
@@ -22,7 +21,6 @@ export default function StepAccount({
 }: StepAccountProps) {
 
 
-const [errorMessage, setErrorMessage] = useState<string | null>(null);
 const [showPw, setShowPw] = useState(false);
 const [showConfirmPw, setShowConfirmPw] = useState(false);
 
@@ -115,30 +113,6 @@ const [showConfirmPw, setShowConfirmPw] = useState(false);
       </div>
 
     </div>
-  <div className="space-y-6">
-    <TurnstileWidget
-        onVerify={(token) => {
-          setForm((prev) => ({
-            ...prev,
-            turnstileToken: token,
-          }));
-
-          if (!token) {
-            setErrorMessage(
-              "Aguarde a verificação anti-bot terminar de carregar."
-            );
-          } else {
-            setErrorMessage(null);
-          }
-        }}
-      />
-
-         {errorMessage && (
-        <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300">
-          {errorMessage}
-        </div>
-      )}
-      </div>
   </div>
 );
 

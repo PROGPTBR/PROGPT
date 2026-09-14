@@ -1,7 +1,9 @@
 "use client";
+import { useState } from "react";
 import Image from "next/image";
 import type { SignupForm } from "./types";
 import { INPUT_CLASS, LABEL_CLASS } from "./constants";
+import { TurnstileWidget } from "./TurnstileWidget";
 
 type StepPaymentProps = {
   form: SignupForm;
@@ -67,6 +69,13 @@ export default function StepPayment({
   setForm,
 }: StepPaymentProps) {
   const cardBrand = detectCardBrand(form.cardNumber);
+  // Verificação anti-bot fica no ÚLTIMO passo, não no primeiro (sub-projeto
+  // 56.1): o token do Turnstile expira em ~5 min e é de uso único. No passo 1
+  // ele ficava pronto cedo demais e, pra formulários que levam mais tempo
+  // (perfil + revisão do plano + dados do cartão), chegava expirado na hora
+  // do submit real — "Falha na verificação de segurança" sem nenhuma relação
+  // com o cartão em si (achado 2026-09-14, print do cliente com Mastercard).
+  const [turnstileError, setTurnstileError] = useState<string | null>(null);
 
   return (
 
@@ -202,6 +211,26 @@ inputMode="numeric"
     </div>
 
 
+  </div>
+
+  <div>
+    <TurnstileWidget
+      onVerify={(token) => {
+        setForm((prev) => ({
+          ...prev,
+          turnstileToken: token,
+        }));
+        setTurnstileError(
+          token ? null : "Aguarde a verificação anti-bot terminar de carregar.",
+        );
+      }}
+    />
+
+    {turnstileError && (
+      <div className="mt-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300">
+        {turnstileError}
+      </div>
+    )}
   </div>
 
 </div>

@@ -92,10 +92,6 @@ const [form, setForm] = useState<SignupForm>({
     return "As senhas não coincidem.";
   }
 
-  if (!form.turnstileToken) {
-    return "Confirme que você não é um robô.";
-  }
-
   return "";
 }
 function validateStep2() {
@@ -158,6 +154,10 @@ if (!form.state.trim()) {
   return "";
 }
 function validateStep4() {
+  if (!form.turnstileToken) {
+    return "Confirme que você não é um robô.";
+  }
+
   const cardDigits = form.cardNumber.replace(/\D/g, "");
 
   if (cardDigits.length < 13) {
