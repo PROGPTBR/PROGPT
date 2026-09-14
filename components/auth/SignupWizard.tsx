@@ -246,7 +246,7 @@ if (step === 2) {
     const data = await response.json().catch(() => ({}));
 
     if (!response.ok) {
-      alert(data.error);
+      showError(data.error || "Não foi possível concluir o cadastro. Tente novamente.");
       return;
     }
 
@@ -255,7 +255,7 @@ if (step === 2) {
  } catch (err) {
   console.error(err);
 
-  alert("Não foi possível concluir o cadastro. Tente novamente.");
+  showError("Não foi possível concluir o cadastro. Tente novamente.");
 } finally {
 
     setLoading(false);

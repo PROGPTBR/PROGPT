@@ -3,7 +3,7 @@ import {
   getServerSupabase,
   getSignupSupabase,
 } from "@/lib/db/supabase";
-import { createAsaasCustomer, createAsaasSubscription, deleteAsaasCustomer, } from "@/lib/billing/asaas";
+import { createAsaasCustomer, createAsaasSubscription, deleteAsaasCustomer, AsaasError, } from "@/lib/billing/asaas";
 import { getBillingSettings } from "@/lib/billing/settings";
 import {
   isValidCpf,
@@ -317,6 +317,23 @@ if (userId) {
   }
 
   console.error("############################");
+
+  // AsaasError carrega a descrição real que o Asaas devolveu (ex.: "Cartão
+  // de crédito recusado", "Número de cartão inválido") — muito mais
+  // acionável pro cliente do que "Asaas POST /subscriptions failed: 400".
+  // Cliente reclamou (2026-09-14, WhatsApp) que o cadastro "dá uma falha"
+  // sem entender o motivo — o alert() cru mostrando esse texto genérico era
+  // a causa.
+  if (err instanceof AsaasError) {
+    return NextResponse.json(
+      {
+        error:
+          err.description ??
+          "Não foi possível processar o pagamento com este cartão. Confira os dados ou tente outro cartão.",
+      },
+      { status: 400 },
+    );
+  }
 
   return NextResponse.json(
     {

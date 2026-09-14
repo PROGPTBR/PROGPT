@@ -89,10 +89,26 @@ class AsaasError extends Error {
     message: string,
     public status: number,
     public body: unknown,
+    // Descrição em PT-BR que o Asaas já devolve em `errors[0].description`
+    // (ex.: "Cartão de crédito recusado", "Número de cartão inválido") —
+    // muito mais útil pro cliente/suporte do que o `message` genérico acima.
+    // Extraída aqui (não no call site) porque o shape do body do Asaas é
+    // um detalhe de transporte que não deveria vazar pra fora deste módulo.
+    public description: string | null = null,
   ) {
     super(message);
     this.name = 'AsaasError';
   }
+}
+
+function extractAsaasDescription(body: unknown): string | null {
+  if (!body || typeof body !== 'object') return null;
+  const errors = (body as { errors?: unknown }).errors;
+  if (!Array.isArray(errors) || errors.length === 0) return null;
+  const first = errors[0] as { description?: unknown } | undefined;
+  return typeof first?.description === 'string' && first.description.trim()
+    ? first.description.trim()
+    : null;
 }
 
 async function getConfig() {
@@ -177,6 +193,7 @@ async function asaasFetch<T>(
       `Asaas ${method} ${path} failed: ${res.status}`,
       res.status,
       parsed,
+      extractAsaasDescription(parsed),
     );
   }
 
