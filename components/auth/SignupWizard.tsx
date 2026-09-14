@@ -131,8 +131,12 @@ if (form.personType === "pf") {
     return "Informe o CEP.";
   }
 
+  // Rua/bairro/cidade/estado normalmente vêm sozinhos da busca por CEP, mas
+  // são sempre editáveis (a busca é só uma conveniência — pode falhar sem
+  // travar o cadastro) — por isso cada um pede o que falta especificamente,
+  // em vez de mandar o cliente reconferir um CEP que já está certo.
   if (!form.street.trim()) {
-    return "Informe um CEP válido.";
+    return "Informe a rua/logradouro.";
   }
 
   if (!form.addressNumber.trim()) {
@@ -140,16 +144,16 @@ if (form.personType === "pf") {
   }
 
   if (!form.district.trim()) {
-  return "Informe um CEP válido.";
-}
+    return "Informe o bairro.";
+  }
 
-if (!form.city.trim()) {
-  return "Informe um CEP válido.";
-}
+  if (!form.city.trim()) {
+    return "Informe a cidade.";
+  }
 
-if (!form.state.trim()) {
-  return "Informe um CEP válido.";
-}
+  if (!form.state.trim()) {
+    return "Informe o estado (UF).";
+  }
 
   return "";
 }

@@ -1,3 +1,4 @@
+import { useRef, useState } from "react";
 import { INPUT_CLASS, LABEL_CLASS } from "./constants";
 import { User, Building2 } from "lucide-react";
 import type { SignupForm } from "./types";
@@ -23,6 +24,13 @@ export default function StepProfile({
   const docComplete = isPj ? docDigits.length === 14 : docDigits.length === 11;
   const docInvalid =
     docComplete && !(isPj ? isValidCnpj(docDigits) : isValidCpf(docDigits));
+
+  // Busca automática do endereço pelo CEP é só uma conveniência — nunca pode
+  // travar o cadastro. cepStatus avisa o que está acontecendo; os campos de
+  // endereço abaixo são sempre editáveis, então uma falha na busca (CEP não
+  // encontrado, ViaCEP fora do ar, etc.) nunca deixa o cliente sem saída.
+  const [cepStatus, setCepStatus] = useState<"idle" | "loading" | "not_found">("idle");
+  const lastRequestedCep = useRef("");
 
   return (
 
@@ -203,10 +211,26 @@ CEP
       postalCode: cep,
     }));
 
+    if (cep.replace(/\D/g, "").length !== 8) {
+      setCepStatus("idle");
+      return;
+    }
+
+    lastRequestedCep.current = cep;
+    setCepStatus("loading");
+
     const endereco = await buscarCep(cep);
 
-    if (!endereco) return;
+    // Guarda contra resposta atrasada: se o usuário já mudou o CEP de novo
+    // enquanto essa busca estava em voo, essa resposta é velha — ignora.
+    if (lastRequestedCep.current !== cep) return;
 
+    if (!endereco) {
+      setCepStatus("not_found");
+      return;
+    }
+
+    setCepStatus("idle");
     setForm((prev) => ({
       ...prev,
       postalCode: cep,
@@ -220,6 +244,14 @@ CEP
   className={INPUT_CLASS}
   placeholder="00000-000"
 />
+{cepStatus === "loading" && (
+  <p className="mt-1 text-xs text-muted-foreground">Buscando endereço…</p>
+)}
+{cepStatus === "not_found" && (
+  <p className="mt-1 text-xs text-amber-500">
+    Não encontramos esse CEP automaticamente — preencha o endereço abaixo manualmente.
+  </p>
+)}
 </div>
 <div>
 <label className={LABEL_CLASS}>
@@ -229,7 +261,9 @@ Rua
 <input
 className={INPUT_CLASS}
 value={form.street}
-readOnly
+onChange={(e) =>
+  setForm((prev) => ({ ...prev, street: e.target.value }))
+}
 />
 </div>
 <div>
@@ -240,7 +274,9 @@ Bairro
 <input
 className={INPUT_CLASS}
 value={form.district}
-readOnly
+onChange={(e) =>
+  setForm((prev) => ({ ...prev, district: e.target.value }))
+}
 />
 </div><div>
 <label className={LABEL_CLASS}>
@@ -250,7 +286,9 @@ Cidade
 <input
 className={INPUT_CLASS}
 value={form.city}
-readOnly
+onChange={(e) =>
+  setForm((prev) => ({ ...prev, city: e.target.value }))
+}
 />
 </div>
 <div>
@@ -261,7 +299,10 @@ Estado
 <input
 className={INPUT_CLASS}
 value={form.state}
-readOnly
+maxLength={2}
+onChange={(e) =>
+  setForm((prev) => ({ ...prev, state: e.target.value.toUpperCase() }))
+}
 />
 </div>
 
