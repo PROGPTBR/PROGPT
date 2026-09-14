@@ -7,6 +7,7 @@ import {
   normalizeCandidateTheme,
   MAX_THEME_LENGTH,
 } from '@/lib/ingest/taxonomy';
+import { recordAuditLog } from '@/lib/observability/audit-log';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -29,8 +30,9 @@ const PatchBody = z
   });
 
 export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
+  let admin;
   try {
-    await requireAdmin();
+    admin = await requireAdmin();
   } catch (err) {
     if (err instanceof NotAdmin) return new NextResponse('Not Found', { status: 404 });
     throw err;
@@ -38,12 +40,20 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
   const sb = getServerSupabase();
   const { error } = await sb.from('articles').delete().eq('id', params.id);
   if (error) return NextResponse.json({ error: 'delete_failed' }, { status: 500 });
+  void recordAuditLog({
+    actorId: admin.user.id,
+    actorEmail: admin.user.email,
+    action: 'article.delete',
+    resourceType: 'article',
+    resourceId: params.id,
+  });
   return NextResponse.json({ ok: true });
 }
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+  let admin;
   try {
-    await requireAdmin();
+    admin = await requireAdmin();
   } catch (err) {
     if (err instanceof NotAdmin) return new NextResponse('Not Found', { status: 404 });
     throw err;
@@ -69,5 +79,13 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   const sb = getServerSupabase();
   const { error } = await sb.from('articles').update(update).eq('id', params.id);
   if (error) return NextResponse.json({ error: 'update_failed' }, { status: 500 });
+  void recordAuditLog({
+    actorId: admin.user.id,
+    actorEmail: admin.user.email,
+    action: 'article.update',
+    resourceType: 'article',
+    resourceId: params.id,
+    metadata: update,
+  });
   return NextResponse.json({ ok: true, themeStatus: update.theme_status });
 }

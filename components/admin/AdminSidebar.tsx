@@ -31,7 +31,7 @@ type SidebarItem = {
 const ITEMS: SidebarItem[] = [
   {
     href: '/admin/monitor',
-    label: 'Monitoramento',
+    label: 'Super Admin',
     Icon: Activity,
   },
   {
@@ -136,7 +136,7 @@ export function AdminSidebar({
         </Link>
 
         <div className="text-[10px] font-medium uppercase tracking-wider text-brand">
-          {role === 'gestor' ? 'Gestor' : 'Admin'}
+          {role === 'gestor' ? 'Gestor' : 'Super Admin'}
         </div>
       </div>
 

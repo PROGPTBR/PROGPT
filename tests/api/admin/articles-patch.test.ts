@@ -16,6 +16,7 @@ function setupMocks(opts: { isAdmin: boolean; supabaseError?: { message: string 
     return {
       requireAdmin: vi.fn().mockImplementation(() => {
         if (!opts.isAdmin) throw new NotAdmin();
+        return { user: { id: 'admin-1', email: 'a@b.com' }, profile: { id: 'admin-1', role: 'admin' } };
       }),
       NotAdmin,
     };
@@ -23,6 +24,7 @@ function setupMocks(opts: { isAdmin: boolean; supabaseError?: { message: string 
   vi.doMock('@/lib/db/supabase', () => ({
     getServerSupabase: () => ({ from: () => ({ update }) }),
   }));
+  vi.doMock('@/lib/observability/audit-log', () => ({ recordAuditLog: vi.fn() }));
   return { update, updateChain };
 }
 

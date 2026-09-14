@@ -56,14 +56,16 @@ const num = (v: unknown) => (typeof v === 'number' ? v : Number(v) || 0);
 const maxIso = (a: string, b: string) => (a > b ? a : b);
 
 export async function GET(req: Request) {
+  let staff;
   try {
-    await requireStaff();
+    staff = await requireStaff();
   } catch (err) {
     if (err instanceof NotAuthenticated || err instanceof NotStaff) {
       return new NextResponse('Not Found', { status: 404 });
     }
     throw err;
   }
+  const isAdmin = staff.profile.role === 'admin';
 
   const url = new URL(req.url);
   const rangeParam = Number(url.searchParams.get('range') ?? '30');
@@ -149,10 +151,14 @@ export async function GET(req: Request) {
   const sessSpend = new Map<string, SessAcc>();
   const byDayMap = new Map<string, { costCents: number; calls: number }>();
   let totalSpendCents = 0;
+  let totalTokensIn = 0;
+  let totalTokensOut = 0;
 
   for (const e of events) {
     const cost = num(e.cost_usd_cents);
     totalSpendCents += cost;
+    totalTokensIn += num(e.tokens_in);
+    totalTokensOut += num(e.tokens_out);
     bump(e.user_id as string, { spendCents: cost }, e.created_at as string);
 
     const day = String(e.created_at).slice(0, 10);
@@ -238,6 +244,40 @@ export async function GET(req: Request) {
     .map(([day, v]) => ({ day, costCents: v.costCents, calls: v.calls }))
     .sort((a, b) => a.day.localeCompare(b.day));
 
+  // ── Logs de auditoria ("visão Super Admin") ─────────────────────────────
+  // Só admin (não gestor) vê quem promoveu/deletou/renomeou o quê — é o dado
+  // mais sensível do painel. Gestor recebe auditLogRestricted:true em vez de
+  // um array vazio, pra UI diferenciar "sem eventos" de "sem permissão".
+  let auditLog: Array<{
+    id: string;
+    createdAt: string;
+    actorEmail: string | null;
+    action: string;
+    resourceType: string | null;
+    resourceId: string | null;
+    metadata: Record<string, unknown>;
+  }> = [];
+  if (isAdmin) {
+    const rows = await fetchSince(
+      svc,
+      'audit_log',
+      'id, actor_email, action, resource_type, resource_id, metadata, created_at',
+      'created_at',
+      sinceIso,
+    );
+    auditLog = rows
+      .map((r) => ({
+        id: r.id as string,
+        createdAt: r.created_at as string,
+        actorEmail: (r.actor_email as string | null) ?? null,
+        action: r.action as string,
+        resourceType: (r.resource_type as string | null) ?? null,
+        resourceId: (r.resource_id as string | null) ?? null,
+        metadata: (r.metadata ?? {}) as Record<string, unknown>,
+      }))
+      .slice(0, 500);
+  }
+
   return NextResponse.json({
     rangeDays,
     overview: {
@@ -248,6 +288,8 @@ export async function GET(req: Request) {
       totalSessions: sessions.length,
       totalRuns: runs.length,
       totalSpendCents,
+      totalTokensIn,
+      totalTokensOut,
       subscriptions: subsByStatus,
     },
     byDay,
@@ -259,5 +301,7 @@ export async function GET(req: Request) {
       usdBrlRate: USD_BRL_RATE,
       users: alerts,
     },
+    auditLog,
+    auditLogRestricted: !isAdmin,
   });
 }

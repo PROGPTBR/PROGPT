@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireAdmin, NotAdmin } from '@/lib/auth';
 import { getServerSupabase } from '@/lib/db/supabase';
+import { recordAuditLog } from '@/lib/observability/audit-log';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -11,8 +12,9 @@ const bodySchema = z.object({
 });
 
 export async function POST(req: Request) {
+  let admin;
   try {
-    await requireAdmin();
+    admin = await requireAdmin();
   } catch (err) {
     if (err instanceof NotAdmin) return new NextResponse('Not Found', { status: 404 });
     throw err;
@@ -34,5 +36,12 @@ export async function POST(req: Request) {
     .in('id', ids);
 
   if (error) return NextResponse.json({ error: 'delete_failed' }, { status: 500 });
+  void recordAuditLog({
+    actorId: admin.user.id,
+    actorEmail: admin.user.email,
+    action: 'article.bulk_delete',
+    resourceType: 'article',
+    metadata: { ids, deleted: count ?? ids.length },
+  });
   return NextResponse.json({ ok: true, deleted: count ?? ids.length });
 }

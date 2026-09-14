@@ -15,11 +15,13 @@ function setupMocks(opts: { isAdmin: boolean; resolveResult?: { ok: boolean; res
     return {
       requireAdmin: vi.fn().mockImplementation(() => {
         if (!opts.isAdmin) throw new NotAdmin();
+        return { user: { id: 'admin-1', email: 'a@b.com' }, profile: { id: 'admin-1', role: 'admin' } };
       }),
       NotAdmin,
     };
   });
   vi.doMock('@/lib/feedback', () => ({ resolveFeedback }));
+  vi.doMock('@/lib/observability/audit-log', () => ({ recordAuditLog: vi.fn() }));
   return { resolveFeedback };
 }
 

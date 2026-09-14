@@ -12,10 +12,12 @@ beforeEach(() => {
 
 type Opts = {
   isStaff?: boolean;
+  staffRole?: 'admin' | 'gestor';
   profiles?: Array<Record<string, unknown>>;
   subscriptions?: Array<Record<string, unknown>>;
   planPrice?: number | null;
   events?: Array<Record<string, unknown>>;
+  auditLogRows?: Array<Record<string, unknown>>;
 };
 
 // Query builder chainable pra `fetchSince` (sessions/assistant_runs/
@@ -35,6 +37,7 @@ function setupMocks(opts: Opts = {}) {
     return {
       requireStaff: vi.fn().mockImplementation(() => {
         if (opts.isStaff === false) throw new NotStaff();
+        return { user: { id: 'staff-1', email: 's@x.com' }, profile: { id: 'staff-1', role: opts.staffRole ?? 'admin' } };
       }),
       NotStaff,
       NotAuthenticated,
@@ -49,6 +52,7 @@ function setupMocks(opts: Opts = {}) {
   const billingChain = { select: vi.fn().mockReturnValue({ eq: vi.fn().mockReturnValue({ maybeSingle }) }) };
   const emptyChain = fetchSinceChain([]);
   const eventsChain = fetchSinceChain(opts.events ?? []);
+  const auditLogChain = fetchSinceChain(opts.auditLogRows ?? []);
 
   vi.doMock('@/lib/db/supabase', () => ({
     getServerSupabase: () => ({
@@ -57,6 +61,7 @@ function setupMocks(opts: Opts = {}) {
         if (table === 'subscriptions') return subsChain;
         if (table === 'billing_settings') return billingChain;
         if (table === 'api_usage_events') return eventsChain;
+        if (table === 'audit_log') return auditLogChain;
         return emptyChain; // sessions, assistant_runs
       },
     }),
@@ -184,5 +189,69 @@ describe('GET /api/admin/monitor — alerta de consumo', () => {
     const body = await res.json();
     const userRow = body.users.find((u: { userId: string }) => u.userId === 'u-4');
     expect(userRow.pctOfPlan).toBeGreaterThan(70);
+  });
+});
+
+// Visão "Super Admin" (sub-projeto do backlog do diretor): tokens agregados
+// no overview + logs de auditoria — este último restrito a admin (gestor não
+// vê ações administrativas de outros, é o dado mais sensível do painel).
+describe('GET /api/admin/monitor — tokens + logs de auditoria', () => {
+  it('sums tokens_in/tokens_out across all events into overview', async () => {
+    setupMocks({
+      isStaff: true,
+      events: [
+        { user_id: 'u-1', cost_usd_cents: 10, tokens_in: 100, tokens_out: 20, metadata: {}, created_at: '2026-08-20T10:00:00Z' },
+        { user_id: 'u-2', cost_usd_cents: 5, tokens_in: 50, tokens_out: 10, metadata: {}, created_at: '2026-08-21T10:00:00Z' },
+      ],
+    });
+    const { GET } = await import('@/app/api/admin/monitor/route');
+    const res = await GET(buildGet());
+    const body = await res.json();
+    expect(body.overview.totalTokensIn).toBe(150);
+    expect(body.overview.totalTokensOut).toBe(30);
+  });
+
+  it('admin sees the audit log rows', async () => {
+    setupMocks({
+      isStaff: true,
+      staffRole: 'admin',
+      auditLogRows: [
+        {
+          id: 'log-1',
+          actor_email: 'admin@x.com',
+          action: 'article.delete',
+          resource_type: 'article',
+          resource_id: 'art-1',
+          metadata: {},
+          created_at: '2026-08-20T10:00:00Z',
+        },
+      ],
+    });
+    const { GET } = await import('@/app/api/admin/monitor/route');
+    const res = await GET(buildGet());
+    const body = await res.json();
+    expect(body.auditLogRestricted).toBe(false);
+    expect(body.auditLog).toHaveLength(1);
+    expect(body.auditLog[0]).toMatchObject({
+      actorEmail: 'admin@x.com',
+      action: 'article.delete',
+      resourceType: 'article',
+      resourceId: 'art-1',
+    });
+  });
+
+  it('gestor does not see the audit log, even when rows exist', async () => {
+    setupMocks({
+      isStaff: true,
+      staffRole: 'gestor',
+      auditLogRows: [
+        { id: 'log-1', actor_email: 'admin@x.com', action: 'article.delete', resource_type: 'article', resource_id: 'art-1', metadata: {}, created_at: '2026-08-20T10:00:00Z' },
+      ],
+    });
+    const { GET } = await import('@/app/api/admin/monitor/route');
+    const res = await GET(buildGet());
+    const body = await res.json();
+    expect(body.auditLogRestricted).toBe(true);
+    expect(body.auditLog).toEqual([]);
   });
 });

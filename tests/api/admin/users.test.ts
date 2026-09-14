@@ -18,6 +18,7 @@ function mockAuth(role: 'admin' | 'user', userId: string = 'admin-1') {
       }),
     };
   });
+  vi.doMock('@/lib/observability/audit-log', () => ({ recordAuditLog: vi.fn() }));
 }
 
 describe('POST/PATCH /api/admin/users', () => {

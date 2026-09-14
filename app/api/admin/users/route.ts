@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { requireAdmin, NotAdmin } from '@/lib/auth';
 import { getServerSupabase } from '@/lib/db/supabase';
 import { supabaseServer } from '@/lib/db/supabase-server';
+import { recordAuditLog } from '@/lib/observability/audit-log';
 // supabaseServer is used by PATCH (so admins update profiles via RLS); GET uses
 // service-role because profiles_with_email joins auth.users (no SELECT for authed).
 
@@ -77,6 +78,14 @@ export async function PATCH(req: Request) {
   if (error) {
     return NextResponse.json({ error: 'update_failed' }, { status: 500 });
   }
+  void recordAuditLog({
+    actorId: admin.user.id,
+    actorEmail: admin.user.email,
+    action: 'user.role_change',
+    resourceType: 'profile',
+    resourceId: parsed.user_id,
+    metadata: { toRole: parsed.role },
+  });
   return NextResponse.json({ ok: true });
 }
 
@@ -94,7 +103,7 @@ export async function GET() {
   const svc = getServerSupabase();
   const { data: rows, error } = await svc
     .from('profiles_with_email')
-    .select('id, email, role, last_sign_in_at, created_at, auth_created_at');
+    .select('id, email, role, last_sign_in_at, created_at, auth_created_at, banned_until');
   if (error) return NextResponse.json({ error: 'list_failed' }, { status: 500 });
 
   const { data: counts } = await svc.rpc('admin_user_session_counts');
@@ -103,9 +112,16 @@ export async function GET() {
     map.set(r.user_id, Number(r.session_count));
   }
 
-  const enriched = (rows ?? []).map((r: Record<string, unknown>) => ({
-    ...r,
-    session_count: map.get(r.id as string) ?? 0,
-  }));
+  const now = Date.now();
+  const enriched = (rows ?? []).map((r: Record<string, unknown>) => {
+    const bannedUntil = r.banned_until as string | null;
+    const { banned_until: _bannedUntil, ...rest } = r;
+    void _bannedUntil;
+    return {
+      ...rest,
+      session_count: map.get(r.id as string) ?? 0,
+      active: !bannedUntil || new Date(bannedUntil).getTime() <= now,
+    };
+  });
   return NextResponse.json({ users: enriched });
 }

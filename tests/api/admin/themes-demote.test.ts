@@ -28,6 +28,7 @@ function setupMocks(opts: Opts) {
     return {
       requireAdmin: vi.fn().mockImplementation(() => {
         if (!opts.isAdmin) throw new NotAdmin();
+        return { user: { id: 'admin-1', email: 'a@b.com' }, profile: { id: 'admin-1', role: 'admin' } };
       }),
       NotAdmin,
     };
@@ -35,6 +36,7 @@ function setupMocks(opts: Opts) {
   vi.doMock('@/lib/db/supabase', () => ({
     getServerSupabase: () => ({ from: () => ({ update }) }),
   }));
+  vi.doMock('@/lib/observability/audit-log', () => ({ recordAuditLog: vi.fn() }));
   return { update, eq1, eq2 };
 }
 

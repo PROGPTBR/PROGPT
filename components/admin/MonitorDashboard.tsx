@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Activity, Users, MessageSquare, Sparkles, DollarSign, UserPlus,
-  Download, RefreshCw, Loader2, AlertTriangle,
+  Download, RefreshCw, Loader2, AlertTriangle, ShieldCheck, Coins, Lock,
 } from 'lucide-react';
 
 type UserRow = {
@@ -30,6 +30,15 @@ type SessionRow = {
   spendCents: number;
   lastAt: string;
 };
+type AuditLogRow = {
+  id: string;
+  createdAt: string;
+  actorEmail: string | null;
+  action: string;
+  resourceType: string | null;
+  resourceId: string | null;
+  metadata: Record<string, unknown>;
+};
 type Payload = {
   rangeDays: number;
   overview: {
@@ -42,6 +51,8 @@ type Payload = {
     totalSessions: number;
     totalRuns: number;
     totalSpendCents: number;
+    totalTokensIn: number;
+    totalTokensOut: number;
     subscriptions: Record<string, number>;
   };
   byDay: Array<{ day: string; costCents: number; calls: number }>;
@@ -53,7 +64,41 @@ type Payload = {
     usdBrlRate: number;
     users: UserRow[];
   };
+  auditLog: AuditLogRow[];
+  auditLogRestricted: boolean;
 };
+
+const AUDIT_ACTION_LABEL: Record<string, string> = {
+  'user.role_change': 'Trocou papel de usuário',
+  'article.update': 'Editou artigo',
+  'article.delete': 'Excluiu artigo',
+  'article.bulk_delete': 'Excluiu artigos em lote',
+  'theme.promote': 'Promoveu tema a canônico',
+  'theme.demote': 'Rebaixou tema a candidato',
+  'theme.rename': 'Renomeou/mesclou tema',
+  'feedback.resolve': 'Resolveu feedback',
+  'feedback.reopen': 'Reabriu feedback',
+};
+
+function auditDetail(row: AuditLogRow): string {
+  const m = row.metadata ?? {};
+  switch (row.action) {
+    case 'user.role_change':
+      return `novo papel: ${m.toRole ?? '—'}`;
+    case 'article.bulk_delete':
+      return `${Number(m.deleted ?? 0)} artigo(s)`;
+    case 'theme.promote':
+      return `${Number(m.promoted ?? 0)} artigo(s)`;
+    case 'theme.demote':
+      return `${Number(m.demoted ?? 0)} artigo(s)`;
+    case 'theme.rename':
+      return `→ "${m.to ?? '—'}" (${Number(m.moved ?? 0)} artigo(s))`;
+    case 'article.update':
+      return Object.keys(m).filter((k) => k !== 'theme_status').join(', ') || '—';
+    default:
+      return row.resourceId ?? '—';
+  }
+}
 
 const RANGES = [
   { key: 1, label: 'Hoje' },
@@ -139,14 +184,14 @@ export function MonitorDashboard() {
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <div className="flex items-center gap-2 text-brand">
-            <Activity className="h-5 w-5" aria-hidden />
-            <span className="text-xs font-medium uppercase tracking-wider">Monitoramento</span>
+            <ShieldCheck className="h-5 w-5" aria-hidden />
+            <span className="text-xs font-medium uppercase tracking-wider">Super Admin</span>
           </div>
           <h1 className="mt-1 text-2xl sm:text-3xl font-semibold tracking-tight">
             Painel do site <span className="text-brand">.</span>
           </h1>
           <p className="mt-0.5 text-sm text-muted-foreground">
-            Usuários, atividade e gastos por sessão — atualizado em tempo real.
+            Usuários, tokens, gastos por sessão e log de auditoria — visão completa da operação.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -190,12 +235,13 @@ export function MonitorDashboard() {
       {data && (
         <>
           {/* KPIs */}
-          <section className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
+          <section className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-9 gap-3">
             <Kpi icon={<Users className="h-4 w-4" />} label="Usuários" value={int(data.overview.totalUsers)} hint={`${data.overview.admin} adm · ${data.overview.gestor} gestor`} />
             <Kpi icon={<Activity className="h-4 w-4" />} label="Ativos" value={int(data.overview.activeUsers)} hint="no período" />
             <Kpi icon={<UserPlus className="h-4 w-4" />} label="Novos" value={int(data.overview.newUsers)} hint="no período" />
             <Kpi icon={<MessageSquare className="h-4 w-4" />} label="Sessões" value={int(data.overview.totalSessions)} />
             <Kpi icon={<Sparkles className="h-4 w-4" />} label="Execuções" value={int(data.overview.totalRuns)} />
+            <Kpi icon={<Coins className="h-4 w-4" />} label="Tokens" value={int(data.overview.totalTokensIn + data.overview.totalTokensOut)} hint={`${int(data.overview.totalTokensIn)} in · ${int(data.overview.totalTokensOut)} out`} />
             <Kpi icon={<DollarSign className="h-4 w-4" />} label="Gasto (API)" value={usd(data.overview.totalSpendCents)} />
             <Kpi icon={<DollarSign className="h-4 w-4" />} label="Assinaturas" value={int(data.overview.subscriptions.active ?? 0)} hint={`${data.overview.subscriptions.trialing ?? 0} trial`} />
             <Kpi
@@ -326,6 +372,51 @@ export function MonitorDashboard() {
                   relative(s.lastAt),
                 ])}
                 numericCols={[2, 3, 4]}
+              />
+            )}
+          </Panel>
+
+          {/* Logs de auditoria — quem fez o quê nos painéis admin. Admin-only
+              (gestor não vê: dado mais sensível do painel). */}
+          <Panel
+            title="Logs de auditoria"
+            subtitle="Ações administrativas — papéis, artigos, temas, feedback"
+            action={
+              !data.auditLogRestricted && data.auditLog.length > 0 ? (
+                <ExportBtn
+                  onClick={() =>
+                    downloadCsv(
+                      `auditoria-${data.rangeDays}d.csv`,
+                      data.auditLog.map((a) => ({
+                        quando: a.createdAt,
+                        quem: a.actorEmail ?? '—',
+                        acao: AUDIT_ACTION_LABEL[a.action] ?? a.action,
+                        recurso: `${a.resourceType ?? ''} ${a.resourceId ?? ''}`.trim(),
+                        detalhes: auditDetail(a),
+                      })),
+                    )
+                  }
+                />
+              ) : undefined
+            }
+          >
+            {data.auditLogRestricted ? (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Lock className="h-3.5 w-3.5" aria-hidden />
+                Visível só para Super Admin (papel Admin).
+              </div>
+            ) : data.auditLog.length === 0 ? (
+              <Empty text="Nenhuma ação administrativa registrada no período." />
+            ) : (
+              <Table
+                head={['Quando', 'Quem', 'Ação', 'Recurso', 'Detalhes']}
+                rows={data.auditLog.slice(0, 200).map((a) => [
+                  relative(a.createdAt),
+                  a.actorEmail ?? '—',
+                  AUDIT_ACTION_LABEL[a.action] ?? a.action,
+                  a.resourceType ?? '—',
+                  auditDetail(a),
+                ])}
               />
             )}
           </Panel>

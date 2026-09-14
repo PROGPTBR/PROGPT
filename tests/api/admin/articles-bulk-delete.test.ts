@@ -18,6 +18,7 @@ function mockAuth(role: 'admin' | 'user') {
       }),
     };
   });
+  vi.doMock('@/lib/observability/audit-log', () => ({ recordAuditLog: vi.fn() }));
 }
 
 const VALID_IDS = [
