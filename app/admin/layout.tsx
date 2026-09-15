@@ -11,11 +11,13 @@ export default async function AdminLayout({
 }) {
   let role: 'admin' | 'gestor' = 'admin';
   let canViewProfitability = false;
+  let isPlatformSuperAdmin = false;
 
   try {
     const { profile, user } = await requireStaff();
 
     role = profile.role === 'gestor' ? 'gestor' : 'admin';
+    isPlatformSuperAdmin = profile.super_admin === true;
 
     // E-mail autorizado fica somente na variável de ambiente do servidor.
     const profitabilityAllowedEmail =
@@ -47,6 +49,7 @@ export default async function AdminLayout({
       <AdminSidebar
         role={role}
         canViewProfitability={canViewProfitability}
+        isPlatformSuperAdmin={isPlatformSuperAdmin}
       />
 
       <main className="flex-1 p-8 overflow-x-auto">

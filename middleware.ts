@@ -230,5 +230,6 @@ export const config = {
     '/profile/:path*',
     '/prompts/:path*',
     '/painel/:path*',
+    '/plataforma/:path*',
   ],
 };

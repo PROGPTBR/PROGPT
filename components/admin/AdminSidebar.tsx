@@ -16,6 +16,7 @@ import {
   CreditCard,
   Activity,
   ArrowLeft,
+  Building2,
 } from 'lucide-react';
 
 import { BrandLogo } from '@/components/brand/BrandLogo';
@@ -26,6 +27,12 @@ type SidebarItem = {
   Icon: LucideIcon;
   adminOnly?: boolean;
   profitabilityOnly?: boolean;
+  // Fundação "Plataforma" — visível só quando profiles.super_admin (flag
+  // GLOBAL de plataforma, ortogonal ao papel 'admin' usado pelos demais
+  // itens desta sidebar). Não confundir com o rótulo "Super Admin" acima
+  // (esse é o badge de papel — role='admin' — apontando pra /admin/monitor,
+  // sub-projeto 54; este item novo é o console cross-org /plataforma).
+  platformSuperAdminOnly?: boolean;
 };
 
 const ITEMS: SidebarItem[] = [
@@ -33,6 +40,12 @@ const ITEMS: SidebarItem[] = [
     href: '/admin/monitor',
     label: 'Super Admin',
     Icon: Activity,
+  },
+  {
+    href: '/plataforma',
+    label: 'Plataforma 2B Supply',
+    Icon: Building2,
+    platformSuperAdminOnly: true,
   },
   {
     href: '/admin/users',
@@ -100,11 +113,13 @@ const ITEMS: SidebarItem[] = [
 type AdminSidebarProps = {
   role?: 'admin' | 'gestor';
   canViewProfitability?: boolean;
+  isPlatformSuperAdmin?: boolean;
 };
 
 export function AdminSidebar({
   role = 'admin',
   canViewProfitability = false,
+  isPlatformSuperAdmin = false,
 }: AdminSidebarProps) {
   const pathname = usePathname();
 
@@ -116,6 +131,10 @@ export function AdminSidebar({
 
     // Rentabilidade depende da autorização calculada no servidor.
     if (item.profitabilityOnly && !canViewProfitability) {
+      return false;
+    }
+
+    if (item.platformSuperAdminOnly && !isPlatformSuperAdmin) {
       return false;
     }
 

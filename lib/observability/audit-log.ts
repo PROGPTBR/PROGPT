@@ -13,6 +13,11 @@ export type AuditLogInput = {
   resourceType?: string;
   resourceId?: string;
   metadata?: Record<string, unknown>;
+  // Sub-projeto "Plataforma" — ações administrativas sobre uma org
+  // específica (ver /api/plataforma/*). Null para ações cross-org (ex.:
+  // CRUD de plataforma_templates) ou para o /admin de conteúdo, que não
+  // tem noção de org.
+  orgId?: string | null;
 };
 
 export async function recordAuditLog(input: AuditLogInput): Promise<void> {
@@ -25,6 +30,7 @@ export async function recordAuditLog(input: AuditLogInput): Promise<void> {
       resource_type: input.resourceType ?? null,
       resource_id: input.resourceId ?? null,
       metadata: input.metadata ?? {},
+      org_id: input.orgId ?? null,
     });
     if (error) {
       console.warn(`[audit-log] insert failed for action=${input.action}:`, error.message);

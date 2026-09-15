@@ -17,6 +17,15 @@ export type Profile = {
   asaas_customer_id: string | null;
   asaas_subscription_id: string | null;
   subscription_status: string | null;
+
+  // Fundação "Plataforma" — org_id é NOT NULL no banco (todo usuário tem
+  // uma org, mesmo que seja a org default 'progpt-default'); super_admin é
+  // um flag GLOBAL ortogonal a `role` (não um valor de role) — espelha o
+  // padrão verificado no CRM-2Mimobi: papel de org e flag de plataforma são
+  // independentes. Ambas as colunas são guardadas por trigger no banco
+  // (guard_plataforma_columns, migration 0053) — só service-role escreve.
+  org_id: string;
+  super_admin: boolean;
 };
 
 export type SubscriptionStatus =
@@ -115,7 +124,10 @@ export async function getProfile(
 
       asaas_customer_id,
       asaas_subscription_id,
-      subscription_status
+      subscription_status,
+
+      org_id,
+      super_admin
     `)
     .eq('id', userId)
     .maybeSingle();
@@ -288,6 +300,43 @@ export async function requireStaff(): Promise<{
 
   if (!isStaff(profile)) {
     throw new NotStaff();
+  }
+
+  return {
+    user,
+    profile: profile!,
+  };
+}
+
+// ============================================================
+// SUPER ADMIN (fundação "Plataforma")
+//
+// Flag GLOBAL, ortogonal a `role`/isStaff — administra TODAS as orgs
+// (tenants), não só o conteúdo/usuários da própria. Gate de
+// /plataforma/*, nunca de /admin/* (que continua em requireAdmin/
+// requireStaff).
+// ============================================================
+
+export function isSuperAdmin(profile: Profile | null): boolean {
+  return profile?.super_admin === true;
+}
+
+export class NotSuperAdmin extends Error {
+  constructor() {
+    super('NOT_SUPER_ADMIN');
+    this.name = 'NotSuperAdmin';
+  }
+}
+
+export async function requireSuperAdmin(): Promise<{
+  user: User;
+  profile: Profile;
+}> {
+  const user = await requireUser();
+  const profile = await getProfile(user.id);
+
+  if (!isSuperAdmin(profile)) {
+    throw new NotSuperAdmin();
   }
 
   return {
