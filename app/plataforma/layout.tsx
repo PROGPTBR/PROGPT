@@ -38,8 +38,9 @@ export default async function PlataformaLayout({
         <div className="px-4 py-4 border-b border-amber-500/20">
           <div className="text-sm font-semibold">PROGPT</div>
           <div className="text-[10px] font-medium uppercase tracking-wider text-amber-600 dark:text-amber-400">
-            Plataforma 2B Supply
+            Super Admin
           </div>
+          <div className="text-[10px] text-muted-foreground mt-0.5">2B Supply</div>
         </div>
         <nav className="flex-1 p-2 space-y-0.5">
           {items.map(({ href, label, Icon }) => (

@@ -185,7 +185,7 @@ export function MonitorDashboard() {
         <div>
           <div className="flex items-center gap-2 text-brand">
             <ShieldCheck className="h-5 w-5" aria-hidden />
-            <span className="text-xs font-medium uppercase tracking-wider">Super Admin</span>
+            <span className="text-xs font-medium uppercase tracking-wider">Monitoramento</span>
           </div>
           <h1 className="mt-1 text-2xl sm:text-3xl font-semibold tracking-tight">
             Painel do site <span className="text-brand">.</span>
@@ -403,7 +403,7 @@ export function MonitorDashboard() {
             {data.auditLogRestricted ? (
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <Lock className="h-3.5 w-3.5" aria-hidden />
-                Visível só para Super Admin (papel Admin).
+                Visível só para o papel Admin.
               </div>
             ) : data.auditLog.length === 0 ? (
               <Empty text="Nenhuma ação administrativa registrada no período." />

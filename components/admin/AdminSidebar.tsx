@@ -27,25 +27,29 @@ type SidebarItem = {
   Icon: LucideIcon;
   adminOnly?: boolean;
   profitabilityOnly?: boolean;
-  // Fundação "Plataforma" — visível só quando profiles.super_admin (flag
-  // GLOBAL de plataforma, ortogonal ao papel 'admin' usado pelos demais
-  // itens desta sidebar). Não confundir com o rótulo "Super Admin" acima
-  // (esse é o badge de papel — role='admin' — apontando pra /admin/monitor,
-  // sub-projeto 54; este item novo é o console cross-org /plataforma).
+  // Visível só quando profiles.super_admin (flag GLOBAL de plataforma,
+  // ortogonal ao papel 'admin' usado pelos demais itens desta sidebar).
   platformSuperAdminOnly?: boolean;
 };
 
+// ATENÇÃO (correção 2026-09-15): "Super Admin" aponta pro console
+// /plataforma, NÃO pro /admin/monitor. Até esta correção o rótulo "Super
+// Admin" ficava no /admin/monitor (sub-projeto 54) enquanto o console novo
+// se chamava "Plataforma 2B Supply" — o diretor clicava em "Super Admin",
+// caía na tela antiga e reportava (com razão) que "nada tinha mudado".
+// Um rótulo "Super Admin" só, apontando pro lugar certo; o /admin/monitor
+// voltou a se chamar pelo que ele é: monitoramento DESTA instância.
 const ITEMS: SidebarItem[] = [
   {
-    href: '/admin/monitor',
-    label: 'Super Admin',
-    Icon: Activity,
-  },
-  {
     href: '/plataforma',
-    label: 'Plataforma 2B Supply',
+    label: 'Super Admin',
     Icon: Building2,
     platformSuperAdminOnly: true,
+  },
+  {
+    href: '/admin/monitor',
+    label: 'Monitoramento',
+    Icon: Activity,
   },
   {
     href: '/admin/users',
@@ -154,8 +158,12 @@ export function AdminSidebar({
           />
         </Link>
 
+        {/* Badge de PAPEL desta instância. "Super Admin" aqui não — esse
+            rótulo agora pertence só ao item de nav do console /plataforma,
+            pra não existirem dois "Super Admin" com significados
+            diferentes (ver comentário no topo de ITEMS). */}
         <div className="text-[10px] font-medium uppercase tracking-wider text-brand">
-          {role === 'gestor' ? 'Gestor' : 'Super Admin'}
+          {role === 'gestor' ? 'Gestor' : 'Admin'}
         </div>
       </div>
 
