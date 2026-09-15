@@ -50,13 +50,18 @@ alter table profiles alter column org_id set not null;
 
 create index if not exists profiles_org_id_idx on profiles (org_id);
 
--- Bootstrap: o admin atual documentado no CLAUDE.md (rgoalves@gmail.com)
--- vira o primeiro super_admin, senão /plataforma fica inacessível até
--- alguém rodar um UPDATE manual (ver nota "Bootstrap do primeiro
--- super_admin" no CLAUDE.md). Roda ANTES da trigger de guarda existir
--- (próxima seção), então não precisa do workaround de GUC.
+-- Bootstrap: o admin original do projeto (rgoalves@gmail.com) vira o
+-- primeiro super_admin, senão /plataforma fica inacessível até alguém
+-- rodar um UPDATE manual (ver nota "Bootstrap do primeiro super_admin" no
+-- CLAUDE.md). Roda ANTES da trigger de guarda existir (próxima seção),
+-- então não precisa do workaround de GUC. Por e-mail, não UUID hardcoded
+-- — um UUID achado no CLAUDE.md em 2026-09-14 estava desatualizado
+-- (drift entre docs e o auth.users real de produção) e o bootstrap virou
+-- um no-op silencioso; lookup por e-mail é mais robusto que confiar num
+-- ID documentado à mão. No-op inofensivo se o e-mail não existir no
+-- ambiente (dev/CI/staging sem esse usuário).
 update profiles set super_admin = true
-where id = '16fab8f7-a960-48b4-903d-b590e476b51b';
+where id = (select id from auth.users where email = 'rgoalves@gmail.com');
 
 -- ────────────────────────────────────────────────────────────────────────
 -- 3) handle_new_user() ganha org_id — todo signup novo entra na org default.
