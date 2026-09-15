@@ -21,9 +21,15 @@ import { createWebSearchTool } from '@/lib/chat/web-search-tool';
 import {
   createOffBaseMarkerTool,
   createPrecoReferenciaTool,
+  createIndicadoresTool,
+  createDiagnosticoAquisicaoTool,
+  createHomologacaoQuickTool,
   isChatToolWebSearchEnabled,
   isOffTopicFallbackEnabled,
   isPrecoReferenciaToolEnabled,
+  isIndicadoresToolEnabled,
+  isDiagnosticoAquisicaoToolEnabled,
+  isHomologacaoQuickToolEnabled,
 } from '@/lib/chat/inline-chat-tools';
 
 export const runtime = 'nodejs';
@@ -203,6 +209,9 @@ export async function POST(req: Request): Promise<Response> {
     const offBaseRef = { current: false };
     const webSearchRef = { current: false };
     const precoRef = { current: false };
+    const indicadoresRef = { current: false };
+    const diagnosticoRef = { current: false };
+    const homologacaoRef = { current: false };
     const chatTools = {
       ...(isOffTopicFallbackEnabled()
         ? { responder_fora_do_escopo: createOffBaseMarkerTool(offBaseRef) }
@@ -218,6 +227,15 @@ export async function POST(req: Request): Promise<Response> {
         : {}),
       ...(isPrecoReferenciaToolEnabled()
         ? { preco_referencia: createPrecoReferenciaTool({ usedRef: precoRef }) }
+        : {}),
+      ...(isIndicadoresToolEnabled()
+        ? { indicadores_economicos: createIndicadoresTool({ usedRef: indicadoresRef }) }
+        : {}),
+      ...(isDiagnosticoAquisicaoToolEnabled()
+        ? { diagnostico_aquisicao_rapido: createDiagnosticoAquisicaoTool({ usedRef: diagnosticoRef }) }
+        : {}),
+      ...(isHomologacaoQuickToolEnabled()
+        ? { homologacao_rapida: createHomologacaoQuickTool({ usedRef: homologacaoRef }) }
         : {}),
     };
     const tools = Object.keys(chatTools).length > 0 ? chatTools : undefined;
@@ -277,6 +295,9 @@ export async function POST(req: Request): Promise<Response> {
             session_id: parsed.sessionId ?? null,
             off_base_used: offBaseRef.current,
             preco_referencia_used: precoRef.current,
+            indicadores_used: indicadoresRef.current,
+            diagnostico_aquisicao_used: diagnosticoRef.current,
+            homologacao_used: homologacaoRef.current,
           },
         });
         const aborted = finishReason === 'error';
@@ -293,11 +314,22 @@ export async function POST(req: Request): Promise<Response> {
           data.appendMessageAnnotation({ mode: 'personal', webSearchUsed: webSearchRef.current });
           trace.setTag('off-base-fallback:used');
         }
-        // CTA forçado quando a tool de preço rodou de verdade — mais
+        // CTA forçado quando uma tool de assistente rodou de verdade — mais
         // confiável que depender do modelo escrever o caminho no texto.
+        // Uma só por turno (a primeira que rodou vence — na prática o
+        // modelo só chama uma tool de assistente por vez).
         if (precoRef.current) {
           data.appendMessageAnnotation({ assistantCTA: 'pesquisa_precos' });
           trace.setTag('preco-referencia-tool:used');
+        } else if (diagnosticoRef.current) {
+          data.appendMessageAnnotation({ assistantCTA: 'diagnostico_aquisicao' });
+          trace.setTag('diagnostico-aquisicao-tool:used');
+        } else if (homologacaoRef.current) {
+          data.appendMessageAnnotation({ assistantCTA: 'homologacao' });
+          trace.setTag('homologacao-tool:used');
+        } else if (indicadoresRef.current) {
+          data.appendMessageAnnotation({ assistantCTA: 'indicadores' });
+          trace.setTag('indicadores-tool:used');
         }
 
         // Sub-projeto 34 — persist the resolved perfilId on the session
@@ -326,9 +358,11 @@ export async function POST(req: Request): Promise<Response> {
         // e anexar annotation pra UI renderizar um CTA card grande no
         // lugar do link "aqui" pequeno (feedback beta 2026-05-22: link
         // markdown era pequeno demais no mobile + LLM hallucinava URL).
-        // Pulado quando a tool de preço já anotou um CTA acima — evita
-        // dois cards conflitantes na mesma resposta.
-        if (!precoRef.current && !aborted && finishReason === 'stop' && text.length >= 20) {
+        // Pulado quando alguma tool de assistente já anotou um CTA acima —
+        // evita dois cards conflitantes na mesma resposta.
+        const toolCtaAlreadySet =
+          precoRef.current || diagnosticoRef.current || homologacaoRef.current || indicadoresRef.current;
+        if (!toolCtaAlreadySet && !aborted && finishReason === 'stop' && text.length >= 20) {
           const ctaType = detectAssistantToolCTA(text);
           if (ctaType) {
             data.appendMessageAnnotation({ assistantCTA: ctaType });

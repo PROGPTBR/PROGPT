@@ -577,12 +577,22 @@ describe('POST /api/chat — piloto de tools automáticas (Pesquisa de Preços +
   // .test.ts. Aqui testamos só a FIAÇÃO em route.ts: os refs viram
   // annotation certa no onFinish.
   function mockInlineTools(
-    opts: { offBase?: boolean; webSearch?: boolean; preco?: boolean } = {},
+    opts: {
+      offBase?: boolean;
+      webSearch?: boolean;
+      preco?: boolean;
+      indicadores?: boolean;
+      diagnostico?: boolean;
+      homologacao?: boolean;
+    } = {},
   ) {
     vi.doMock('@/lib/chat/inline-chat-tools', () => ({
       isOffTopicFallbackEnabled: () => opts.offBase ?? true,
       isChatToolWebSearchEnabled: () => opts.webSearch ?? true,
       isPrecoReferenciaToolEnabled: () => opts.preco ?? true,
+      isIndicadoresToolEnabled: () => opts.indicadores ?? true,
+      isDiagnosticoAquisicaoToolEnabled: () => opts.diagnostico ?? true,
+      isHomologacaoQuickToolEnabled: () => opts.homologacao ?? true,
       createOffBaseMarkerTool: (ref: { current: boolean }) => ({
         execute: async () => {
           ref.current = true;
@@ -593,6 +603,24 @@ describe('POST /api/chat — piloto de tools automáticas (Pesquisa de Preços +
         execute: async () => {
           ctx.usedRef.current = true;
           return 'preco ok';
+        },
+      }),
+      createIndicadoresTool: (ctx: { usedRef: { current: boolean } }) => ({
+        execute: async () => {
+          ctx.usedRef.current = true;
+          return 'indicadores ok';
+        },
+      }),
+      createDiagnosticoAquisicaoTool: (ctx: { usedRef: { current: boolean } }) => ({
+        execute: async () => {
+          ctx.usedRef.current = true;
+          return 'diagnostico ok';
+        },
+      }),
+      createHomologacaoQuickTool: (ctx: { usedRef: { current: boolean } }) => ({
+        execute: async () => {
+          ctx.usedRef.current = true;
+          return 'homologacao ok';
         },
       }),
     }));
@@ -655,9 +683,16 @@ describe('POST /api/chat — piloto de tools automáticas (Pesquisa de Preços +
     expect(args.maxSteps).toBe(5);
   });
 
-  it('omits tools and uses maxSteps:1 when all 3 kill-switches are off', async () => {
+  it('omits tools and uses maxSteps:1 when all kill-switches are off', async () => {
     setupBase();
-    mockInlineTools({ offBase: false, webSearch: false, preco: false });
+    mockInlineTools({
+      offBase: false,
+      webSearch: false,
+      preco: false,
+      indicadores: false,
+      diagnostico: false,
+      homologacao: false,
+    });
     const streamTextSpy = vi.fn().mockReturnValue({
       toDataStreamResponse: vi.fn(() => new Response('ok', { status: 200 })),
     });
