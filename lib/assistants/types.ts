@@ -20,7 +20,8 @@ export type AssistantType =
   | 'scorecard'
   | 'homologacao'
   | 'pesquisa_precos'
-  | 'spend_analysis';
+  | 'spend_analysis'
+  | 'diagnostico_aquisicao';
 
 export const ASSISTANT_TYPES = [
   'rfp',
@@ -34,6 +35,7 @@ export const ASSISTANT_TYPES = [
   'homologacao',
   'pesquisa_precos',
   'spend_analysis',
+  'diagnostico_aquisicao',
 ] as const;
 
 export type ThemeStatusRow = 'running' | 'done' | 'error';
@@ -873,7 +875,8 @@ export type AssistantRunRow = {
     | ScorecardParams
     | HomologacaoParams
     | PesquisaPrecosParams
-    | SpendAnalysisParams;
+    | SpendAnalysisParams
+    | DiagnosticoAquisicaoParams;
   output_md: string | null;
   status: ThemeStatusRow;
   error_message: string | null;
@@ -1093,3 +1096,142 @@ export const SpendAnalysisCreateSchema = z.object({
   params: SpendAnalysisParamsSchema,
 });
 export type SpendAnalysisCreate = z.infer<typeof SpendAnalysisCreateSchema>;
+
+// ── Diagnóstico de Aquisição ──────────────────────────────────────────────
+// A partir de docs/produto (2026-09-14): classificação CAPEX/OPEX definida
+// pelo comprador (premissa — o assistente NUNCA sobrescreve) + criticidade ×
+// complexidade de mercado × impacto operacional → recomenda o conjunto de
+// KPIs (lista fechada por classificação, vem do doc-fonte) e uma inclinação
+// determinística SOURCE / CONTRACT / BUY. Cada classificação tem seu próprio
+// bloco de campos opcionais (o doc-fonte detalha as perguntas específicas
+// de CAPEX vs. OPEX) — ambos ficam disponíveis no schema porque o form é
+// único; só o bloco relevante à `classificacao` escolhida é exibido/enviado.
+
+export const DIAGNOSTICO_NIVEL = ['baixa', 'media', 'alta'] as const;
+export type DiagnosticoNivel = (typeof DIAGNOSTICO_NIVEL)[number];
+export const DIAGNOSTICO_NIVEL_LABELS: Record<DiagnosticoNivel, string> = {
+  baixa: 'Baixa',
+  media: 'Média',
+  alta: 'Alta',
+};
+
+export const DIAGNOSTICO_IMPACTO = ['baixo', 'medio', 'alto'] as const;
+export type DiagnosticoImpacto = (typeof DIAGNOSTICO_IMPACTO)[number];
+export const DIAGNOSTICO_IMPACTO_LABELS: Record<DiagnosticoImpacto, string> = {
+  baixo: 'Baixo',
+  medio: 'Médio',
+  alto: 'Alto',
+};
+
+export const DIAGNOSTICO_NATUREZA = ['produto', 'servico', 'produto_servico'] as const;
+export type DiagnosticoNatureza = (typeof DIAGNOSTICO_NATUREZA)[number];
+export const DIAGNOSTICO_NATUREZA_LABELS: Record<DiagnosticoNatureza, string> = {
+  produto: 'Produto',
+  servico: 'Serviço',
+  produto_servico: 'Produto + Serviço',
+};
+
+export const DIAGNOSTICO_TIPO_INVESTIMENTO = ['substituicao', 'expansao', 'novo'] as const;
+export type DiagnosticoTipoInvestimento = (typeof DIAGNOSTICO_TIPO_INVESTIMENTO)[number];
+export const DIAGNOSTICO_TIPO_INVESTIMENTO_LABELS: Record<
+  DiagnosticoTipoInvestimento,
+  string
+> = {
+  substituicao: 'Substituição',
+  expansao: 'Expansão',
+  novo: 'Novo investimento',
+};
+
+export const DIAGNOSTICO_FREQUENCIA = [
+  'unica',
+  'mensal',
+  'trimestral',
+  'anual',
+  'sob_demanda',
+] as const;
+export type DiagnosticoFrequencia = (typeof DIAGNOSTICO_FREQUENCIA)[number];
+export const DIAGNOSTICO_FREQUENCIA_LABELS: Record<DiagnosticoFrequencia, string> = {
+  unica: 'Compra única',
+  mensal: 'Mensal',
+  trimestral: 'Trimestral',
+  anual: 'Anual',
+  sob_demanda: 'Sob demanda',
+};
+
+// Campos específicos de CAPEX — todos opcionais (o comprador preenche o que souber).
+export const DiagnosticoCapexDetalhesSchema = z.object({
+  valorInvestimentoBRL: z.number().nonnegative().optional(),
+  vidaUtilAnos: z.number().nonnegative().optional(),
+  orcamentoAprovado: z.boolean().optional(),
+  tipoInvestimento: z.enum(DIAGNOSTICO_TIPO_INVESTIMENTO).optional(),
+  capacidadeAdicional: z.string().trim().max(300).optional(),
+  existeEquipamentoAtual: z.boolean().optional(),
+  custoAtualOperacao: z.string().trim().max(300).optional(),
+  haveraInstalacao: z.boolean().optional(),
+  haveraTreinamento: z.boolean().optional(),
+  custoManutencaoAnualBRL: z.number().nonnegative().optional(),
+  custoParada: z.string().trim().max(300).optional(),
+  pecasSobressalentes: z.boolean().optional(),
+  valorResidualBRL: z.number().nonnegative().optional(),
+});
+export type DiagnosticoCapexDetalhes = z.infer<typeof DiagnosticoCapexDetalhesSchema>;
+
+// Campos específicos de OPEX — todos opcionais.
+export const DiagnosticoOpexDetalhesSchema = z.object({
+  gastoAnualBRL: z.number().nonnegative().optional(),
+  orcamentoDisponivelBRL: z.number().nonnegative().optional(),
+  volumeEsperado: z.string().trim().max(300).optional(),
+  frequenciaConsumo: z.enum(DIAGNOSTICO_FREQUENCIA).optional(),
+  sazonalidade: z.string().trim().max(300).optional(),
+  historicoPreco: z.string().trim().max(300).optional(),
+  numeroFornecedores: z.number().int().nonnegative().optional(),
+  riscoDesabastecimento: z.boolean().optional(),
+  existeSla: z.boolean().optional(),
+  reajuste: z.string().trim().max(300).optional(),
+  indiceInflacaoAssociado: z.string().trim().max(120).optional(),
+  prazoContratualMeses: z.number().nonnegative().optional(),
+  consumoMinimo: z.boolean().optional(),
+  possibilidadeConsolidacao: z.boolean().optional(),
+});
+export type DiagnosticoOpexDetalhes = z.infer<typeof DiagnosticoOpexDetalhesSchema>;
+
+export const DiagnosticoAquisicaoParamsSchema = z.object({
+  descricaoCompra: z.string().trim().min(2).max(300),
+  categoria: z.string().trim().max(200).optional().default(''),
+  // Premissa do comprador — INPUT, nunca reclassificado pelo assistente.
+  classificacao: z.enum(['CAPEX', 'OPEX']),
+  natureza: z.enum(DIAGNOSTICO_NATUREZA),
+  criticidade: z.enum(DIAGNOSTICO_NIVEL),
+  complexidadeMercado: z.enum(DIAGNOSTICO_NIVEL),
+  impactoOperacional: z.enum(DIAGNOSTICO_IMPACTO),
+  capex: DiagnosticoCapexDetalhesSchema.optional(),
+  opex: DiagnosticoOpexDetalhesSchema.optional(),
+  notes: z.string().trim().max(2000).optional().default(''),
+  perfilId: z.string().uuid().optional(),
+});
+export type DiagnosticoAquisicaoParams = z.infer<typeof DiagnosticoAquisicaoParamsSchema>;
+
+export const DiagnosticoAquisicaoRequestSchema = z.object({
+  templateId: z.string().uuid(),
+  params: DiagnosticoAquisicaoParamsSchema,
+});
+export type DiagnosticoAquisicaoRequest = z.infer<
+  typeof DiagnosticoAquisicaoRequestSchema
+>;
+
+export type DiagnosticoLeaning = 'SOURCE' | 'CONTRACT' | 'BUY';
+
+export const DIAGNOSTICO_LEANING_LABELS: Record<DiagnosticoLeaning, string> = {
+  SOURCE: 'SOURCE — engajamento de strategic sourcing completo',
+  CONTRACT: 'CONTRACT — negociação/contratação direcionada',
+  BUY: 'BUY — compra transacional simplificada',
+};
+
+export type ClassifiedDiagnosticoAquisicao = {
+  kpis: string[];
+  leaning: DiagnosticoLeaning;
+  criticidadeScore: number; // 1-3
+  complexidadeScore: number; // 1-3
+  impactoScore: number; // 1-3
+  totalScore: number; // 3-9
+};

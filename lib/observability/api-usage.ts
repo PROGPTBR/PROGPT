@@ -92,6 +92,7 @@ export type ApiOperation =
   | 'quick-chart-infer'
   | 'chat-personal-generate'
   | 'chat-personal-websearch'
+  | 'assistant-diagnostico-aquisicao-generate'
   | 'chat-tool-websearch';
 
 export type RecordUsageInput = {

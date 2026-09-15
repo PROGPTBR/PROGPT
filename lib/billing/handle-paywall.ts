@@ -20,6 +20,7 @@ const TYPE_LABELS: Record<string, string> = {
   profile: 'perfil de categoria',
   negotiation: 'simulação de negociação',
   spend_analysis: 'análise de gastos',
+  diagnostico_aquisicao: 'diagnóstico de aquisição',
 };
 
 /**

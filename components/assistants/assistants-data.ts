@@ -15,7 +15,8 @@ export type AssistantPreviewKey =
   | 'simulador_tributario'
   | 'simulador_logistico'
   | 'grafico_rapido'
-  | 'comprador';
+  | 'comprador'
+  | 'diagnostico_aquisicao';
 
 export type AssistantDefinition = {
   id: string;
@@ -336,5 +337,22 @@ export const ASSISTANTS: readonly AssistantDefinition[] = [
       'Baixe o PNG pronto — sem depender de outro assistente',
     ],
     previewKey: 'grafico_rapido',
+  },
+
+  {
+    id: 'diagnostico_aquisicao',
+    step: 3,
+    stepCategory: 'Estratégia',
+    href: '/assistants/diagnostico_aquisicao',
+    title: 'Diagnóstico de Aquisição',
+    short:
+      'Classifique a compra como CAPEX ou OPEX e receba os KPIs certos + a estratégia recomendada (SOURCE, CONTRACT ou BUY) antes de partir para RFP ou Kraljic.',
+    sideSubtitle: 'Decida o caminho antes de sourcing',
+    bullets: [
+      'CAPEX × OPEX define as perguntas certas a fazer',
+      'Criticidade × complexidade × impacto → SOURCE, CONTRACT ou BUY',
+      'KPIs recomendados por classificação + relatório em .docx',
+    ],
+    previewKey: 'diagnostico_aquisicao',
   },
 ];
