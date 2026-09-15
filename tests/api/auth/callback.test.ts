@@ -10,13 +10,20 @@ beforeEach(() => {
 function mockSupabaseServer(opts: {
   error?: { message: string } | null;
   user?: { id: string; email: string } | null;
+  superAdmin?: boolean;
 }) {
   const exchangeCodeForSession = vi.fn().mockResolvedValue({
     data: { user: opts.user ?? null },
     error: opts.error ?? null,
   });
+  const maybeSingle = vi.fn().mockResolvedValue({ data: { super_admin: opts.superAdmin ?? false } });
+  const eq = vi.fn().mockReturnValue({ maybeSingle });
+  const select = vi.fn().mockReturnValue({ eq });
   vi.doMock('@/lib/db/supabase-server', () => ({
-    supabaseServer: () => ({ auth: { exchangeCodeForSession } }),
+    supabaseServer: () => ({
+      auth: { exchangeCodeForSession },
+      from: () => ({ select }),
+    }),
   }));
   return { exchangeCodeForSession };
 }
@@ -88,5 +95,23 @@ describe('GET /auth/callback', () => {
     const req = new NextRequest('http://0.0.0.0:8080/auth/callback?code=bad');
     await GET(req);
     expect(ensureWelcomeEmailSent).not.toHaveBeenCalled();
+  });
+
+  it('sends a super admin to /plataforma instead of /chat when no explicit next', async () => {
+    mockSupabaseServer({ user: { id: 'u1', email: 'x@y.com' }, superAdmin: true });
+    mockWelcome();
+    const { GET } = await import('@/app/auth/callback/route');
+    const req = new NextRequest('http://0.0.0.0:8080/auth/callback?code=abc');
+    const res = await GET(req);
+    expect(res.headers.get('location')).toBe('https://progpt.com.br/plataforma');
+  });
+
+  it('respects an explicit next even for a super admin', async () => {
+    mockSupabaseServer({ user: { id: 'u1', email: 'x@y.com' }, superAdmin: true });
+    mockWelcome();
+    const { GET } = await import('@/app/auth/callback/route');
+    const req = new NextRequest('http://0.0.0.0:8080/auth/callback?code=abc&next=/reset-password');
+    const res = await GET(req);
+    expect(res.headers.get('location')).toBe('https://progpt.com.br/reset-password');
   });
 });

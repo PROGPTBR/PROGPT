@@ -12,21 +12,28 @@ afterEach(() => {
 });
 
 function mockBrowser(opts: {
-  signInPwResult?: { error: null | { message: string; code?: string } };
+  signInPwResult?: { data?: { user: { id: string } | null }; error: null | { message: string; code?: string } };
+  superAdmin?: boolean;
+  searchParams?: URLSearchParams;
 }) {
   const signInWithPassword = vi.fn().mockResolvedValue(
-    opts.signInPwResult ?? { error: null },
+    opts.signInPwResult ?? { data: { user: { id: 'u1' } }, error: null },
   );
+  const maybeSingle = vi.fn().mockResolvedValue({ data: { super_admin: opts.superAdmin ?? false } });
+  const eq = vi.fn().mockReturnValue({ maybeSingle });
+  const select = vi.fn().mockReturnValue({ eq });
   vi.doMock('@/lib/db/supabase-browser', () => ({
     supabaseBrowser: () => ({
       auth: { signInWithPassword },
+      from: () => ({ select }),
     }),
   }));
+  const push = vi.fn();
   vi.doMock('next/navigation', () => ({
-    useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
-    useSearchParams: () => new URLSearchParams(),
+    useRouter: () => ({ push, refresh: vi.fn() }),
+    useSearchParams: () => opts.searchParams ?? new URLSearchParams(),
   }));
-  return { signInWithPassword };
+  return { signInWithPassword, push };
 }
 
 describe('LoginForm', () => {
@@ -75,5 +82,41 @@ describe('LoginForm', () => {
     const link = screen.getByRole('link', { name: /criar conta/i });
     // useSearchParams mock returns empty params → next defaults to /chat
     expect(link.getAttribute('href')).toBe('/signup?next=%2Fchat');
+  });
+
+  it('redirects a super admin to /plataforma instead of /chat when there is no explicit next', async () => {
+    const { push } = mockBrowser({ superAdmin: true });
+    const { LoginForm } = await import('@/components/auth/LoginForm');
+    render(<LoginForm />);
+    const user = userEvent.setup();
+    await user.type(screen.getByLabelText(/email/i), 'super@progpt.com.br');
+    await user.type(screen.getByLabelText('Senha'), 'pw1234');
+    await user.click(screen.getByRole('button', { name: /entrar/i }));
+    await vi.waitFor(() => expect(push).toHaveBeenCalledWith('/plataforma'));
+  });
+
+  it('sends a non-super-admin to the default /chat', async () => {
+    const { push } = mockBrowser({ superAdmin: false });
+    const { LoginForm } = await import('@/components/auth/LoginForm');
+    render(<LoginForm />);
+    const user = userEvent.setup();
+    await user.type(screen.getByLabelText(/email/i), 'cliente@empresa.com');
+    await user.type(screen.getByLabelText('Senha'), 'pw1234');
+    await user.click(screen.getByRole('button', { name: /entrar/i }));
+    await vi.waitFor(() => expect(push).toHaveBeenCalledWith('/chat'));
+  });
+
+  it('respects an explicit ?next= even for a super admin (does not override to /plataforma)', async () => {
+    const { push } = mockBrowser({
+      superAdmin: true,
+      searchParams: new URLSearchParams('next=/assistants/kraljic'),
+    });
+    const { LoginForm } = await import('@/components/auth/LoginForm');
+    render(<LoginForm />);
+    const user = userEvent.setup();
+    await user.type(screen.getByLabelText(/email/i), 'super@progpt.com.br');
+    await user.type(screen.getByLabelText('Senha'), 'pw1234');
+    await user.click(screen.getByRole('button', { name: /entrar/i }));
+    await vi.waitFor(() => expect(push).toHaveBeenCalledWith('/assistants/kraljic'));
   });
 });

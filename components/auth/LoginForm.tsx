@@ -27,7 +27,12 @@ const ERROR_CLASS =
 export function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
-  const next = params.get('next') ?? '/chat';
+  // `next` explícito (ex.: middleware bounceando de uma página protegida)
+  // é sempre respeitado. Sem ele, o destino padrão depende do perfil — super
+  // admin não deveria cair na tela de chat de cliente comum, ver checagem
+  // pós-login abaixo.
+  const explicitNext = params.get('next');
+  const next = explicitNext ?? '/chat';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
@@ -39,13 +44,27 @@ export function LoginForm() {
     setError(null);
     setLoading(true);
     const sb = supabaseBrowser();
-    const { error: err } = await sb.auth.signInWithPassword({ email, password });
-    setLoading(false);
+    const { data, error: err } = await sb.auth.signInWithPassword({ email, password });
     if (err) {
+      setLoading(false);
       setError(friendlyError(err));
       return;
     }
-    router.push(next);
+
+    let destination = next;
+    if (!explicitNext && data.user) {
+      const { data: profile } = await sb
+        .from('profiles')
+        .select('super_admin')
+        .eq('id', data.user.id)
+        .maybeSingle();
+      if ((profile as { super_admin?: boolean } | null)?.super_admin) {
+        destination = '/plataforma';
+      }
+    }
+
+    setLoading(false);
+    router.push(destination);
     router.refresh();
   }
 

@@ -19,13 +19,27 @@ function safeNext(raw: string | null, fallback: string): string {
 
 export async function GET(req: NextRequest) {
   const code = req.nextUrl.searchParams.get('code');
-  const next = safeNext(req.nextUrl.searchParams.get('next'), '/chat');
+  const explicitNext = req.nextUrl.searchParams.get('next');
+  let next = safeNext(explicitNext, '/chat');
   if (code) {
     const supabase = supabaseServer();
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error && data?.user?.id && data.user.email) {
       // Fire-and-forget — não bloqueia o redirect.
       void ensureWelcomeEmailSent(data.user.id, data.user.email);
+
+      // Mesma regra do LoginForm: sem `next` explícito, super admin cai
+      // direto em /plataforma em vez da tela de chat de cliente comum.
+      if (!explicitNext) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('super_admin')
+          .eq('id', data.user.id)
+          .maybeSingle();
+        if ((profile as { super_admin?: boolean } | null)?.super_admin) {
+          next = '/plataforma';
+        }
+      }
     }
   }
   // Base FIXA (configuredAppUrl), nunca req.url — atrás do proxy do Railway
