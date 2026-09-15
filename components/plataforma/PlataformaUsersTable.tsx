@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
@@ -95,11 +96,11 @@ export function PlataformaUsersTable() {
   return (
     <div className="space-y-6 max-w-6xl">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Usuários (cross-org)</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Usuários</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Ativar/desativar login e redefinição de senha continuam em{' '}
-          <code>/admin/users</code>. Aqui: mover entre orgs e conceder/revogar{' '}
-          <strong>super_admin</strong>.
+          Clique em <strong>Gerenciar</strong> pra abrir o painel completo de um usuário — plano, uso,
+          conta e "ver como o cliente". Mover entre orgs e conceder/revogar super_admin em massa continuam
+          aqui embaixo.
         </p>
       </div>
 
@@ -114,6 +115,7 @@ export function PlataformaUsersTable() {
               <TableHead>Org</TableHead>
               <TableHead>Login</TableHead>
               <TableHead>Super Admin</TableHead>
+              <TableHead></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -153,6 +155,13 @@ export function PlataformaUsersTable() {
                   >
                     {u.super_admin ? 'Revogar' : 'Conceder'}
                   </Button>
+                </TableCell>
+                <TableCell>
+                  <Link href={`/plataforma/usuarios/${u.id}`}>
+                    <Button size="sm" variant="ghost">
+                      Gerenciar
+                    </Button>
+                  </Link>
                 </TableCell>
               </TableRow>
             ))}
