@@ -1,6 +1,6 @@
 import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
-import { Gauge, Building2, Users, FileCode, ArrowLeft } from 'lucide-react';
+import { Gauge, Building2, Users, FileCode, Activity, ArrowLeft } from 'lucide-react';
 import { requireSuperAdmin, NotSuperAdmin, NotAuthenticated } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
@@ -29,6 +29,7 @@ export default async function PlataformaLayout({
     { href: '/plataforma/operacoes', label: 'Operações', Icon: Building2 },
     { href: '/plataforma/usuarios', label: 'Usuários', Icon: Users },
     { href: '/plataforma/templates', label: 'Templates', Icon: FileCode },
+    { href: '/plataforma/monitoramento', label: 'Monitoramento', Icon: Activity },
   ];
 
   return (
