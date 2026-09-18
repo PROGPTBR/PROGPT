@@ -1,0 +1,146 @@
+{
+  "versao": 1,
+  "suite": "2Bagents",
+  "segmento": "suprimentos",
+  "marca": {
+    "produto": "PROGPT",
+    "empresa": "2B Supply",
+    "suite": "2Bagents"
+  },
+  "posicionamento": {
+    "headline": "2Bagents orquestra a gestão de gastos de suprimentos",
+    "subheadline": "Agentes de IA especializados, da requisição ao pedido, com a decisão sempre de uma pessoa",
+    "promessa_hitl": "Todo agente que gera compromisso (pedido, resposta a fornecedor, aprovação) exige aprovação humana explícita antes de sair."
+  },
+  "camadas": [
+    {
+      "n": 1,
+      "nome": "Agentes",
+      "descricao": "Os módulos especializados listados abaixo, cada um com entrada, entrega e documento próprio."
+    },
+    {
+      "n": 2,
+      "nome": "Orquestração",
+      "descricao": "Chat especialista que aciona os agentes automaticamente pela conversa + Proc2Pay para processos com estado (13 etapas encadeadas com handoff de contexto)."
+    },
+    {
+      "n": 3,
+      "nome": "Dados e ambiente",
+      "descricao": "Base de conhecimento própria de procurement (retrieval híbrido) + fontes públicas brasileiras oficiais (Receita, PNCP/CATMAT, BACEN) + dados do cliente isolados por conta. LGPD; sem certificação ISO 27001 hoje."
+    }
+  ],
+  "modulos": [
+    {
+      "id": "compras",
+      "nome": "Compras — da requisição ao pedido",
+      "entrega": "Processo de compra de ponta a ponta: requisição, análise crítica, escopo, estratégia, seleção de fornecedores, RFQ/RFP, equalização, negociação, aprovação e emissão do pedido.",
+      "status": "ativo",
+      "hitl": true,
+      "ferramentas": ["proc2pay"]
+    },
+    {
+      "id": "homologacao",
+      "nome": "Homologação de fornecedores",
+      "entrega": "CNPJ vira dossiê: situação cadastral, sócios, score de risco, compliance, certidões por UF, histórico de fornecimento ao governo e due diligence reputacional.",
+      "status": "ativo",
+      "hitl": false,
+      "ferramentas": ["homologacao", "suppliers"]
+    },
+    {
+      "id": "spend_nf",
+      "nome": "Spend pela nota fiscal",
+      "entrega": "Lote de notas (PDF ou planilha) vira base classificada por categoria e fornecedor, com Pareto, cobertura de PO, evolução mensal e recomendações de sourcing.",
+      "status": "ativo",
+      "hitl": false,
+      "ferramentas": ["spend_analysis"]
+    },
+    {
+      "id": "equalizacao_negociacao",
+      "nome": "Equalização e negociação",
+      "entrega": "Compara propostas por TCO contra o pedido de cotação item a item, aponta desvios de política e redige a resposta ao fornecedor; simulador de negociação com voz para ensaiar a reunião.",
+      "status": "ativo",
+      "hitl": true,
+      "ferramentas": ["comprador", "negotiation", "rfp"]
+    },
+    {
+      "id": "estrategia_categoria",
+      "nome": "Estratégia de categoria",
+      "entrega": "Diagnóstico da aquisição, matriz de Kraljic, 5 Forças, Curva ABC, perfil da categoria e scorecard de fornecedores — o lado estratégico que decide COMO comprar antes de comprar.",
+      "status": "ativo",
+      "hitl": false,
+      "ferramentas": ["diagnostico_aquisicao", "kraljic", "porter", "abc", "profile", "scorecard"]
+    },
+    {
+      "id": "benchmark_precos",
+      "nome": "Benchmark de preços",
+      "entrega": "Preço de referência por item com estatística robusta (mediana e descarte de outliers).",
+      "status": "parcial",
+      "lacuna": "Hoje a base é de compras PÚBLICAS (PNCP/CATMAT), não varejo nem preço de mercado B2B. Benchmark de varejo exigiria fonte de dados nova.",
+      "hitl": false,
+      "ferramentas": ["pesquisa_precos"]
+    },
+    {
+      "id": "spend_logistico",
+      "nome": "Spend logístico",
+      "entrega": "Simulação de custo logístico e impacto tributário no frete.",
+      "status": "parcial",
+      "lacuna": "Hoje cobre DIFAL e cenário tributário. Otimização de rota, ocupação e FTL vs. LTL não existe.",
+      "hitl": false,
+      "ferramentas": ["simulador_logistico", "simulador"]
+    },
+    {
+      "id": "contratos",
+      "nome": "Contratos",
+      "entrega": "Extração de cláusulas, vigências, reajustes e SLAs; alerta de vencimento e comparação contra a proposta aceita.",
+      "status": "roadmap",
+      "hitl": true,
+      "ferramentas": []
+    },
+    {
+      "id": "orcamento",
+      "nome": "Orçamento",
+      "entrega": "Consolidação do orçamento de compras, confronto planejado vs. realizado e bloqueio de requisição sem verba.",
+      "status": "roadmap",
+      "hitl": true,
+      "ferramentas": []
+    },
+    {
+      "id": "contas_a_pagar",
+      "nome": "Contas a pagar",
+      "entrega": "Conciliação nota × pedido × recebimento e fila de exceções para tratamento humano.",
+      "status": "roadmap",
+      "hitl": true,
+      "ferramentas": []
+    },
+    {
+      "id": "ativos",
+      "nome": "Gestão de ativos",
+      "entrega": "Ciclo de vida do ativo, custo total de posse e decisão de substituir, reformar ou alugar.",
+      "status": "roadmap",
+      "hitl": false,
+      "ferramentas": []
+    }
+  ],
+  "fluxo_compra": [
+    "Abertura da requisição",
+    "Análise crítica e validação de escopo",
+    "Estratégia de compra (Kraljic)",
+    "Seleção de fornecedores e RFQ/RFP",
+    "Recebimento e equalização das propostas",
+    "Negociação",
+    "Aprovação e emissão do pedido"
+  ],
+  "diferenciais": [
+    "Base de conhecimento própria de procurement (centenas de artigos, retrieval híbrido) — o agente fundamenta, não improvisa",
+    "Dados públicos brasileiros oficiais integrados: Receita/situação cadastral, PNCP/CATMAT, BACEN",
+    "Assistente por voz em tempo real, inclusive para ensaiar negociação",
+    "Simulador tributário da reforma",
+    "Biblioteca de prompts de procurement curada"
+  ],
+  "nao_incluido": [
+    "Integração nativa com ERP (SAP/Oracle/Protheus) — hoje a entrada é documento, planilha ou e-mail",
+    "Instalação no ambiente do cliente / on-premise — o PROGPT é SaaS multi-tenant",
+    "Certificação ISO/IEC 27001",
+    "Módulos marcados como roadmap acima"
+  ]
+}
