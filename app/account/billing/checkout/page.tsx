@@ -27,6 +27,20 @@ import {
 
 import { Header } from '@/app/login/header';
 
+import { SeatSelector } from '@/components/billing/SeatSelector';
+
+import {
+  parseSeats,
+  seatsTotal,
+  formatBRL,
+} from '@/lib/billing/seats';
+
+// Preço unitário do plano `pf-73` (o slug carrega o valor). Aqui é só pra
+// MOSTRAR a conta — quem cobra é o servidor, que lê plans.price em
+// /api/billing/subscribe. Se o preço do plano mudar, o valor cobrado muda
+// pelo servidor; este número só ajusta o rótulo.
+const UNIT_PRICE = 73;
+
 // ============================================================
 // ESTILOS
 // ============================================================
@@ -147,6 +161,26 @@ function CheckoutContent() {
   const planSlug =
     searchParams.get('plan') ||
     'pf-73';
+
+  // Assinatura por usuário: /account/billing/checkout?plan=pf-73&usuarios=3
+  const [seats, setSeats] =
+    useState(() =>
+      parseSeats(
+        searchParams.get(
+          'usuarios',
+        ) ??
+          searchParams.get(
+            'seats',
+          ) ??
+          1,
+      ),
+    );
+
+  const totalMonthly =
+    seatsTotal(
+      UNIT_PRICE,
+      seats,
+    );
 
   // ==========================================================
   // ESTADOS GERAIS
@@ -510,6 +544,8 @@ function CheckoutContent() {
               {
                 plan:
                   planSlug,
+
+                seats,
 
                 customer: {
                   name:
@@ -1220,8 +1256,11 @@ return;
                   </>
                 ) : (
                   <>
-                    Assinar por R$
-                    73,00/mês
+                    Assinar por{' '}
+                    {formatBRL(
+                      totalMonthly,
+                    )}
+                    /mês
                   </>
                 )}
               </button>
@@ -1249,6 +1288,17 @@ return;
                   do PROGPT.
                 </p>
 
+                {/* USUÁRIOS */}
+
+                <div className="mt-6">
+                  <SeatSelector
+                    seats={seats}
+                    onChange={setSeats}
+                    unitPrice={UNIT_PRICE}
+                    disabled={busy}
+                  />
+                </div>
+
                 {/* PREÇO */}
 
                 <div className="my-6 border-y border-border py-6">
@@ -1260,7 +1310,9 @@ return;
 
                     <div className="text-right">
                       <span className="text-3xl font-bold">
-                        R$ 73,00
+                        {formatBRL(
+                          totalMonthly,
+                        )}
                       </span>
 
                       <span className="text-sm text-muted-foreground">
@@ -1268,6 +1320,15 @@ return;
                       </span>
                     </div>
                   </div>
+
+                  {seats > 1 && (
+                    <p className="mt-2 text-right text-xs text-muted-foreground">
+                      {seats} usuários ×{' '}
+                      {formatBRL(
+                        UNIT_PRICE,
+                      )}
+                    </p>
+                  )}
                 </div>
 
                 {/* RECURSOS */}
@@ -1322,7 +1383,9 @@ return;
                       Processando...
                     </>
                   ) : (
-                    'ASSINAR POR R$ 73,00/MÊS'
+                    `ASSINAR POR ${formatBRL(
+                      totalMonthly,
+                    )}/MÊS`
                   )}
                 </button>
 

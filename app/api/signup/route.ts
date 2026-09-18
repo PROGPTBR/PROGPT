@@ -6,6 +6,13 @@ import {
 import { createAsaasCustomer, createAsaasSubscription, deleteAsaasCustomer, AsaasError, } from "@/lib/billing/asaas";
 import { getBillingSettings } from "@/lib/billing/settings";
 import {
+  parseSeats,
+  seatsTotal,
+  seatsLabel,
+  seatsChargeSummary,
+  normalizeSeatEmails,
+} from "@/lib/billing/seats";
+import {
   isValidCpf,
   formatCpf,
 } from '@/lib/validators/cpf';
@@ -158,6 +165,15 @@ console.log(`[${requestId}] ✅ Profile atualizado`);
 // hardcoded — assim mudar o valor lá muda o que é cobrado de fato.
 const billing = await getBillingSettings();
 
+// Assinatura POR USUÁRIO: 3 acessos = 3 × o preço unitário. A quantidade vem
+// do passo "Plano" do cadastro e é revalidada aqui (parseSeats clampa 1..50).
+// O cliente escolhe a QUANTIDADE, nunca o valor — o unitário é o do painel.
+const seats = parseSeats(body.seats);
+const seatEmails = normalizeSeatEmails(body.seatEmails, seats);
+const monthlyTotal = seatsTotal(billing.planPrice, seats);
+
+console.log(`[${requestId}] Assinatura para ${seats} usuário(s)`);
+
 const nextDueDate = new Date();
 nextDueDate.setDate(nextDueDate.getDate() + billing.trialDays);
 
@@ -193,10 +209,12 @@ if (!isValidCpf(cpf)) {
 
 const subscription = await createAsaasSubscription({
 customerId: customer.id,
-value: billing.planPrice,
+value: monthlyTotal,
 cycle: "MONTHLY",
 billingType: "CREDIT_CARD",
-description: "Plano PRO - APP 2BSUPPLY",
+// A description aparece na fatura do cartão do cliente — deixa explícito
+// por que o valor é múltiplo do unitário.
+description: `Plano PRO - APP 2BSUPPLY (${seatsLabel(seats)} · ${seatsChargeSummary(billing.planPrice, seats)})`,
 nextDueDate: nextDueDateString,
 
 creditCard: {
@@ -254,6 +272,8 @@ const { error: subscriptionRowError } = await supabase
       asaas_subscription_id: subscription.id,
       status: "trialing",
       plan: "pro",
+      seats,
+      seat_emails: seatEmails,
       payment_method: "credit_card",
       current_period_start: null,
       current_period_end: null,

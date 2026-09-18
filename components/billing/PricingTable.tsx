@@ -6,6 +6,12 @@ import { useRouter } from 'next/navigation';
 import { ArrowRight, Check, Loader2, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { isValidCpf, formatCpf } from '@/lib/validators/cpf';
+import { SeatSelector } from '@/components/billing/SeatSelector';
+import {
+  parseSeats,
+  seatsTotal,
+  formatBRL,
+} from '@/lib/billing/seats';
 
 type Plan = {
   id: string;
@@ -177,6 +183,18 @@ export function PricingTable({
   const [selectedPlan, setSelectedPlan] =
     useState<Plan | null>(null);
 
+  // Assinatura por usuário (2026-09-17): o plano é vendido por acesso, então
+  // a quantidade escolhida aqui multiplica o valor e viaja pro checkout.
+  const [seats, setSeats] =
+    useState(1);
+
+  /** Link de cadastro já com a quantidade escolhida — é o link que dá pra
+   *  mandar direto pra quem vai contratar (/signup?usuarios=3). */
+  function signupHref() {
+    const base = '/signup?next=/planos';
+    return seats > 1 ? `${base}&usuarios=${seats}` : base;
+  }
+
   const profileComplete =
     !!profile?.full_name &&
     !!profile?.cpf_cnpj &&
@@ -209,6 +227,7 @@ export function PricingTable({
             professionalRequirement:
               profile!
                 .professional_requirement,
+            seats,
           }),
         },
       );
@@ -561,6 +580,21 @@ export function PricingTable({
               )}
 
               {/* ==================================================
+                  USUÁRIOS (assinatura por acesso)
+              ================================================== */}
+
+              {buyerPlan && !isCurrent && (
+                <div className="pt-6">
+                  <SeatSelector
+                    seats={seats}
+                    onChange={setSeats}
+                    unitPrice={plan.price}
+                    hint="Para equipes: cada usuário tem login, histórico e assistentes próprios."
+                  />
+                </div>
+              )}
+
+              {/* ==================================================
                   CTA
               ================================================== */}
 
@@ -582,7 +616,7 @@ export function PricingTable({
                 ) : freePlan ? (
                   !authed && (
                     <Link
-                      href="/signup?next=/planos"
+                      href={signupHref()}
                       className="inline-flex w-full items-center justify-center gap-2 bg-muted border border-border text-foreground py-2.5 rounded-full text-sm font-medium hover:bg-accent active:scale-95 transition-all duration-300"
                     >
                       Criar conta grátis
@@ -610,7 +644,7 @@ export function PricingTable({
                   </>
                 ) : !authed ? (
                   <Link
-                    href="/signup?next=/planos"
+                    href={signupHref()}
                     className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-brand-gradient text-black hover:brightness-110 brand-glow h-11 text-sm font-semibold transition-all active:scale-[0.98]"
                   >
                     COMEÇAR MEU TESTE
@@ -728,6 +762,7 @@ export function PricingTable({
           <CheckoutForm
             plan={selectedPlan}
             expired={expired}
+            seats={seats}
             onClose={() =>
               setShowCheckout(false)
             }
@@ -745,10 +780,12 @@ function CheckoutForm({
   onClose,
   plan,
   expired,
+  seats,
 }: {
   onClose: () => void;
   plan: Plan;
   expired: boolean;
+  seats: number;
 }) {
   const router = useRouter();
 
@@ -771,6 +808,15 @@ function CheckoutForm({
     professionalRequirement,
     setProfessionalRequirement,
   ] = useState('');
+
+  const seatCount =
+    parseSeats(seats);
+
+  const totalMonthly =
+    seatsTotal(
+      plan.price,
+      seatCount,
+    );
 
   const cpfClean =
     formatCpf(cpfInput);
@@ -828,6 +874,7 @@ function CheckoutForm({
               '',
             ),
             professionalRequirement,
+            seats,
           }),
         },
       );
@@ -911,10 +958,16 @@ function CheckoutForm({
                 para continuar usando
                 o PROGPT. A assinatura
                 é{' '}
-                {fmtPrice(
-                  plan.price,
+                {formatBRL(
+                  totalMonthly,
                 )}
-                /{plan.interval}.
+                /{plan.interval}
+                {seatCount > 1
+                  ? ` (${seatCount} usuários × ${formatBRL(
+                      plan.price,
+                    )})`
+                  : ''}
+                .
               </>
             ) : (
               <>
@@ -925,10 +978,16 @@ function CheckoutForm({
                 cobrança agora). Após
                 o período, a
                 assinatura é{' '}
-                {fmtPrice(
-                  plan.price,
+                {formatBRL(
+                  totalMonthly,
                 )}
-                /{plan.interval}.
+                /{plan.interval}
+                {seatCount > 1
+                  ? ` (${seatCount} usuários × ${formatBRL(
+                      plan.price,
+                    )})`
+                  : ''}
+                .
               </>
             )}
           </p>

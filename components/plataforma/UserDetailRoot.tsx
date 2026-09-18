@@ -24,6 +24,8 @@ type Subscription = {
   current_period_start: string | null;
   current_period_end: string | null;
   cancel_at_period_end: boolean;
+  seats?: number | null;
+  seat_emails?: string[] | null;
 } | null;
 type Usage = { sessions: number; runs: number; spendCents: number; tokensIn: number; tokensOut: number };
 type Payload = {
@@ -139,6 +141,18 @@ export function UserDetailRoot({ userId }: { userId: string }) {
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
             <Field label="Status" value={STATUS_LABEL[subscription.status] ?? subscription.status} />
             <Field label="Plano" value={subscription.plan ?? '—'} />
+            {/* Assinatura por usuário: quantos acessos foram pagos e, quando
+                informados na contratação, pra quem provisionar. */}
+            <Field
+              label="Usuários contratados"
+              value={String(subscription.seats ?? 1)}
+            />
+            {!!subscription.seat_emails?.length && (
+              <Field
+                label="E-mails informados"
+                value={subscription.seat_emails.join(', ')}
+              />
+            )}
             <Field label="Pagamento" value={subscription.payment_method ?? '—'} />
             <Field label="Trial até" value={fmtDate(subscription.trial_end)} />
             <Field label="Período atual até" value={fmtDate(subscription.current_period_end)} />

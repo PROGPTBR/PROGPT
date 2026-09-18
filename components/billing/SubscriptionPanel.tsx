@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { parseSeats } from '@/lib/billing/seats';
 import { AlertCircle, CreditCard, Loader2, Sparkles, X } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Subscription } from '@/lib/billing/subscription';
@@ -112,6 +113,9 @@ export function SubscriptionPanel({ subscription }: Props) {
   }
 
   const isCancelling = subscription.cancel_at_period_end;
+  // Assinatura por usuário: mostra a quantidade contratada quando for time.
+  const seatCount = parseSeats(subscription.seats ?? 1);
+
   const showCancelButton =
     !isCancelling &&
     (subscription.status === 'active' || subscription.status === 'past_due');
@@ -123,6 +127,14 @@ export function SubscriptionPanel({ subscription }: Props) {
           <h1 className="text-2xl font-semibold tracking-tight">Assinatura</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Plano <span className="font-medium text-foreground">{subscription.plan === 'pro' ? 'Pro' : subscription.plan}</span>
+            {seatCount > 1 && (
+              <>
+                {' · '}
+                <span className="font-medium text-foreground">
+                  {seatCount} usuários
+                </span>
+              </>
+            )}
           </p>
         </div>
         <StatusBadge status={subscription.status} />

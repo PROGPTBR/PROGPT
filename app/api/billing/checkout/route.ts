@@ -9,6 +9,15 @@ import {
 } from '@/lib/billing/asaas';
 import { getSubscription } from '@/lib/billing/subscription';
 import { getBillingSettings } from '@/lib/billing/settings';
+import {
+  parseSeats,
+  seatsTotal,
+  seatsLabel,
+  seatsChargeSummary,
+  normalizeSeatEmails,
+  MIN_SEATS,
+  MAX_SEATS,
+} from '@/lib/billing/seats';
 import { callbackBaseUrl } from '@/lib/billing/callback';
 import { isValidCpf, formatCpf } from '@/lib/validators/cpf';
 
@@ -31,6 +40,10 @@ const Body = z.object({
   cpf: z.string(),
   phone: z.string().optional(),
   professionalRequirement: z.string().trim().max(255).optional(),
+  // Quantidade de usuários contratados (assinatura por seat). Ausente = 1,
+  // que é exatamente o comportamento anterior a esta feature.
+  seats: z.coerce.number().int().min(MIN_SEATS).max(MAX_SEATS).optional(),
+  seatEmails: z.array(z.string()).max(MAX_SEATS).optional(),
 });
 
 const PENDING_GRACE_MS = 60 * 60 * 1000; // 1h
@@ -140,7 +153,12 @@ if (existing) {
   // Config administrável (preço + dias de trial)
   const settings = await getBillingSettings();
   const charge = firstChargeDate(settings.trialDays);
-  const priceLabel = `R$ ${settings.planPrice.toFixed(2).replace('.', ',')}`;
+
+  // Assinatura por usuário: o valor cobrado é o unitário × quantidade.
+  const seats = parseSeats(parsed.seats);
+  const seatEmails = normalizeSeatEmails(parsed.seatEmails, seats);
+  const monthlyTotal = seatsTotal(settings.planPrice, seats);
+  const priceLabel = seatsChargeSummary(settings.planPrice, seats);
 
   // Cria Asaas subscription — cartão obrigatório (trial), 1ª cobrança só
   // após os dias grátis (nextDueDate = hoje + trialDays).
@@ -148,10 +166,10 @@ if (existing) {
   try {
     subscriptionResult = await createAsaasSubscription({
       customerId: asaasCustomerId,
-      value: settings.planPrice,
+      value: monthlyTotal,
       cycle: 'MONTHLY',
       billingType: 'CREDIT_CARD', // cartão pra cadastrar e cobrar pós-trial
-      description: `PROGPT Pro · ${priceLabel}/mês (${settings.trialDays} dias grátis)`,
+      description: `PROGPT Pro · ${seatsLabel(seats)} · ${priceLabel} (${settings.trialDays} dias grátis)`,
       nextDueDate: charge.date,
       callback: {
         // Volta do hosted checkout do Asaas → /assinar/concluido confirma o
@@ -175,6 +193,8 @@ if (existing) {
     asaas_subscription_id: subscriptionResult.id,
     status: 'pending' as const,
     plan: 'pro',
+    seats,
+    seat_emails: seatEmails,
     payment_method: 'credit_card' as const,
     current_period_start: null,
     current_period_end: null,

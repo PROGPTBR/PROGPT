@@ -4,10 +4,15 @@ import Image from "next/image";
 import type { SignupForm } from "./types";
 import { INPUT_CLASS, LABEL_CLASS } from "./constants";
 import { TurnstileWidget } from "./TurnstileWidget";
+import { SeatChargeSummary } from "@/components/billing/SeatSelector";
 
 type StepPaymentProps = {
   form: SignupForm;
   setForm: React.Dispatch<React.SetStateAction<SignupForm>>;
+  /** Preço unitário do plano e dias de trial — usados pra mostrar a conta
+   *  fechada (quantidade × unitário) na hora de digitar o cartão. */
+  planPrice: number;
+  trialDays: number;
 };
 
 function detectCardBrand(number: string): string {
@@ -67,6 +72,8 @@ function getCardBrandLogo(brand: string) {
 export default function StepPayment({
   form,
   setForm,
+  planPrice,
+  trialDays,
 }: StepPaymentProps) {
   const cardBrand = detectCardBrand(form.cardNumber);
   // Verificação anti-bot fica no ÚLTIMO passo, não no primeiro (sub-projeto
@@ -86,7 +93,15 @@ export default function StepPayment({
 <h3 className="text-lg rounded-xl bg-brand/5 p-5 ">🔒 Pagamento seguro</h3>
 <p>Seus dados são protegidos por criptografia.
 Você não será cobrado hoje.
-A primeira cobrança ocorrerá somente após 3 dias.</p>
+A primeira cobrança ocorrerá somente após {trialDays === 1 ? "1 dia" : `${trialDays} dias`}.</p>
+
+{/* O cliente precisa ver AQUI, com o cartão na mão, exatamente quanto e
+    por quantos usuários será cobrado. */}
+<SeatChargeSummary
+  seats={form.seats}
+  unitPrice={planPrice}
+  trialDays={trialDays}
+/>
 
 <div className="space-y-5">
 

@@ -36,7 +36,7 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
         .maybeSingle(),
       svc
         .from('subscriptions')
-        .select('status, plan, payment_method, trial_end, current_period_start, current_period_end, cancel_at_period_end')
+        .select('status, plan, payment_method, trial_end, current_period_start, current_period_end, cancel_at_period_end, seats, seat_emails')
         .eq('user_id', params.id)
         .maybeSingle(),
       svc.from('sessions').select('id', { count: 'exact', head: true }).eq('user_id', params.id),

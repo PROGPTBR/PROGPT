@@ -13,15 +13,23 @@ import StepPayment from './StepPayment';
 import { isValidCpf } from "@/lib/validators/cpf";
 import { isValidCnpj } from "@/lib/validators/cnpj";
 import StepPlan from "./StepPlan";
+import { parseSeats } from "@/lib/billing/seats";
 
 import { useRef, useState } from 'react';
 
 type SignupWizardProps = {
   planPrice: number;
   trialDays: number;
+  /** Quantidade de usuários pré-selecionada via link (/signup?usuarios=3) —
+   *  permite mandar o link já configurado pra quem vai contratar. */
+  initialSeats?: number;
 };
 
-export function SignupWizard({ planPrice, trialDays }: SignupWizardProps) {
+export function SignupWizard({
+  planPrice,
+  trialDays,
+  initialSeats = 1,
+}: SignupWizardProps) {
   
   
 const errorRef = useRef<HTMLDivElement>(null);
@@ -56,6 +64,9 @@ const [form, setForm] = useState<SignupForm>({
   district: "",
   city: "",
   state: "",
+
+  seats: parseSeats(initialSeats),
+  seatEmails: [],
 
   turnstileToken: null,
   personType: "pf",
@@ -306,8 +317,28 @@ if (signupSuccess) {
             {step === 1 && <StepAccount form={form} setForm={setForm} />}
             {error && ( <div ref={errorRef} className={`${ERROR_CLASS} mt-4`}>  {error} </div> )}
             {step === 2 && ( <StepProfile form={form} setForm={setForm} /> )}
-            {step === 3 && ( <StepPlan planPrice={planPrice} trialDays={trialDays} /> )}
-            {step === 4 && ( <StepPayment form={form}  setForm={setForm} /> )}
+            {step === 3 && (
+              <StepPlan
+                planPrice={planPrice}
+                trialDays={trialDays}
+                seats={form.seats}
+                onSeatsChange={(seats) =>
+                  setForm((prev) => ({ ...prev, seats }))
+                }
+                seatEmails={form.seatEmails}
+                onSeatEmailsChange={(seatEmails) =>
+                  setForm((prev) => ({ ...prev, seatEmails }))
+                }
+              />
+            )}
+            {step === 4 && (
+              <StepPayment
+                form={form}
+                setForm={setForm}
+                planPrice={planPrice}
+                trialDays={trialDays}
+              />
+            )}
 
            <NavigationButtons
   step={step}

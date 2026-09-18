@@ -27,4 +27,11 @@ export interface SignupForm {
     state: string;
     turnstileToken: string | null;
     personType: "pf" | "pj";
+
+    /** Assinatura por usuário: quantos acessos estão sendo contratados.
+     *  1 = comportamento de sempre. */
+    seats: number;
+
+    /** E-mails dos usuários adicionais (opcional — nunca bloqueia). */
+    seatEmails: string[];
 }

@@ -27,6 +27,7 @@ class AsaasError extends Error {
 function mockHappyPathUpToSubscription(opts: {
   subscriptionThrows?: Error;
 }) {
+  const upsert = vi.fn().mockResolvedValue({ error: null });
   vi.doMock('@/lib/captcha', () => ({
     verifyTurnstileToken: vi.fn().mockResolvedValue(true),
     getClientIp: vi.fn().mockReturnValue('127.0.0.1'),
@@ -38,6 +39,7 @@ function mockHappyPathUpToSubscription(opts: {
       auth: { admin: authAdmin },
       from: () => ({
         update: () => ({ eq: vi.fn().mockResolvedValue({ error: null }) }),
+        upsert,
       }),
     }),
     getSignupSupabase: () => ({
@@ -74,10 +76,10 @@ function mockHappyPathUpToSubscription(opts: {
     }),
   }));
 
-  return { authAdmin };
+  return { authAdmin, upsert };
 }
 
-function buildReq(): Request {
+function buildReq(extra: Record<string, unknown> = {}): Request {
   return new Request('http://x/api/signup', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -95,6 +97,7 @@ function buildReq(): Request {
       cardNumber: '5555 5555 5555 4444',
       cardExpiry: '12/30',
       cardCvv: '123',
+      ...extra,
     }),
   });
 }
@@ -146,5 +149,71 @@ describe('POST /api/signup — Asaas decline surfacing', () => {
     expect(createAsaasCustomer).toHaveBeenCalled();
     expect(deleteAsaasCustomer).toHaveBeenCalledWith('cus_1');
     expect(authAdmin.deleteUser).toHaveBeenCalledWith('u1');
+  });
+});
+
+// Assinatura por usuário (2026-09-17). A demanda que originou isto: uma
+// empresa contratando 3 acessos precisa ser cobrada em 3 × R$ 73 — e o
+// cliente escolhe a QUANTIDADE, nunca o valor (o unitário vem do painel).
+describe('POST /api/signup — assinatura por usuário (seats)', () => {
+  it('charges the unit price when no seat count is sent (comportamento de antes)', async () => {
+    mockHappyPathUpToSubscription({});
+    const { createAsaasSubscription } = await import('@/lib/billing/asaas');
+    const { POST } = await import('@/app/api/signup/route');
+
+    const res = await POST(buildReq());
+
+    expect(res.status).toBe(200);
+    expect(createAsaasSubscription).toHaveBeenCalledWith(
+      expect.objectContaining({ value: 73 }),
+    );
+  });
+
+  it('multiplies the charged value by the number of seats', async () => {
+    mockHappyPathUpToSubscription({});
+    const { createAsaasSubscription } = await import('@/lib/billing/asaas');
+    const { POST } = await import('@/app/api/signup/route');
+
+    await POST(buildReq({ seats: 3 }));
+
+    const call = vi.mocked(createAsaasSubscription).mock.calls[0]![0];
+    expect(call.value).toBe(219);
+    // A description é o texto que aparece na fatura do cartão do cliente.
+    expect(call.description).toContain('3 usuários');
+  });
+
+  it('persists seats and the informed extra emails on the local subscription row', async () => {
+    const { upsert } = mockHappyPathUpToSubscription({});
+    const { POST } = await import('@/app/api/signup/route');
+
+    await POST(
+      buildReq({
+        seats: 3,
+        seatEmails: [' Maria@Empresa.com ', 'joao@empresa.com', 'sobra@empresa.com'],
+      }),
+    );
+
+    const row = upsert.mock.calls.at(-1)![0] as {
+      seats: number;
+      seat_emails: string[];
+    };
+    expect(row.seats).toBe(3);
+    // Só os 2 acessos ADICIONAIS — o titular ocupa o primeiro.
+    expect(row.seat_emails).toEqual(['maria@empresa.com', 'joao@empresa.com']);
+  });
+
+  it('never blocks the signup because of a bad seat count or bad emails', async () => {
+    mockHappyPathUpToSubscription({});
+    const { createAsaasSubscription } = await import('@/lib/billing/asaas');
+    const { POST } = await import('@/app/api/signup/route');
+
+    const res = await POST(
+      buildReq({ seats: 'três', seatEmails: ['não-é-email'] }),
+    );
+
+    expect(res.status).toBe(200);
+    expect(createAsaasSubscription).toHaveBeenCalledWith(
+      expect.objectContaining({ value: 73 }),
+    );
   });
 });

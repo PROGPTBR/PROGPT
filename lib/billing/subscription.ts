@@ -17,6 +17,10 @@ export type Subscription = {
   trial_end: string | null;
   cancel_at_period_end: boolean;
   cancelled_at: string | null;
+  /** Quantidade de usuários contratados (assinatura por seat). */
+  seats?: number | null;
+  /** E-mails dos usuários adicionais informados na contratação (opcional). */
+  seat_emails?: string[] | null;
   created_at: string;
   updated_at: string;
 };

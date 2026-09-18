@@ -29,6 +29,16 @@ import {
   formatCpf,
 } from '@/lib/validators/cpf';
 
+import {
+  parseSeats,
+  seatsTotal,
+  seatsLabel,
+  seatsChargeSummary,
+  normalizeSeatEmails,
+  MIN_SEATS,
+  MAX_SEATS,
+} from '@/lib/billing/seats';
+
 export const runtime =
   'nodejs';
 
@@ -46,6 +56,21 @@ export const dynamic =
 
 const Body = z.object({
   plan: z.literal('pf-73'),
+
+  // Assinatura por usuário: quantidade contratada. Ausente = 1 (comportamento
+  // anterior a esta feature).
+  seats: z
+    .coerce
+    .number()
+    .int()
+    .min(MIN_SEATS)
+    .max(MAX_SEATS)
+    .optional(),
+
+  seatEmails: z
+    .array(z.string())
+    .max(MAX_SEATS)
+    .optional(),
 
   customer: z.object({
     name: z
@@ -486,6 +511,31 @@ export async function POST(
   }
 
   // ==========================================================
+  // USUÁRIOS CONTRATADOS (SEATS)
+  //
+  // O plano é por usuário: o valor cobrado é o preço unitário do plano
+  // multiplicado pela quantidade de acessos. `base_price` continua guardando
+  // o UNITÁRIO — o total é derivado, nunca gravado como se fosse o preço
+  // do plano.
+  // ==========================================================
+
+  const seats = parseSeats(
+    parsed.seats,
+  );
+
+  const seatEmails =
+    normalizeSeatEmails(
+      parsed.seatEmails,
+      seats,
+    );
+
+  const monthlyTotal =
+    seatsTotal(
+      planPrice,
+      seats,
+    );
+
+  // ==========================================================
   // ASSINATURA ATUAL
   // ==========================================================
 
@@ -723,7 +773,7 @@ export async function POST(
             asaasCustomerId,
 
           value:
-            planPrice,
+            monthlyTotal,
 
           cycle:
             'MONTHLY',
@@ -732,12 +782,12 @@ export async function POST(
             'CREDIT_CARD',
 
           description:
-            `${plan.name} · R$ ${planPrice
-              .toFixed(2)
-              .replace(
-                '.',
-                ',',
-              )}/mês`,
+            `${plan.name} · ${seatsLabel(
+              seats,
+            )} · ${seatsChargeSummary(
+              planPrice,
+              seats,
+            )}`,
 
           nextDueDate,
 
@@ -871,6 +921,11 @@ export async function POST(
 
     base_price:
       planPrice,
+
+    seats,
+
+    seat_emails:
+      seatEmails,
 
     payment_method:
       'credit_card' as const,
