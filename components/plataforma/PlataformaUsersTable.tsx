@@ -99,7 +99,7 @@ export function PlataformaUsersTable() {
         <h1 className="text-2xl font-semibold tracking-tight">Usuários</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Clique em <strong>Gerenciar</strong> pra abrir o painel completo de um usuário — plano, uso,
-          conta e "ver como o cliente". Mover entre orgs e conceder/revogar super_admin em massa continuam
+          conta e &ldquo;ver como o cliente&rdquo;. Mover entre orgs e conceder/revogar super_admin em massa continuam
           aqui embaixo.
         </p>
       </div>
