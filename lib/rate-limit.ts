@@ -71,7 +71,7 @@ export async function checkPersonalChatRateLimit(): Promise<RateLimitResult> {
  * captcha cobre o caso.
  */
 export async function checkAnonRateLimit(
-  endpoint: 'signup' | 'reset-request',
+  endpoint: 'signup' | 'reset-request' | 'seat-invite',
   ipHash: string,
   perMin: number = ANON_RATE_PER_MIN,
   perHour: number = ANON_RATE_PER_HOUR,

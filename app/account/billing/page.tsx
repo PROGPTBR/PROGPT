@@ -4,6 +4,7 @@ import { Header } from '../../login/header';
 import { getCurrentUser} from '@/lib/auth';
 import { getSubscription } from '@/lib/billing/subscription';
 import { SubscriptionPanel } from '@/components/billing/SubscriptionPanel';
+import { SeatMembersPanel } from '@/components/billing/SeatMembersPanel';
 import { BackButton } from '@/components/BackButton';
 
 export const dynamic = 'force-dynamic';
@@ -37,6 +38,12 @@ export default async function AccountBillingPage() {
         <SubscriptionPanel
   subscription={subscription}
 />
+
+        {/* Licenças da assinatura — só aparece pra quem contratou mais de
+            um usuário (sub-projeto 64). */}
+        <div className="mt-8">
+          <SeatMembersPanel />
+        </div>
       </main>
     </div>
     </>

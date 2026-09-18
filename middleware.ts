@@ -102,19 +102,27 @@ export async function middleware(req: NextRequest) {
   // A PARTIR DAQUI É CLIENTE (role = user)
   // ============================================================
 
+  // Acesso = assinatura PRÓPRIA ou licença de uma assinatura de outra pessoa
+  // (empresa que contratou N usuários — sub-projeto 64). O RPC resolve os
+  // dois casos e devolve sempre uma linha de assinatura no mesmo formato,
+  // então toda a lógica abaixo (trial, atraso, cancelado com período pago)
+  // continua valendo sem mudança. O RPC usa auth.uid() — não aceita id de
+  // terceiro.
   const {
-    data: subscription,
+    data: accessRows,
     error: subscriptionError,
-  } = await supabase
-    .from('subscriptions')
-    .select(`
-      status,
-      trial_end,
-      current_period_end,
-      cancel_at_period_end
-    `)
-    .eq('user_id', user.id)
-    .maybeSingle();
+  } = await supabase.rpc('resolve_subscription_access');
+
+  const subscription =
+    (accessRows as
+      | Array<{
+          status: string;
+          trial_end: string | null;
+          current_period_end: string | null;
+          cancel_at_period_end: boolean;
+          via: string;
+        }>
+      | null)?.[0] ?? null;
 
   if (subscriptionError) {
     console.error(

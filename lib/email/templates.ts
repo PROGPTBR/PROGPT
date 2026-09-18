@@ -126,6 +126,34 @@ ${p(`Qualquer dúvida, responda este email ou escreva pra <a href="mailto:${LEGA
   return { subject, html: shell(content, 'Cartão cadastrado. Defina sua senha para acessar.') };
 }
 
+// ─── 1c. Convite de licença (assinatura multi-usuário, sub-projeto 64) ───
+
+export function buildSeatInviteEmail(args: {
+  inviterName: string | null;
+  inviterEmail: string | null;
+  link: string;
+}): { subject: string; html: string } {
+  const who =
+    (args.inviterName || '').trim() ||
+    (args.inviterEmail || '').trim() ||
+    'Alguém da sua empresa';
+
+  const subject = `${who} liberou seu acesso ao PROGPT`;
+
+  const content = `
+${h('Seu acesso ao PROGPT está pronto 🎉')}
+${p(`<strong>${who}</strong> contratou o PROGPT para a equipe e reservou um acesso para você.`)}
+${p('Você terá sua própria conta — com login, histórico de conversas e assistentes separados. O pagamento é da assinatura da empresa; você não precisa cadastrar cartão.')}
+<div style="text-align:center;margin:24px 0;">
+${button(args.link, 'Criar minha senha e entrar')}
+</div>
+${p('Se você já tem conta no PROGPT com este e-mail, o acesso é vinculado automaticamente — é só entrar normalmente depois de abrir o link.')}
+${p(`Dúvidas? Responda este email ou escreva pra <a href="mailto:${LEGAL_CONTACT_EMAIL}" style="color:${BRAND_COLOR};">${LEGAL_CONTACT_EMAIL}</a>.`)}
+`;
+
+  return { subject, html: shell(content, `${who} reservou um acesso ao PROGPT para você.`) };
+}
+
 // ─── 2. Recibo de pagamento (pós PAYMENT_CONFIRMED) ──────────────────────
 
 export function buildPaymentConfirmedEmail(args: {

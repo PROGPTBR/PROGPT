@@ -12,6 +12,7 @@ import {
   seatsChargeSummary,
   normalizeSeatEmails,
 } from "@/lib/billing/seats";
+import { provisionSeatsFromSignup } from "@/lib/billing/seat-members";
 import {
   isValidCpf,
   formatCpf,
@@ -290,6 +291,19 @@ if (subscriptionRowError) {
 }
 
 console.log(`[${requestId}] ✅ Assinatura local (trialing) criada`);
+
+// Licenças da equipe (sub-projeto 64): cria os acessos extras e manda os
+// convites pros e-mails informados no passo "Plano". Fire-and-forget e
+// fail-soft — cadastro já pago nunca cai por causa disto, e o titular pode
+// convidar depois em /account/billing.
+if (seatEmails.length > 0) {
+  void provisionSeatsFromSignup({
+    ownerId: data.user.id,
+    ownerEmail: body.email ?? null,
+    ownerName: body.fullName ?? null,
+    emails: seatEmails,
+  });
+}
 
 console.log(`[${requestId}] 🎉 Signup finalizado com sucesso`);
     
