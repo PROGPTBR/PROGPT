@@ -26,8 +26,15 @@ class AsaasError extends Error {
 // update) precisa estar mockado até chegar em createAsaasSubscription.
 function mockHappyPathUpToSubscription(opts: {
   subscriptionThrows?: Error;
+  /** Quebra o upsert local — reproduz o incidente de 22/09/2026, em que a
+   *  assinatura JÁ existia no Asaas quando o cadastro falhou. */
+  upsertThrows?: boolean;
 }) {
-  const upsert = vi.fn().mockResolvedValue({ error: null });
+  const upsert = vi
+    .fn()
+    .mockImplementation(async () =>
+      opts.upsertThrows ? { error: { message: 'falha ao gravar' } } : { error: null },
+    );
   vi.doMock('@/lib/captcha', () => ({
     verifyTurnstileToken: vi.fn().mockResolvedValue(true),
     getClientIp: vi.fn().mockReturnValue('127.0.0.1'),
@@ -70,6 +77,7 @@ function mockHappyPathUpToSubscription(opts: {
     AsaasError,
     createAsaasCustomer: vi.fn().mockResolvedValue({ id: 'cus_1' }),
     deleteAsaasCustomer: vi.fn().mockResolvedValue(undefined),
+    cancelAsaasSubscription: vi.fn().mockResolvedValue(undefined),
     createAsaasSubscription: vi.fn().mockImplementation(async () => {
       if (opts.subscriptionThrows) throw opts.subscriptionThrows;
       return { id: 'sub_1', invoiceUrl: '' };
@@ -215,5 +223,65 @@ describe('POST /api/signup — assinatura por usuário (seats)', () => {
     expect(createAsaasSubscription).toHaveBeenCalledWith(
       expect.objectContaining({ value: 73 }),
     );
+  });
+});
+
+// Incidente 22/09/2026: um cadastro de 3 usuários falhou DEPOIS de a
+// assinatura nascer no Asaas. O rollback removia só o cliente — e o Asaas
+// NÃO apaga a assinatura junto —, então sobrou uma assinatura de R$ 219/mês
+// viva e invisível pra nós (sem linha em `subscriptions`), que precisou ser
+// apagada à mão no painel. Estes testes travam a ordem do rollback.
+describe('POST /api/signup — rollback não pode deixar assinatura órfã no Asaas', () => {
+  it('cancels the Asaas subscription when the local write fails after it was created', async () => {
+    mockHappyPathUpToSubscription({ upsertThrows: true });
+    const { cancelAsaasSubscription, deleteAsaasCustomer } = await import('@/lib/billing/asaas');
+    const { POST } = await import('@/app/api/signup/route');
+
+    await POST(buildReq({ seats: 3 }));
+
+    expect(cancelAsaasSubscription).toHaveBeenCalledWith('sub_1');
+    expect(deleteAsaasCustomer).toHaveBeenCalledWith('cus_1');
+  });
+
+  it('cancels the subscription BEFORE deleting the customer', async () => {
+    mockHappyPathUpToSubscription({ upsertThrows: true });
+    const asaas = await import('@/lib/billing/asaas');
+    const { POST } = await import('@/app/api/signup/route');
+
+    const order: string[] = [];
+    vi.mocked(asaas.cancelAsaasSubscription).mockImplementation(async () => {
+      order.push('cancel');
+    });
+    vi.mocked(asaas.deleteAsaasCustomer).mockImplementation(async () => {
+      order.push('deleteCustomer');
+    });
+
+    await POST(buildReq({ seats: 3 }));
+
+    // Invertida, o Asaas recusa/ignora e a assinatura sobrevive cobrando.
+    expect(order).toEqual(['cancel', 'deleteCustomer']);
+  });
+
+  it('does not try to cancel anything when the failure happened before the subscription existed', async () => {
+    mockHappyPathUpToSubscription({
+      subscriptionThrows: new AsaasError('failed', 400, {}, 'Cartão recusado'),
+    });
+    const { cancelAsaasSubscription } = await import('@/lib/billing/asaas');
+    const { POST } = await import('@/app/api/signup/route');
+
+    await POST(buildReq());
+
+    expect(cancelAsaasSubscription).not.toHaveBeenCalled();
+  });
+
+  it('still removes the account even if cancelling the subscription blows up', async () => {
+    const { authAdmin } = mockHappyPathUpToSubscription({ upsertThrows: true });
+    const asaas = await import('@/lib/billing/asaas');
+    vi.mocked(asaas.cancelAsaasSubscription).mockRejectedValue(new Error('asaas fora do ar'));
+    const { POST } = await import('@/app/api/signup/route');
+
+    await POST(buildReq({ seats: 3 }));
+
+    expect(authAdmin.deleteUser).toHaveBeenCalledWith('u1');
   });
 });

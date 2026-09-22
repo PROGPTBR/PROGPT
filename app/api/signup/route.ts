@@ -9,6 +9,7 @@ import {
   createAsaasCustomer,
   createAsaasSubscription,
   deleteAsaasCustomer,
+  cancelAsaasSubscription,
   AsaasError,
 } from "@/lib/billing/asaas";
 
@@ -57,6 +58,10 @@ export async function POST(req: Request) {
 
   let userId: string | null = null;
   let customerId: string | null = null;
+  // Precisa viver FORA do try: se o cadastro quebrar DEPOIS de a assinatura
+  // nascer no Asaas, o rollback tem que cancelá-la — senão ela fica cobrando
+  // sem nenhuma linha nossa apontando pra ela (incidente 22/09/2026).
+  let subscriptionId: string | null = null;
 
   try {
     const body = await req.json();
@@ -604,6 +609,8 @@ export async function POST(req: Request) {
         remoteIp,
       });
 
+    subscriptionId = subscription.id;
+
     console.log(
       `[${requestId}] ✅ Assinatura criada (id ${subscription.id})`,
     );
@@ -756,7 +763,35 @@ export async function POST(req: Request) {
   ) {
     // =======================================================
     // ROLLBACK ASAAS
+    //
+    // ORDEM IMPORTA: cancelar a assinatura ANTES de remover o cliente. O
+    // Asaas não remove a assinatura junto com o cliente — em 22/09/2026 um
+    // cadastro falhou depois de criar a assinatura, o rollback apagou só a
+    // conta, e sobrou uma assinatura de R$ 219/mês viva no Asaas, invisível
+    // pra nós (sem linha em `subscriptions`). Foi preciso apagar na mão pelo
+    // painel, 1h30 depois.
     // =======================================================
+
+    if (subscriptionId) {
+      try {
+        await cancelAsaasSubscription(
+          subscriptionId,
+        );
+
+        console.log(
+          `[${requestId}] 🗑️ Assinatura Asaas cancelada no rollback.`,
+        );
+      } catch (
+        rollbackError
+      ) {
+        // Se isto falhar, sobra uma assinatura órfã cobrando. Loga o id CRU
+        // pra dar pra achar e apagar no painel do Asaas.
+        console.error(
+          `[${requestId}] ⚠️ ASSINATURA ÓRFÃ NO ASAAS — cancelar manualmente: ${subscriptionId}`,
+          rollbackError,
+        );
+      }
+    }
 
     if (customerId) {
       try {
