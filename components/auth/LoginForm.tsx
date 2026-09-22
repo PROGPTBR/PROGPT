@@ -6,33 +6,56 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
 import { supabaseBrowser } from '@/lib/db/supabase-browser';
 
-
-function friendlyError(error: { message: string; code?: string } | null): string | null {
+function friendlyError(
+  error: { message: string; code?: string } | null,
+): string | null {
   if (!error) return null;
-  if (error.message?.toLowerCase().includes('invalid login credentials')) {
+
+  const message = error.message?.toLowerCase() ?? '';
+  const code = error.code?.toLowerCase() ?? '';
+
+  // E-mail ainda não confirmado
+  if (
+    message.includes('email not confirmed') ||
+    message.includes('email_not_confirmed') ||
+    code === 'email_not_confirmed'
+  ) {
+    return 'Seu e-mail ainda não foi confirmado. Verifique sua caixa de entrada e clique no link de confirmação.';
+  }
+
+  // Credenciais incorretas
+  if (message.includes('invalid login credentials')) {
     return 'Email ou senha incorretos.';
   }
+
+  // Qualquer outro erro continua genérico
   return 'Algo deu errado. Tente novamente.';
 }
 
 const INPUT_CLASS =
   'w-full rounded-lg bg-muted/40 border border-input px-4 py-3.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 transition-colors';
+
 const LABEL_CLASS =
   'block text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5';
+
 const SUBMIT_CLASS =
   'w-full inline-flex items-center justify-center bg-brand-gradient text-black h-11 rounded-full text-sm font-semibold brand-glow disabled:opacity-60 disabled:cursor-not-allowed disabled:shadow-none hover:brightness-110 active:scale-[0.98] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-background';
+
 const ERROR_CLASS =
   'rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive';
 
 export function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
+
   // `next` explícito (ex.: middleware bounceando de uma página protegida)
   // é sempre respeitado. Sem ele, o destino padrão depende do perfil — super
   // admin não deveria cair na tela de chat de cliente comum, ver checagem
   // pós-login abaixo.
   const explicitNext = params.get('next');
+
   const next = explicitNext ?? '/chat';
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
@@ -41,10 +64,18 @@ export function LoginForm() {
 
   async function onPasswordSubmit(e: React.FormEvent) {
     e.preventDefault();
+
     setError(null);
     setLoading(true);
+
     const sb = supabaseBrowser();
-    const { data, error: err } = await sb.auth.signInWithPassword({ email, password });
+
+    const { data, error: err } =
+      await sb.auth.signInWithPassword({
+        email,
+        password,
+      });
+
     if (err) {
       setLoading(false);
       setError(friendlyError(err));
@@ -52,18 +83,24 @@ export function LoginForm() {
     }
 
     let destination = next;
+
     if (!explicitNext && data.user) {
       const { data: profile } = await sb
         .from('profiles')
         .select('super_admin')
         .eq('id', data.user.id)
         .maybeSingle();
-      if ((profile as { super_admin?: boolean } | null)?.super_admin) {
+
+      if (
+        (profile as { super_admin?: boolean } | null)
+          ?.super_admin
+      ) {
         destination = '/plataforma';
       }
     }
 
     setLoading(false);
+
     router.push(destination);
     router.refresh();
   }
@@ -74,29 +111,46 @@ export function LoginForm() {
         <h1 className="text-3xl font-semibold tracking-tight text-foreground">
           Entrar <span className="text-brand">.</span>
         </h1>
+
         <p className="text-sm text-muted-foreground">
           Use seu email e senha para acessar.
         </p>
       </div>
-      <form onSubmit={onPasswordSubmit} className="space-y-4">
+
+      <form
+        onSubmit={onPasswordSubmit}
+        className="space-y-4"
+      >
         <div>
-          <label htmlFor="email" className={LABEL_CLASS}>
+          <label
+            htmlFor="email"
+            className={LABEL_CLASS}
+          >
             Email
           </label>
+
           <input
             id="email"
             type="email"
             autoComplete="email"
             required
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className={INPUT_CLASS}  placeholder="Digite seu e-mail"
+            onChange={(e) =>
+              setEmail(e.target.value)
+            }
+            className={INPUT_CLASS}
+            placeholder="Digite seu e-mail"
           />
         </div>
+
         <div>
-          <label htmlFor="password" className={LABEL_CLASS}>
+          <label
+            htmlFor="password"
+            className={LABEL_CLASS}
+          >
             Senha
           </label>
+
           <div className="relative">
             <input
               id="password"
@@ -104,33 +158,62 @@ export function LoginForm() {
               autoComplete="current-password"
               required
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className={`${INPUT_CLASS} pr-11`} 
+              onChange={(e) =>
+                setPassword(e.target.value)
+              }
+              className={`${INPUT_CLASS} pr-11`}
             />
+
             <button
               type="button"
-              onClick={() => setShowPw((v) => !v)}
-              aria-label={showPw ? 'Ocultar senha' : 'Mostrar senha'}
-              title={showPw ? 'Ocultar senha' : 'Mostrar senha'}
+              onClick={() =>
+                setShowPw((v) => !v)
+              }
+              aria-label={
+                showPw
+                  ? 'Ocultar senha'
+                  : 'Mostrar senha'
+              }
+              title={
+                showPw
+                  ? 'Ocultar senha'
+                  : 'Mostrar senha'
+              }
               className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground transition-colors"
             >
               {showPw ? (
-                <EyeOff className="h-4 w-4" aria-hidden="true" />
+                <EyeOff
+                  className="h-4 w-4"
+                  aria-hidden="true"
+                />
               ) : (
-                <Eye className="h-4 w-4" aria-hidden="true" />
+                <Eye
+                  className="h-4 w-4"
+                  aria-hidden="true"
+                />
               )}
             </button>
           </div>
         </div>
+
         {error ? (
-          <div role="alert" className={ERROR_CLASS}>
+          <div
+            role="alert"
+            className={ERROR_CLASS}
+          >
             {error}
           </div>
         ) : null}
-        <button type="submit" disabled={loading} className={SUBMIT_CLASS}>
+
+        <button
+          type="submit"
+          disabled={loading}
+          className={SUBMIT_CLASS}
+        >
           {loading ? 'Entrando…' : 'Entrar'}
         </button>
       </form>
+
       <div className="pt-4 border-t border-border space-y-3 text-center">
         <Link
           href={`/signup?next=${encodeURIComponent(next)}`}
@@ -138,6 +221,7 @@ export function LoginForm() {
         >
           Criar conta
         </Link>
+
         <div>
           <Link
             href="/forgot-password"
