@@ -1,4 +1,5 @@
 export type AssistantPreviewKey =
+  | 'fluxo_compras'
   | 'dashboard'
   | 'abc'
   | 'spend'
@@ -165,6 +166,23 @@ export const ASSISTANTS: readonly AssistantDefinition[] = [
       'Chat de refinamento',
     ],
     previewKey: 'rfp',
+  },
+
+  {
+    id: 'fluxo_compras',
+    step: 1,
+    stepCategory: 'Processo',
+    href: '/fluxo',
+    title: 'Fluxo Automatizado de Compras',
+    short:
+      'O processo inteiro de uma compra, da solicitação à chegada do produto, em 8 etapas encadeadas. A IA executa cada etapa e para para você decidir: SIGA avança, AJUSTAR manda refazer. Nada anda sem a sua decisão.',
+    sideSubtitle: 'Conduza uma compra do início ao fim',
+    bullets: [
+      '8 etapas: solicitação → aprovação → fornecedores → RFQ → análise → PO → entrega → recebimento',
+      'Gate humano em toda etapa (SIGA / AJUSTAR), com histórico do que a IA propôs',
+      'Reaproveita o Equalizador no TCO e a consulta fiscal na seleção de fornecedores',
+    ],
+    previewKey: 'fluxo_compras',
   },
 
   {

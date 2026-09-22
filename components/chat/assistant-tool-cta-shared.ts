@@ -11,6 +11,7 @@ import {
   MessageCircle,
   Receipt,
   Scale,
+  Workflow,
   Star,
   TrendingUp,
   Truck,
@@ -36,6 +37,7 @@ import {
 // (app/api/chat/route.ts).
 
 export type AssistantToolType =
+  | 'fluxo_compras'
   | 'rfp'
   | 'kraljic'
   | 'porter'
@@ -156,6 +158,13 @@ export const META: Record<AssistantToolType, AssistantToolMeta> = {
     Icon: Landmark,
     path: '/simulador',
   },
+  fluxo_compras: {
+    title: 'Fluxo Automatizado de Compras',
+    blurb:
+      'O processo inteiro, da solicitação à chegada do produto: 8 etapas encadeadas em que a IA executa e você decide SIGA ou AJUSTAR a cada passo — solicitação, aprovação, fornecedores, RFQ, análise, PO, entrega e recebimento.',
+    Icon: Workflow,
+    path: '/fluxo',
+  },
   diagnostico_aquisicao: {
     title: 'Diagnóstico de Aquisição',
     blurb:
@@ -169,6 +178,7 @@ export function pathFor(type: AssistantToolType): string {
 }
 
 const VALID_TYPES = new Set<AssistantToolType>([
+  'fluxo_compras',
   'rfp',
   'kraljic',
   'porter',
@@ -231,7 +241,7 @@ export function detectAssistantToolCTA(text: string): AssistantToolType | null {
 // Tipos cujo caminho cru removemos do texto exibido (o card assume o CTA).
 // Inclui `suppliers` (caminho válido) pra não deixar o path feio na frase.
 const STRIP_TYPES =
-  'rfp|kraljic|porter|abc|financial|scorecard|profile|negotiation|homologacao|pesquisa_precos|spend_analysis|indicadores|grafico_rapido|comprador|suppliers|diagnostico_aquisicao';
+  'fluxo_compras|rfp|kraljic|porter|abc|financial|scorecard|profile|negotiation|homologacao|pesquisa_precos|spend_analysis|indicadores|grafico_rapido|comprador|suppliers|diagnostico_aquisicao';
 const ASSISTANTS_OR_CUSTOM = CUSTOM_PATH_ALTERNATION
   ? `/assistants/(?:${STRIP_TYPES})|${CUSTOM_PATH_ALTERNATION}`
   : `/assistants/(?:${STRIP_TYPES})`;

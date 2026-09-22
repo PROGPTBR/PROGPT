@@ -22,6 +22,7 @@ import { ScorecardPreview } from './previews/ScorecardPreview';
 import { HomologacaoPreview } from './previews/HomologacaoPreview';
 import { PesquisaPrecosPreview } from './previews/PesquisaPrecosPreview';
 import { IndicadoresPreview } from './previews/IndicadoresPreview';
+import { FluxoPreview } from './previews/FluxoPreview';
 import { DashboardPreview } from './previews/DashboardPreview';
 import { SimuladorTributarioPreview } from './previews/SimuladorTributarioPreview';
 import { SimuladorLogisticoPreview } from './previews/SimuladorLogisticoPreview';
@@ -43,6 +44,7 @@ const BADGE_LABEL: Record<'em_breve' | 'sob_demanda', string> = {
 };
 
 const PREVIEWS: Record<AssistantPreviewKey, ComponentType> = {
+  fluxo_compras: FluxoPreview,
   dashboard: DashboardPreview,
   abc: AbcCurvePreview,
   spend: SpendAnalysisPreview,

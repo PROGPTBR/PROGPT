@@ -17,6 +17,16 @@ export type ApiProvider = 'openai' | 'voyage' | 'cohere';
 // Add new labels here AND in lib/observability/api-usage.ts cost calc if
 // the new operation has a different rate.
 export type ApiOperation =
+  // Fluxo Automatizado de Compras (1 op por etapa + a equalização reusada)
+  | 'fluxo-etapa-solicitacao'
+  | 'fluxo-etapa-aprovacao'
+  | 'fluxo-etapa-fornecedores'
+  | 'fluxo-etapa-rfq'
+  | 'fluxo-etapa-analise'
+  | 'fluxo-etapa-po'
+  | 'fluxo-etapa-acompanhamento'
+  | 'fluxo-etapa-recebimento'
+  | 'fluxo-analise-equalizacao'
   | 'chat-generate'
   | 'chat-title-summarize'
   | 'chat-attachment-parse'

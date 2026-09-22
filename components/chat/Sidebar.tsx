@@ -9,6 +9,7 @@ import {
   Sparkles,
   Pencil,
   BookOpen,
+  Workflow,
   Building2,
   LayoutDashboard,
   BarChart3,
@@ -52,6 +53,12 @@ const CONTACT_PHONE = '(21) 99979-2912';
 const CONTACT_PHONE_HREF = 'tel:+5521999792912';
 
 const NAV_ITEMS = [
+  {
+    href: '/fluxo',
+    label: 'Fluxo de Compras',
+    description: 'Conduza uma compra, da solicitação ao recebimento.',
+    icon: Workflow,
+  },
   {
     href: '/painel',
     label: 'Painel',
