@@ -277,7 +277,7 @@ export async function POST(req: Request) {
               "Já existe uma conta cadastrada com este e-mail.",
           },
           {
-            status: 200,
+            status: 400,
           },
         );
       }

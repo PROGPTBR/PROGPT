@@ -328,15 +328,65 @@ export function SignupWizard({
        ETAPA 1
     ------------------------- */
 
-    if (step === 1) {
-      const validation =
-        validateStep1();
+if (step === 1) {
+  const validation = validateStep1();
 
-      if (validation) {
-        showError(validation);
-        return;
-      }
+  if (validation) {
+    showError(validation);
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+    const response = await fetch(
+      "/api/auth/check-email",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: form.email.trim(),
+        }),
+      },
+    );
+
+    const data = await response
+      .json()
+      .catch(() => ({}));
+
+    if (!response.ok) {
+      showError(
+        data?.message ||
+          "Não foi possível verificar o e-mail agora. Tente novamente.",
+      );
+
+      return;
     }
+
+    if (data.exists) {
+      showError(
+        "Este e-mail já possui uma conta cadastrada.",
+      );
+
+      return;
+    }
+  } catch (err) {
+    console.error(
+      "[SignupWizard] check-email failed:",
+      err,
+    );
+
+    showError(
+      "Não foi possível verificar o e-mail agora. Tente novamente.",
+    );
+
+    return;
+  } finally {
+    setLoading(false);
+  }
+}
 
     /* -------------------------
        ETAPA 2
