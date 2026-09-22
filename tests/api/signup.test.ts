@@ -123,8 +123,13 @@ describe('POST /api/signup — Asaas decline surfacing', () => {
     const { POST } = await import('@/app/api/signup/route');
     const res = await POST(buildReq());
     expect(res.status).toBe(400);
-    const body = (await res.json()) as { error: string };
-    expect(body.error).toBe('Cartão de crédito recusado');
+    // Contrato atual (22/09/2026): `error` é código de máquina e `message` é
+    // o texto que o cliente lê — é `message` que o SignupWizard mostra.
+    const body = (await res.json()) as { error: string; message: string };
+    expect(body.error).toBe('card_declined');
+    expect(body.message).toMatch(/cartão não foi autorizado/i);
+    // O que o sub-projeto 56 comprou: NUNCA devolver texto técnico do Asaas.
+    expect(body.message).not.toMatch(/failed|4\d\d|subscriptions/i);
   });
 
   it('falls back to a friendly generic message when Asaas gives no description', async () => {
@@ -134,8 +139,9 @@ describe('POST /api/signup — Asaas decline surfacing', () => {
     const { POST } = await import('@/app/api/signup/route');
     const res = await POST(buildReq());
     expect(res.status).toBe(400);
-    const body = (await res.json()) as { error: string };
-    expect(body.error).toMatch(/não foi possível processar o pagamento/i);
+    const body = (await res.json()) as { error: string; message: string };
+    expect(body.error).toBe('payment_failed');
+    expect(body.message).toMatch(/não foi possível processar o pagamento/i);
   });
 
   it('still returns 500 with the raw message for a non-Asaas error', async () => {
@@ -143,8 +149,9 @@ describe('POST /api/signup — Asaas decline surfacing', () => {
     const { POST } = await import('@/app/api/signup/route');
     const res = await POST(buildReq());
     expect(res.status).toBe(500);
-    const body = (await res.json()) as { error: string };
-    expect(body.error).toBe('conexão perdida');
+    const body = (await res.json()) as { error: string; message: string };
+    expect(body.error).toBe('signup_failed');
+    expect(body.message).toBe('conexão perdida');
   });
 
   it('rolls back the Asaas customer and the auth user on decline', async () => {
