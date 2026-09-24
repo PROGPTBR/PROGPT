@@ -150,7 +150,21 @@ export const MVP_TRACK: Stage[] = STAGES.filter((s) => s.mvp && !s.optional);
 export function isStageComplete(id: StageId, context: Proc2PayContext): boolean {
   const stage = getStage(id);
   if (!stage.produces) return false;
-  return context[stage.produces] != null;
+
+  const valor = context[stage.produces];
+  if (valor == null) return false;
+
+  // A aprovação é a única etapa em que EXISTIR resposta não basta: uma compra
+  // REPROVADA não pode destravar a emissão da PO. Até 24/09/2026 destravava —
+  // `recordApproval` gravava `context.aprovacao` com a decisão qualquer que
+  // ela fosse, e nada no fluxo ramificava nela. A decisão continua gravada
+  // (aqui, em `proc2pay_stage_runs` e em `proc2pay_approvals`, para
+  // auditoria); ela só deixa de contar como etapa vencida.
+  if (id === 'aprovacao') {
+    return (valor as { decision?: string }).decision === 'aprovado';
+  }
+
+  return true;
 }
 
 /**

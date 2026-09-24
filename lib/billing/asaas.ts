@@ -124,6 +124,31 @@ async function getConfig() {
     );
   }
 
+  // Guarda de sandbox-em-produção.
+  //
+  // Este é o ponto ÚNICO por onde passa toda chamada de cobrança, e cobre as
+  // duas origens da URL: o env e o campo editável em /admin/billing. Sem ela,
+  // apontar o sistema pro sandbox faz cada cadastro criar assinatura que
+  // parece real, aparece no painel, dispara webhook — e nunca cobra ninguém.
+  // O risco é concreto: o fallback de `getBillingSettings` é o SANDBOX, então
+  // basta a variável sumir do ambiente pra produção parar de faturar em
+  // silêncio. Falhar alto é melhor do que faturar zero sem ninguém notar.
+  if (process.env.APP_ENV === 'production' && /sandbox/i.test(apiUrl ?? '')) {
+    const semEnv = !process.env.ASAAS_API_URL?.trim();
+
+    throw new Error(
+      semEnv
+        ? 'ASAAS_API_URL não configurada em produção — sem ela o padrão é o sandbox do Asaas, que não cobra de verdade.'
+        : 'Asaas apontado para o SANDBOX com APP_ENV=production — nenhuma cobrança seria real. Corrija a URL em /admin/billing ou em ASAAS_API_URL.',
+    );
+  }
+
+  if (process.env.APP_ENV === 'production' && !apiUrl?.trim()) {
+    throw new Error(
+      'ASAAS_API_URL não configurada em produção (billing_settings ou env).',
+    );
+  }
+
   return {
     apiKey,
     apiUrl,

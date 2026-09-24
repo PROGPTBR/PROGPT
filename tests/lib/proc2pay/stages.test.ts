@@ -30,6 +30,10 @@ function contextUpTo(upTo: string): Proc2PayContext {
 function stubFor(key: keyof Proc2PayContext): unknown {
   if (key === 'requisicao') return reqPayload;
   if (key === 'fornecedores') return [{ nome: 'ACME' }];
+  // A aprovação não conta como vencida só por existir: desde 24/09/2026 uma
+  // compra REPROVADA não destrava a emissão da PO. Um contexto "completo"
+  // precisa, portanto, de uma aprovação de fato aprovada.
+  if (key === 'aprovacao') return { decision: 'aprovado' };
   return { ok: true };
 }
 
@@ -121,5 +125,46 @@ describe('isTrackComplete', () => {
   it('false no meio, true no fim', () => {
     expect(isTrackComplete(contextUpTo('negociacao'))).toBe(false);
     expect(isTrackComplete(contextUpTo('emissao_po'))).toBe(true);
+  });
+});
+
+// Bug encontrado em 24/09/2026 (estava documentado como conhecido desde
+// julho): reprovar uma compra NÃO impedia a emissão do pedido. O gate de
+// aprovação é a promessa central do produto — "a decisão é de uma pessoa" —,
+// então valia corrigir mesmo com o módulo a caminho da aposentadoria.
+describe('gate de aprovação — reprovar bloqueia a PO', () => {
+  it('aprovação APROVADA conclui a etapa', () => {
+    expect(isStageComplete('aprovacao', { aprovacao: { decision: 'aprovado' } })).toBe(true);
+  });
+
+  it('aprovação REPROVADA não conclui a etapa', () => {
+    expect(isStageComplete('aprovacao', { aprovacao: { decision: 'reprovado' } })).toBe(false);
+  });
+
+  it('com a compra reprovada, a emissão da PO continua bloqueada', () => {
+    const contexto = {
+      ...contextUpTo('negociacao'),
+      aprovacao: { decision: 'reprovado' as const },
+    } as Proc2PayContext;
+
+    expect(canRunStage('emissao_po', contexto)).toBe(false);
+  });
+
+  it('a mesma compra, aprovada, libera a emissão da PO', () => {
+    const contexto = {
+      ...contextUpTo('negociacao'),
+      aprovacao: { decision: 'aprovado' as const },
+    } as Proc2PayContext;
+
+    expect(canRunStage('emissao_po', contexto)).toBe(true);
+  });
+
+  it('reprovado mantém a aprovação como próxima etapa (pede nova decisão)', () => {
+    const contexto = {
+      ...contextUpTo('negociacao'),
+      aprovacao: { decision: 'reprovado' as const },
+    } as Proc2PayContext;
+
+    expect(nextStage(contexto)?.id).toBe('aprovacao');
   });
 });
