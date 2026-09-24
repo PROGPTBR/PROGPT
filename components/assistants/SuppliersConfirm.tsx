@@ -12,10 +12,13 @@ import {
   Loader2,
   MapPin,
   MapPinned,
+  Radius,
   Search,
   Tag,
   X,
 } from 'lucide-react';
+
+import { toast } from 'sonner';
 
 import type {
   CnaeAlternative,
@@ -331,6 +334,79 @@ export function SuppliersConfirm({
       (selected) =>
         selected.id === city.id,
     );
+  }
+
+  // ── Cidades próximas (raio) ────────────────────────────────
+  //
+  // Dor do cliente (24/09/2026): obras espalhadas pelo estado, e comprar de
+  // cidade distante não compensa o frete. Filtrar só pela cidade da obra
+  // exclui o fornecedor da cidade vizinha; filtrar pelo estado traz a
+  // capital inteira. O raio resolve os dois.
+  const [raioBuscando, setRaioBuscando] =
+    useState<number | null>(null);
+
+  async function incluirCidadesProximas(
+    raioKm: number,
+  ) {
+    const base = selectedCities[0];
+    if (!base || raioBuscando !== null) return;
+
+    setRaioBuscando(raioKm);
+    try {
+      const res = await fetch(
+        `/api/suppliers/nearby-cities?uf=${encodeURIComponent(
+          base.uf,
+        )}&cidade=${encodeURIComponent(
+          base.name,
+        )}&raio=${raioKm}`,
+      );
+
+      const data = (await res
+        .json()
+        .catch(() => ({}))) as {
+        cidades?: Array<{
+          id: number;
+          nome: string;
+          uf: string;
+        }>;
+        limitado?: boolean;
+        message?: string;
+      };
+
+      if (!res.ok || !data.cidades?.length) {
+        toast.error(
+          data.message ??
+            'Não foi possível incluir as cidades próximas.',
+        );
+        return;
+      }
+
+      setSelectedCities((prev) => {
+        const porId = new Map(
+          prev.map((c) => [c.id, c]),
+        );
+        for (const c of data.cidades!) {
+          porId.set(c.id, {
+            id: c.id,
+            name: c.nome,
+            uf: c.uf as SupplierCity['uf'],
+          });
+        }
+        return [...porId.values()];
+      });
+
+      toast.success(
+        `${data.cidades.length} cidades num raio de ${raioKm} km${
+          data.limitado ? ' (limite atingido)' : ''
+        }.`,
+      );
+    } catch {
+      toast.error(
+        'Não foi possível incluir as cidades próximas.',
+      );
+    } finally {
+      setRaioBuscando(null);
+    }
   }
 
   function toggleCity(
@@ -683,6 +759,76 @@ export function SuppliersConfirm({
               </button>
             )}
           </div>
+
+          {/* CIDADES PRÓXIMAS (RAIO)
+
+              Só aparece com UMA cidade escolhida: ela é a obra, e o raio
+              diz até onde vale buscar fornecedor sem o frete comer a
+              economia. */}
+
+          {selectedCities.length ===
+            1 && (
+            <div className="rounded-xl border border-border bg-muted/30 p-3 space-y-2">
+              <div className="flex items-center gap-1.5 text-xs text-foreground">
+                <Radius
+                  className="h-3.5 w-3.5 text-brand"
+                  aria-hidden="true"
+                />
+
+                <span>
+                  Incluir cidades até{' '}
+                  <strong>
+                    X km
+                  </strong>{' '}
+                  de{' '}
+                  {
+                    selectedCities[0]!
+                      .name
+                  }
+                </span>
+              </div>
+
+              <div className="flex flex-wrap gap-1.5">
+                {[30, 50, 100].map(
+                  (raio) => (
+                    <button
+                      key={raio}
+                      type="button"
+                      disabled={
+                        raioBuscando !==
+                        null
+                      }
+                      onClick={() =>
+                        void incluirCidadesProximas(
+                          raio,
+                        )
+                      }
+                      className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 h-7 text-xs hover:bg-accent disabled:opacity-60 transition-colors"
+                    >
+                      {raioBuscando ===
+                      raio ? (
+                        <Loader2
+                          className="h-3 w-3 animate-spin"
+                          aria-hidden="true"
+                        />
+                      ) : null}
+                      {raio} km
+                    </button>
+                  ),
+                )}
+              </div>
+
+              <p className="text-[11px] text-muted-foreground">
+                Útil para obra fora
+                da capital: traz os
+                fornecedores das
+                cidades vizinhas,
+                inclusive de outro
+                estado quando a
+                divisa é perto.
+              </p>
+            </div>
+          )}
 
           {/* CIDADES SELECIONADAS */}
 
