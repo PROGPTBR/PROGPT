@@ -144,3 +144,72 @@ describe('POST /api/fluxo/processos/[id]/run', () => {
     expect((await res.json()).message).toMatch(/aguarda sua decisão/i);
   });
 });
+
+// Painel de gestão dos processos (pedido de cliente, 24/09/2026).
+describe('GET /api/fluxo/painel', () => {
+  function mockDb(processos: unknown[], etapas: unknown[]) {
+    const eqCalls: Array<[string, unknown]> = [];
+    vi.doMock('@/lib/db/supabase', () => ({
+      getServerSupabase: () => ({
+        from: (t: string) => ({
+          select: () => ({
+            eq: (col: string, val: unknown) => {
+              eqCalls.push([col, val]);
+              return Promise.resolve({
+                data: t === 'fluxo_processos' ? processos : etapas,
+              });
+            },
+          }),
+        }),
+      }),
+    }));
+    return eqCalls;
+  }
+
+  it('401 sem sessão', async () => {
+    mockAuth(false);
+    mockDb([], []);
+    const { GET } = await import('@/app/api/fluxo/painel/route');
+    expect((await GET()).status).toBe(401);
+  });
+
+  it('filtra as DUAS tabelas pelo usuário logado', async () => {
+    mockAuth(true);
+    const eqCalls = mockDb([], []);
+    const { GET } = await import('@/app/api/fluxo/painel/route');
+    await GET();
+
+    // Sem este filtro em cada consulta, um comprador veria a compra do outro.
+    expect(eqCalls).toEqual([
+      ['user_id', 'u1'],
+      ['user_id', 'u1'],
+    ]);
+  });
+
+  it('devolve o painel montado a partir dos processos do usuário', async () => {
+    mockAuth(true);
+    mockDb(
+      [
+        {
+          id: 'p1',
+          user_id: 'u1',
+          titulo: 'Notebooks',
+          etapa_atual: 'rfq',
+          status: 'em_andamento',
+          contexto: {},
+          created_at: '2026-09-01T00:00:00Z',
+          updated_at: '2026-09-01T00:00:00Z',
+        },
+      ],
+      [],
+    );
+    const { GET } = await import('@/app/api/fluxo/painel/route');
+    const body = (await (await GET()).json()) as {
+      emAndamento: number;
+      etapas: Array<{ etapa: string; emAndamento: number }>;
+    };
+
+    expect(body.emAndamento).toBe(1);
+    expect(body.etapas.find((e) => e.etapa === 'rfq')!.emAndamento).toBe(1);
+  });
+});

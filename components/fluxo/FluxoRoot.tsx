@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, Loader2, Plus, Workflow } from 'lucide-react';
+import { ArrowRight, BarChart3, Loader2, Plus, Workflow } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { FLUXO_STAGES, getStage } from '@/lib/fluxo/stages';
@@ -101,16 +101,26 @@ export function FluxoRoot({ processosIniciais }: { processosIniciais: FluxoProce
         ))}
       </ol>
 
-      {!abrindo && (
-        <button
-          type="button"
-          onClick={() => setAbrindo(true)}
-          className="inline-flex items-center gap-2 rounded-full bg-brand-gradient text-black h-11 px-5 text-sm font-semibold"
+      <div className="flex flex-wrap items-center gap-2">
+        {!abrindo && (
+          <button
+            type="button"
+            onClick={() => setAbrindo(true)}
+            className="inline-flex items-center gap-2 rounded-full bg-brand-gradient text-black h-11 px-5 text-sm font-semibold"
+          >
+            <Plus className="h-4 w-4" aria-hidden />
+            Nova compra
+          </button>
+        )}
+
+        <Link
+          href="/fluxo/painel"
+          className="inline-flex items-center gap-2 rounded-full border border-border h-11 px-5 text-sm font-medium hover:bg-accent transition-colors"
         >
-          <Plus className="h-4 w-4" aria-hidden />
-          Nova compra
-        </button>
-      )}
+          <BarChart3 className="h-4 w-4" aria-hidden />
+          Gestão dos processos
+        </Link>
+      </div>
 
       {abrindo && (
         <form
