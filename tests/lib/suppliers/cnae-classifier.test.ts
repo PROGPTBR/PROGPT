@@ -266,3 +266,59 @@ describe('cnae-classifier — exemplos de atividade chegam na escolha', () => {
     expect(r.cnaeExamples).toBeUndefined();
   });
 });
+
+// Segundo achado do mesmo dia, testando contra o banco real: a correção dos
+// exemplos resolvia só quando o CNAE certo já era candidato. Com "locação de
+// caçambas de entulho", a palavra "locação" afogava "caçamba"/"entulho" e o
+// 3811400 nem aparecia na lista — a busca voltava errada com 80% de
+// confiança. A segunda passada, sem as palavras genéricas de negócio,
+// resolve. Validado ao vivo: passou a devolver 3811400.
+describe('termosDistintivos', () => {
+  it('descarta palavras de negócio que aparecem em dezenas de CNAEs', async () => {
+    const { termosDistintivos } = await import('@/lib/suppliers/cnae-classifier');
+    expect(termosDistintivos('locação de caçambas de entulho')).toBe('caçambas entulho');
+    expect(termosDistintivos('fornecimento de embalagens plásticas')).toBe(
+      'embalagens plásticas',
+    );
+  });
+
+  it('preserva o termo que identifica a atividade', async () => {
+    const { termosDistintivos } = await import('@/lib/suppliers/cnae-classifier');
+    expect(termosDistintivos('locação de andaimes')).toBe('andaimes');
+    expect(termosDistintivos('aluguel de betoneira')).toBe('betoneira');
+  });
+
+  it('devolve vazio quando a frase inteira é genérica (não vale 2ª busca)', async () => {
+    const { termosDistintivos } = await import('@/lib/suppliers/cnae-classifier');
+    expect(termosDistintivos('fornecimento de serviços')).toBe('');
+    expect(termosDistintivos('de para com')).toBe('');
+  });
+});
+
+describe('cnae-classifier — duas passadas de busca', () => {
+  it('une os candidatos das duas buscas, sem repetir', async () => {
+    mockOpenAI([
+      {
+        text: JSON.stringify({
+          activityDescription: 'locação de caçambas de entulho',
+          scope: 'national',
+        }),
+      },
+      { text: JSON.stringify({ cnaeCode: '3811400', confidence: 0.9, rationale: 'ok' }) },
+    ]);
+
+    // O fake devolve a MESMA lista nas duas passadas; o resultado não pode
+    // duplicar os códigos.
+    mockReceitaSql([
+      { codigo: '7719599', denominacao: 'Locação de outros meios de transporte', score: 0.9, exemplos: 'contêineres', exato: 0 },
+      { codigo: '3811400', denominacao: 'Coleta de resíduos não-perigosos', score: 0.5, exemplos: 'entulho; caçambas', exato: 1 },
+    ]);
+
+    const { classifyCnae } = await import('@/lib/suppliers/cnae-classifier');
+    const r = await classifyCnae('locação de caçambas de entulho');
+
+    const codigos = [r.cnaeCode, ...r.alternatives.map((a) => a.code)];
+    expect(new Set(codigos).size).toBe(codigos.length);
+    expect(r.cnaeCode).toBe('3811400');
+  });
+});

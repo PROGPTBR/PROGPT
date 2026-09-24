@@ -135,7 +135,55 @@ async function extractActivity(
   }
 }
 
+// Palavras de negócio que aparecem em dezenas de CNAEs e afogam o termo que
+// realmente identifica a atividade. Testado ao vivo em 24/09/2026: "locação
+// de caçambas de entulho" trazia só CNAEs de aluguel — o correto (coleta de
+// resíduos) nem entrava na lista, porque "caçamba"/"entulho" perdiam para
+// "locação". NÃO removemos essas palavras da busca principal (quem procura
+// "locação de andaimes" quer mesmo locação); fazemos uma SEGUNDA busca sem
+// elas e unimos as duas listas.
+const PALAVRAS_GENERICAS = new Set([
+  'locacao', 'locação', 'aluguel', 'alugar', 'leasing',
+  'fornecimento', 'fornecedor', 'fornecedores', 'fornecer',
+  'servico', 'serviço', 'servicos', 'serviços', 'prestacao', 'prestação',
+  'prestador', 'prestadores', 'venda', 'vendas', 'comercio', 'comércio',
+  'empresa', 'empresas', 'contratacao', 'contratação', 'terceirizacao',
+  'terceirização', 'compra', 'de', 'da', 'do', 'para', 'com', 'em', 'e',
+]);
+
+/** Só os termos que identificam a atividade. Vazio quando a frase inteira é
+ *  genérica — aí não vale fazer a segunda busca. */
+export function termosDistintivos(descricao: string): string {
+  const palavras = descricao
+    .toLowerCase()
+    .split(/[^\p{L}\p{N}]+/u)
+    .filter((p) => p.length > 2 && !PALAVRAS_GENERICAS.has(p));
+
+  return palavras.join(' ');
+}
+
 async function retrieveCandidates(
+  activityDescription: string,
+): Promise<CnaeAlternative[]> {
+  const distintivos = termosDistintivos(activityDescription);
+
+  const [principal, focada] = await Promise.all([
+    buscarCandidatos(activityDescription),
+    // Segunda passada só com o que distingue a atividade.
+    distintivos && distintivos !== activityDescription.toLowerCase()
+      ? buscarCandidatos(distintivos)
+      : Promise.resolve([]),
+  ]);
+
+  // União preservando ordem: a busca principal manda, a focada completa com
+  // o que ela não achou. O LLM decide entre as duas leituras.
+  const vistos = new Set(principal.map((c) => c.code));
+  const extras = focada.filter((c) => !vistos.has(c.code));
+
+  return [...principal, ...extras].slice(0, 15);
+}
+
+async function buscarCandidatos(
   activityDescription: string,
 ): Promise<CnaeAlternative[]> {
   try {
