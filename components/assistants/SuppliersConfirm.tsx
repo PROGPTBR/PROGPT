@@ -840,11 +840,9 @@ export function SuppliersConfirm({
                     )}
                   </div>
                 ) : (
-                  <div className="px-3 py-5 text-center text-xs text-muted-foreground">
-                    Nenhuma cidade
-                    encontrada para "
-                    {citySearch}".
-                  </div>
+ <div className="px-3 py-5 text-center text-xs text-muted-foreground">
+  {`Nenhuma cidade encontrada para "${citySearch}".`}
+</div>
                 )}
               </div>
             )}
