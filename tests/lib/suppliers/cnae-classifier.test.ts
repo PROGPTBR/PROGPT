@@ -22,7 +22,13 @@ function mockOpenAI(responses: MockResp[]) {
   return { create };
 }
 
-type DbRow = { codigo: string; denominacao: string; score: number };
+type DbRow = {
+  codigo: string;
+  denominacao: string;
+  score: number;
+  exemplos?: string | null;
+  exato?: number;
+};
 
 function mockReceitaSql(rows: DbRow[]) {
   const tagged = (() => Promise.resolve(rows)) as unknown;
@@ -163,5 +169,100 @@ describe('cnae-classifier', () => {
     const { classifyCnae } = await import('@/lib/suppliers/cnae-classifier');
     const result = await classifyCnae('foo');
     expect(result.states).toEqual(['SP', 'MG', 'RJ']);
+  });
+});
+
+// Feedback de cliente em 24/09/2026: buscou "locação de caçambas de entulho"
+// e a plataforma devolveu uma locadora de compressores (CNAE 7719-5/99,
+// "Locação de outros meios de transporte"). Causa provada reproduzindo o
+// passo de escolha: o LLM recebia só `código — nome`, e o nome oficial do
+// CNAE é jurídico demais pra distinguir. Com os EXEMPLOS de atividade (que o
+// banco já tinha e o código descartava) ele acerta.
+describe('cnae-classifier — exemplos de atividade chegam na escolha', () => {
+  const extracao = {
+    text: JSON.stringify({
+      activityDescription: 'locação de caçambas de entulho',
+      scope: 'city',
+      cities: ['Itupeva'],
+      states: ['SP'],
+    }),
+  };
+
+  const candidatos: DbRow[] = [
+    {
+      codigo: '7719599',
+      denominacao: 'Locação de outros meios de transporte não especificados anteriormente, sem condutor',
+      score: 0.9,
+      exemplos: 'aluguel de contêineres; locação de vagões',
+      exato: 0,
+    },
+    {
+      codigo: '3811400',
+      denominacao: 'Coleta de resíduos não-perigosos',
+      score: 0.4,
+      exemplos: 'coleta de entulho; locação de caçambas para entulho',
+      exato: 1,
+    },
+  ];
+
+  it('inclui os exemplos no prompt de escolha do CNAE', async () => {
+    const { create } = mockOpenAI([
+      extracao,
+      { text: JSON.stringify({ cnaeCode: '3811400', confidence: 0.9, rationale: 'caçamba de entulho é coleta de resíduos' }) },
+    ]);
+    mockReceitaSql(candidatos);
+
+    const { classifyCnae } = await import('@/lib/suppliers/cnae-classifier');
+    await classifyCnae('locação de caçambas de entulho em Itupeva SP');
+
+    const promptDoPick = JSON.stringify(create.mock.calls[1]?.[0]);
+    expect(promptDoPick).toContain('locação de caçambas para entulho');
+    // Sem isto o modelo escolhe pelo nome jurídico e erra.
+    expect(promptDoPick).toContain('Exemplos:');
+  });
+
+  it('devolve os exemplos do CNAE escolhido pra UI poder mostrar', async () => {
+    mockOpenAI([
+      extracao,
+      { text: JSON.stringify({ cnaeCode: '3811400', confidence: 0.9, rationale: 'ok' }) },
+    ]);
+    mockReceitaSql(candidatos);
+
+    const { classifyCnae } = await import('@/lib/suppliers/cnae-classifier');
+    const r = await classifyCnae('caçamba de entulho');
+
+    expect(r.cnaeCode).toBe('3811400');
+    expect(r.cnaeExamples).toContain('entulho');
+  });
+
+  it('carrega exemplos também nas alternativas (o comprador escolhe por elas)', async () => {
+    mockOpenAI([
+      extracao,
+      { text: JSON.stringify({ cnaeCode: '3811400', confidence: 0.9, rationale: 'ok' }) },
+    ]);
+    mockReceitaSql(candidatos);
+
+    const { classifyCnae } = await import('@/lib/suppliers/cnae-classifier');
+    const r = await classifyCnae('caçamba de entulho');
+
+    expect(r.alternatives).toHaveLength(1);
+    expect(r.alternatives[0]!.code).toBe('7719599');
+    expect(r.alternatives[0]!.examples).toContain('contêineres');
+  });
+
+  it('não quebra quando o CNAE não tem exemplos cadastrados', async () => {
+    mockOpenAI([
+      extracao,
+      { text: JSON.stringify({ cnaeCode: '7719599', confidence: 0.5, rationale: 'ok' }) },
+    ]);
+    mockReceitaSql([
+      { codigo: '7719599', denominacao: 'Locação de outros meios de transporte', score: 0.9, exemplos: null, exato: 0 },
+    ]);
+
+    const { classifyCnae } = await import('@/lib/suppliers/cnae-classifier');
+    const r = await classifyCnae('qualquer coisa');
+
+    expect(r.cnaeCode).toBe('7719599');
+    expect(r.cnaeExamples).toBeUndefined();
   });
 });

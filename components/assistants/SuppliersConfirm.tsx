@@ -453,6 +453,26 @@ export function SuppliersConfirm({
               {cnaeName}
             </div>
 
+            {/* O nome oficial do CNAE é jurídico e genérico — são os
+                exemplos que deixam o comprador reconhecer se é isso
+                mesmo. Feedback de cliente em 24/09/2026: buscou caçamba
+                de entulho e recebeu locadora de compressores. */}
+            {classify.cnaeExamples && (
+              <div className="text-xs text-muted-foreground leading-relaxed">
+                <span className="font-medium text-foreground/80">
+                  Inclui:
+                </span>{' '}
+                {classify
+                  .cnaeExamples
+                  .length > 220
+                  ? `${classify.cnaeExamples.slice(
+                      0,
+                      220,
+                    )}…`
+                  : classify.cnaeExamples}
+              </div>
+            )}
+
             {classify.confidence >
               0 && (
               <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
@@ -462,6 +482,15 @@ export function SuppliersConfirm({
                   100
                 ).toFixed(0)}
                 %
+                {classify.confidence <
+                  0.6 && (
+                  <span className="ml-1.5 normal-case tracking-normal text-amber-600 dark:text-amber-400">
+                    · confira se é
+                    isso mesmo, ou
+                    escolha outra
+                    opção abaixo
+                  </span>
+                )}
               </div>
             )}
           </div>
@@ -498,7 +527,9 @@ export function SuppliersConfirm({
                         : 'border-border bg-background hover:bg-accent text-foreground/80'
                     }`}
                     title={
-                      alt.name
+                      alt.examples
+                        ? `${alt.name}\n\nInclui: ${alt.examples}`
+                        : alt.name
                     }
                   >
                     <span className="font-mono">

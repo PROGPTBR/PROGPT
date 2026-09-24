@@ -57,6 +57,13 @@ export const CnaeAlternativeSchema =
     code: z.string(),
     name: z.string(),
     score: z.number(),
+
+    /** Atividades reais classificadas nesse CNAE (vocabulário do
+     *  comprador). É o que permite reconhecer o CNAE certo — o nome
+     *  oficial é jurídico demais pra distinguir. */
+    examples: z
+      .string()
+      .optional(),
   });
 
 export type CnaeAlternative =
@@ -73,6 +80,12 @@ export const ClassifyResponseSchema =
     cnaeName: z
       .string()
       .nullable(),
+
+    /** Exemplos de atividade do CNAE escolhido — o que deixa o comprador
+     *  reconhecer (ou recusar) a escolha sem saber ler código CNAE. */
+    cnaeExamples: z
+      .string()
+      .optional(),
 
     scope: z.enum([
       'national',

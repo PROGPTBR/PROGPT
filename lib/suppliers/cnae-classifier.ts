@@ -92,6 +92,7 @@ Regras:
 - Prefira CNAE específico (sub-classe) sobre genérico (divisão).
 - Se a atividade pede "fabricação", priorize CNAEs de indústria, NÃO comércio.
 - Se a atividade pede "fornecedor de X", e há ambos fabricante e comércio, prefira FABRICAÇÃO (B2B típico de procurement).
+- Os "Exemplos" de cada candidato são atividades REAIS classificadas naquele CNAE. Quando um exemplo descreve a atividade pedida, esse candidato ganha — mesmo que o NOME do CNAE pareça distante. O nome é jurídico; o exemplo é o que a empresa faz.
 - Se nenhum candidato encaixa bem, retorne cnaeCode=null e confidence=0.`;
 
 async function extractActivity(
@@ -145,35 +146,52 @@ async function retrieveCandidates(
     // basta pra entrar no rank; `ts_rank` com `setweight` (denominacao=A,
     // exemplos=B, notas=C) prioriza match no nome canônico do CNAE.
     const rows = await sql<
-      Array<{ codigo: string; denominacao: string; score: number }>
+      Array<{
+        codigo: string;
+        denominacao: string;
+        exemplos: string | null;
+        score: number;
+        exato: number;
+      }>
     >`
       with q as (
-        select to_tsquery(
-          'portuguese',
-          regexp_replace(plainto_tsquery('portuguese', ${activityDescription})::text, ' & ', ' | ', 'g')
-        ) as tsq
-      )
-      select cnae.codigo,
-             cnae.denominacao,
-             ts_rank(
+        select
+          -- AND: todos os termos. Casa pouco, mas com PRECISÃO alta — é o
+          -- que separa "caçamba de entulho" (coleta de resíduos) de
+          -- qualquer CNAE que só tenha a palavra genérica "locação".
+          plainto_tsquery('portuguese', ${activityDescription}) as tsq_and,
+          -- OR: qualquer termo. Garante recall quando uma palavra do
+          -- usuário não existe em CNAE nenhum.
+          to_tsquery(
+            'portuguese',
+            regexp_replace(plainto_tsquery('portuguese', ${activityDescription})::text, ' & ', ' | ', 'g')
+          ) as tsq_or
+      ),
+      doc as (
+        select cnae.codigo,
+               cnae.denominacao,
+               cnae.exemplos_atividades,
                setweight(to_tsvector('portuguese', cnae.denominacao), 'A') ||
                setweight(to_tsvector('portuguese', coalesce(cnae.exemplos_atividades, '')), 'B') ||
-               setweight(to_tsvector('portuguese', coalesce(cnae.notas_explicativas, '')), 'C'),
-               q.tsq
-             )::float as score
-      from cnae_taxonomy cnae, q
-      where q.tsq is not null and q.tsq @@ (
-        to_tsvector('portuguese', cnae.denominacao) ||
-        to_tsvector('portuguese', coalesce(cnae.exemplos_atividades, '')) ||
-        to_tsvector('portuguese', coalesce(cnae.notas_explicativas, ''))
+               setweight(to_tsvector('portuguese', coalesce(cnae.notas_explicativas, '')), 'C') as tsv
+        from cnae_taxonomy cnae
       )
-      order by score desc
-      limit 10
+      select doc.codigo,
+             doc.denominacao,
+             left(coalesce(doc.exemplos_atividades, ''), 400) as exemplos,
+             ts_rank(doc.tsv, q.tsq_or)::float as score,
+             (case when q.tsq_and is not null and doc.tsv @@ q.tsq_and then 1 else 0 end) as exato
+      from doc, q
+      where q.tsq_or is not null and doc.tsv @@ q.tsq_or
+      -- Quem casa com TODOS os termos vem primeiro, sempre.
+      order by exato desc, score desc
+      limit 12
     `;
     return rows.map((r) => ({
       code: r.codigo,
       name: r.denominacao,
       score: Number(r.score),
+      examples: r.exemplos?.trim() || undefined,
     }));
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
@@ -192,8 +210,16 @@ async function pickCnae(
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), PICK_TIMEOUT_MS);
 
+  // Os EXEMPLOS DE ATIVIDADE são o que desempata na prática: o nome oficial
+  // do CNAE é jurídico e genérico ("Locação de outros meios de transporte"),
+  // enquanto os exemplos trazem o vocabulário real do comprador ("caçamba
+  // para entulho"). Testado em 24/09/2026: sem exemplos o modelo erra
+  // "locação de caçambas de entulho"; com exemplos acerta (3811-4/00).
   const candidatesText = candidates
-    .map((c, i) => `${i + 1}. ${c.code} — ${c.name}`)
+    .map((c, i) => {
+      const linha = `${i + 1}. ${c.code} — ${c.name}`;
+      return c.examples ? `${linha}\n   Exemplos: ${c.examples}` : linha;
+    })
     .join('\n');
 
   try {
@@ -286,6 +312,7 @@ export async function classifyCnae(query: string): Promise<ClassifyResponse> {
   return {
     cnaeCode: chosen.code,
     cnaeName: chosen.name,
+    cnaeExamples: chosen.examples,
     scope: extracted.scope,
     states: normalizeUfs(extracted.states),
     cities: extracted.cities,
