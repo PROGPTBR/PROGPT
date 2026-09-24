@@ -2,101 +2,315 @@ import { z } from 'zod';
 
 // 27 UFs brasileiras (26 estados + DF).
 export const UF_LIST = [
-  'AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA',
-  'PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO',
+  'AC',
+  'AL',
+  'AP',
+  'AM',
+  'BA',
+  'CE',
+  'DF',
+  'ES',
+  'GO',
+  'MA',
+  'MT',
+  'MS',
+  'MG',
+  'PA',
+  'PB',
+  'PR',
+  'PE',
+  'PI',
+  'RJ',
+  'RN',
+  'RS',
+  'RO',
+  'RR',
+  'SC',
+  'SP',
+  'SE',
+  'TO',
 ] as const;
-export type UF = (typeof UF_LIST)[number];
 
-export const UfSchema = z.enum(UF_LIST);
+export type UF =
+  (typeof UF_LIST)[number];
 
-// ── Classify endpoint ───────────────────────────────────────────────────────
+export const UfSchema =
+  z.enum(UF_LIST);
 
-export const ClassifyRequestSchema = z.object({
-  query: z.string().min(3).max(500),
-});
-export type ClassifyRequest = z.infer<typeof ClassifyRequestSchema>;
+// ── Classify endpoint ────────────────────────────────────────
 
-export const CnaeAlternativeSchema = z.object({
-  code: z.string(),
-  name: z.string(),
-  score: z.number(),
-});
-export type CnaeAlternative = z.infer<typeof CnaeAlternativeSchema>;
+export const ClassifyRequestSchema =
+  z.object({
+    query: z
+      .string()
+      .min(3)
+      .max(500),
+  });
 
-export const ClassifyResponseSchema = z.object({
-  cnaeCode: z.string().nullable(),
-  cnaeName: z.string().nullable(),
-  scope: z.enum(['national', 'regional', 'state', 'city']),
-  states: z.array(UfSchema).optional(),
-  cities: z.array(z.string()).optional(),
-  confidence: z.number().min(0).max(1),
-  rationale: z.string(),
-  alternatives: z.array(CnaeAlternativeSchema),
-});
-export type ClassifyResponse = z.infer<typeof ClassifyResponseSchema>;
+export type ClassifyRequest =
+  z.infer<
+    typeof ClassifyRequestSchema
+  >;
 
-// ── Search / Export endpoints ───────────────────────────────────────────────
+export const CnaeAlternativeSchema =
+  z.object({
+    code: z.string(),
+    name: z.string(),
+    score: z.number(),
+  });
 
-export const SearchRequestSchema = z.object({
-  cnae: z.string().regex(/^\d{4,7}$/, 'CNAE precisa ser numérico (4-7 dígitos)'),
-  ufs: z.array(UfSchema).optional(),
-  limit: z.number().int().min(1).max(200).optional(),
-  offset: z.number().int().min(0).optional(),
-});
-export type SearchRequest = z.infer<typeof SearchRequestSchema>;
+export type CnaeAlternative =
+  z.infer<
+    typeof CnaeAlternativeSchema
+  >;
 
-export const SupplierResultSchema = z.object({
-  cnpj: z.string(),
-  razao_social: z.string(),
-  nome_fantasia: z.string().nullable(),
-  cnae_primario: z.string().nullable(),
-  cnaes_secundarios: z.array(z.string()).nullable(),
-  porte: z.string().nullable(),
-  capital_social: z.number().nullable(),
-  faixa_funcionarios: z.string().nullable(),
-  uf: z.string().nullable(),
-  municipio: z.string().nullable(),
-  telefone: z.string().nullable(),
-  email: z.string().nullable(),
-  ultima_atualizacao_rf: z.string().nullable(),
-});
-export type SupplierResult = z.infer<typeof SupplierResultSchema>;
+export const ClassifyResponseSchema =
+  z.object({
+    cnaeCode: z
+      .string()
+      .nullable(),
 
-// Sub-projeto 21 follow-up: agrupar por CNPJ base (primeiros 8 dígitos).
-// Empresas com várias filiais batendo no mesmo CNAE+UF apareciam como
-// cards repetidos; agora viram 1 card por empresa com expand pra mostrar
-// filiais individuais.
-export const GroupedSupplierSchema = z.object({
-  cnpjBasico: z.string(),
-  units: z.array(SupplierResultSchema).min(1),
-  // Ano de abertura mais antigo do grupo (tempo de mercado). Opcional — só
-  // vem preenchido quando a base `empresas` expõe a coluna de data de
-  // abertura (detectada em runtime; ver search.ts). null = desconhecido.
-  aberturaAno: z.number().int().nullable().optional(),
-});
-export type GroupedSupplier = z.infer<typeof GroupedSupplierSchema>;
+    cnaeName: z
+      .string()
+      .nullable(),
 
-export const SearchResponseSchema = z.object({
-  groups: z.array(GroupedSupplierSchema),
-  total: z.number().int().min(0),
-  cnaeName: z.string().nullable(),
-});
-export type SearchResponse = z.infer<typeof SearchResponseSchema>;
+    scope: z.enum([
+      'national',
+      'regional',
+      'state',
+      'city',
+    ]),
 
-// ── CNAE lookup / autocomplete ──────────────────────────────────────────────
+    states: z
+      .array(UfSchema)
+      .optional(),
 
-export const CnaeInfoSchema = z.object({
-  code: z.string(),
-  name: z.string(),
-  divisao: z.string().nullable(),
-  grupo: z.string().nullable(),
-});
-export type CnaeInfo = z.infer<typeof CnaeInfoSchema>;
+    cities: z
+      .array(z.string())
+      .optional(),
 
-export const CnaeSearchResponseSchema = z.object({
-  results: z.array(CnaeInfoSchema),
-});
-export type CnaeSearchResponse = z.infer<typeof CnaeSearchResponseSchema>;
+    confidence: z
+      .number()
+      .min(0)
+      .max(1),
 
-// Cap defensivo do export — 5000 fornecedores ainda gera CSV < 2MB.
+    rationale: z.string(),
+
+    alternatives:
+      z.array(
+        CnaeAlternativeSchema,
+      ),
+  });
+
+export type ClassifyResponse =
+  z.infer<
+    typeof ClassifyResponseSchema
+  >;
+
+// ── Cidades da busca ─────────────────────────────────────────
+
+export const SupplierCitySchema =
+  z.object({
+    id: z
+      .number()
+      .int()
+      .positive(),
+
+    name: z
+      .string()
+      .trim()
+      .min(1)
+      .max(150),
+
+    uf: UfSchema,
+  });
+
+export type SupplierCity =
+  z.infer<
+    typeof SupplierCitySchema
+  >;
+
+// ── Search / Export endpoints ────────────────────────────────
+
+export const SearchRequestSchema =
+  z.object({
+    cnae: z
+      .string()
+      .regex(
+        /^\d{4,7}$/,
+        'CNAE precisa ser numérico (4-7 dígitos)',
+      ),
+
+    ufs: z
+      .array(UfSchema)
+      .optional(),
+
+    // Cidades selecionadas pelo usuário.
+    //
+    // Quando vazio/undefined:
+    //   SP -> todo o estado de SP
+    //
+    // Quando preenchido:
+    //   SP + Campinas -> somente Campinas/SP
+    //
+    // O UF também faz parte da cidade para evitar ambiguidades
+    // entre municípios de mesmo nome em estados diferentes.
+    cities: z
+      .array(
+        SupplierCitySchema,
+      )
+      .max(100)
+      .optional(),
+
+    limit: z
+      .number()
+      .int()
+      .min(1)
+      .max(200)
+      .optional(),
+
+    offset: z
+      .number()
+      .int()
+      .min(0)
+      .optional(),
+  });
+
+export type SearchRequest =
+  z.infer<
+    typeof SearchRequestSchema
+  >;
+
+export const SupplierResultSchema =
+  z.object({
+    cnpj: z.string(),
+
+    razao_social:
+      z.string(),
+
+    nome_fantasia:
+      z.string().nullable(),
+
+    cnae_primario:
+      z.string().nullable(),
+
+    cnaes_secundarios:
+      z
+        .array(z.string())
+        .nullable(),
+
+    porte:
+      z.string().nullable(),
+
+    capital_social:
+      z.number().nullable(),
+
+    faixa_funcionarios:
+      z.string().nullable(),
+
+    uf:
+      z.string().nullable(),
+
+    municipio:
+      z.string().nullable(),
+
+    telefone:
+      z.string().nullable(),
+
+    email:
+      z.string().nullable(),
+
+    ultima_atualizacao_rf:
+      z.string().nullable(),
+  });
+
+export type SupplierResult =
+  z.infer<
+    typeof SupplierResultSchema
+  >;
+
+// Sub-projeto 21 follow-up: agrupar por CNPJ base
+// (primeiros 8 dígitos).
+//
+// Empresas com várias filiais batendo no mesmo CNAE+UF
+// apareciam como cards repetidos; agora viram 1 card
+// por empresa com expand para mostrar filiais individuais.
+export const GroupedSupplierSchema =
+  z.object({
+    cnpjBasico:
+      z.string(),
+
+    units: z
+      .array(
+        SupplierResultSchema,
+      )
+      .min(1),
+
+    // Ano de abertura mais antigo do grupo.
+    aberturaAno: z
+      .number()
+      .int()
+      .nullable()
+      .optional(),
+  });
+
+export type GroupedSupplier =
+  z.infer<
+    typeof GroupedSupplierSchema
+  >;
+
+export const SearchResponseSchema =
+  z.object({
+    groups: z.array(
+      GroupedSupplierSchema,
+    ),
+
+    total: z
+      .number()
+      .int()
+      .min(0),
+
+    cnaeName:
+      z.string().nullable(),
+  });
+
+export type SearchResponse =
+  z.infer<
+    typeof SearchResponseSchema
+  >;
+
+// ── CNAE lookup / autocomplete ───────────────────────────────
+
+export const CnaeInfoSchema =
+  z.object({
+    code: z.string(),
+
+    name: z.string(),
+
+    divisao:
+      z.string().nullable(),
+
+    grupo:
+      z.string().nullable(),
+  });
+
+export type CnaeInfo =
+  z.infer<
+    typeof CnaeInfoSchema
+  >;
+
+export const CnaeSearchResponseSchema =
+  z.object({
+    results: z.array(
+      CnaeInfoSchema,
+    ),
+  });
+
+export type CnaeSearchResponse =
+  z.infer<
+    typeof CnaeSearchResponseSchema
+  >;
+
+// Cap defensivo do export — 5000 fornecedores ainda gera
+// CSV < 2MB.
 export const EXPORT_CAP = 5000;

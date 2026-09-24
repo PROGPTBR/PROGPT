@@ -32,6 +32,70 @@ function formatCnpj(cnpj: string | null): string | null {
   return `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5, 8)}/${d.slice(8, 12)}-${d.slice(12, 14)}`;
 }
 
+function normalizePhoneDigits(phone: string | null | undefined): string {
+  if (!phone) return '';
+
+  let digits = phone.replace(/\D/g, '');
+
+  // Remove prefixo internacional 00 + Brasil.
+  if (digits.startsWith('0055')) {
+    digits = digits.slice(4);
+  }
+
+  // Remove o código do Brasil quando já vier junto.
+  if (digits.startsWith('55') && digits.length > 11) {
+    digits = digits.slice(2);
+  }
+
+  return digits;
+}
+
+function formatPhone(phone: string | null | undefined): string {
+  if (!phone) return '';
+
+  const digits = normalizePhoneDigits(phone);
+
+  // Celular com DDD: 11987654321 -> (11) 98765-4321
+  if (digits.length === 11) {
+    return digits.replace(/^(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3');
+  }
+
+  // Fixo com DDD: 1130946600 -> (11) 3094-6600
+  if (digits.length === 10) {
+    return digits.replace(/^(\d{2})(\d{4})(\d{4})$/, '($1) $2-$3');
+  }
+
+  return phone;
+}
+
+function phoneHref(phone: string | null | undefined): string {
+  if (!phone) return '#';
+
+  const digits = normalizePhoneDigits(phone);
+
+  if (digits.length === 10 || digits.length === 11) {
+    return `tel:+55${digits}`;
+  }
+
+  return `tel:${phone.replace(/\D/g, '')}`;
+}
+
+function normalizePhoneForStorage(phone: string | null | undefined): string | null {
+  if (!phone?.trim()) return null;
+
+  const trimmed = phone.trim();
+  const digits = normalizePhoneDigits(trimmed);
+
+  // Para números brasileiros padrão, salva somente DDD + número.
+  // A formatação visual é aplicada na interface.
+  if (digits.length === 10 || digits.length === 11) {
+    return digits;
+  }
+
+  // Preserva valores fora do padrão em vez de destruir informação.
+  return trimmed;
+}
+
 export function SupplierBase() {
   const {
     suppliers,
@@ -241,7 +305,7 @@ function SupplierRow({
 }) {
   const [editing, setEditing] = useState(false);
   const [categoria, setCategoria] = useState(s.categoria ?? '');
-  const [telefone, setTelefone] = useState(s.telefone ?? '');
+  const [telefone, setTelefone] = useState(formatPhone(s.telefone));
   const [email, setEmail] = useState(s.email ?? '');
   const [notas, setNotas] = useState(s.notas ?? '');
   const [rating, setRating] = useState<number | null>(s.rating);
@@ -251,7 +315,7 @@ function SupplierRow({
     setSaving(true);
     const ok = await onSave({
       categoria: categoria.trim() || null,
-      telefone: telefone.trim() || null,
+      telefone: normalizePhoneForStorage(telefone),
       email: email.trim() || null,
       rating,
       notas: notas.trim() || null,
@@ -342,11 +406,11 @@ function SupplierRow({
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs pt-1 border-t border-border">
           {s.telefone && (
             <a
-              href={`tel:${s.telefone.replace(/\D/g, '')}`}
+              href={phoneHref(s.telefone)}
               className="inline-flex items-center gap-1.5 text-foreground hover:text-brand transition-colors"
             >
               <Phone className="h-3 w-3" aria-hidden="true" />
-              {s.telefone}
+              {formatPhone(s.telefone)}
             </a>
           )}
           {s.email && (
@@ -394,6 +458,8 @@ function SupplierRow({
             <input
               value={telefone}
               onChange={(e) => setTelefone(e.target.value)}
+              onBlur={() => setTelefone(formatPhone(telefone))}
+              inputMode="tel"
               className="editinput"
             />
           </Field>
@@ -508,7 +574,7 @@ function AddSupplierForm({
       categoria: categoria.trim() || null,
       uf: uf.trim().toUpperCase().slice(0, 2) || null,
       municipio: municipio.trim() || null,
-      telefone: telefone.trim() || null,
+      telefone: normalizePhoneForStorage(telefone),
       email: email.trim() || null,
     });
     setBusy(false);
@@ -543,7 +609,13 @@ function AddSupplierForm({
           </Field>
         </div>
         <Field label="Telefone">
-          <input value={telefone} onChange={(e) => setTelefone(e.target.value)} className="editinput2" />
+          <input
+            value={telefone}
+            onChange={(e) => setTelefone(e.target.value)}
+            onBlur={() => setTelefone(formatPhone(telefone))}
+            inputMode="tel"
+            className="editinput2"
+          />
         </Field>
         <Field label="Email">
           <input value={email} onChange={(e) => setEmail(e.target.value)} className="editinput2" />
