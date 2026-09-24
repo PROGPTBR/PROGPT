@@ -173,14 +173,16 @@ describe('GET /api/fluxo/painel', () => {
     expect((await GET()).status).toBe(401);
   });
 
-  it('filtra as DUAS tabelas pelo usuário logado', async () => {
+  it('filtra TODAS as tabelas pelo usuário logado', async () => {
     mockAuth(true);
     const eqCalls = mockDb([], []);
     const { GET } = await import('@/app/api/fluxo/painel/route');
     await GET();
 
-    // Sem este filtro em cada consulta, um comprador veria a compra do outro.
+    // Sem este filtro em CADA consulta (processos, etapas e metas de SLA),
+    // um comprador veria a compra — ou a meta — do outro.
     expect(eqCalls).toEqual([
+      ['user_id', 'u1'],
       ['user_id', 'u1'],
       ['user_id', 'u1'],
     ]);

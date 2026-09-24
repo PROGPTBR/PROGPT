@@ -214,3 +214,77 @@ describe('SLA e retrabalho por etapa', () => {
     expect(po.horasAteDecisao).toBeNull();
   });
 });
+
+// Metas de SLA definidas pelo próprio cliente (24/09/2026). Sem meta o painel
+// mede, mas não julga — "SLA" sem alvo é só medição.
+describe('metas de SLA', () => {
+  const base = new Date('2026-09-20T08:00:00Z');
+  const decidida = (horas: number) =>
+    etapa({
+      id: `e${horas}`,
+      etapa: 'aprovacao',
+      created_at: base.toISOString(),
+      decidida_em: new Date(base.getTime() + horas * 3600_000).toISOString(),
+    });
+
+  it('sem meta, não inventa percentual de cumprimento', () => {
+    const p = construirPainel({
+      processos: [processo()],
+      etapas: [decidida(50)],
+      agora: AGORA,
+    });
+    const ap = p.etapas.find((e) => e.etapa === 'aprovacao')!;
+    expect(ap.metaHoras).toBeNull();
+    expect(ap.dentroDaMetaPct).toBeNull();
+    expect(ap.estouros).toBe(0);
+  });
+
+  it('com meta, calcula cumprimento e conta os estouros', () => {
+    const p = construirPainel({
+      processos: [processo()],
+      // 2h e 4h dentro da meta de 24h; 40h estoura.
+      etapas: [decidida(2), decidida(4), decidida(40)],
+      agora: AGORA,
+      slas: { aprovacao: 24 },
+    });
+    const ap = p.etapas.find((e) => e.etapa === 'aprovacao')!;
+    expect(ap.metaHoras).toBe(24);
+    expect(ap.estouros).toBe(1);
+    expect(ap.dentroDaMetaPct).toBe(67); // 2 de 3
+  });
+
+  it('meta 0 é tratada como "sem meta"', () => {
+    const p = construirPainel({
+      processos: [processo()],
+      etapas: [decidida(50)],
+      agora: AGORA,
+      slas: { aprovacao: 0 },
+    });
+    expect(p.etapas.find((e) => e.etapa === 'aprovacao')!.metaHoras).toBeNull();
+  });
+
+  it('acusa compra que estourou a meta ANTES de virar "parada há 3 dias"', () => {
+    const p = construirPainel({
+      // parada há ~1 dia: não entra na lista de paradas…
+      processos: [
+        processo({ id: 'p1', etapa_atual: 'aprovacao', created_at: dia(2), updated_at: dia(1) }),
+      ],
+      etapas: [],
+      agora: AGORA,
+      slas: { aprovacao: 4 }, // …mas a meta é de 4 horas
+    });
+
+    expect(p.parados).toEqual([]);
+    expect(p.foraDoPrazo.map((x) => x.id)).toEqual(['p1']);
+  });
+
+  it('sem meta na etapa, nada entra em fora do prazo', () => {
+    const p = construirPainel({
+      processos: [processo({ id: 'p1', created_at: dia(40), updated_at: dia(30) })],
+      etapas: [],
+      agora: AGORA,
+    });
+    expect(p.foraDoPrazo).toEqual([]);
+    expect(p.parados).toHaveLength(1); // continua aparecendo como parada
+  });
+});

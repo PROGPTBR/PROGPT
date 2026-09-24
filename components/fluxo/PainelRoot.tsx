@@ -9,10 +9,15 @@ import {
   Clock,
   Hourglass,
   Loader2,
+  Save,
+  Target,
 } from 'lucide-react';
 
-import type { FluxoPainel } from '@/lib/fluxo/metrics';
+import { toast } from 'sonner';
+
+import type { FluxoPainel, SlaPorEtapa } from '@/lib/fluxo/metrics';
 import { DIAS_PARA_ALERTA } from '@/lib/fluxo/metrics';
+import { FLUXO_STAGES } from '@/lib/fluxo/stages';
 
 // Painel de gestão dos processos de compra: onde as compras estão, quanto
 // tempo levam e quais travaram. Gráficos em SVG na mão, como o resto do
@@ -59,16 +64,54 @@ export function PainelRoot() {
   const [dados, setDados] = useState<FluxoPainel | null>(null);
   const [carregando, setCarregando] = useState(true);
 
+  // Aba de metas: o cliente define o prazo aceitável de cada etapa. Sem meta
+  // o painel mede, mas não julga — não existe SLA sem alvo.
+  const [aba, setAba] = useState<'painel' | 'metas'>('painel');
+  const [metas, setMetas] = useState<SlaPorEtapa>({});
+  const [salvando, setSalvando] = useState(false);
+
+  async function carregar() {
+    const [painel, sla] = await Promise.all([
+      fetch('/api/fluxo/painel').then((r) => (r.ok ? r.json() : null)),
+      fetch('/api/fluxo/sla').then((r) => (r.ok ? r.json() : { slas: {} })),
+    ]);
+    if (painel) setDados(painel as FluxoPainel);
+    setMetas((sla as { slas: SlaPorEtapa }).slas ?? {});
+  }
+
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch('/api/fluxo/painel');
-        if (res.ok) setDados((await res.json()) as FluxoPainel);
+        await carregar();
       } finally {
         setCarregando(false);
       }
     })();
   }, []);
+
+  async function salvarMetas() {
+    if (salvando) return;
+    setSalvando(true);
+    try {
+      const res = await fetch('/api/fluxo/sla', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slas: metas }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { message?: string };
+
+      if (!res.ok) {
+        toast.error(data.message ?? 'Não foi possível salvar as metas.');
+        return;
+      }
+
+      await carregar();
+      toast.success('Metas salvas. O painel já está medindo por elas.');
+      setAba('painel');
+    } finally {
+      setSalvando(false);
+    }
+  }
 
   if (carregando) {
     return (
@@ -107,7 +150,91 @@ export function PainelRoot() {
         </p>
       </div>
 
-      {vazio ? (
+      <div className="flex gap-1 border-b border-border">
+        {([['painel', 'Painel'], ['metas', 'Metas de SLA']] as const).map(
+          ([id, rotulo]) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setAba(id)}
+              className={`px-4 py-2 text-sm border-b-2 -mb-px transition-colors ${
+                aba === id
+                  ? 'border-brand text-foreground font-medium'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {rotulo}
+            </button>
+          ),
+        )}
+      </div>
+
+      {aba === 'metas' && (
+        <section className="rounded-2xl border border-border bg-card p-5 space-y-4">
+          <div className="flex items-center gap-2">
+            <Target className="h-4 w-4 text-brand" aria-hidden="true" />
+            <h2 className="text-sm font-semibold">
+              Prazo aceitável de cada etapa
+            </h2>
+          </div>
+
+          <p className="text-xs text-muted-foreground">
+            Defina em horas quanto cada etapa pode levar. O painel passa a
+            mostrar quanto do processo fica dentro do prazo e avisa quando uma
+            compra estoura. Deixe em 0 a etapa que você não quer acompanhar.
+          </p>
+
+          <div className="space-y-2">
+            {FLUXO_STAGES.map((s) => (
+              <div key={s.id} className="flex items-center gap-3">
+                <label
+                  htmlFor={`meta-${s.id}`}
+                  className="flex-1 text-sm truncate"
+                >
+                  {s.num}. {s.label}
+                </label>
+
+                <input
+                  id={`meta-${s.id}`}
+                  type="number"
+                  min={0}
+                  max={8760}
+                  value={metas[s.id] ?? 0}
+                  onChange={(e) =>
+                    setMetas((prev) => ({
+                      ...prev,
+                      [s.id]: Math.max(0, Number(e.target.value) || 0),
+                    }))
+                  }
+                  className="w-24 rounded-lg border border-input bg-background px-3 h-9 text-sm text-right outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+                />
+
+                <span className="w-24 shrink-0 text-xs text-muted-foreground">
+                  {(metas[s.id] ?? 0) > 0
+                    ? `= ${(((metas[s.id] ?? 0) / 24)).toFixed(1)} dias`
+                    : 'sem meta'}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => void salvarMetas()}
+            disabled={salvando}
+            className="inline-flex items-center gap-2 rounded-full bg-brand-gradient text-black h-10 px-5 text-sm font-semibold disabled:opacity-60"
+          >
+            {salvando ? (
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+            ) : (
+              <Save className="h-4 w-4" aria-hidden="true" />
+            )}
+            Salvar metas
+          </button>
+        </section>
+      )}
+
+      {aba === 'painel' && (vazio ? (
         <div className="rounded-2xl border border-border bg-card p-8 text-center space-y-3">
           <p className="text-sm text-muted-foreground">
             Nenhuma compra aberta ainda. O painel se preenche sozinho conforme
@@ -138,6 +265,40 @@ export function PainelRoot() {
               Icon={Clock}
             />
           </div>
+
+          {/* Fora do prazo: medido contra a META, não contra dias corridos.
+              Uma compra pode estourar o SLA em 4 horas e nunca aparecer na
+              lista de "paradas há 3 dias". */}
+          {dados.foraDoPrazo.length > 0 && (
+            <section className="rounded-2xl border border-red-500/40 bg-red-500/5 p-5 space-y-3">
+              <div className="flex items-center gap-2 text-sm font-semibold text-red-600 dark:text-red-400">
+                <Target className="h-4 w-4" aria-hidden="true" />
+                Fora do prazo que você definiu ({dados.foraDoPrazo.length})
+              </div>
+
+              <ul className="divide-y divide-red-500/20">
+                {dados.foraDoPrazo.map((p) => (
+                  <li key={p.id} className="py-2">
+                    <Link
+                      href={`/fluxo/${p.id}`}
+                      className="flex items-center justify-between gap-3 hover:opacity-80"
+                    >
+                      <div className="min-w-0">
+                        <div className="truncate text-sm font-medium">{p.titulo}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {p.etapaLabel}
+                          {p.aguardandoDecisao && ' · aguardando sua decisão'}
+                        </div>
+                      </div>
+                      <span className="shrink-0 text-sm font-semibold text-red-600 dark:text-red-400">
+                        {p.diasParado}d
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
 
           {/* Compras paradas — o alerta que o comprador quer de manhã */}
           {dados.parados.length > 0 && (
@@ -201,7 +362,8 @@ export function PainelRoot() {
             <h2 className="text-sm font-semibold">Tempo e retrabalho por etapa</h2>
             <p className="text-xs text-muted-foreground">
               Tempo de resposta = da IA entregar a etapa até você decidir.
-              Retrabalho = quantas vezes a etapa precisou ser refeita.
+              Retrabalho = quantas vezes a etapa precisou ser refeita. A coluna
+              &ldquo;No prazo&rdquo; só aparece nas etapas com meta definida.
             </p>
 
             <div className="overflow-x-auto">
@@ -212,7 +374,9 @@ export function PainelRoot() {
                     <th className="py-2 px-3 font-medium text-right">Aprovadas</th>
                     <th className="py-2 px-3 font-medium text-right">Refeitas</th>
                     <th className="py-2 px-3 font-medium text-right">Retrabalho</th>
-                    <th className="py-2 pl-3 font-medium text-right">Tempo de resposta</th>
+                    <th className="py-2 px-3 font-medium text-right">Tempo de resposta</th>
+                    <th className="py-2 px-3 font-medium text-right">Meta</th>
+                    <th className="py-2 pl-3 font-medium text-right">No prazo</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
@@ -232,8 +396,20 @@ export function PainelRoot() {
                       >
                         {e.retrabalhoPct > 0 ? `${e.retrabalhoPct}%` : '—'}
                       </td>
-                      <td className="py-2 pl-3 text-right">
+                      <td className="py-2 px-3 text-right">
                         {e.horasAteDecisao != null ? `${e.horasAteDecisao} h` : '—'}
+                      </td>
+                      <td className="py-2 px-3 text-right text-muted-foreground">
+                        {e.metaHoras != null ? `${e.metaHoras} h` : '—'}
+                      </td>
+                      <td
+                        className={`py-2 pl-3 text-right ${
+                          e.dentroDaMetaPct != null && e.dentroDaMetaPct < 80
+                            ? 'text-red-600 dark:text-red-400 font-medium'
+                            : ''
+                        }`}
+                      >
+                        {e.dentroDaMetaPct != null ? `${e.dentroDaMetaPct}%` : '—'}
                       </td>
                     </tr>
                   ))}
@@ -242,7 +418,7 @@ export function PainelRoot() {
             </div>
           </section>
         </>
-      )}
+      ))}
     </div>
   );
 }

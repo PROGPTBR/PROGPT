@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 
 import { requireUser, NotAuthenticated } from '@/lib/auth';
 import { getServerSupabase } from '@/lib/db/supabase';
-import { construirPainel } from '@/lib/fluxo/metrics';
+import { construirPainel, type SlaPorEtapa } from '@/lib/fluxo/metrics';
+import { isFluxoStageId } from '@/lib/fluxo/stages';
 import type { FluxoEtapa, FluxoProcesso } from '@/lib/fluxo/types';
 
 export const runtime = 'nodejs';
@@ -26,7 +27,7 @@ export async function GET() {
 
   const svc = getServerSupabase();
 
-  const [{ data: processos }, { data: etapas }] = await Promise.all([
+  const [{ data: processos }, { data: etapas }, { data: slaRows }] = await Promise.all([
     svc
       .from('fluxo_processos')
       .select('id, user_id, titulo, requisicao, etapa_atual, status, contexto, created_at, updated_at')
@@ -35,12 +36,19 @@ export async function GET() {
       .from('fluxo_etapas')
       .select('id, processo_id, user_id, etapa, rodada, saida, decisao, observacao, decidida_em, created_at')
       .eq('user_id', user.id),
+    svc.from('fluxo_slas').select('etapa, prazo_horas').eq('user_id', user.id),
   ]);
+
+  const slas: SlaPorEtapa = {};
+  for (const linha of (slaRows ?? []) as Array<{ etapa: string; prazo_horas: number }>) {
+    if (isFluxoStageId(linha.etapa)) slas[linha.etapa] = linha.prazo_horas;
+  }
 
   const painel = construirPainel({
     processos: (processos ?? []) as FluxoProcesso[],
     etapas: (etapas ?? []) as FluxoEtapa[],
     agora: Date.now(),
+    slas,
   });
 
   return NextResponse.json(painel);

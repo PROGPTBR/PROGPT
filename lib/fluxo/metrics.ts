@@ -15,6 +15,9 @@ const DIA_MS = 24 * 60 * 60 * 1000;
 /** A partir de quantos dias sem avançar uma compra conta como parada. */
 export const DIAS_PARA_ALERTA = 3;
 
+/** Prazo aceitável por etapa, em horas. 0 ou ausente = etapa sem meta. */
+export type SlaPorEtapa = Partial<Record<FluxoStageId, number>>;
+
 export type EtapaMetrica = {
   etapa: FluxoStageId;
   num: number;
@@ -29,6 +32,13 @@ export type EtapaMetrica = {
   retrabalhoPct: number;
   /** Horas médias entre a IA executar e o comprador decidir. */
   horasAteDecisao: number | null;
+
+  /** Meta definida pelo cliente, em horas. null = etapa sem meta. */
+  metaHoras: number | null;
+  /** % de decisões dentro da meta. null quando não há meta ou decisão. */
+  dentroDaMetaPct: number | null;
+  /** Quantas decisões estouraram a meta. */
+  estouros: number;
 };
 
 export type ProcessoParado = {
@@ -49,6 +59,8 @@ export type FluxoPainel = {
   cicloMedioDias: number | null;
   /** Compras sem avançar há DIAS_PARA_ALERTA ou mais. */
   parados: ProcessoParado[];
+  /** Compras abertas que JÁ passaram da meta da etapa em que estão. */
+  foraDoPrazo: ProcessoParado[];
   /** Quantas decisões esperam o comprador agora. */
   aguardandoDecisao: number;
   etapas: EtapaMetrica[];
@@ -86,8 +98,10 @@ export function construirPainel(args: {
   processos: FluxoProcesso[];
   etapas: FluxoEtapa[];
   agora: number;
+  /** Metas do cliente. Sem elas o painel mede, mas não julga. */
+  slas?: SlaPorEtapa;
 }): FluxoPainel {
-  const { processos, etapas, agora } = args;
+  const { processos, etapas, agora, slas = {} } = args;
 
   const porProcesso = new Map<string, FluxoEtapa[]>();
   for (const e of etapas) {
@@ -125,6 +139,15 @@ export function construirPainel(args: {
       )
       .filter((ms) => Number.isFinite(ms) && ms >= 0);
 
+    // Meta: só conta como SLA quando o cliente definiu um prazo > 0.
+    const meta = slas[stage.id];
+    const metaHoras = meta && meta > 0 ? meta : null;
+    const metaMs = metaHoras ? metaHoras * 60 * 60 * 1000 : null;
+
+    const estouros = metaMs
+      ? esperas.filter((ms) => ms > metaMs).length
+      : 0;
+
     return {
       etapa: stage.id,
       num: stage.num,
@@ -137,12 +160,19 @@ export function construirPainel(args: {
           ? Math.round((ajustes / decididas.length) * 100)
           : 0,
       horasAteDecisao: esperas.length ? horas(media(esperas) ?? 0) : null,
+      metaHoras,
+      dentroDaMetaPct:
+        metaMs && esperas.length > 0
+          ? Math.round(((esperas.length - estouros) / esperas.length) * 100)
+          : null,
+      estouros,
     };
   });
 
   // --- Paradas --------------------------------------------------------------
 
   const parados: ProcessoParado[] = [];
+  const foraDoPrazo: ProcessoParado[] = [];
   let aguardando = 0;
 
   for (const p of emAndamento) {
@@ -152,21 +182,31 @@ export function construirPainel(args: {
     );
     if (pendente) aguardando++;
 
-    const diasParado = dias(agora - ultimaAtividade(p, doProcesso));
-    if (diasParado < DIAS_PARA_ALERTA) continue;
+    const paradoMs = agora - ultimaAtividade(p, doProcesso);
+    const diasParado = dias(paradoMs);
 
     const stage = FLUXO_STAGES.find((s) => s.id === p.etapa_atual);
-    parados.push({
+    const linha: ProcessoParado = {
       id: p.id,
       titulo: p.titulo,
       etapa: p.etapa_atual,
       etapaLabel: stage ? `${stage.num}. ${stage.label}` : p.etapa_atual,
       diasParado,
       aguardandoDecisao: !!pendente,
-    });
+    };
+
+    // Fora do prazo é medido contra a META da etapa (quando existe) — uma
+    // compra pode estourar o SLA em 4 horas e nunca aparecer como "parada".
+    const meta = slas[p.etapa_atual];
+    if (meta && meta > 0 && paradoMs > meta * 60 * 60 * 1000) {
+      foraDoPrazo.push(linha);
+    }
+
+    if (diasParado >= DIAS_PARA_ALERTA) parados.push(linha);
   }
 
   parados.sort((a, b) => b.diasParado - a.diasParado);
+  foraDoPrazo.sort((a, b) => b.diasParado - a.diasParado);
 
   return {
     totalProcessos: processos.length,
@@ -174,6 +214,7 @@ export function construirPainel(args: {
     concluidos: concluidos.length,
     cicloMedioDias: media(ciclos),
     parados,
+    foraDoPrazo,
     aguardandoDecisao: aguardando,
     etapas: metricas,
   };
