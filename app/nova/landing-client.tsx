@@ -1,13 +1,10 @@
 'use client';
-
 import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
 import { PricingTable } from '@/components/billing/PricingTable';
 import { FaWhatsapp } from "react-icons/fa";
 import { FiMail, FiFileText } from "react-icons/fi";
-
-
 import {
   ArrowRight,
   Bot,
@@ -32,14 +29,12 @@ import {
   X,
   Zap,
 } from 'lucide-react';
-
 import { useTheme } from 'next-themes';
 import styles from './nova.module.css';
-
+import CertificacoesGrid from '@/app/certificacoes/CertificacoesGrid';
 /* ============================================================
    FEATURES
 ============================================================ */
-
 const features = [
   {
     icon: Layers,
@@ -78,11 +73,9 @@ const features = [
       'Crie análises, relatórios e painéis em BI interativos para acompanhar compras, contratos, fornecedores e indicadores de desempenho.',
   },
 ];
-
 /* ============================================================
    FAQ
 ============================================================ */
-
 const faqs = [
   [
     'O que é o PROGPT?',
@@ -109,11 +102,9 @@ const faqs = [
     'Sim. Você pode interromper a renovação da assinatura sem burocracia.',
   ],
 ];
-
 /* ============================================================
    ASSISTENTES / CASOS DE USO
 ============================================================ */
-
 const useCases = [
   {
     tab: 'Dashboard',
@@ -130,7 +121,6 @@ const useCases = [
     soon: false,
     cta: 'Marque sua demonstração.',
   },
-
   {
     tab: 'RFI/RFQ',
     label: 'RFI/RFQ · Cotação inteligente',
@@ -141,7 +131,6 @@ const useCases = [
     href: '/assistants/rfp',
     soon: false,
   },
-
   {
     tab: 'Curva ABC',
     label: 'Curva ABC · Análise de gastos',
@@ -152,7 +141,6 @@ const useCases = [
     href: '/assistants/abc',
     soon: false,
   },
-
   {
     tab: 'TCO Online',
     label: 'TCO Online · Custo total de compra',
@@ -163,7 +151,6 @@ const useCases = [
     href: '/assistants/spend_analysis',
     soon: false,
   },
-
   {
     tab: 'Envio de Ordens de compras automáticas',
     label:
@@ -175,7 +162,6 @@ const useCases = [
     href: '/',
     soon: true,
   },
-
   {
     tab: 'Negociação',
     label: 'Negociação · Analista em tempo real',
@@ -186,7 +172,6 @@ const useCases = [
     href: '/assistants/negotiation',
     soon: false,
   },
-
   {
     tab: 'Should Cost',
     label: 'Should Cost · Preço justo',
@@ -197,7 +182,6 @@ const useCases = [
     href: '/signup',
     soon: true,
   },
-
   {
     tab: 'Painel de análise tributária',
     label: 'Painel de análise tributária',
@@ -208,7 +192,6 @@ const useCases = [
     href: '/signup',
     soon: true,
   },
-
   {
     tab: 'Guia de Rotas com análise do DIFAL',
     label: 'Guia de Rotas · Análise do DIFAL',
@@ -220,11 +203,39 @@ const useCases = [
     soon: true,
   },
 ];
-
 /* ============================================================
    TYPES
 ============================================================ */
-
+const certificacoes = [
+  {
+    numero: 'ISO/IEC 42001:2023',
+    titulo: 'Gestão de Inteligência Artificial',
+    descricao: 'Diretrizes para o uso responsável e seguro da inteligência artificial.',
+    imagem: 'https://2bsupply.com.br/wp-content/uploads/2026/09/certificacao-iso-42001-2023-2bsupply-01.png',
+    pdf: 'https://taydbrfqmgvjzelvablx.supabase.co/storage/v1/object/public/Certificacoes/iso-42001.pd.pdf',
+  },
+  {
+    numero: 'ISO 27701:2019',
+    titulo: 'Gestão da Privacidade da Informação',
+    descricao: 'Proteção de dados pessoais e práticas de privacidade.',
+    imagem: 'https://2bsupply.com.br/wp-content/uploads/2026/09/certificacao-iso-27701-2019-2bsupply-01.png',
+    pdf: 'https://taydbrfqmgvjzelvablx.supabase.co/storage/v1/object/public/Certificacoes/iso-27701.pdf',
+  },
+  {
+    numero: 'ISO/IEC 27001:2022',
+    titulo: 'Gestão da Segurança da Informação',
+    descricao: 'Segurança e proteção das informações.',
+    imagem: 'https://2bsupply.com.br/wp-content/uploads/2026/09/certificacao-iso-27001-2022-2bsupply-01.png',
+    pdf: 'https://taydbrfqmgvjzelvablx.supabase.co/storage/v1/object/public/Certificacoes/iso-27001-2.pdf',
+  },
+  {
+    numero: 'ISO 9001:2015',
+    titulo: 'Gestão da Qualidade',
+    descricao: 'Melhoria contínua dos processos e serviços.',
+    imagem: 'https://2bsupply.com.br/wp-content/uploads/2026/09/certificacao-iso-9001-2015-2bsupply-01.png',
+    pdf: 'https://taydbrfqmgvjzelvablx.supabase.co/storage/v1/object/public/Certificacoes/iso-9001.pdf',
+  },
+] as const;
 type Plan = {
   id: string;
   slug: string;
@@ -235,11 +246,9 @@ type Plan = {
   interval: string;
   features: string[];
 };
-
 /* ============================================================
    BUTTON
 ============================================================ */
-
 const Button = ({
   children = 'QUERO CONHECER O PROGPT',
   className = '',
@@ -252,11 +261,9 @@ const Button = ({
     <ArrowRight size={17} />
   </Link>
 );
-
 /* ============================================================
    COMPONENT
 ============================================================ */
-
 export function NovaLanding({
   plans,
   authed,
@@ -265,29 +272,22 @@ export function NovaLanding({
   authed: boolean;
 }) {
   const { resolvedTheme, setTheme } = useTheme();
-
   const [mounted, setMounted] = useState(false);
   const [menu, setMenu] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [activeSection, setActiveSection] = useState('');
   const [activeUseCase, setActiveUseCase] = useState(0);
-
   /* ==========================================================
      REF DO SLIDER
   ========================================================== */
-
   const useCaseTabsRef = useRef<HTMLDivElement>(null);
-
   const scrollUseCases = (direction: 'left' | 'right') => {
     const container = useCaseTabsRef.current;
-
     if (!container) return;
-
     const distance = Math.min(
       container.clientWidth * 0.65,
       500
     );
-
     container.scrollBy({
       left:
         direction === 'right'
@@ -296,18 +296,14 @@ export function NovaLanding({
       behavior: 'smooth',
     });
   };
-
   const isDark =
     !mounted || resolvedTheme !== 'light';
-
   useEffect(() => {
     setMounted(true);
   }, []);
-
   /* ==========================================================
      SEÇÃO ATIVA DO MENU
   ========================================================== */
-
   useEffect(() => {
     const sections = [
       'sobre',
@@ -320,12 +316,9 @@ export function NovaLanding({
         (section): section is HTMLElement =>
           Boolean(section)
       );
-
     const updateActiveSection = () => {
       const marker = window.scrollY + 140;
-
       let current = '';
-
       for (const section of sections) {
         if (section.offsetTop <= marker) {
           current = section.id;
@@ -333,12 +326,9 @@ export function NovaLanding({
           break;
         }
       }
-
       setActiveSection(current);
     };
-
     updateActiveSection();
-
     window.addEventListener(
       'scroll',
       updateActiveSection,
@@ -346,33 +336,27 @@ export function NovaLanding({
         passive: true,
       }
     );
-
     window.addEventListener(
       'resize',
       updateActiveSection
     );
-
     return () => {
       window.removeEventListener(
         'scroll',
         updateActiveSection
       );
-
       window.removeEventListener(
         'resize',
         updateActiveSection
       );
     };
   }, []);
-
   const navClass = (section: string) =>
     activeSection === section
       ? styles.navActive
       : undefined;
-
   const selectedUseCase =
     useCases[activeUseCase]!;
-
   return (
     <main
       className={`${styles.page} ${
@@ -384,7 +368,6 @@ export function NovaLanding({
       {/* ======================================================
           NAV
       ====================================================== */}
-
     <nav className={styles.nav}>
   {/* LOGO */}
   <Link
@@ -404,7 +387,6 @@ export function NovaLanding({
       priority
     />
   </Link>
-
   {/* MENU DESKTOP / MENU ABERTO NO MOBILE */}
   <div
     className={`${styles.navlinks} ${
@@ -421,7 +403,6 @@ export function NovaLanding({
     >
       Sobre
     </a>
-
     <a
       href="#recursos"
       className={navClass('recursos')}
@@ -432,7 +413,6 @@ export function NovaLanding({
     >
       Recursos
     </a>
-
     <a
       href="#planos"
       className={navClass('planos')}
@@ -443,7 +423,6 @@ export function NovaLanding({
     >
       Planos
     </a>
-
     <a
       href="#faq"
       className={navClass('faq')}
@@ -455,7 +434,6 @@ export function NovaLanding({
       FAQ
     </a>
   </div>
-
   {/* AÇÕES DO TOPO */}
   <div className={styles.navActions}>
     <button
@@ -481,7 +459,6 @@ export function NovaLanding({
         <Moon size={18} aria-hidden="true" />
       )}
     </button>
-
     <Link
       href="/login"
       className={styles.topLogin}
@@ -489,11 +466,9 @@ export function NovaLanding({
       <LogIn size={18} />
       <span>Entrar</span>
     </Link>
-
     <Button className={styles.navCta}>
       COMEÇAR AGORA
     </Button>
-
     <button
       type="button"
       className={styles.menuButton}
@@ -511,44 +486,33 @@ export function NovaLanding({
     </button>
   </div>
 </nav>
-
       {/* ======================================================
           HERO
       ====================================================== */}
-
       <section className={styles.hero}>
         <div className={styles.grid} />
-
         <div className={styles.heroCopy}>
           <div className={styles.eyebrow}>
             <Sparkles size={15} />
             PROGPT · uma plataforma 2BSUPPLY
           </div>
-
-    
-
-
           <h1>
            IA feita para quem{' '}
             <span>
               compra, negocia e decide.
             </span>
           </h1>
-
           <p className='mb-3'>
            Uma IA especializada em Compras e Suprimentos para apoiar análises de propostas, fornecedores, TCO, contratos, riscos, negociação e Strategic Sourcing.
 <br/><br/>
 Menos trabalho operacional. Mais capacidade para decidir melhor.
           </p>
-
           <Button />
-
           <small>
             <ShieldCheck size={15} />
           Acesse e veja como a IA pode apoiar sua rotina de Compras.
           </small>
         </div>
-
         <div className={styles.heroVisual}>
           <div className={styles.systemShot}>
             <Image
@@ -559,23 +523,19 @@ Menos trabalho operacional. Mais capacidade para decidir melhor.
               priority
             />
           </div>
-
           <div
             className={`${styles.floatCard} ${styles.floatOne}`}
           >
             <Target />
-
             <span>
               <b>Economia potencial</b>
               8,7% identificada
             </span>
           </div>
-
           <div
             className={`${styles.floatCard} ${styles.floatTwo}`}
           >
             <Users />
-
             <span>
               <b>Fornecedores</b>
               42 qualificados
@@ -583,11 +543,9 @@ Menos trabalho operacional. Mais capacidade para decidir melhor.
           </div>
         </div>
       </section>
-
       {/* ======================================================
           PROOF
       ====================================================== */}
-
       <section className={styles.proof}>
         <div>
           <strong>+1.000</strong>
@@ -595,18 +553,14 @@ Menos trabalho operacional. Mais capacidade para decidir melhor.
             profissionais capacitados em IA para Suprimentos
           </span>
         </div>
-
         <i />
-
         <div>
           <strong>+30</strong>
           <span>
             assistentes especializados em Suprimentos
           </span>
         </div>
-
         <i />
-
         <div>
           <strong>24/7</strong>
           <span>
@@ -614,11 +568,9 @@ Menos trabalho operacional. Mais capacidade para decidir melhor.
           </span>
         </div>
       </section>
-
       {/* ======================================================
           SOBRE
       ====================================================== */}
-
       <section
         className={styles.intelligence}
         id="sobre"
@@ -629,16 +581,14 @@ Menos trabalho operacional. Mais capacidade para decidir melhor.
           }
         >
           <span>Sobre</span>
-
           <h2>
             Do diagnóstico à negociação:{' '}
             <em>
-              IA apoiando os 8 passos 
+              IA apoiando os 8 passos&#x20;
               do Strategic Sourcing.
             </em>
           </h2>
         </div>
-
         <div
           className={
             styles.intelligenceGrid
@@ -656,21 +606,17 @@ Menos trabalho operacional. Mais capacidade para decidir melhor.
                 <Library />
                 <span>KNOWLEDGE</span>
               </div>
-
               <i />
               <i />
               <i />
             </div>
-
             <div
               className={
                 styles.intelligenceContent
               }
             >
               <span>CONHECIMENTO</span>
-
               <h3>Especialista em Suprimentos ao seu lado</h3>
-
               <p>
                 Acesse conhecimento aplicado em Strategic Sourcing, Kraljic, Porter, negociação, fornecedores, contratos e custos.
                 <br />
@@ -679,7 +625,6 @@ Menos trabalho operacional. Mais capacidade para decidir melhor.
               </p>
             </div>
           </article>
-
           <article>
             <div
               className={`${styles.intelligenceVisual} ${styles.agentsVisual}`}
@@ -693,7 +638,6 @@ Menos trabalho operacional. Mais capacidade para decidir melhor.
                   Pronto para executar
                 </small>
               </div>
-
               <div
                 className={
                   styles.agentChip
@@ -701,7 +645,6 @@ Menos trabalho operacional. Mais capacidade para decidir melhor.
               >
                 ABC
               </div>
-
               <div
                 className={
                   styles.agentChip
@@ -709,7 +652,6 @@ Menos trabalho operacional. Mais capacidade para decidir melhor.
               >
                 RFP
               </div>
-
               <div
                 className={
                   styles.agentChip
@@ -718,18 +660,15 @@ Menos trabalho operacional. Mais capacidade para decidir melhor.
                 Kraljic
               </div>
             </div>
-
             <div
               className={
                 styles.intelligenceContent
               }
             >
               <span>EXECUÇÃO</span>
-
               <h3>
                 Assistentes que trabalham junto com você
               </h3>
-
               <p>
                 Conte com assistentes especializados para diferentes etapas de Compras.
                  <br />
@@ -741,7 +680,6 @@ Menos trabalho manual. Mais velocidade para transformar dados em decisão.
               </p>
             </div>
           </article>
-
           <article>
             <div
               className={`${styles.intelligenceVisual} ${styles.baseVisual}`}
@@ -753,7 +691,6 @@ Menos trabalho manual. Mais velocidade para transformar dados em decisão.
               >
                 <ShieldCheck />
               </div>
-
               <div
                 className={
                   styles.sourceLine
@@ -763,16 +700,13 @@ Menos trabalho manual. Mais velocidade para transformar dados em decisão.
                 Fonte verificada
               </div>
             </div>
-
             <div
               className={
                 styles.intelligenceContent
               }
             >
               <span>CONFIANÇA</span>
-
               <h3>Respostas com mais segurança</h3>
-
               <p>
                 O ProGpt pode consultar fontes selecionadas, cruzar informações e indicar as referências utilizadas na análise.
 <br />
@@ -781,18 +715,60 @@ Quando não encontra base suficiente para responder, sinaliza a limitação em v
 <br />
                 <br />
 Mais confiança para usar IA em decisões reais de Compras.
-
-                
               </p>
             </div>
           </article>
         </div>
       </section>
-
-      {/* ======================================================
+      {/* CERTIFICAÇÕES ISO */}
+      <section className="progpt-certifications" id="certificacoes" aria-labelledby="progpt-certifications-title">
+        <div className="progpt-certifications-inner">
+          <span>Nossas certificações</span>
+          <h2 id="progpt-certifications-title">
+           <em> Certificações</em> ISO
+          </h2>
+          <p className="progpt-certifications-intro">
+          O PROGPT faz parte do <b>grupo 2BSUPPLY.</b><br/>
+         As certificações abaixo foram emitidas em nome da <b>2BSUPPLY CONSULTORIA E TREINAMENTOS LTDA</b> e abrangem as atividades descritas no escopo de cada certificado.
+          </p>
+          <CertificacoesGrid certificacoes={certificacoes} />
+        </div>
+      </section>
+      <style>{`
+        .progpt-certifications {
+          color: #f8fbff;
+          background: radial-gradient(ellipse at 52% 0%, rgba(14, 141, 225, .10), transparent 58%), #06101f;
+          padding: 88px 24px 96px;
+          border-top: 1px solid rgba(43, 167, 225, .12);
+          border-bottom: 1px solid rgba(43, 167, 225, .12);
+        }
+        .progpt-certifications-inner { width: 100%; max-width: 1220px; margin: 0 auto; }
+        .progpt-certifications-kicker { color: #27d6ec; font-size: 12px; font-weight: 700; letter-spacing: .14em; }
+        .progpt-certifications h2 { margin: 12px 0 10px; font-size: clamp(30px, 3vw, 46px); line-height: 1.13; font-weight: 700; letter-spacing: -.035em; }
+        .progpt-certifications h2 em { font-style: normal; color: #16cbed; }
+        .progpt-certifications-intro { color: #a1b3c7; font-size: 16px; line-height: 1.6; margin: 0 0 30px; }
+        .progpt-certifications-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+        .progpt-certifications-card { min-width: 0; overflow: hidden; display: flex; flex-direction: column; border: 1px solid rgba(42, 147, 201, .25); border-radius: 14px; background: #091829; }
+        .progpt-certifications-image { aspect-ratio: 1672 / 941; overflow: hidden; background: #06101f; }
+        .progpt-certifications-image img { display: block; width: 100%; height: 100%; object-fit: cover; }
+        .progpt-certifications-preview { display: block; width: 100%; border: 0; padding: 0; cursor: zoom-in; }
+        .progpt-certifications-trigger { border: 0; padding: 0; background: transparent; cursor: pointer; }
+        .progpt-certifications-preview:focus-visible, .progpt-certifications-trigger:focus-visible { outline: 2px solid #24d7ee; outline-offset: 4px; }
+        .progpt-certifications-body { display: flex; flex: 1; flex-direction: column; padding: 20px; }
+        .progpt-certifications-body > span { color: #27d6ec; font-size: 11px; font-weight: 700; letter-spacing: .12em; }
+        .progpt-certifications-body h3 { margin: 10px 0 4px; font-size: clamp(17px, 1.5vw, 21px); line-height: 1.2; font-weight: 700; }
+        .progpt-certifications-name { margin: 0; color: #d9e8f6; font-size: 14px; line-height: 1.45; }
+        .progpt-certifications-description { margin: 16px 0 22px; color: #9eafc2; font-size: 13px; line-height: 1.55; }
+        .progpt-certifications-link { display: inline-flex; align-items: center; gap: 8px; margin-top: auto; align-self: flex-start; color: #24d7ee; font-size: 13px; font-weight: 700; text-decoration: none; }
+        .progpt-certifications-link:hover { color: #80ecfa; }
+        .progpt-certifications-link:focus-visible { outline: 2px solid #24d7ee; outline-offset: 5px; }
+        .progpt-certifications-footnote { margin: 26px 0 0; color: #8ea2ba; font-size: 12px; text-align: center; line-height: 1.6; }
+        @media (max-width: 950px) { .progpt-certifications-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+        @media (max-width: 600px) { .progpt-certifications { padding: 64px 18px 72px; } .progpt-certifications-grid { grid-template-columns: 1fr; } }
+      `}</style>
+{/* ======================================================
           RECURSOS
       ====================================================== */}
-
       <section
         className={styles.features}
         id="recursos"
@@ -801,12 +777,10 @@ Mais confiança para usar IA em decisões reais de Compras.
           className={styles.sectionHeading}
         >
           <span>Recursos</span>
-
           <h2>
             Por que a PROGPT é{' '}
             <em>diferente</em>
           </h2>
-
           <p>
             Não é mais uma IA genérica.
             <br />
@@ -819,7 +793,6 @@ Mais confiança para usar IA em decisões reais de Compras.
             estratégicas.
           </p>
         </div>
-
         <div className={styles.featureGrid}>
           {features.map(
             ({
@@ -838,22 +811,17 @@ Mais confiança para usar IA em decisões reais de Compras.
                 >
                   <Icon />
                 </div>
-
                 <h3>{title}</h3>
-
                 <p>{text}</p>
               </article>
             )
           )}
         </div>
-
         <Button />
       </section>
-
       {/* ======================================================
           ASSISTENTES
       ====================================================== */}
-
       <section
         className={styles.bonus}
         id="assistentes"
@@ -864,7 +832,6 @@ Mais confiança para usar IA em decisões reais de Compras.
           <span>
             Assistentes Estratégicos
           </span>
-
           <h2>
             Diferentes caminhos,
             <br />
@@ -874,16 +841,13 @@ Mais confiança para usar IA em decisões reais de Compras.
             </em>
           </h2>
         </div>
-
         {/* ====================================================
             SLIDER DAS TABS
         ==================================================== */}
-
         <div
           className={styles.useCaseSlider}
         >
           {/* SETA ESQUERDA */}
-
           <button
             type="button"
             className={`${styles.useCaseSliderArrow} ${styles.useCaseSliderArrowLeft}`}
@@ -894,9 +858,7 @@ Mais confiança para usar IA em decisões reais de Compras.
           >
             <ChevronLeft size={17} />
           </button>
-
           {/* TABS */}
-
           <div
             ref={useCaseTabsRef}
             className={styles.useCaseTabs}
@@ -921,7 +883,6 @@ onClick={() => {
 }}
                 >
                   {item.tab}
-
                   {item.soon && (
                     <small>
                       {' '}
@@ -932,9 +893,7 @@ onClick={() => {
               )
             )}
           </div>
-
           {/* SETA DIREITA */}
-
           <button
             type="button"
             className={`${styles.useCaseSliderArrow} ${styles.useCaseSliderArrowRight}`}
@@ -946,11 +905,9 @@ onClick={() => {
             <ChevronRight size={17} />
           </button>
         </div>
-
         {/* ====================================================
             CONTEÚDO DO ASSISTENTE
         ==================================================== */}
-
         <div
           className={styles.useCasePanel}
           role="tabpanel"
@@ -963,14 +920,12 @@ onClick={() => {
               alt={`Imagem do recurso ${selectedUseCase.tab}`}
             />
           </div>
-
           <div
             className={styles.useCaseCopy}
           >
             <span>
               {selectedUseCase.label}
             </span>
-
             {selectedUseCase.cta ? (
               <>
                 <h3
@@ -984,7 +939,6 @@ onClick={() => {
                     )[0]
                   }
                 </h3>
-
                 <p>
                   {selectedUseCase.title
                     .split('\n\n')
@@ -997,7 +951,6 @@ onClick={() => {
                 {selectedUseCase.title}
               </h3>
             )}
-
             {selectedUseCase.soon ? (
               <span
                 className={styles.soonBadge}
@@ -1013,18 +966,15 @@ onClick={() => {
               >
                 {selectedUseCase.cta ??
                   'CONHECER O ASSISTENTE'}
-
                 <ArrowRight size={17} />
               </Link>
             )}
           </div>
         </div>
       </section>
-
       {/* ======================================================
           PLANOS
       ====================================================== */}
-
       <section
         className={styles.offer}
         id="planos"
@@ -1036,7 +986,6 @@ onClick={() => {
             <Sparkles size={14} />
             Planos PROGPT
           </span>
-
           <h2>
             <em>Menos burocracia</em> para o
             comprador.
@@ -1044,7 +993,6 @@ onClick={() => {
             <em>Mais controle</em> para a
             empresa.
           </h2>
-
           <p
             className={
               styles.offerSubtitle
@@ -1056,7 +1004,6 @@ onClick={() => {
             seguros e estratégicos.
           </p>
         </div>
-
         <div
           className={
             styles.pricingTableWrap
@@ -1083,11 +1030,9 @@ onClick={() => {
           )}
         </div>
       </section>
-
       {/* ======================================================
           FAQ
       ====================================================== */}
-
       <section
         className={styles.faq}
         id="faq"
@@ -1098,7 +1043,6 @@ onClick={() => {
           >
             Perguntas frequentes
           </span>
-
           <h2>
             Suas dúvidas,
             <br />
@@ -1106,7 +1050,6 @@ onClick={() => {
               respondidas com clareza.
             </em>
           </h2>
-
           <a
             href="https://wa.me/5521999792912"
             target="_blank"
@@ -1119,7 +1062,6 @@ onClick={() => {
             FALAR COM ESPECIALISTA
           </a>
         </div>
-
         <div
           className={styles.accordion}
         >
@@ -1147,12 +1089,9 @@ onClick={() => {
                     '0'
                   )}
                 </span>
-
                 {q}
-
                 <ChevronDown />
               </button>
-
               {openFaq === i && (
                 <p>{a}</p>
               )}
@@ -1160,11 +1099,9 @@ onClick={() => {
           ))}
         </div>
       </section>
-
       {/* ======================================================
           FOOTER
       ====================================================== */}
-
       <footer className={styles.footer}>
         <div>
           <Link
@@ -1184,71 +1121,90 @@ onClick={() => {
               priority
             />
           </Link>
-          <p>Na 2BSUPPLY, desenvolvemos soluções sob medida para a cadeia de suprimentos de Pequenas e Médias Empresas que precisam ganhar eficiência sem perder agilidade.</p>
-       
-       
+          <p>O Grupo 2BSUPPLY desenvolve soluções sob medida para a cadeia de suprimentos de Pequenas e Médias Empresas que precisam ganhar eficiência sem perder agilidade.</p>
 <div className="elementor-widget-container">
-
 <ul className="footer-contact-list">
   <li>
     <FaWhatsapp className="footer-contact-icon" aria-hidden="true" />
-
     <span>+55 (21) 99979-2912</span>
   </li>
-
   <li>
     <FiMail className="footer-contact-icon" aria-hidden="true" />
-
     <span>comercial@2bsupply.com.br</span>
   </li>
-
   <li>
     <FiFileText className="footer-contact-icon" aria-hidden="true" />
-
     <span>CNPJ: 36.335.299/0001-82</span>
   </li>
 </ul>
 </div>
         </div>
-
         <div>
           <b>Produto</b>
-
           <a href="#recursos">
             Recursos
           </a>
-
           <a href="#planos">
             Planos
           </a>
-
           <Link href="/login">
             Entrar
           </Link>
         </div>
-
         <div>
           <b>Legal</b>
-
           <Link href="/privacidade">
             Privacidade
           </Link>
-
           <Link href="/termos">
             Termos de uso
           </Link>
-
           <Link href="/cookies">
             Cookies
           </Link>
         </div>
+      <div
+  className={styles["footer-certifications"]}
+  aria-label="Conheça as certificações da 2BSUPPLY"
+>
+  <span className={styles["footer-certifications-title"]}>
+    Certificações
+  </span>
 
-        <div>
-          <Button>
-            CRIAR MINHA CONTA
-          </Button>
-        </div>
+  <span className={styles["footer-certifications-logos"]}>
+    <Image
+      src="https://taydbrfqmgvjzelvablx.supabase.co/storage/v1/object/public/Certificacoes/selo-iso-42001-2.png"
+      alt="ISO/IEC 42001"
+      width={100}
+      height={100}
+      className={styles["footer-certification-image"]}
+    />
 
+    <Image
+      src="https://taydbrfqmgvjzelvablx.supabase.co/storage/v1/object/public/Certificacoes/selo-iso-27001-1.png"
+      alt="ISO/IEC 27001"
+      width={100}
+      height={100}
+      className={styles["footer-certification-image"]}
+    />
+
+    <Image
+      src="https://taydbrfqmgvjzelvablx.supabase.co/storage/v1/object/public/Certificacoes/selo-iso-27701-2.png"
+      alt="ISO/IEC 27701"
+      width={100}
+      height={100}
+      className={styles["footer-certification-image"]}
+    />
+
+    <Image
+      src="https://taydbrfqmgvjzelvablx.supabase.co/storage/v1/object/public/Certificacoes/selo-iso-9001.png"
+      alt="ISO 9001"
+      width={100}
+      height={100}
+      className={styles["footer-certification-image"]}
+    />
+  </span>
+</div>
         <small>
           © 2026 PROGPT. Todos os direitos
           reservados.

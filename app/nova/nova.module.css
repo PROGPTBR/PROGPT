@@ -75,6 +75,34 @@
      border-left:1px solid #293238;
     padding-left:28px
 }
+.footer-certifications {
+    color: inherit;
+    flex-direction: column;
+    flex-shrink: 0;
+    align-items: flex-end;
+    gap: 12px;
+    text-decoration: none;
+    display: flex;
+}
+.footer-certifications-logos {
+    align-items: center;
+    gap: 12px;
+    display: flex;
+}
+.footer-certification-image {
+    object-fit: contain;
+    width: 60px;
+    height: 60px;
+    display: block;
+}
+.footer-certifications-title {
+  color: #94a3b8;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 12px;
+  font-weight: 700;
+}
+
 .cta{
     display:inline-flex;
     align-items:center;
@@ -2265,6 +2293,7 @@
      border-color: #d4dee8;
      color: #64748b !important;
 }
+
 /* ============================================================ PLANOS ============================================================ */
  .lightTheme .offer {
      color: #0f172a;
@@ -2387,8 +2416,7 @@
      color: #003d64!important;
      font-weight: 800!important;
 }
- .lightTheme .themeToggle{
-}
+
 /* ============================================================ SLIDER DOS ASSISTENTES ============================================================ */
 /* Impede qualquer conteúdo horizontal da seção de aumentar a largura da página. */
  .bonus {

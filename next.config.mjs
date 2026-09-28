@@ -11,11 +11,13 @@ const TURNSTILE_TEST_SITE_KEYS = new Set([
 // mas cujo token será corretamente recusado pelo secret real no servidor.
 if (process.env.APP_ENV === 'production') {
   const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+
   if (!siteKey || TURNSTILE_TEST_SITE_KEYS.has(siteKey)) {
     throw new Error(
       'Production requires a real NEXT_PUBLIC_TURNSTILE_SITE_KEY; Turnstile test keys are not allowed.',
     );
   }
+
   if (!process.env.TURNSTILE_SECRET_KEY) {
     throw new Error('Production requires TURNSTILE_SECRET_KEY.');
   }
@@ -24,6 +26,7 @@ if (process.env.APP_ENV === 'production') {
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+
   // Standalone output: Next.js traces the dependency graph and emits
   // only the modules actually imported at runtime into .next/standalone.
   // Without this, Railpack copies the entire node_modules (~1024 pkgs)
@@ -31,6 +34,22 @@ const nextConfig = {
   // disk during image assembly. The runtime starts via
   // `node .next/standalone/server.js` — see Railway start command.
   output: 'standalone',
+
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '2bsupply.com.br',
+        pathname: '/wp-content/uploads/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'taydbrfqmgvjzelvablx.supabase.co',
+        pathname: '/storage/v1/object/public/Certificacoes/**',
+      },
+    ],
+  },
+
   experimental: {
     // `@napi-rs/canvas` ships platform-specific `.node` binaries that
     // webpack can't bundle (parses as "Unexpected character"). Treating
