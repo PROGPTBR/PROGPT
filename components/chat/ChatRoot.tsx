@@ -23,6 +23,8 @@ import {
   SheetContent,
 } from '@/components/ui/sheet';
 
+import { ProductTour } from '@/components/onboarding/ProductTour';
+
 import { CHAT_PREFILL_KEY } from '@/lib/prompts/chat-prefill';
 
 const SIDEBAR_COLLAPSED_KEY =
@@ -32,7 +34,12 @@ const SIDEBAR_COLLAPSED_KEY =
    CHAT ROOT
 ============================================================ */
 
-export function ChatRoot() {
+export function ChatRoot({
+  showTour = false,
+}: {
+  /** Primeiro acesso: abre o tour guiado assim que o chat aparece. */
+  showTour?: boolean;
+}) {
   const [mounted, setMounted] =
     useState(false);
 
@@ -46,16 +53,39 @@ export function ChatRoot() {
     );
   }
 
-  return <ChatRootMounted />;
+  return <ChatRootMounted showTour={showTour} />;
 }
 
 /* ============================================================
    CHAT ROOT MONTADO
 ============================================================ */
 
-function ChatRootMounted() {
+function ChatRootMounted({
+  showTour,
+}: {
+  showTour: boolean;
+}) {
   const sessionsApi =
     useChatSessions();
+
+  /* ==========================================================
+     TOUR DE PRIMEIRO ACESSO
+  ========================================================== */
+
+  const [tourOpen, setTourOpen] =
+    useState(showTour);
+
+  function finishTour() {
+    setTourOpen(false);
+
+    /* Marca no perfil pra não reaparecer em outro computador.
+       Fail-soft: errar aqui só faz o tour voltar no próximo login. */
+    fetch('/api/account/onboarding-tour', {
+      method: 'POST',
+    }).catch(() => {
+      /* ignore */
+    });
+  }
 
   /* ==========================================================
      WELCOME EMAIL (fallback) — ver lib/email/welcome.ts. Idempotente
@@ -137,6 +167,12 @@ function ChatRootMounted() {
       /* ignore */
     }
   }, []);
+
+  useEffect(() => {
+    /* Os passos da navegação apontam para itens da barra lateral; recolhida,
+       eles não existem na tela. Abrir aqui não persiste a preferência. */
+    if (tourOpen) setCollapsed(false);
+  }, [tourOpen]);
 
   function toggleCollapse() {
     setCollapsed(
@@ -398,6 +434,10 @@ function ChatRootMounted() {
               (open) => !open
             );
           }}
+
+          onStartTour={() =>
+            setTourOpen(true)
+          }
         />
       </div>
 
@@ -555,6 +595,11 @@ function ChatRootMounted() {
               setPromptsMobileOpen(
                 true
               );
+            }}
+
+            onStartTour={() => {
+              setDrawerOpen(false);
+              setTourOpen(true);
             }}
           />
         </SheetContent>
@@ -783,6 +828,15 @@ function ChatRootMounted() {
           />
         </ChatErrorBoundary>
       </div>
+
+      {/* ======================================================
+          TOUR DE PRIMEIRO ACESSO
+      ======================================================= */}
+
+      <ProductTour
+        open={tourOpen}
+        onFinish={finishTour}
+      />
     </div>
   );
 }

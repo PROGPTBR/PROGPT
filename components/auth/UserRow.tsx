@@ -152,7 +152,7 @@ export function UserRow({ collapsed = false }: { collapsed?: boolean }) {
   }
 
   return (
-    <div ref={rootRef} className="relative border-t border-border">
+    <div ref={rootRef} data-tour="conta" className="relative border-t border-border">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}

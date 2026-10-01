@@ -701,6 +701,7 @@ export function Composer({
               ================================================ */}
 
               <textarea
+                data-tour="composer"
                 ref={taRef}
                 value={input}
                 onChange={(e) =>
@@ -764,6 +765,7 @@ export function Composer({
                     disabled={
                       isLoading
                     }
+                    data-tour="voz"
                     aria-label="Conversar por voz em tempo real"
                     title="Conversar por voz — fale com o assistente em tempo real"
                     className="
@@ -801,6 +803,7 @@ export function Composer({
                     aria-pressed={
                       !!personalMode
                     }
+                    data-tour="modo-livre"
                     aria-label="Modo Pessoal — pergunte qualquer coisa, com busca ao vivo"
                     title="Modo Pessoal — pergunte qualquer coisa, com busca ao vivo"
                     className={
@@ -1043,6 +1046,7 @@ export function Composer({
                 disabled={
                   isLoading
                 }
+                data-tour="voz"
                 aria-label="Conversar por voz em tempo real"
                 title="Conversar por voz — fale com o assistente em tempo real"
                 className="
@@ -1086,6 +1090,7 @@ export function Composer({
                 aria-pressed={
                   !!personalMode
                 }
+                data-tour="modo-livre"
                 aria-label="Modo Pessoal — pergunte qualquer coisa, com busca ao vivo"
                 title="Modo Pessoal — pergunte qualquer coisa, com busca ao vivo"
                 className={
@@ -1140,6 +1145,7 @@ export function Composer({
 
             {/* Campo */}
             <textarea
+              data-tour="composer"
               ref={taRef}
               value={input}
               onChange={(e) =>

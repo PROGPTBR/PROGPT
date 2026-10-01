@@ -16,6 +16,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   ChevronRight,
+  Compass,
   Phone,
   Search,
   X,
@@ -47,6 +48,9 @@ type Props = {
 
   onOpenPrompts?: () => void;
   promptsOpen?: boolean;
+
+  /** Reabre o tour de primeiro acesso (rodapé da barra). */
+  onStartTour?: () => void;
 };
 
 const CONTACT_PHONE = '(21) 99979-2912';
@@ -133,6 +137,8 @@ export function Sidebar({
 
   onOpenPrompts,
   promptsOpen = false,
+
+  onStartTour,
 }: Props) {
   const [
     editingId,
@@ -555,6 +561,7 @@ export function Sidebar({
         <button
           key={href}
           type="button"
+          data-tour={`nav-${href.slice(1)}`}
           onClick={onOpenPanel}
           className={`
             group
@@ -617,6 +624,7 @@ export function Sidebar({
       <Link
         key={href}
         href={href}
+        data-tour={`nav-${href.slice(1)}`}
         className="
           group
           flex
@@ -667,7 +675,7 @@ export function Sidebar({
     CONVERSAS
 ========================================================= */}
 
-<div className="p-2">
+<div className="p-2" data-tour="conversas">
   {/* Título da seção */}
 {/* Título da seção + Nova conversa */}
 <div className="mb-2 flex items-center justify-between px-1">
@@ -983,10 +991,37 @@ export function Sidebar({
       ========================================================= */}
 
       <div className="shrink-0 px-3 pb-3">
+        {onStartTour && (
+          <button
+            type="button"
+            onClick={onStartTour}
+            className="
+              mb-2
+              flex
+              w-full
+              items-center
+              gap-2
+              rounded-xl
+              px-3
+              py-2
+              text-xs
+              text-muted-foreground
+              transition-colors
+
+              hover:bg-accent
+              hover:text-foreground
+            "
+          >
+            <Compass className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            Ver o tour da plataforma
+          </button>
+        )}
+
         <a
           href={
             CONTACT_PHONE_HREF
           }
+          data-tour="suporte"
           className="
             group
             block
