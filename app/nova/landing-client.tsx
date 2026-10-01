@@ -1162,46 +1162,65 @@ onClick={() => {
             Cookies
           </Link>
         </div>
-      <div
+    <div
   className={styles["footer-certifications"]}
   aria-label="Conheça as certificações da 2BSUPPLY"
 >
   <span className={styles["footer-certifications-title"]}>
-    Certificações
+    Empresa Certificada ISO
   </span>
 
   <span className={styles["footer-certifications-logos"]}>
-    <Image
-      src="https://taydbrfqmgvjzelvablx.supabase.co/storage/v1/object/public/Certificacoes/selo-iso-42001-2.png"
-      alt="ISO/IEC 42001"
-      width={100}
-      height={100}
-      className={styles["footer-certification-image"]}
-    />
+    {[
+      {
+        id: "42001",
+        nome: "ISO/IEC 42001",
+        descricao: "Gestão de Inteligência Artificial",
+        src: "https://taydbrfqmgvjzelvablx.supabase.co/storage/v1/object/public/Certificacoes/selo-iso-42001-2 (2).png",
+      },
+      {
+        id: "27001",
+        nome: "ISO/IEC 27001",
+        descricao: "Gestão da Segurança da Informação",
+        src: "https://taydbrfqmgvjzelvablx.supabase.co/storage/v1/object/public/Certificacoes/selo-iso-27001-1.png",
+      },
+      {
+        id: "27701",
+        nome: "ISO/IEC 27701",
+        descricao: "Gestão da Privacidade da Informação",
+        src: "https://taydbrfqmgvjzelvablx.supabase.co/storage/v1/object/public/Certificacoes/selo-iso-27701-2 (1).png",
+      },
+      {
+        id: "9001",
+        nome: "ISO 9001",
+        descricao: "Gestão da Qualidade",
+        src: "https://taydbrfqmgvjzelvablx.supabase.co/storage/v1/object/public/Certificacoes/selo-iso-9001 (1).png",
+      },
+    ].map((certificacao) => (
+      <span
+        key={certificacao.id}
+        className={styles["footer-certification-item"]}
+        tabIndex={0}
+        aria-describedby={`footer-tooltip-${certificacao.id}`}
+      >
+        <Image
+          src={certificacao.src}
+          alt={certificacao.nome}
+          width={150}
+          height={150}
+          className={styles["footer-certification-image"]}
+        />
 
-    <Image
-      src="https://taydbrfqmgvjzelvablx.supabase.co/storage/v1/object/public/Certificacoes/selo-iso-27001-1.png"
-      alt="ISO/IEC 27001"
-      width={100}
-      height={100}
-      className={styles["footer-certification-image"]}
-    />
-
-    <Image
-      src="https://taydbrfqmgvjzelvablx.supabase.co/storage/v1/object/public/Certificacoes/selo-iso-27701-2.png"
-      alt="ISO/IEC 27701"
-      width={100}
-      height={100}
-      className={styles["footer-certification-image"]}
-    />
-
-    <Image
-      src="https://taydbrfqmgvjzelvablx.supabase.co/storage/v1/object/public/Certificacoes/selo-iso-9001.png"
-      alt="ISO 9001"
-      width={100}
-      height={100}
-      className={styles["footer-certification-image"]}
-    />
+        <span
+          id={`footer-tooltip-${certificacao.id}`}
+          role="tooltip"
+          className={styles["footer-certification-tooltip"]}
+        >
+          <strong>{certificacao.nome}</strong>
+          <span>{certificacao.descricao}</span>
+        </span>
+      </span>
+    ))}
   </span>
 </div>
         <small>
