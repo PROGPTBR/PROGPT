@@ -463,8 +463,9 @@ function QuoteDetail({ id, onBack }: { id: string; onBack: () => void }) {
               {/* Comparativo item a item contra o Pedido de Cotação (só quando um foi fornecido) */}
               {a.comparativo_itens?.length ? (
                 <div className="rounded-2xl border border-border bg-card overflow-hidden">
-                  <div className="px-4 py-2 border-b border-border text-xs font-medium text-muted-foreground">
-                    Comparativo de itens × Pedido de Cotação
+                  <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-2 border-b border-border text-xs font-medium text-muted-foreground">
+                    <span>Comparativo de itens × Pedido de Cotação</span>
+                    <span className="text-[11px] font-normal">Arraste para o lado para ver todos os fornecedores →</span>
                   </div>
                   <div className="overflow-x-auto">
                     {(() => {
@@ -473,34 +474,36 @@ function QuoteDetail({ id, onBack }: { id: string; onBack: () => void }) {
                         <table className="w-full min-w-[640px] text-left text-xs">
                           <thead>
                             <tr className="text-muted-foreground border-b border-border">
-                              <th className="px-3 py-2 font-medium">Item</th>
-                              <th className="px-3 py-2 font-medium">Qtd. solicitada</th>
+                              <th className="sticky left-0 z-10 min-w-[11rem] border-r border-border bg-card px-3 py-2 font-medium">
+                                Item
+                              </th>
+                              <th className="whitespace-nowrap px-3 py-2 font-medium">Qtd. solicitada</th>
                               {matrix.fornecedores.map((f) => (
-                                <th key={f} className="px-3 py-2 font-medium">{f}</th>
+                                <th key={f} className="min-w-[10rem] px-3 py-2 font-medium">{f}</th>
                               ))}
                             </tr>
                           </thead>
                           <tbody>
                             {matrix.rows.map((row, i) => (
                               <tr key={i} className="border-b border-border/50 align-top">
-                                <td className="px-3 py-2 font-medium">
+                                <td className="sticky left-0 z-10 min-w-[11rem] border-r border-border bg-card px-3 py-2 font-medium">
                                   {row.item}
                                   {row.especificacaoSolicitada ? (
                                     <div className="font-normal text-muted-foreground">{row.especificacaoSolicitada}</div>
                                   ) : null}
                                 </td>
-                                <td className="px-3 py-2 text-muted-foreground">{row.quantidadeSolicitada}</td>
+                                <td className="whitespace-nowrap px-3 py-2 text-muted-foreground">{row.quantidadeSolicitada}</td>
                                 {matrix.fornecedores.map((f) => {
                                   const cell = row.porFornecedor[f];
                                   if (!cell) {
                                     return (
-                                      <td key={f} className="px-3 py-2 text-muted-foreground">—</td>
+                                      <td key={f} className="min-w-[10rem] px-3 py-2 text-muted-foreground">—</td>
                                     );
                                   }
                                   const badge = ITEM_STATUS_BADGE[cell.status];
                                   return (
-                                    <td key={f} className="px-3 py-2">
-                                      <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium ${badge.cls}`}>
+                                    <td key={f} className="min-w-[10rem] px-3 py-2">
+                                      <span className={`inline-flex items-center whitespace-nowrap rounded-full border px-2 py-0.5 text-[11px] font-medium ${badge.cls}`}>
                                         {badge.label}
                                       </span>
                                       {cell.detalhe ? (
@@ -534,21 +537,24 @@ function QuoteDetail({ id, onBack }: { id: string; onBack: () => void }) {
 
               {/* Comparativo completo de condições comerciais */}
               <div className="rounded-2xl border border-border bg-card overflow-hidden">
-                <div className="px-4 py-2 border-b border-border text-xs font-medium text-muted-foreground">
-                  Balizamento de condições comerciais
+                <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-2 border-b border-border text-xs font-medium text-muted-foreground">
+                  <span>Balizamento de condições comerciais</span>
+                  <span className="text-[11px] font-normal">Arraste para o lado para ver todas as colunas →</span>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[640px] text-left text-xs">
                     <thead>
                       <tr className="text-muted-foreground border-b border-border">
-                        <th className="px-3 py-2 font-medium">Fornecedor</th>
-                        <th className="px-3 py-2 font-medium">Preço</th>
-                        <th className="px-3 py-2 font-medium">Frete</th>
-                        <th className="px-3 py-2 font-medium">Impostos</th>
-                        <th className="px-3 py-2 font-medium">Prazo</th>
-                        <th className="px-3 py-2 font-medium">Validade</th>
-                        <th className="px-3 py-2 font-medium">Pagamento</th>
-                        <th className="px-3 py-2 font-medium text-right">Custo total</th>
+                        <th className="sticky left-0 z-10 min-w-[10rem] border-r border-border bg-card px-3 py-2 font-medium">
+                          Fornecedor
+                        </th>
+                        <th className="whitespace-nowrap px-3 py-2 font-medium">Preço</th>
+                        <th className="whitespace-nowrap px-3 py-2 font-medium">Frete</th>
+                        <th className="whitespace-nowrap px-3 py-2 font-medium">Impostos</th>
+                        <th className="whitespace-nowrap px-3 py-2 font-medium">Prazo</th>
+                        <th className="whitespace-nowrap px-3 py-2 font-medium">Validade</th>
+                        <th className="whitespace-nowrap px-3 py-2 font-medium">Pagamento</th>
+                        <th className="whitespace-nowrap px-3 py-2 font-medium text-right">Custo total</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -559,17 +565,26 @@ function QuoteDetail({ id, onBack }: { id: string; onBack: () => void }) {
                             key={i}
                             className={'border-b border-border/50 align-top ' + (rec ? 'bg-brand/10' : '')}
                           >
-                            <td className="px-3 py-2 font-medium">
-                              {it.fornecedor}
-                              {rec && <span className="ml-1 text-brand">★</span>}
+                            <td
+                              className={
+                                'sticky left-0 z-10 min-w-[10rem] border-r border-border bg-card px-3 py-2 font-medium ' +
+                                (rec
+                                  ? "relative before:absolute before:inset-0 before:bg-brand/10 before:content-['']"
+                                  : '')
+                              }
+                            >
+                              <span className="relative">
+                                {it.fornecedor}
+                                {rec && <span className="ml-1 text-brand">★</span>}
+                              </span>
                             </td>
-                            <td className="px-3 py-2 text-muted-foreground">{it.preco}</td>
-                            <td className="px-3 py-2 text-muted-foreground">{it.frete}</td>
-                            <td className="px-3 py-2 text-muted-foreground">{it.impostos}</td>
-                            <td className="px-3 py-2 text-muted-foreground">{it.prazo_entrega}</td>
-                            <td className="px-3 py-2 text-muted-foreground">{it.validade}</td>
-                            <td className="px-3 py-2 text-muted-foreground">{it.condicao_pagamento}</td>
-                            <td className="px-3 py-2 text-right font-semibold tabular-nums">
+                            <td className="whitespace-nowrap px-3 py-2 text-muted-foreground">{it.preco}</td>
+                            <td className="whitespace-nowrap px-3 py-2 text-muted-foreground">{it.frete}</td>
+                            <td className="whitespace-nowrap px-3 py-2 text-muted-foreground">{it.impostos}</td>
+                            <td className="whitespace-nowrap px-3 py-2 text-muted-foreground">{it.prazo_entrega}</td>
+                            <td className="whitespace-nowrap px-3 py-2 text-muted-foreground">{it.validade}</td>
+                            <td className="whitespace-nowrap px-3 py-2 text-muted-foreground">{it.condicao_pagamento}</td>
+                            <td className="whitespace-nowrap px-3 py-2 text-right font-semibold tabular-nums">
                               {brl(it.custo_total)}
                             </td>
                           </tr>

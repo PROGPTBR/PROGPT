@@ -681,19 +681,18 @@ export function Sidebar({
     aria-label="Nova conversa"
     title="Nova conversa"
     className="
-      brand-glow
       inline-flex
-      h-8
-      w-8
+      h-7
+      w-7
       shrink-0
       items-center
       justify-center
-      rounded-full
-      bg-brand-gradient
-      text-black
-      transition-all
+      rounded-md
+      text-muted-foreground
+      transition-colors
 
-      hover:brightness-110
+      hover:bg-accent
+      hover:text-foreground
       active:scale-95
     "
   >

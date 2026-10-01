@@ -116,7 +116,7 @@ export function ProcessoRoot({ processoInicial, etapasIniciais }: Props) {
   }
 
   return (
-    <div className="mx-auto w-full max-w-4xl px-4 py-8 space-y-6">
+    <div className="mx-auto w-full max-w-4xl space-y-6">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <Link
           href="/fluxo"
@@ -137,7 +137,7 @@ export function ProcessoRoot({ processoInicial, etapasIniciais }: Props) {
       <h1 className="text-xl font-semibold tracking-tight">{processo.titulo}</h1>
 
       {/* Trilha */}
-      <ol className="grid grid-cols-4 gap-1.5 sm:grid-cols-8">
+      <ol className="grid grid-cols-4 gap-1.5 md:grid-cols-8">
         {FLUXO_STAGES.map((s) => {
           const aprovada = !!processo.contexto?.[s.id];
           const atual = s.id === processo.etapa_atual && !concluido;
@@ -146,7 +146,7 @@ export function ProcessoRoot({ processoInicial, etapasIniciais }: Props) {
             <li
               key={s.id}
               title={s.label}
-              className={`rounded-lg border p-2 text-center ${
+              className={`min-w-0 rounded-lg border p-2 text-center ${
                 aprovada
                   ? 'border-emerald-500/40 bg-emerald-500/10'
                   : atual
@@ -155,7 +155,7 @@ export function ProcessoRoot({ processoInicial, etapasIniciais }: Props) {
               }`}
             >
               <div className="text-[10px] font-semibold text-muted-foreground">{s.num}</div>
-              <div className="mt-0.5 text-[10px] leading-tight line-clamp-2">{s.label}</div>
+              <div className="mt-0.5 break-words text-[10px] leading-tight line-clamp-2">{s.label}</div>
               {aprovada && (
                 <Check className="mx-auto mt-1 h-3 w-3 text-emerald-600 dark:text-emerald-400" aria-hidden />
               )}

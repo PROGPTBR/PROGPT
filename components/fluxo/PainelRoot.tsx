@@ -133,7 +133,7 @@ export function PainelRoot() {
   const vazio = dados.totalProcessos === 0;
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-4 py-8 space-y-8">
+    <div className="mx-auto w-full max-w-5xl space-y-8">
       <div className="space-y-1">
         <Link
           href="/fluxo"

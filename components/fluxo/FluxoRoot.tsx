@@ -63,7 +63,7 @@ export function FluxoRoot({ processosIniciais }: { processosIniciais: FluxoProce
   }
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-4 py-10 space-y-8">
+    <div className="mx-auto w-full max-w-5xl space-y-8">
       <header className="space-y-2">
         <div className="flex items-center gap-2 text-brand">
           <Workflow className="h-5 w-5" aria-hidden />
@@ -83,11 +83,11 @@ export function FluxoRoot({ processosIniciais }: { processosIniciais: FluxoProce
       </header>
 
       {/* Trilha das 8 etapas, só como mapa do processo */}
-      <ol className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
+      <ol className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-8">
         {FLUXO_STAGES.map((s) => (
           <li
             key={s.id}
-            className={`rounded-xl border p-3 ${
+            className={`min-w-0 rounded-xl border p-3 ${
               s.trilha === 's2c'
                 ? 'border-amber-500/30 bg-amber-500/5'
                 : 'border-brand/30 bg-brand/5'
@@ -96,7 +96,7 @@ export function FluxoRoot({ processosIniciais }: { processosIniciais: FluxoProce
             <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
               Etapa {s.num}
             </div>
-            <div className="mt-1 text-xs font-medium leading-tight">{s.label}</div>
+            <div className="mt-1 break-words text-xs font-medium leading-tight">{s.label}</div>
           </li>
         ))}
       </ol>
