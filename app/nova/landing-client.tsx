@@ -728,8 +728,7 @@ Mais confiança para usar IA em decisões reais de Compras.
            <em> Certificações</em> ISO
           </h2>
           <p className="progpt-certifications-intro">
-          O PROGPT faz parte do <b>grupo 2BSUPPLY.</b><br/>
-         As certificações abaixo foram emitidas em nome da <b>2BSUPPLY CONSULTORIA E TREINAMENTOS LTDA</b> e abrangem as atividades descritas no escopo de cada certificado.
+         O PROGPT, solução de Inteligência Artificial da 2BSUPPLY, agora opera respaldado pelas certificações ISO do grupo, reforçando sua capacidade de atuar em processos críticos de Suprimentos com segurança, governança, qualidade e confiabilidade.
           </p>
           <CertificacoesGrid certificacoes={certificacoes} />
         </div>
