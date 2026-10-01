@@ -44,15 +44,13 @@ export function SimuladorFrame() {
       }`}
     >
       {/* Barra de ferramentas — visual do projeto */}
-      <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border bg-card px-4 py-2.5">
-        <div className="min-w-0">
-          <h2 className="truncate text-sm font-semibold text-foreground">
-            Simulador Tributário
-          </h2>
-          <p className="truncate text-xs text-muted-foreground">
+      <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border bg-card px-4 py-2">
+        <h2 className="truncate text-sm font-semibold text-foreground">
+          Simulador Tributário
+          <span className="ml-2 font-normal text-muted-foreground">
             Simples Nacional × Reforma (IBS/CBS)
-          </p>
-        </div>
+          </span>
+        </h2>
         <div className="flex shrink-0 items-center gap-1">
           <button
             type="button"

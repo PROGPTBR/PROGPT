@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { Trash2, CreditCard, UserCircle, ImageIcon, Building2, FolderKanban } from 'lucide-react';
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
-import { Header } from '../login/header';
+import { AppShell } from '@/components/layout/AppShell';
 import { BackButton } from '@/components/BackButton';
 import { ProfileLogoUpload } from '@/components/profile/ProfileLogoUpload';
 import { ProfileCompanyForm } from '@/components/profile/ProfileCompanyForm';
@@ -56,10 +56,8 @@ export default async function ProfilePage() {
     : null;
 
   return (
-    <>
-      <Header />
-      <div className="min-h-screen bg-background text-foreground font-outfit antialiased">
-        <main className="mx-auto max-w-3xl px-6 pt-24 pb-16 space-y-8">
+    <AppShell width="narrow">
+      <div className="space-y-8">
           <BackButton />
 
           {/* Hero */}
@@ -171,9 +169,8 @@ export default async function ProfilePage() {
               Excluir minha conta
             </Link>
           </section>
-        </main>
       </div>
-    </>
+    </AppShell>
   );
 }
 

@@ -1,11 +1,9 @@
-import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { Header } from '../../login/header';
+import { AppShell } from '@/components/layout/AppShell';
 import { getCurrentUser} from '@/lib/auth';
 import { getSubscription } from '@/lib/billing/subscription';
 import { SubscriptionPanel } from '@/components/billing/SubscriptionPanel';
 import { SeatMembersPanel } from '@/components/billing/SeatMembersPanel';
-import { BackButton } from '@/components/BackButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,36 +14,14 @@ export default async function AccountBillingPage() {
   const subscription = await getSubscription(user.id);
 
   return (
-    <>
-    <Header />
-    <div className="min-h-screen bg-background text-foreground">
+    <AppShell back={{ href: '/chat', label: 'Voltar ao chat' }}>
+      <SubscriptionPanel subscription={subscription} />
 
-      <main className="max-w-7xl mx-auto px-6 py-12 pt-20">
-
-          <div className="max-w-7xl mx-auto px-6 py-16 flex items-center justify-between">
-           <BackButton />
-
-            {!user && (
-              <Link
-                href="/login?next=/pricing"
-                className="text-xs text-brand hover:text-brand/80 transition-colors"
-              >
-                Entrar →
-              </Link>
-            )}
-          </div>
-
-        <SubscriptionPanel
-  subscription={subscription}
-/>
-
-        {/* Licenças da assinatura — só aparece pra quem contratou mais de
-            um usuário (sub-projeto 64). */}
-        <div className="mt-8">
-          <SeatMembersPanel />
-        </div>
-      </main>
-    </div>
-    </>
+      {/* Licenças da assinatura — só aparece pra quem contratou mais de
+          um usuário (sub-projeto 64). */}
+      <div className="mt-8">
+        <SeatMembersPanel />
+      </div>
+    </AppShell>
   );
 }

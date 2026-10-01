@@ -1,7 +1,7 @@
 import { redirect, notFound } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
 import { getProcessForOwner, listStageRuns } from '@/lib/proc2pay/process';
-import { Header } from '../../login/header';
+import { AppShell } from '@/components/layout/AppShell';
 import { ProcessCockpit } from '@/components/proc2pay/ProcessCockpit';
 
 export const dynamic = 'force-dynamic';
@@ -16,13 +16,8 @@ export default async function Proc2PayProcessPage({ params }: { params: { id: st
   const stageRuns = await listStageRuns(user.id, params.id);
 
   return (
-    <>
-      <Header />
-      <div className="min-h-screen bg-background text-foreground font-outfit antialiased">
-        <main className="mx-auto max-w-4xl px-6 pt-24 pb-16">
-          <ProcessCockpit initialProcess={process} initialStageRuns={stageRuns} />
-        </main>
-      </div>
-    </>
+    <AppShell back={{ href: '/proc2pay', label: 'Processos' }}>
+      <ProcessCockpit initialProcess={process} initialStageRuns={stageRuns} />
+    </AppShell>
   );
 }
