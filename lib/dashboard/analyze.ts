@@ -313,6 +313,8 @@ export type CrosstabResult = {
   colKeys: string[];
   /** matrix[rowKey][colKey] = valor agregado. */
   matrix: Record<string, Record<string, number>>;
+  /** counts[rowKey][colKey] = quantas linhas caíram na célula (o "n" da média). */
+  counts: Record<string, Record<string, number>>;
   /** Formato "long" pronto pro recharts stacked bar: [{ dim, [colKey]: n }]. */
   stacked: Array<Record<string, string | number>>;
 };
@@ -323,19 +325,25 @@ export function crosstab(
   dimA: string,
   dimB: string,
   measure: string | null,
-  opts: { topRows?: number; topCols?: number } = {},
+  opts: { topRows?: number; topCols?: number; agg?: Agg } = {},
 ): CrosstabResult {
-  const { topRows = 8, topCols = 6 } = opts;
-  const rowTotals = topN(groupBy(rows, dimA, measure), topRows).map((s) => s.key);
-  const colTotals = topN(groupBy(rows, dimB, measure), topCols).map((s) => s.key);
+  const { topRows = 8, topCols = 6, agg = 'sum' } = opts;
+  const rowTotals = topN(groupBy(rows, dimA, measure, agg), topRows).map((s) => s.key);
+  const colTotals = topN(groupBy(rows, dimB, measure, agg), topCols).map((s) => s.key);
   const rowSet = new Set(rowTotals);
   const colSet = new Set(colTotals);
 
-  const matrix: Record<string, Record<string, number>> = {};
+  const totals: Record<string, Record<string, number>> = {};
+  const counts: Record<string, Record<string, number>> = {};
   for (const rk of rowTotals) {
     const row: Record<string, number> = {};
-    for (const ck of colTotals) row[ck] = 0;
-    matrix[rk] = row;
+    const cnt: Record<string, number> = {};
+    for (const ck of colTotals) {
+      row[ck] = 0;
+      cnt[ck] = 0;
+    }
+    totals[rk] = row;
+    counts[rk] = cnt;
   }
 
   for (const r of rows) {
@@ -343,10 +351,28 @@ export function crosstab(
     let ck = keyOf(r[dimB]);
     if (!rowSet.has(rk)) rk = rowTotals.includes('Outros') ? 'Outros' : rk;
     if (!colSet.has(ck)) ck = colTotals.includes('Outros') ? 'Outros' : ck;
-    const row = matrix[rk];
-    if (!row || !(ck in row)) continue;
+    const row = totals[rk];
+    const cnt = counts[rk];
+    if (!row || !cnt || !(ck in row)) continue;
+    cnt[ck] = (cnt[ck] ?? 0) + 1;
     const n = measure ? coerceNumber(r[measure]) : 1;
     row[ck] = (row[ck] ?? 0) + (n ?? 0);
+  }
+
+  // `matrix` entrega o valor já agregado conforme `agg` — média é o que faz um
+  // heatmap de lead time dizer alguma coisa (a soma só mediria volume).
+  const matrix: Record<string, Record<string, number>> = {};
+  for (const rk of rowTotals) {
+    const row: Record<string, number> = {};
+    for (const ck of colTotals) {
+      const total = totals[rk]?.[ck] ?? 0;
+      const n = counts[rk]?.[ck] ?? 0;
+      row[ck] =
+        agg === 'count' ? n
+        : agg === 'mean' ? (n ? total / n : 0)
+        : total;
+    }
+    matrix[rk] = row;
   }
 
   const stacked = rowTotals.map((rk) => {
@@ -356,7 +382,7 @@ export function crosstab(
     return entry;
   });
 
-  return { rowKeys: rowTotals, colKeys: colTotals, matrix, stacked };
+  return { rowKeys: rowTotals, colKeys: colTotals, matrix, counts, stacked };
 }
 
 /** Correlação de Pearson entre duas medidas (para scatter/insight). */

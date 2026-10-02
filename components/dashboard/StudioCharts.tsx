@@ -285,7 +285,7 @@ export function Heatmap({ crosstab, format }: { crosstab: CrosstabResult; format
                       }}
                       title={`${rk} · ${ck}: ${fmtBy(format, v)}`}
                     >
-                      {v > 0 ? fmtNumber(v) : '·'}
+                      {v > 0 ? fmtBy(format, v) : '·'}
                     </div>
                   </td>
                 );
@@ -296,4 +296,76 @@ export function Heatmap({ crosstab, format }: { crosstab: CrosstabResult; format
       </table>
     </div>
   );
+}
+
+// ─── Velocímetro (taxa contra meta) ─────────────────────────────────────────
+
+/**
+ * Arco de 180° com a marca da meta. Serve o caso clássico de compras —
+ * "taxa de atendimento no prazo" — em que o número só diz alguma coisa ao
+ * lado do alvo combinado.
+ */
+export function GaugeArc({
+  value,
+  goal,
+  caption,
+}: {
+  /** Percentual já em 0-100. */
+  value: number;
+  /** Meta em 0-100. */
+  goal: number;
+  caption?: string;
+}) {
+  const pct = Math.max(0, Math.min(100, value));
+  const meta = Math.max(0, Math.min(100, goal));
+  const atingiu = pct >= meta;
+
+  // Semicírculo de raio 80 centrado em (100, 100): comprimento = π·80.
+  const arc = Math.PI * 80;
+  const angulo = (p: number) => Math.PI * (1 - p / 100);
+  const metaX = 100 + 80 * Math.cos(angulo(meta));
+  const metaY = 100 - 80 * Math.sin(angulo(meta));
+
+  return (
+    <div className="flex flex-col items-center py-1">
+      <svg viewBox="0 0 200 118" className="w-full max-w-[230px]" role="img" aria-label={`${pct.toFixed(1)}% de ${meta}% de meta`}>
+        <path
+          d="M 20 100 A 80 80 0 0 1 180 100"
+          fill="none"
+          stroke="rgba(148,163,184,0.22)"
+          strokeWidth={16}
+          strokeLinecap="round"
+        />
+        <path
+          d="M 20 100 A 80 80 0 0 1 180 100"
+          fill="none"
+          stroke={atingiu ? '#22c55e' : pct >= meta * 0.8 ? '#f59e0b' : '#ef4444'}
+          strokeWidth={16}
+          strokeLinecap="round"
+          strokeDasharray={`${(pct / 100) * arc} ${arc}`}
+          style={{ transition: 'stroke-dasharray 400ms ease' }}
+        />
+        <line
+          x1={100 + 62 * Math.cos(angulo(meta))}
+          y1={100 - 62 * Math.sin(angulo(meta))}
+          x2={metaX}
+          y2={metaY}
+          stroke={AXIS}
+          strokeWidth={2}
+        />
+        <text x="100" y="92" textAnchor="middle" className="fill-foreground" style={{ fontSize: 26, fontWeight: 600 }}>
+          {fmtPercentTick(pct)}
+        </text>
+        <text x="100" y="112" textAnchor="middle" fill={AXIS} style={{ fontSize: 10 }}>
+          meta {fmtPercentTick(meta)}
+        </text>
+      </svg>
+
+      {caption && <p className="mt-1 text-center text-[11px] text-muted-foreground">{caption}</p>}
+    </div>
+  );
+}
+
+function fmtPercentTick(n: number): string {
+  return `${Number.isInteger(n) ? n : n.toFixed(1)}%`;
 }

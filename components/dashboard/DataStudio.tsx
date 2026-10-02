@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import {
   Upload, Sparkles, X, RefreshCw, Filter, FileDown, CalendarRange, Search,
   ChevronDown, LayoutDashboard, Plus, Save, FolderOpen, Trash2,
-  Gauge, Pencil, BarChart3, PieChart, LineChart, Layers, Table as TableIcon, Loader2, Package,
+  Gauge, GaugeCircle, Grid3x3, Pencil, BarChart3, PieChart, LineChart, Layers, Table as TableIcon, Loader2, Package,
 } from 'lucide-react';
 import {
   buildDataset, planDashboard, groupBy, keyOf, coerceNumber, coerceDate,
@@ -32,6 +32,8 @@ const PALETTE: Array<{ type: PanelType; Icon: typeof Gauge }> = [
   { type: 'donut', Icon: PieChart },
   { type: 'line', Icon: LineChart },
   { type: 'stacked', Icon: Layers },
+  { type: 'heatmap', Icon: Grid3x3 },
+  { type: 'gauge', Icon: GaugeCircle },
   { type: 'table', Icon: TableIcon },
 ];
 

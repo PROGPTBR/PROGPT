@@ -150,7 +150,10 @@ export function fmtCurrency(n: number): string {
 export function fmtNumber(n: number): string {
   if (Math.abs(n) >= 1_000_000) return `${num1.format(n / 1_000_000)}M`;
   if (Math.abs(n) >= 10_000) return `${num1.format(n / 1000)}k`;
-  return num0.format(n);
+  // Média quebrada mantém uma casa: num lead time médio, a diferença entre
+  // 4,2 e 4,8 dias é justamente o que se quer ver — arredondar para 4 some
+  // com a informação. Contagem (inteiro) continua sem casa decimal.
+  return Number.isInteger(n) ? num0.format(n) : num1.format(n);
 }
 export function fmtPercent(n: number): string {
   // aceita 0.23 (fração) ou 23 (já em %)

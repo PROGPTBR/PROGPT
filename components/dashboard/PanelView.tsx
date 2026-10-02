@@ -1,14 +1,29 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Settings2, X, ChevronUp, ChevronDown, TrendingUp, GripVertical } from 'lucide-react';
 import type { Dataset, DashboardPlan, Row, Agg } from '@/lib/dashboard/analyze';
 import { computePanel, formatFor, PANEL_META, type PanelConfig, type PanelType, type PanelFormat } from '@/lib/dashboard/panels';
 import { fmtBy } from '@/lib/dashboard/parse-file';
-import { RankBar, ShareDonut, TimeSeriesArea, StackedBars } from './StudioCharts';
+import { RankBar, ShareDonut, TimeSeriesArea, StackedBars, Heatmap, GaugeArc } from './StudioCharts';
 
 const AGG_LABEL: Record<Agg, string> = { sum: 'Soma', mean: 'Média', count: 'Contagem', min: 'Mínimo', max: 'Máximo' };
-const TYPES: PanelType[] = ['kpi', 'manualKpi', 'bar', 'donut', 'line', 'stacked', 'table'];
+const TYPES: PanelType[] = ['kpi', 'manualKpi', 'bar', 'donut', 'line', 'stacked', 'heatmap', 'gauge', 'table'];
+
+/** Valores distintos de uma coluna — alimenta o seletor de "quando conta". */
+function distinctValues(rows: Row[], column: string | null | undefined, cap = 40): string[] {
+  if (!column) return [];
+  const seen = new Set<string>();
+  for (const r of rows) {
+    const v = r[column];
+    if (v == null) continue;
+    const t = String(v).trim();
+    if (!t) continue;
+    seen.add(t);
+    if (seen.size >= cap) break;
+  }
+  return [...seen].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+}
 const spanClass = (size?: string) => (size === 'lg' ? 'lg:col-span-2' : size === 'sm' ? '' : '');
 
 export function PanelView({
@@ -24,6 +39,14 @@ export function PanelView({
 }) {
   const [cfgOpen, setCfgOpen] = useState(false);
   const data = computePanel(cfg, dataset, rows);
+  const matchOptions = useMemo(
+    () => (cfg.type === 'gauge' || cfg.type === 'kpi' ? distinctValues(rows, cfg.dimension) : []),
+    [cfg.type, cfg.dimension, rows],
+  );
+  const filterOptions = useMemo(
+    () => distinctValues(rows, cfg.filterColumn),
+    [cfg.filterColumn, rows],
+  );
   const isKpi = cfg.type === 'kpi' || cfg.type === 'manualKpi';
   const set = (patch: Partial<PanelConfig>) => onChange({ ...cfg, ...patch });
 
@@ -61,14 +84,63 @@ export function PanelView({
           ) : (
             <>
               <Sel label="Medida" value={cfg.measure ?? ''} onChange={(v) => set({ measure: v || null, format: formatFor(v || null) })} options={[['', 'Contagem'], ...plan.measures.map((m) => [m, m] as [string, string])]} />
-              {cfg.measure && (cfg.type === 'kpi' || cfg.type === 'bar' || cfg.type === 'donut' || cfg.type === 'line' || cfg.type === 'table') && (
+              {cfg.measure && (cfg.type === 'kpi' || cfg.type === 'bar' || cfg.type === 'donut' || cfg.type === 'line' || cfg.type === 'table' || cfg.type === 'heatmap') && (
                 <Sel label="Como" value={cfg.agg ?? 'sum'} onChange={(v) => set({ agg: v as Agg })} options={(['sum', 'mean', 'max', 'min'] as Agg[]).map((a) => [a, AGG_LABEL[a]])} />
               )}
-              {(cfg.type === 'bar' || cfg.type === 'donut' || cfg.type === 'stacked' || cfg.type === 'table') && (
-                <Sel label="Por" value={cfg.dimension ?? ''} onChange={(v) => set({ dimension: v || null })} options={[['', '—'], ...plan.dimensions.map((d) => [d, d] as [string, string])]} />
+              {(cfg.type === 'bar' || cfg.type === 'donut' || cfg.type === 'stacked' || cfg.type === 'table' || cfg.type === 'heatmap' || cfg.type === 'gauge' || cfg.type === 'kpi') && (
+                <Sel
+                  label={cfg.type === 'gauge' || cfg.type === 'kpi' ? 'Coluna' : 'Por'}
+                  value={cfg.dimension ?? ''}
+                  onChange={(v) => set({ dimension: v || null, matchValue: null })}
+                  options={[['', '—'], ...plan.dimensions.map((d) => [d, d] as [string, string])]}
+                />
               )}
-              {cfg.type === 'stacked' && (
+              {(cfg.type === 'stacked' || cfg.type === 'heatmap') && (
                 <Sel label="Cruzar" value={cfg.dimension2 ?? ''} onChange={(v) => set({ dimension2: v || null })} options={[['', '—'], ...plan.dimensions.map((d) => [d, d] as [string, string])]} />
+              )}
+              {(cfg.type === 'gauge' || cfg.type === 'kpi') && cfg.dimension && (
+                <Sel
+                  label="Conta quando é"
+                  value={cfg.matchValue ?? ''}
+                  onChange={(v) => set({ matchValue: v || null })}
+                  options={[['', '— (não é taxa)'], ...matchOptions.map((v) => [v, v] as [string, string])]}
+                />
+              )}
+              {cfg.type === 'kpi' && cfg.matchValue && (
+                <Sel
+                  label="Mostrar"
+                  value={cfg.rateMode ?? 'percent'}
+                  onChange={(v) => set({ rateMode: v as 'count' | 'percent' })}
+                  options={[['count', 'Quantidade'], ['percent', 'Percentual']]}
+                />
+              )}
+              {/* Recorte só desta peça — é o que permite "no prazo APENAS dos críticos". */}
+              <Sel
+                label="Só quando"
+                value={cfg.filterColumn ?? ''}
+                onChange={(v) => set({ filterColumn: v || null, filterValue: null })}
+                options={[['', '— (tudo)'], ...plan.dimensions.map((d) => [d, d] as [string, string])]}
+              />
+              {cfg.filterColumn && (
+                <Sel
+                  label="for"
+                  value={cfg.filterValue ?? ''}
+                  onChange={(v) => set({ filterValue: v || null })}
+                  options={[['', '—'], ...filterOptions.map((v) => [v, v] as [string, string])]}
+                />
+              )}
+              {cfg.type === 'gauge' && (
+                <label className="inline-flex items-center gap-1 rounded-md bg-background px-2 py-1 text-xs">
+                  <span className="text-muted-foreground">Meta %</span>
+                  <input
+                    type="number"
+                    min={0}
+                    max={100}
+                    value={cfg.goal ?? 95}
+                    onChange={(e) => set({ goal: Number(e.target.value) })}
+                    className="w-14 bg-transparent font-medium text-foreground outline-none"
+                  />
+                </label>
               )}
               {cfg.type === 'line' && (
                 <Sel label="Data" value={cfg.dateColumn ?? ''} onChange={(v) => set({ dateColumn: v || null })} options={[['', '—'], ...dataset.columns.filter((c) => c.type === 'date').map((c) => [c.name, c.name] as [string, string])]} />
@@ -94,6 +166,18 @@ export function PanelView({
         <TimeSeriesArea data={data.points} format={data.format} />
       ) : data.kind === 'crosstab' ? (
         <StackedBars crosstab={data.crosstab} format={data.format} />
+      ) : data.kind === 'matrix' ? (
+        <Heatmap crosstab={data.crosstab} format={data.format} />
+      ) : data.kind === 'gauge' ? (
+        <GaugeArc
+          value={data.value}
+          goal={data.goal}
+          caption={
+            cfg.matchValue
+              ? `${fmtBy('number', data.matched)} de ${fmtBy('number', data.total)} registros`
+              : undefined
+          }
+        />
       ) : data.kind === 'table' ? (
         <MiniTable rows={data.rows} format={data.format} dim={cfg.dimension ?? ''} measure={cfg.measure ?? 'contagem'} />
       ) : null}

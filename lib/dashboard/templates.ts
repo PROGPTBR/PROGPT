@@ -80,8 +80,90 @@ function logisticaPanels(): PanelConfig[] {
   ];
 }
 
+
+// ─── Carteira de Compras (SCs e Pedidos) ────────────────────────────────────
+//
+// Desenhado a partir do pedido de um cliente (01/10/2026): os painéis abaixo
+// são, um a um, os que ele listou — 4 KPIs, barras por comprador, rosca de
+// criticidade, linha do backlog, matriz de lead time, velocímetro de
+// atendimento no prazo dos críticos e as duas tabelas de ranking.
+//
+// Os nomes de coluna aqui são o contrato: uma planilha com estas colunas
+// reproduz este painel com os dados reais do cliente.
+
+const COMPRADORES = ['Ana Ribeiro', 'Bruno Tavares', 'Carla Nunes', 'Diego Prado', 'Elisa Moraes', 'Felipe Araújo'];
+const CRITICIDADES = ['Alta', 'Alta', 'Média', 'Média', 'Média', 'Baixa'];
+const STATUS_SC = ['Em aberto', 'Em aberto', 'Em cotação', 'Pedido emitido', 'Entregue', 'Entregue', 'Cancelada'];
+const FORNECEDORES_SC = ['Metalúrgica Souza', 'Rolamentos BR', 'Hidráulica Prime', 'Elétrica Central', 'Ferramentas Vale', 'Insumos Atlântico', 'Peças Norte'];
+const FAMILIAS = ['Rolamento', 'Mangueira hidráulica', 'Contator', 'Correia', 'Filtro', 'Parafuso', 'Luva de proteção'];
+
+function comprasRows(): Row[] {
+  const rng = lcg(20261001);
+  const rows: Row[] = [];
+  const hoje = new Date(2026, 9, 1); // 2026-10-01 fixo
+
+  for (let i = 0; i < 480; i++) {
+    const diasAtras = Math.floor(rng() * 180);
+    const d = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() - diasAtras);
+    const comprador = pick(rng, COMPRADORES);
+    const criticidade = pick(rng, CRITICIDADES);
+    const status = pick(rng, STATUS_SC);
+    const entregue = status === 'Entregue';
+
+    // Lead time cresce quando a criticidade é baixa (fila) e varia por comprador.
+    const base = criticidade === 'Alta' ? 6 : criticidade === 'Média' ? 11 : 18;
+    const vies = COMPRADORES.indexOf(comprador) * 0.9;
+    const leadTime = Math.max(1, Math.round(base + vies + rng() * 10 - 4));
+
+    const noPrazo = entregue ? (rng() < (criticidade === 'Alta' ? 0.88 : 0.79) ? 'Sim' : 'Não') : '';
+
+    rows.push({
+      'Data abertura': `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`,
+      'SC': `SC-${String(10_000 + i)}`,
+      'Comprador': comprador,
+      'Criticidade': criticidade,
+      'Status': status,
+      'Fornecedor': pick(rng, FORNECEDORES_SC),
+      'Item': pick(rng, FAMILIAS),
+      'Lead time (dias)': leadTime,
+      'Entregue no prazo': noPrazo,
+      'Valor (R$)': Math.round(300 + rng() * 24_000),
+    });
+  }
+  return rows;
+}
+
+function comprasPanels(): PanelConfig[] {
+  const p = (c: Omit<PanelConfig, 'id'>): PanelConfig => ({ id: panelId(), ...c });
+  return [
+    p({ type: 'kpi', title: 'SCs em aberto', dimension: 'Status', matchValue: 'Em aberto', rateMode: 'count', format: 'number', size: 'sm' }),
+    p({ type: 'kpi', title: 'Pedidos críticos', dimension: 'Criticidade', matchValue: 'Alta', rateMode: 'count', format: 'number', size: 'sm' }),
+    p({ type: 'kpi', title: 'Lead time médio (dias)', measure: 'Lead time (dias)', agg: 'mean', format: 'number', size: 'sm' }),
+    p({ type: 'kpi', title: 'Taxa OTIF', dimension: 'Entregue no prazo', matchValue: 'Sim', rateMode: 'percent', format: 'percent', size: 'sm' }),
+
+    p({ type: 'bar', title: 'SCs abertas por comprador', dimension: 'Comprador', agg: 'count', format: 'number', size: 'md', filterColumn: 'Status', filterValue: 'Em aberto' }),
+    p({ type: 'donut', title: 'Criticidade das SCs', dimension: 'Criticidade', agg: 'count', format: 'number', size: 'md' }),
+
+    p({ type: 'line', title: 'Evolução do backlog (SCs em aberto)', dateColumn: 'Data abertura', agg: 'count', format: 'number', size: 'lg', filterColumn: 'Status', filterValue: 'Em aberto' }),
+
+    p({ type: 'heatmap', title: 'Lead time médio · comprador × criticidade', measure: 'Lead time (dias)', agg: 'mean', dimension: 'Comprador', dimension2: 'Criticidade', format: 'number', size: 'lg' }),
+
+    p({ type: 'gauge', title: 'No prazo · pedidos críticos', dimension: 'Entregue no prazo', matchValue: 'Sim', goal: 95, format: 'percent', size: 'md', filterColumn: 'Criticidade', filterValue: 'Alta' }),
+    p({ type: 'table', title: 'Ranking de compradores (lead time médio)', dimension: 'Comprador', measure: 'Lead time (dias)', agg: 'mean', format: 'number', size: 'md' }),
+
+    p({ type: 'table', title: 'Fornecedores com mais pedidos em atraso', dimension: 'Fornecedor', agg: 'count', format: 'number', size: 'lg', filterColumn: 'Entregue no prazo', filterValue: 'Não' }),
+  ];
+}
+
 export function getTemplates(): DashboardTemplate[] {
   return [
+    {
+      key: 'compras',
+      name: 'Carteira de Compras',
+      description: 'SCs em aberto, criticidade, lead time por comprador, OTIF dos críticos e fornecedores em atraso.',
+      rows: comprasRows(),
+      panels: comprasPanels(),
+    },
     {
       key: 'logistica',
       name: 'Logística',
