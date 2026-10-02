@@ -47,7 +47,7 @@ describe('POST /api/account/onboarding-tour', () => {
     // O filtro explícito é o que impede marcar o perfil de outra pessoa.
     expect(sb.eq).toHaveBeenCalledWith('id', 'user-1');
 
-    const patch = sb.update.mock.calls[0][0] as { onboarding_tour_completed_at: string };
+    const patch = sb.update.mock.calls[0]?.[0] as { onboarding_tour_completed_at: string };
     expect(Number.isNaN(Date.parse(patch.onboarding_tour_completed_at))).toBe(false);
   });
 

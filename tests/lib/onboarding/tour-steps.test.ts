@@ -44,7 +44,7 @@ describe('TOUR_STEPS', () => {
 
       const dataTour = /^\[data-tour="([^"]+)"\]$/.exec(step.target);
       if (dataTour) {
-        const value = dataTour[1];
+        const value = dataTour[1] ?? '';
         // Os itens de navegação montam o atributo a partir do href.
         const navHref = /^nav-(.+)$/.exec(value);
         const needle = navHref

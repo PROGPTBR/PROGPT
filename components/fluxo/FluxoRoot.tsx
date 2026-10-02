@@ -83,7 +83,10 @@ export function FluxoRoot({ processosIniciais }: { processosIniciais: FluxoProce
       </header>
 
       {/* Trilha das 8 etapas, só como mapa do processo */}
-      <ol className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-8">
+      {/* Quatro por linha: cada card fica largo o bastante para o nome da etapa
+          caber sem partir palavra — e a quebra cai justo no corte do processo
+          (linha 1 = S2C, etapas 1-4; linha 2 = P2P, etapas 5-8). */}
+      <ol className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {FLUXO_STAGES.map((s) => (
           <li
             key={s.id}
@@ -96,7 +99,7 @@ export function FluxoRoot({ processosIniciais }: { processosIniciais: FluxoProce
             <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
               Etapa {s.num}
             </div>
-            <div className="mt-1 break-words text-xs font-medium leading-tight">{s.label}</div>
+            <div className="mt-1 text-xs font-medium leading-tight">{s.label}</div>
           </li>
         ))}
       </ol>

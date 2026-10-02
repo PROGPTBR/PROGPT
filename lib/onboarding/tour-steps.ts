@@ -58,12 +58,6 @@ export const TOUR_STEPS: TourStep[] = [
     body: 'Conduz uma compra inteira em oito etapas, da solicitação ao recebimento. A IA executa cada etapa e para para você decidir: SIGA avança, AJUSTAR manda refazer. Nada anda sem a sua decisão.',
   },
   {
-    id: 'nav-fornecedores',
-    target: '[data-tour="nav-fornecedores"]',
-    title: 'Fornecedores',
-    body: 'Sua base própria de fornecedores: cadastro, situação fiscal, homologação e histórico. Dá para alimentá-la a partir da busca por atividade e região.',
-  },
-  {
     id: 'nav-painel',
     target: '[data-tour="nav-painel"]',
     title: 'Painel',
@@ -74,6 +68,12 @@ export const TOUR_STEPS: TourStep[] = [
     target: '[data-tour="nav-dashboard"]',
     title: 'Dashboard',
     body: 'Suba uma planilha sua e ela vira um painel de indicadores, com rankings e cruzamentos — sem precisar montar gráfico à mão.',
+  },
+  {
+    id: 'nav-fornecedores',
+    target: '[data-tour="nav-fornecedores"]',
+    title: 'Fornecedores',
+    body: 'Sua base própria de fornecedores: cadastro, situação fiscal, homologação e histórico. Dá para alimentá-la a partir da busca por atividade e região.',
   },
   {
     id: 'nav-prompts',

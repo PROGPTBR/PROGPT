@@ -155,7 +155,7 @@ export function ProcessoRoot({ processoInicial, etapasIniciais }: Props) {
               }`}
             >
               <div className="text-[10px] font-semibold text-muted-foreground">{s.num}</div>
-              <div className="mt-0.5 break-words text-[10px] leading-tight line-clamp-2">{s.label}</div>
+              <div className="mt-0.5 text-[10px] leading-tight line-clamp-2">{s.label}</div>
               {aprovada && (
                 <Check className="mx-auto mt-1 h-3 w-3 text-emerald-600 dark:text-emerald-400" aria-hidden />
               )}

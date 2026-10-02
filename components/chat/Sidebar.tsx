@@ -58,6 +58,12 @@ const CONTACT_PHONE_HREF = 'tel:+5521999792912';
 
 const NAV_ITEMS = [
   {
+    href: '/assistants',
+    label: 'Assistentes',
+    description: null,
+    icon: Sparkles,
+  },
+  {
     href: '/fluxo',
     label: 'Fluxo de Compras',
     description: 'Conduza uma compra, da solicitação ao recebimento.',
@@ -74,12 +80,6 @@ const NAV_ITEMS = [
     label: 'Dashboard',
     description: 'Indicadores, análises e acompanhamento.',
     icon: BarChart3,
-  },
-  {
-    href: '/assistants',
-    label: 'Assistentes',
-    description: null,
-    icon: Sparkles,
   },
   {
     href: '/fornecedores',
