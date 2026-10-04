@@ -24,6 +24,7 @@ import {
 } from '@/components/ui/sheet';
 
 import { useTourAtivo } from '@/components/onboarding/TourHost';
+import { SupportWidget } from '@/components/support/SupportWidget';
 import { startTour, tourJaIniciado } from '@/lib/onboarding/tour-state';
 
 import { CHAT_PREFILL_KEY } from '@/lib/prompts/chat-prefill';
@@ -823,6 +824,8 @@ function ChatRootMounted({
         </ChatErrorBoundary>
       </div>
 
+      {/* Suporte flutuante: acima da caixa de mensagem no chat. */}
+      <SupportWidget elevado />
     </div>
   );
 }

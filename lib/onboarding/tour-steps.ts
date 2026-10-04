@@ -264,8 +264,8 @@ export const TOUR_STEPS: TourStep[] = [
     route: '/chat',
     secao: 'Para fechar',
     target: '[data-tour="suporte"]',
-    title: 'Suporte de gente',
-    body: 'Travou em alguma coisa? O WhatsApp da 2B Supply fica sempre aqui no rodapé.',
+    title: 'Suporte sempre à mão',
+    body: 'Este botão fica no canto inferior direito de todas as telas: abre as perguntas frequentes sobre o sistema, com busca, e o WhatsApp da 2B Supply para falar com a gente.',
   },
   {
     id: 'fim',

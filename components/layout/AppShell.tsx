@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 
 import { Header } from '@/app/login/header';
+import { SupportWidget } from '@/components/support/SupportWidget';
 
 // Moldura única das telas do produto (logado). Antes cada página repetia o
 // mesmo bloco de Header + brilhos + <main>, e a repetição foi derivando:
@@ -88,6 +89,7 @@ export function AppShell({
           {children}
         </main>
       </div>
+      <SupportWidget />
     </>
   );
 }
