@@ -165,7 +165,7 @@ function UploadHero({
         barra lateral, inclua números que não estavam no arquivo e crie algo único.
       </p>
 
-      <label
+      <label data-tour="dashboard-upload"
         onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
         onDragLeave={() => setDragOver(false)}
         onDrop={(e) => { e.preventDefault(); setDragOver(false); const f = e.dataTransfer.files?.[0]; if (f) onFile(f); }}
@@ -183,7 +183,7 @@ function UploadHero({
         <input ref={inputRef} type="file" accept=".xlsx,.xlsm,.csv,.tsv,.txt" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = ''; }} />
       </label>
 
-      <div className="mt-5 flex flex-wrap items-center justify-center gap-2 text-sm">
+      <div data-tour="dashboard-exemplos" className="mt-5 flex flex-wrap items-center justify-center gap-2 text-sm">
         <button onClick={onSample} className="inline-flex items-center gap-1.5 rounded-full bg-brand-gradient text-black px-4 py-2 font-semibold hover:brightness-110 active:scale-95 transition-all">
           <Sparkles className="h-4 w-4" aria-hidden /> Dados de exemplo
         </button>

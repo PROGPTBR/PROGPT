@@ -51,7 +51,7 @@ type Props = {
   onOpenPrompts?: () => void;
   promptsOpen?: boolean;
 
-  /** Reabre o tour de primeiro acesso (rodapé da barra). */
+  /** Reabre o tour da plataforma (topo do menu, acima de Assistentes). */
   onStartTour?: () => void;
 };
 
@@ -312,6 +312,17 @@ export function Sidebar({
 
         {/* Navegação */}
 <nav className="flex flex-col items-center gap-1 py-3">
+  {onStartTour && (
+    <button
+      type="button"
+      onClick={onStartTour}
+      title="Ver o tour da plataforma"
+      aria-label="Ver o tour da plataforma"
+      className="flex h-9 w-9 items-center justify-center rounded-lg text-brand transition-colors hover:bg-accent"
+    >
+      <Compass className="h-5 w-5" aria-hidden="true" />
+    </button>
+  )}
   {NAV_ITEMS.map(
     ({
       href,
@@ -545,7 +556,18 @@ export function Sidebar({
           NAVEGAÇÃO
       ========================================================= */}
 
-      <nav className="space-y-0.5 border-b border-border p-2">
+      <nav data-tour="navegacao" className="space-y-0.5 border-b border-border p-2">
+        {/* Tour no topo do menu, acima de Assistentes (pedido 2026-10-04). */}
+        {onStartTour && (
+          <button
+            type="button"
+            onClick={onStartTour}
+            className="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-brand transition-colors hover:bg-accent"
+          >
+            <Compass className="h-4 w-4 shrink-0" aria-hidden="true" />
+            <span className="truncate">Ver o tour da plataforma</span>
+          </button>
+        )}
 {NAV_ITEMS.map(
   ({
     href,
@@ -1007,31 +1029,6 @@ export function Sidebar({
       ========================================================= */}
 
       <div className="shrink-0 px-3 pb-3">
-        {onStartTour && (
-          <button
-            type="button"
-            onClick={onStartTour}
-            className="
-              mb-2
-              flex
-              w-full
-              items-center
-              gap-2
-              rounded-xl
-              px-3
-              py-2
-              text-xs
-              text-muted-foreground
-              transition-colors
-
-              hover:bg-accent
-              hover:text-foreground
-            "
-          >
-            <Compass className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-            Ver o tour da plataforma
-          </button>
-        )}
 
         <a
           href={

@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
@@ -7,15 +7,36 @@ import { TOUR_STEPS, placeCard } from '@/lib/onboarding/tour-steps';
 const VIEWPORT = { width: 1280, height: 800 };
 const CARD = { width: 360, height: 220 };
 
+const ROOT = join(__dirname, '..', '..', '..');
+
+/** Todo o código de UI (app/ + components/), para achar os alvos do tour. */
+function fontesDeUi(): string {
+  const arquivos: string[] = [];
+  const andar = (dir: string) => {
+    for (const nome of readdirSync(dir)) {
+      const caminho = join(dir, nome);
+      if (statSync(caminho).isDirectory()) andar(caminho);
+      else if (/\.tsx?$/.test(nome)) arquivos.push(caminho);
+    }
+  };
+  andar(join(ROOT, 'app'));
+  andar(join(ROOT, 'components'));
+  return arquivos.map((f) => readFileSync(f, 'utf8')).join('\n');
+}
+
 describe('TOUR_STEPS', () => {
   it('não repete id (o id identifica o passo no progresso)', () => {
     const ids = TOUR_STEPS.map((s) => s.id);
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it('abre e fecha com passo sem alvo, para o tour não começar preso a um elemento', () => {
-    expect(TOUR_STEPS[0]?.target).toBeUndefined();
-    expect(TOUR_STEPS[TOUR_STEPS.length - 1]?.target).toBeUndefined();
+  it('abre e fecha no chat com passo sem alvo, para o tour não começar preso a um elemento', () => {
+    const primeiro = TOUR_STEPS[0]!;
+    const ultimo = TOUR_STEPS[TOUR_STEPS.length - 1]!;
+    expect(primeiro.target).toBeUndefined();
+    expect(ultimo.target).toBeUndefined();
+    expect(primeiro.route).toBe('/chat');
+    expect(ultimo.route).toBe('/chat');
   });
 
   it('todo passo tem título e texto em português', () => {
@@ -25,19 +46,36 @@ describe('TOUR_STEPS', () => {
     }
   });
 
+  it('toda rota do tour é uma página que existe', () => {
+    for (const route of new Set(TOUR_STEPS.map((s) => s.route))) {
+      expect(route.startsWith('/'), route).toBe(true);
+      expect(existsSync(join(ROOT, 'app', route, 'page.tsx')), `app${route}/page.tsx`).toBe(true);
+    }
+  });
+
+  // Cada troca de rota é uma navegação. Passos da mesma tela espalhados pelo
+  // roteiro fariam o tour ir e voltar entre telas. Só o /chat aparece duas
+  // vezes: abre o tour e o fecha.
+  it('passos da mesma tela ficam juntos', () => {
+    const blocos: string[] = [];
+    for (const step of TOUR_STEPS) {
+      if (blocos[blocos.length - 1] !== step.route) blocos.push(step.route);
+    }
+    const repetidas = blocos.filter((r, i) => blocos.indexOf(r) !== i);
+    expect(repetidas).toEqual(['/chat']);
+  });
+
+  it('visita os módulos novos (vitrines sob demanda)', () => {
+    const rotas = TOUR_STEPS.map((s) => s.route);
+    expect(rotas).toContain('/gestao-obras');
+    expect(rotas).toContain('/gestao-demandas');
+  });
+
   // Este é o teste que importa de verdade: um passo que aponta para um
   // elemento que alguém renomeou vira um cartão centrado silencioso — o tour
   // continua funcionando e ninguém percebe que o destaque sumiu.
   it('todo seletor de passo existe em algum componente', () => {
-    const root = join(__dirname, '..', '..', '..');
-    const sources = [
-      'components/chat/Sidebar.tsx',
-      'components/chat/Composer.tsx',
-      'components/chat/AssistantLauncher.tsx',
-      'components/auth/UserRow.tsx',
-    ]
-      .map((f) => readFileSync(join(root, f), 'utf8'))
-      .join('\n');
+    const sources = fontesDeUi();
 
     for (const step of TOUR_STEPS) {
       if (!step.target) continue;

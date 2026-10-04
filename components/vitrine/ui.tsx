@@ -37,6 +37,7 @@ export function VitrineCabecalho({
         <p className="mt-1 max-w-2xl text-sm text-muted-foreground">{descricao}</p>
       </div>
       <a
+        data-tour="vitrine-contato"
         href={solicitarProdutoHref(produto)}
         target="_blank"
         rel="noopener noreferrer"
@@ -94,7 +95,7 @@ export function Abas<T extends string>({
   onChange: (id: T) => void;
 }) {
   return (
-    <div role="tablist" className="mb-6 flex gap-1 overflow-x-auto rounded-xl bg-muted p-1">
+    <div role="tablist" data-tour="vitrine-abas" className="mb-6 flex gap-1 overflow-x-auto rounded-xl bg-muted p-1">
       {abas.map((aba) => (
         <button
           key={aba.id}

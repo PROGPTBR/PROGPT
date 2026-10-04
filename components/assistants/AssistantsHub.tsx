@@ -80,7 +80,7 @@ export function AssistantsHub({
       </header>
 
       {/* ───── Spotlight cards ───── */}
-      <section aria-label="Assistentes disponíveis">
+      <section data-tour="assistentes-grade" aria-label="Assistentes disponíveis">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {ASSISTANTS.map((assistant) => {
             const Preview = PREVIEWS[assistant.previewKey];

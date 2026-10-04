@@ -4,6 +4,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from '@/components/ui/sonner';
 import { CookieConsent } from '@/components/legal/CookieConsent';
 import { ServiceWorkerRegister } from '@/components/pwa/ServiceWorkerRegister';
+import { TourHost } from '@/components/onboarding/TourHost';
 import './globals.css';
 
 // Inter is the single typeface across the whole app (headings + body + UI),
@@ -62,6 +63,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Toaster />
           <CookieConsent />
           <ServiceWorkerRegister />
+          {/* Tour guiado: vive aqui para sobreviver à navegação entre páginas. */}
+          <TourHost />
         </ThemeProvider>
       </body>
     </html>

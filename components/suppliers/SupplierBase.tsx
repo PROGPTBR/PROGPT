@@ -140,7 +140,7 @@ export function SupplierBase() {
             carteira · salve da Busca de Fornecedores ou cadastre à mão.
           </p>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
+        <div data-tour="fornecedores-acoes" className="flex items-center gap-2 flex-wrap">
           <button
             type="button"
             onClick={() => setShowImport(true)}
@@ -183,7 +183,7 @@ export function SupplierBase() {
 
       {/* Filtros */}
       <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card p-3">
-        <div className="relative flex-1 min-w-[180px]">
+        <div data-tour="fornecedores-busca" className="relative flex-1 min-w-[180px]">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
           <input
             value={q}

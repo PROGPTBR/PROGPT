@@ -60,7 +60,7 @@ export function PromptsLibrary({ prompts, initialFavorites }: Props) {
 
       <div className="grid grid-cols-1 md:grid-cols-[210px_1fr] gap-0 rounded-md border border-border overflow-hidden bg-card">
         {/* Sidebar de categorias */}
-        <nav className="border-b md:border-b-0 md:border-r border-border p-2 space-y-0.5 text-sm bg-muted/30 md:max-h-[72vh] md:overflow-y-auto">
+        <nav data-tour="prompts-categorias" className="border-b md:border-b-0 md:border-r border-border p-2 space-y-0.5 text-sm bg-muted/30 md:max-h-[72vh] md:overflow-y-auto">
           <CategoryButton
             label="Todos"
             count={prompts.length}
@@ -87,7 +87,7 @@ export function PromptsLibrary({ prompts, initialFavorites }: Props) {
 
         {/* Lista (larga) */}
         <div className="flex flex-col min-w-0 max-h-[72vh]">
-          <div className="p-2 border-b border-border">
+          <div data-tour="prompts-busca" className="p-2 border-b border-border">
             <div className="relative">
               <Search
                 className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground"
@@ -102,7 +102,7 @@ export function PromptsLibrary({ prompts, initialFavorites }: Props) {
               />
             </div>
           </div>
-          <ul className="flex-1 overflow-y-auto divide-y divide-border">
+          <ul data-tour="prompts-lista" className="flex-1 overflow-y-auto divide-y divide-border">
             {filtered.length === 0 ? (
               <li className="p-4 text-sm text-muted-foreground">
                 Nenhum prompt encontrado.

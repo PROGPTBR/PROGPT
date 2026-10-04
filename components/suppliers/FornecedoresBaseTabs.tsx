@@ -15,7 +15,7 @@ export function FornecedoresBaseTabs() {
 
   return (
     <div className="space-y-6">
-      <div className="inline-flex rounded-lg border border-border bg-card p-1">
+      <div data-tour="fornecedores-abas" className="inline-flex rounded-lg border border-border bg-card p-1">
         <TabButton active={tab === 'fornecedores'} onClick={() => setTab('fornecedores')}>
           Fornecedores
         </TabButton>

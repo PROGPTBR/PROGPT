@@ -54,7 +54,7 @@ export function UnifiedDashboard() {
   return (
     <div className="space-y-6 sm:space-y-8">
       {/* Header */}
-      <header className="flex flex-wrap items-end justify-between gap-3 sm:gap-4">
+      <header data-tour="painel-cabecalho" className="flex flex-wrap items-end justify-between gap-3 sm:gap-4">
         <div className="min-w-0">
           <div className="flex items-center gap-2 text-brand">
             <LayoutDashboard className="h-5 w-5" aria-hidden="true" />
@@ -99,7 +99,7 @@ export function UnifiedDashboard() {
       {data && (
         <>
           {/* KPIs gerais */}
-          <section className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          <section data-tour="painel-kpis" className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
             <Kpi
               icon={<MessageSquare className="h-4 w-4" />}
               label="Conversas"

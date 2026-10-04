@@ -23,7 +23,8 @@ import {
   SheetContent,
 } from '@/components/ui/sheet';
 
-import { ProductTour } from '@/components/onboarding/ProductTour';
+import { useTourAtivo } from '@/components/onboarding/TourHost';
+import { startTour, tourJaIniciado } from '@/lib/onboarding/tour-state';
 
 import { CHAT_PREFILL_KEY } from '@/lib/prompts/chat-prefill';
 
@@ -72,20 +73,15 @@ function ChatRootMounted({
      TOUR DE PRIMEIRO ACESSO
   ========================================================== */
 
-  const [tourOpen, setTourOpen] =
-    useState(showTour);
+  /* O tour navega entre páginas e é conduzido pelo <TourHost/> do layout
+     raiz (que também marca o tour como visto ao concluir/pular). Aqui o chat
+     só dispara o primeiro acesso — e não recomeça um tour em andamento, que
+     volta a passar pelo /chat nos passos finais. */
+  const tourOpen = useTourAtivo();
 
-  function finishTour() {
-    setTourOpen(false);
-
-    /* Marca no perfil pra não reaparecer em outro computador.
-       Fail-soft: errar aqui só faz o tour voltar no próximo login. */
-    fetch('/api/account/onboarding-tour', {
-      method: 'POST',
-    }).catch(() => {
-      /* ignore */
-    });
-  }
+  useEffect(() => {
+    if (showTour && !tourJaIniciado()) startTour();
+  }, [showTour]);
 
   /* ==========================================================
      WELCOME EMAIL (fallback) — ver lib/email/welcome.ts. Idempotente
@@ -435,9 +431,7 @@ function ChatRootMounted({
             );
           }}
 
-          onStartTour={() =>
-            setTourOpen(true)
-          }
+          onStartTour={startTour}
         />
       </div>
 
@@ -599,7 +593,7 @@ function ChatRootMounted({
 
             onStartTour={() => {
               setDrawerOpen(false);
-              setTourOpen(true);
+              startTour();
             }}
           />
         </SheetContent>
@@ -829,14 +823,6 @@ function ChatRootMounted({
         </ChatErrorBoundary>
       </div>
 
-      {/* ======================================================
-          TOUR DE PRIMEIRO ACESSO
-      ======================================================= */}
-
-      <ProductTour
-        open={tourOpen}
-        onFinish={finishTour}
-      />
     </div>
   );
 }

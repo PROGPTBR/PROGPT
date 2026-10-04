@@ -86,7 +86,7 @@ export function FluxoRoot({ processosIniciais }: { processosIniciais: FluxoProce
       {/* Quatro por linha: cada card fica largo o bastante para o nome da etapa
           caber sem partir palavra — e a quebra cai justo no corte do processo
           (linha 1 = S2C, etapas 1-4; linha 2 = P2P, etapas 5-8). */}
-      <ol className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+      <ol data-tour="fluxo-trilha" className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {FLUXO_STAGES.map((s) => (
           <li
             key={s.id}
@@ -104,7 +104,7 @@ export function FluxoRoot({ processosIniciais }: { processosIniciais: FluxoProce
         ))}
       </ol>
 
-      <div className="flex flex-wrap items-center gap-2">
+      <div data-tour="fluxo-acoes" className="flex flex-wrap items-center gap-2">
         {!abrindo && (
           <button
             type="button"

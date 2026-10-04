@@ -1,108 +1,277 @@
-// Tour de primeiro acesso — roteiro completo do produto.
+// Tour de primeiro acesso — roteiro completo do produto, PÁGINA POR PÁGINA.
 //
 // Os passos vivem aqui (e não dentro do componente) por dois motivos: o texto
 // é conteúdo de produto, que muda mais do que a mecânica do tour; e o cálculo
 // de posicionamento do cartão é pura aritmética, testável sem browser.
 //
+// `route` é a tela onde o passo acontece: o <TourHost/> navega até ela antes
+// de mostrar o passo (sub-projeto 70 — antes o tour rodava só no /chat).
 // `target` é um seletor CSS do elemento real da tela. Passo sem alvo — ou com
-// alvo ausente (sidebar recolhida, celular com a gaveta fechada) — vira um
-// cartão centrado, então o tour nunca trava num passo que não dá para mostrar.
+// alvo ausente (sidebar recolhida, celular com a gaveta fechada, tela que não
+// carregou a tempo) — vira um cartão centrado, então o tour nunca trava.
+//
+// Ao incluir uma tela nova no tour, mantenha os passos da MESMA rota juntos:
+// cada troca de rota é uma navegação, e ir e voltar entre telas cansa.
 
 export type TourStep = {
   id: string;
+  route: string;
+  /** Nome da seção mostrado no cartão ("Fluxo de Compras · Passo 9 de 29"). */
+  secao?: string;
   target?: string;
   title: string;
   body: string;
 };
 
 export const TOUR_STEPS: TourStep[] = [
+  // ── Chat ──────────────────────────────────────────────────────────────
   {
     id: 'boas-vindas',
+    route: '/chat',
     title: 'Bem-vindo ao PROGPT',
-    body: 'Em um minuto você conhece tudo que a plataforma faz. Pode sair quando quiser — e rever o tour depois, pelo rodapé da barra lateral.',
+    body: 'Vamos passar por cada tela da plataforma, uma por uma, e mostrar o que cada uma faz. Pode sair quando quiser — e rever o tour depois pelo botão "Ver o tour da plataforma", no topo da barra lateral.',
   },
   {
     id: 'composer',
+    route: '/chat',
+    secao: 'Chat',
     target: '[data-tour="composer"]',
     title: 'Comece perguntando',
-    body: 'Escreva aqui qualquer dúvida de compras. As respostas são fundamentadas na base de conhecimento de Strategic Sourcing — e, quando não há fonte, o PROGPT diz isso em vez de inventar.',
+    body: 'Escreva aqui qualquer dúvida de compras. As respostas são fundamentadas na base de conhecimento de Strategic Sourcing — e, quando não há fonte, o PROGPT diz isso em vez de inventar. Dá para anexar contrato ou proposta pelo clipe.',
   },
   {
     id: 'atalhos',
+    route: '/chat',
+    secao: 'Chat',
     target: '[aria-label="Atalhos para assistentes"]',
     title: 'As ferramentas vêm até você',
     body: 'Não precisa saber onde cada coisa fica. Pedindo um preço de referência, a situação de um CNPJ ou os indicadores do mês, o próprio chat aciona a ferramenta e depois sugere a tela completa.',
   },
   {
     id: 'voz',
+    route: '/chat',
+    secao: 'Chat',
     target: '[data-tour="voz"]',
     title: 'Converse por voz',
     body: 'Fale com o PROGPT em tempo real, com a mesma base por trás. Útil para ensaiar uma negociação ou tirar dúvidas com as mãos ocupadas.',
   },
   {
     id: 'modo-livre',
+    route: '/chat',
+    secao: 'Chat',
     target: '[data-tour="modo-livre"]',
     title: 'Modo Livre',
     body: 'Liga o assistente pessoal: assunto livre, fora de compras, com busca na web ao vivo para o que depende de informação atual.',
   },
   {
-    id: 'nav-assistants',
-    target: '[data-tour="nav-assistants"]',
-    title: 'Assistentes',
-    body: 'As ferramentas que executam tarefas: RFP, Matriz Kraljic, Curva ABC, Scorecard de fornecedor, Análise de Gastos, Pesquisa de Preços e mais. Entregam documento .docx e planilha .xlsx prontos para enviar.',
-  },
-  {
-    id: 'nav-fluxo',
-    target: '[data-tour="nav-fluxo"]',
-    title: 'Fluxo de Compras',
-    body: 'Conduz uma compra inteira em oito etapas, da solicitação ao recebimento. A IA executa cada etapa e para para você decidir: SIGA avança, AJUSTAR manda refazer. Nada anda sem a sua decisão.',
-  },
-  {
-    id: 'nav-painel',
-    target: '[data-tour="nav-painel"]',
-    title: 'Painel',
-    body: 'A visão geral do seu ambiente: o que já foi analisado, quanto de gasto passou pela plataforma e a atividade ao longo dos meses.',
-  },
-  {
-    id: 'nav-dashboard',
-    target: '[data-tour="nav-dashboard"]',
-    title: 'Dashboard',
-    body: 'Suba uma planilha sua e ela vira um painel de indicadores, com rankings e cruzamentos — sem precisar montar gráfico à mão.',
-  },
-  {
-    id: 'nav-fornecedores',
-    target: '[data-tour="nav-fornecedores"]',
-    title: 'Fornecedores',
-    body: 'Sua base própria de fornecedores: cadastro, situação fiscal, homologação e histórico. Dá para alimentá-la a partir da busca por atividade e região.',
-  },
-  {
-    id: 'nav-prompts',
-    target: '[data-tour="nav-prompts"]',
-    title: 'Biblioteca de Prompts',
-    body: 'Dezenas de perguntas prontas de procurement, organizadas por tema. Clique em "Usar no chat" e ajuste os campos entre colchetes com os dados da sua compra.',
-  },
-  {
     id: 'conversas',
+    route: '/chat',
+    secao: 'Chat',
     target: '[data-tour="conversas"]',
     title: 'Suas conversas ficam salvas',
     body: 'Cada conversa fica no histórico, com busca. Dá para renomear e continuar de onde parou — inclusive de outro computador.',
   },
   {
+    id: 'navegacao',
+    route: '/chat',
+    secao: 'Chat',
+    target: '[data-tour="navegacao"]',
+    title: 'Os módulos da plataforma',
+    body: 'Cada item deste menu abre um módulo. A partir do próximo passo, o tour visita um por um — é só ir clicando em "Próximo".',
+  },
+
+  // ── Assistentes ───────────────────────────────────────────────────────
+  {
+    id: 'assistentes-grade',
+    route: '/assistants',
+    secao: 'Assistentes',
+    target: '[data-tour="assistentes-grade"]',
+    title: 'Assistentes que executam tarefas',
+    body: 'Cada cartão é uma ferramenta de Strategic Sourcing: RFP, Matriz Kraljic, 5 Forças de Porter, Curva ABC, Scorecard de fornecedor, Análise Financeira, Análise de Gastos, Pesquisa de Preços, Homologação, Negociação e outras. Você preenche o pedido e recebe documento .docx e planilha .xlsx prontos.',
+  },
+  {
+    id: 'assistentes-historico',
+    route: '/assistants',
+    secao: 'Assistentes',
+    target: '[data-tour="assistentes-historico"]',
+    title: 'Histórico de execuções',
+    body: 'Tudo o que você já gerou com os assistentes fica aqui: dá para reabrir, pedir ajustes conversando com a IA e baixar os arquivos de novo.',
+  },
+
+  // ── Fluxo de Compras ──────────────────────────────────────────────────
+  {
+    id: 'fluxo-trilha',
+    route: '/fluxo',
+    secao: 'Fluxo de Compras',
+    target: '[data-tour="fluxo-trilha"]',
+    title: 'Uma compra em oito etapas',
+    body: 'Solicitação, aprovação, seleção de fornecedores, RFQ, análise e negociação, pedido de compra, acompanhamento e recebimento. A primeira linha é a fase de sourcing; a segunda, a de compra até a entrega.',
+  },
+  {
+    id: 'fluxo-acoes',
+    route: '/fluxo',
+    secao: 'Fluxo de Compras',
+    target: '[data-tour="fluxo-acoes"]',
+    title: 'Você decide cada passo',
+    body: 'Descreva a necessidade para abrir um processo. A IA executa cada etapa e para para você decidir: SIGA avança, AJUSTAR manda refazer com a sua correção. Em "Gestão dos processos" você acompanha todos de uma vez.',
+  },
+
+  // ── Painel ────────────────────────────────────────────────────────────
+  {
+    id: 'painel-cabecalho',
+    route: '/painel',
+    secao: 'Painel',
+    target: '[data-tour="painel-cabecalho"]',
+    title: 'Tudo o que você fez, num lugar',
+    body: 'O Painel junta os dados de todas as ferramentas da sua conta. Os números são recalculados sempre que você abre a tela — e o botão "Atualizar" recarrega na hora.',
+  },
+  {
+    id: 'painel-kpis',
+    route: '/painel',
+    secao: 'Painel',
+    target: '[data-tour="painel-kpis"]',
+    title: 'Indicadores da sua conta',
+    body: 'Conversas, execuções de assistentes, gasto analisado, notas processadas, fornecedores e categorias. Logo abaixo vêm a atividade dos últimos 12 meses e, depois que você roda a Análise de Gastos, o gasto por categoria, fornecedor e mês.',
+  },
+
+  // ── Dashboard ─────────────────────────────────────────────────────────
+  {
+    id: 'dashboard-upload',
+    route: '/dashboard',
+    secao: 'Dashboard',
+    target: '[data-tour="dashboard-upload"]',
+    title: 'Sua planilha vira dashboard',
+    body: 'Arraste aqui uma planilha .xlsx ou .csv e o PROGPT monta os painéis sozinho, com rankings e cruzamentos — sem precisar desenhar gráfico à mão.',
+  },
+  {
+    id: 'dashboard-exemplos',
+    route: '/dashboard',
+    secao: 'Dashboard',
+    target: '[data-tour="dashboard-exemplos"]',
+    title: 'Comece por um exemplo',
+    body: 'Sem planilha à mão? Abra os dados de exemplo ou um template para ver como fica. Os dashboards que você salvar aparecem nesta tela para abrir depois.',
+  },
+
+  // ── Fornecedores ──────────────────────────────────────────────────────
+  {
+    id: 'fornecedores-abas',
+    route: '/fornecedores',
+    secao: 'Fornecedores',
+    target: '[data-tour="fornecedores-abas"]',
+    title: 'Suas bases de fornecedores e materiais',
+    body: 'Duas bases próprias da sua empresa: a de fornecedores, com cadastro, situação e histórico, e a de materiais. Alterne entre elas por estas abas.',
+  },
+  {
+    id: 'fornecedores-acoes',
+    route: '/fornecedores',
+    secao: 'Fornecedores',
+    target: '[data-tour="fornecedores-acoes"]',
+    title: 'Alimente a base',
+    body: 'Importe a sua vendor list de uma planilha ou cadastre um fornecedor à mão. Também dá para salvar direto da Busca de Fornecedores, que procura empresas por atividade (CNAE) e região.',
+  },
+  {
+    id: 'fornecedores-busca',
+    route: '/fornecedores',
+    secao: 'Fornecedores',
+    target: '[data-tour="fornecedores-busca"]',
+    title: 'Encontre rápido',
+    body: 'Busque por nome, categoria, CNAE ou cidade e filtre pelo status de cada fornecedor — de prospecto a homologado, ativo ou bloqueado.',
+  },
+
+  // ── Biblioteca de Prompts ─────────────────────────────────────────────
+  {
+    id: 'prompts-categorias',
+    route: '/prompts',
+    secao: 'Prompts',
+    target: '[data-tour="prompts-categorias"]',
+    title: 'Perguntas prontas por tema',
+    body: 'Dezenas de prompts de procurement organizados por categoria. Em "Favoritos" ficam os que você marcou com a estrela.',
+  },
+  {
+    id: 'prompts-busca',
+    route: '/prompts',
+    secao: 'Prompts',
+    target: '[data-tour="prompts-busca"]',
+    title: 'Busque pelo que precisa',
+    body: 'Filtre por título, resumo ou tag — por exemplo "negociação", "contrato" ou "fornecedor".',
+  },
+  {
+    id: 'prompts-lista',
+    route: '/prompts',
+    secao: 'Prompts',
+    target: '[data-tour="prompts-lista"]',
+    title: 'Do prompt ao chat em um clique',
+    body: 'Abra um prompt para ler e clique em "Usar no chat": ele chega pronto no chat, e você só ajusta os campos entre colchetes com os dados da sua compra.',
+  },
+
+  // ── Gestão de Obras (vitrine) ─────────────────────────────────────────
+  {
+    id: 'obras-abas',
+    route: '/gestao-obras',
+    secao: 'Gestão de Obras',
+    target: '[data-tour="vitrine-abas"]',
+    title: 'Gestão de Obras',
+    body: 'Gestão de obras públicas: visão geral da carteira, contratos e obras com a planilha orçamentária, boletins de medição e planejamento das frentes por quinzena. Navegue pelas abas — os dados desta tela são de exemplo.',
+  },
+  {
+    id: 'obras-contato',
+    route: '/gestao-obras',
+    secao: 'Gestão de Obras',
+    target: '[data-tour="vitrine-contato"]',
+    title: 'Implantado sob demanda',
+    body: 'Este módulo é implantado com os contratos, obras e o processo da sua empresa. Quer na sua operação? Fale com a 2B Supply por aqui.',
+  },
+
+  // ── Gestão de Demandas (vitrine) ──────────────────────────────────────
+  {
+    id: 'demandas-abas',
+    route: '/gestao-demandas',
+    secao: 'Gestão de Demandas',
+    target: '[data-tour="vitrine-abas"]',
+    title: 'Gestão de Demandas',
+    body: 'Solicitações entre setores com responsável, prazo, percentual de conclusão, histórico e validação da entrega — mais o quadro de fluxo e os relatórios. Também com dados de exemplo.',
+  },
+  {
+    id: 'demandas-contato',
+    route: '/gestao-demandas',
+    secao: 'Gestão de Demandas',
+    target: '[data-tour="vitrine-contato"]',
+    title: 'Também sob demanda',
+    body: 'Os setores, as pessoas e as regras de prazo são configurados para a sua empresa na implantação. O pedido é por aqui.',
+  },
+
+  // ── Conta ─────────────────────────────────────────────────────────────
+  {
+    id: 'conta-assinatura',
+    route: '/account/billing',
+    secao: 'Sua conta',
+    target: '[data-tour="conta-assinatura"]',
+    title: 'Sua assinatura',
+    body: 'Plano, situação, forma de pagamento e próxima cobrança. Se você contratou mais de um acesso, os convites da sua equipe também ficam nesta tela.',
+  },
+
+  // ── De volta ao chat ──────────────────────────────────────────────────
+  {
     id: 'conta',
+    route: '/chat',
+    secao: 'Para fechar',
     target: '[data-tour="conta"]',
-    title: 'Sua conta',
-    body: 'Aqui ficam o seu perfil, os dados da empresa que entram nos documentos gerados, a assinatura e — se você contratou mais de um acesso — os convites da sua equipe.',
+    title: 'Sua conta, sempre à mão',
+    body: 'Por aqui você chega ao perfil, aos dados da empresa que entram nos documentos gerados e à assinatura.',
   },
   {
     id: 'suporte',
+    route: '/chat',
+    secao: 'Para fechar',
     target: '[data-tour="suporte"]',
     title: 'Suporte de gente',
     body: 'Travou em alguma coisa? O WhatsApp da 2B Supply fica sempre aqui no rodapé.',
   },
   {
     id: 'fim',
+    route: '/chat',
     title: 'Pronto para começar',
-    body: 'A forma mais rápida de ver valor é fazer uma pergunta real da sua rotina de compras. Se quiser rever este tour, ele fica no rodapé da barra lateral.',
+    body: 'A forma mais rápida de ver valor é fazer uma pergunta real da sua rotina de compras. Para rever este tour, use "Ver o tour da plataforma", no topo da barra lateral.',
   },
 ];
 
