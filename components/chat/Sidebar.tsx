@@ -20,6 +20,8 @@ import {
   Phone,
   Search,
   X,
+  HardHat,
+  ClipboardList,
 } from 'lucide-react';
 
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -92,6 +94,20 @@ const NAV_ITEMS = [
     label: 'Biblioteca de Prompts',
     description: null,
     icon: BookOpen,
+  },
+  // Vitrines sob demanda (sub-projeto 68): só dados de exemplo; o produto de
+  // verdade é implantado por pedido ao comercial da 2B Supply.
+  {
+    href: '/gestao-obras',
+    label: 'Gestão de Obras',
+    description: 'Contratos, medições e planejamento de obras.',
+    icon: HardHat,
+  },
+  {
+    href: '/gestao-demandas',
+    label: 'Gestão de Demandas',
+    description: 'Solicitações entre setores, com prazo e validação.',
+    icon: ClipboardList,
   },
 ] as const;
 

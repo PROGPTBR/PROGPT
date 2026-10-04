@@ -240,5 +240,7 @@ export const config = {
     '/prompts/:path*',
     '/painel/:path*',
     '/plataforma/:path*',
+    '/gestao-obras/:path*',
+    '/gestao-demandas/:path*',
   ],
 };
