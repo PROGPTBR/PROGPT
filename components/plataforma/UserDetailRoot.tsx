@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { toast } from 'sonner';
 import { ArrowLeft, Eye, KeyRound, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ImpersonateDialog } from '@/components/plataforma/ImpersonateDialog';
 
 type Profile = {
   id: string;
@@ -118,12 +119,25 @@ export function UserDetailRoot({ userId }: { userId: string }) {
               {!profile.active && <span className="text-destructive font-medium">login desativado</span>}
             </p>
           </div>
-          <Link
-            href={`/plataforma/usuarios/${userId}/visualizar`}
-            className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/40 bg-amber-500/10 px-3 py-1.5 text-xs font-medium text-amber-700 dark:text-amber-400 hover:bg-amber-500/20 transition-colors"
-          >
-            <Eye className="h-3.5 w-3.5" /> Ver como o cliente
-          </Link>
+          <div className="flex flex-wrap items-center gap-2">
+            <Link
+              href={`/plataforma/usuarios/${userId}/visualizar`}
+              className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+            >
+              <Eye className="h-3.5 w-3.5" /> Ver conversas (só leitura)
+            </Link>
+            <ImpersonateDialog
+              userId={userId}
+              email={profile.email}
+              bloqueio={
+                profile.superAdmin
+                  ? 'Não é possível entrar na conta de outro super admin.'
+                  : !profile.active
+                    ? 'O login desta conta está desativado.'
+                    : undefined
+              }
+            />
+          </div>
         </div>
       </div>
 

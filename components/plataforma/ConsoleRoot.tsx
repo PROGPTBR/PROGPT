@@ -31,6 +31,7 @@ const ACTION_LABEL: Record<string, string> = {
   'user.billing_release': 'liberou acesso pago',
   'user.billing_block': 'bloqueou acesso pago',
   'user.support_view': 'visualizou como suporte',
+  'user.impersonate': 'entrou como o cliente',
 };
 
 function relative(iso: string): string {

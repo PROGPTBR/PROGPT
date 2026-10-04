@@ -78,6 +78,7 @@ const AUDIT_ACTION_LABEL: Record<string, string> = {
   'theme.rename': 'Renomeou/mesclou tema',
   'feedback.resolve': 'Resolveu feedback',
   'feedback.reopen': 'Reabriu feedback',
+  'user.impersonate': 'Entrou como o cliente',
 };
 
 function auditDetail(row: AuditLogRow): string {
@@ -85,6 +86,8 @@ function auditDetail(row: AuditLogRow): string {
   switch (row.action) {
     case 'user.role_change':
       return `novo papel: ${m.toRole ?? '—'}`;
+    case 'user.impersonate':
+      return `conta: ${m.targetEmail ?? '—'}`;
     case 'article.bulk_delete':
       return `${Number(m.deleted ?? 0)} artigo(s)`;
     case 'theme.promote':
