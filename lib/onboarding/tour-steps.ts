@@ -240,6 +240,32 @@ export const TOUR_STEPS: TourStep[] = [
     body: 'Os setores, as pessoas e as regras de prazo são configurados para a sua empresa na implantação. O pedido é por aqui.',
   },
 
+  // ── Meu perfil ────────────────────────────────────────────────────────
+  {
+    id: 'perfil-topo',
+    route: '/profile',
+    secao: 'Meu perfil',
+    target: '[data-tour="perfil-topo"]',
+    title: 'Seu perfil, em dois passos',
+    body: 'Aqui você preenche uma vez os dados da sua empresa. Depois disso, eles entram sozinhos em todo documento e planilha que o PROGPT gerar — não precisa digitar de novo.',
+  },
+  {
+    id: 'perfil-logo',
+    route: '/profile',
+    secao: 'Meu perfil',
+    target: '[data-tour="perfil-logo"]',
+    title: '1. O logo da empresa',
+    body: 'Clique em "Enviar logo" e escolha a imagem (PNG ou JPG). Ela aparece na capa dos documentos. Dá para trocar ou remover quando quiser.',
+  },
+  {
+    id: 'perfil-dados',
+    route: '/profile',
+    secao: 'Meu perfil',
+    target: '[data-tour="perfil-dados"]',
+    title: '2. Os dados da empresa',
+    body: 'Basta o nome da empresa para começar; CNPJ, telefone e e-mail são opcionais. Em "Mais detalhes" ficam razão social, endereço e uma apresentação curta. No fim, clique em "Salvar dados".',
+  },
+
   // ── Conta ─────────────────────────────────────────────────────────────
   {
     id: 'conta-assinatura',
@@ -257,7 +283,7 @@ export const TOUR_STEPS: TourStep[] = [
     secao: 'Para fechar',
     target: '[data-tour="conta"]',
     title: 'Sua conta, sempre à mão',
-    body: 'Por aqui você chega ao perfil, aos dados da empresa que entram nos documentos gerados e à assinatura.',
+    body: 'O ícone com a sua inicial, no canto superior direito de todas as telas, abre a sua conta: Meu perfil, Assinatura e Sair. Ao lado dele fica o botão de tema claro ou escuro.',
   },
   {
     id: 'suporte',

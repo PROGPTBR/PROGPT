@@ -25,7 +25,6 @@ import {
 
 import { ScrollArea } from '@/components/ui/scroll-area';
 import type { StoredSession } from '@/lib/chat-storage';
-import { UserRow } from '@/components/auth/UserRow';
 import { BrandLogo } from '@/components/brand/BrandLogo';
 
 type Props = {
@@ -409,7 +408,6 @@ export function Sidebar({
         {/* Preenche o meio */}
         <div className="flex-1" />
 
-        <UserRow collapsed />
       </aside>
     );
   }
@@ -717,10 +715,6 @@ export function Sidebar({
   </button>
 </div>
 
-{/* Histórico */}
-<div className="border-b border-border px-1 pb-2 text-[11px] font-medium text-muted-foreground">
-  Histórico de conversas
-</div>
 
   {/* Busca */}
   <div className="relative mt-3">
@@ -990,11 +984,6 @@ export function Sidebar({
         </ul>
       </ScrollArea>
 
-      {/* ========================================================
-          USUÁRIO
-      ========================================================= */}
-
-      <UserRow />
     </aside>
   );
 }

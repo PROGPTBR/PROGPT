@@ -1,12 +1,10 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { parseSeats } from '@/lib/billing/seats';
-import { AlertCircle, CreditCard, Loader2, Sparkles, X } from 'lucide-react';
-import { toast } from 'sonner';
+import { AlertCircle, CreditCard, Sparkles } from 'lucide-react';
 import type { Subscription } from '@/lib/billing/subscription';
+import { CancelSubscription } from '@/components/billing/CancelSubscription';
 
 type Props = {
   subscription: Subscription | null;
@@ -57,29 +55,6 @@ function StatusBadge({ status }: { status: Subscription['status'] }) {
 }
 
 export function SubscriptionPanel({ subscription }: Props) {
-  const router = useRouter();
-  const [busy, setBusy] = useState(false);
-
-  async function handleCancel() {
-    if (!subscription) return;
-    if (!confirm('Confirma o cancelamento? Você mantém Pro até o fim do ciclo atual.')) return;
-    setBusy(true);
-    try {
-      const res = await fetch('/api/billing/cancel', { method: 'POST' });
-      if (!res.ok) {
-        toast.error('Falha ao cancelar. Tente novamente.');
-        setBusy(false);
-        return;
-      }
-      toast.success('Assinatura cancelada. Acesso até o fim do ciclo.');
-      router.refresh();
-    } catch (err) {
-      console.error(err);
-      toast.error('Erro de rede. Tente novamente.');
-      setBusy(false);
-    }
-  }
-
   // No subscription = free user
   if (!subscription) {
     return (
@@ -116,9 +91,6 @@ export function SubscriptionPanel({ subscription }: Props) {
   // Assinatura por usuário: mostra a quantidade contratada quando for time.
   const seatCount = parseSeats(subscription.seats ?? 1);
 
-  const showCancelButton =
-    !isCancelling &&
-    (subscription.status === 'active' || subscription.status === 'past_due');
 
   return (
     <div data-tour="conta-assinatura" className="space-y-6">
@@ -196,25 +168,15 @@ export function SubscriptionPanel({ subscription }: Props) {
         </div>
       </div>
 
-      {showCancelButton && (
-        <button
-          type="button"
-          onClick={handleCancel}
-          disabled={busy}
-          className="w-full rounded-full border border-red-500/40 bg-red-500/5 hover:bg-red-500/10 text-red-700 dark:text-red-400 h-10 text-sm font-medium transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2"
-        >
-          {busy ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-              Cancelando…
-            </>
-          ) : (
-            <>
-              <X className="h-4 w-4" aria-hidden />
-              Cancelar assinatura
-            </>
-          )}
-        </button>
+      {/* Cancelamento self-service (CDC art. 49). Cobre também o período de
+          teste: antes vivia só no Perfil, que foi simplificado (sub-projeto 72). */}
+      {!isCancelling && (
+        <CancelSubscription
+          status={subscription.status}
+          trialEnd={subscription.trial_end}
+          currentPeriodEnd={subscription.current_period_end}
+          cancelAtPeriodEnd={subscription.cancel_at_period_end}
+        />
       )}
 
       {subscription.status === 'cancelled' && (

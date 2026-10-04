@@ -5,7 +5,6 @@ import userEvent from '@testing-library/user-event';
 
 // Leaf children pull in supabase/next — stub them so the test isolates the
 // sidebar's own rename interaction.
-vi.mock('@/components/auth/UserRow', () => ({ UserRow: () => null }));
 vi.mock('@/components/brand/BrandLogo', () => ({ BrandLogo: () => null }));
 
 import { Sidebar } from '@/components/chat/Sidebar';

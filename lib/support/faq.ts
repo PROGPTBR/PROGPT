@@ -124,7 +124,7 @@ export const FAQ_SUPORTE: FaqSecao[] = [
         id: 'dados-empresa',
         pergunta: 'Como coloco os dados e o logo da minha empresa nos documentos?',
         resposta:
-          'Preencha "Meu perfil" (clique no seu nome, no rodapé da barra lateral). Os dados da empresa e o logo entram automaticamente nos documentos gerados.',
+          'Clique no ícone com a sua inicial, no canto superior direito, e abra "Meu perfil". Envie o logo e preencha os dados da empresa (basta o nome para começar): eles entram automaticamente nos documentos gerados.',
         termos: 'logo empresa perfil capa',
       },
       {
@@ -211,7 +211,7 @@ export const FAQ_SUPORTE: FaqSecao[] = [
         id: 'ver-assinatura',
         pergunta: 'Onde vejo meu plano e minhas cobranças?',
         resposta:
-          'Clique no seu nome, no rodapé da barra lateral, e depois em "Assinatura": ali estão o plano, a situação, a forma de pagamento e a data da próxima cobrança.',
+          'Clique no ícone com a sua inicial, no canto superior direito, e depois em "Assinatura": ali estão o plano, a situação, a forma de pagamento e a data da próxima cobrança.',
         termos: 'plano cobrança pagamento fatura preço valor',
       },
       {
@@ -225,7 +225,7 @@ export const FAQ_SUPORTE: FaqSecao[] = [
         id: 'cancelar',
         pergunta: 'Como cancelo a assinatura?',
         resposta:
-          'Na tela de Assinatura, em "Cancelar assinatura". O acesso continua até o fim do período já pago.',
+          'Na tela de Assinatura, em "Cancelar assinatura". Vale também durante o período de teste: cancelando antes do fim do teste, nada é cobrado. Depois disso, o acesso continua até o fim do período já pago.',
         termos: 'cancelamento',
       },
       {
@@ -239,7 +239,7 @@ export const FAQ_SUPORTE: FaqSecao[] = [
         id: 'excluir',
         pergunta: 'Como excluo minha conta?',
         resposta:
-          'Em "Meu perfil" (clique no seu nome, no rodapé da barra lateral), use "Excluir minha conta". A exclusão apaga as suas conversas e documentos e cancela a assinatura. Não dá para desfazer.',
+          'Em "Meu perfil" (ícone com a sua inicial, no canto superior direito), use "Excluir minha conta", no fim da página. A exclusão apaga as suas conversas e documentos e cancela a assinatura. Não dá para desfazer.',
         termos: 'apagar lgpd remover dados',
       },
     ],

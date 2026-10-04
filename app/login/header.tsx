@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { supabaseBrowser } from '@/lib/db/supabase-browser';
+import { UserMenu } from '@/components/auth/UserMenu';
 import {
   LEGAL_CONTACT_EMAIL,
   LEGAL_CONTACT_PHONE,
@@ -437,6 +438,9 @@ export function Header() {
               />
             )}
           </button>
+
+          {/* Conta (logado): só o ícone; o e-mail fica dentro do menu. */}
+          {authed && <UserMenu />}
 
           {/* ==========================================================
               BOTÕES PARA USUÁRIO DESLOGADO

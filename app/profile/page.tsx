@@ -1,198 +1,111 @@
-import { getServerSupabase } from '@/lib/db/supabase';
 import Link from 'next/link';
-import { Trash2, CreditCard, UserCircle, ImageIcon, Building2, FolderKanban } from 'lucide-react';
+import { ChevronRight, CreditCard, Trash2 } from 'lucide-react';
 import { redirect } from 'next/navigation';
+
 import { getCurrentUser } from '@/lib/auth';
 import { AppShell } from '@/components/layout/AppShell';
 import { BackButton } from '@/components/BackButton';
 import { ProfileLogoUpload } from '@/components/profile/ProfileLogoUpload';
 import { ProfileCompanyForm } from '@/components/profile/ProfileCompanyForm';
 import { ProfileCategoriesList } from '@/components/profile/ProfileCategoriesList';
-import { CancelSubscription } from '@/components/billing/CancelSubscription';
 
 export const dynamic = 'force-dynamic';
 
+// Meu perfil — simplificado para clientes leigos (sub-projeto 72). A tela faz
+// UMA coisa: os dados da empresa que entram nos documentos. Por isso:
+//   - a seção "Seu plano" saiu (repetia a tela de Assinatura; o cancelamento
+//     do período de teste, que só existia aqui, foi para lá);
+//   - os passos são numerados (logo → dados) e cada um diz para que serve;
+//   - assinatura e exclusão de conta viram atalhos discretos no rodapé.
 export default async function ProfilePage() {
   const user = await getCurrentUser();
   if (!user) redirect('/login?next=/profile');
 
-  const supabase = getServerSupabase();
-  const { data: subscription } = await supabase
-    .from('subscriptions')
-    .select('*')
-    .eq('user_id', user.id)
-    .maybeSingle();
-
-  const statusLabel =
-    subscription?.status === 'active'
-      ? 'Ativo'
-      : subscription?.status === 'trialing'
-        ? 'Período de teste'
-        : subscription?.status === 'past_due'
-          ? 'Pagamento pendente'
-          : subscription?.status === 'cancelled'
-            ? 'Cancelado'
-            : subscription?.status === 'expired'
-              ? 'Expirado'
-              : 'Free';
-
-  const statusCls =
-    subscription?.status === 'active'
-      ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-300'
-      : subscription?.status === 'trialing'
-        ? 'border-brand/40 bg-brand/10 text-brand'
-        : subscription?.status === 'past_due' || subscription?.status === 'expired'
-          ? 'border-red-500/40 bg-red-500/10 text-red-600 dark:text-red-300'
-          : 'border-border bg-muted text-muted-foreground';
-
-  const daysLeft = subscription?.trial_end
-    ? Math.max(
-        0,
-        Math.ceil(
-          (new Date(subscription.trial_end).getTime() - Date.now()) /
-            (1000 * 60 * 60 * 24),
-        ),
-      )
-    : null;
-
   return (
     <AppShell width="narrow">
-      <div className="space-y-8">
-          <BackButton />
+      <div className="space-y-6">
+        <BackButton />
 
-          {/* Hero */}
-          <div className="flex items-center gap-4">
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-brand-gradient text-black text-xl font-bold brand-glow">
-              {(user.email?.[0] ?? '?').toUpperCase()}
-            </div>
-            <div className="min-w-0">
-              <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">
-                Meu perfil <span className="text-brand">.</span>
-              </h1>
-              <p className="text-sm text-muted-foreground truncate">
-                {user.email ?? user.id}
-              </p>
-            </div>
+        <header data-tour="perfil-topo" className="flex items-center gap-4">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-brand-gradient text-xl font-bold text-black brand-glow">
+            {(user.email?.[0] ?? '?').toUpperCase()}
           </div>
+          <div className="min-w-0">
+            <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">Meu perfil</h1>
+            <p className="text-sm text-muted-foreground">
+              Preencha uma vez: o logo e os dados da sua empresa entram sozinhos nos documentos que o PROGPT gera.
+            </p>
+          </div>
+        </header>
 
-          {/* Plano */}
-          <section className="rounded-2xl border border-border bg-card p-6 space-y-4">
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <CreditCard className="h-4 w-4 text-brand" aria-hidden="true" />
-                <h2 className="text-base font-semibold">Seu plano</h2>
-              </div>
-              <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${statusCls}`}>
-                {statusLabel}
-              </span>
-            </div>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <div className="text-xs uppercase tracking-wider text-muted-foreground">Plano</div>
-                <div className="mt-0.5 font-medium text-foreground capitalize">
-                  {subscription?.plan ?? 'Free'}
-                </div>
-              </div>
-              {daysLeft !== null && subscription?.status === 'trialing' && (
-                <div>
-                  <div className="text-xs uppercase tracking-wider text-muted-foreground">Teste termina em</div>
-                  <div className="mt-0.5 font-medium text-brand">{daysLeft} dia(s)</div>
-                </div>
-              )}
-            </div>
-
-            {subscription?.status === 'trialing' && !subscription?.cancel_at_period_end && (
-              <p className="text-xs text-muted-foreground">
-                Você pode cancelar a qualquer momento. Cancele antes do fim do
-                teste e <strong className="text-foreground">nenhum valor será cobrado</strong>.
-              </p>
-            )}
-
-            {/* Cancelamento self-service (CDC art. 49 — cancele quando quiser) */}
-            <CancelSubscription
-              status={subscription?.status ?? 'none'}
-              trialEnd={subscription?.trial_end ?? null}
-              currentPeriodEnd={subscription?.current_period_end ?? null}
-              cancelAtPeriodEnd={!!subscription?.cancel_at_period_end}
-            />
-
-            <Link
-              href="/account/billing"
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-brand hover:text-brand/80 transition-colors"
-            >
-              Gerenciar assinatura →
-            </Link>
-          </section>
-
-          {/* Foto / logo */}
-          <ProfileSection
-            icon={<ImageIcon className="h-4 w-4 text-brand" aria-hidden="true" />}
-            title="Logo da empresa"
-            desc="Incluído nos documentos gerados (.docx e .xlsx). PNG ou JPG, até 2 MB."
-          >
+        <div data-tour="perfil-logo">
+          <Passo numero={1} titulo="Logo da empresa" descricao="Aparece na capa dos documentos e das planilhas. PNG ou JPG, até 2 MB.">
             <ProfileLogoUpload />
-          </ProfileSection>
+          </Passo>
+        </div>
 
-          {/* Dados */}
-          <ProfileSection
-            icon={<Building2 className="h-4 w-4 text-brand" aria-hidden="true" />}
-            title="Dados da empresa"
-            desc="Usados automaticamente na capa do RFP, no banner da planilha e nas cláusulas."
+        <div data-tour="perfil-dados">
+          <Passo
+            numero={2}
+            titulo="Dados da empresa"
+            descricao="Nome, contato e apresentação usados nos documentos — por exemplo, na capa e na carta de abertura do RFP."
           >
             <ProfileCompanyForm />
-          </ProfileSection>
+          </Passo>
+        </div>
 
-          {/* Categorias */}
-          <ProfileSection
-            icon={<FolderKanban className="h-4 w-4 text-brand" aria-hidden="true" />}
-            title="Minhas categorias"
-            desc={'Perfis de categoria que você cadastrou — use no chat ou em "Iniciar de um Perfil" nos assistentes.'}
+        <Passo
+          titulo="Minhas categorias"
+          descricao='Os perfis de categoria que você já montou. Use no chat ou em "Iniciar de um Perfil" nos assistentes, sem digitar tudo de novo.'
+        >
+          <ProfileCategoriesList />
+        </Passo>
+
+        <nav aria-label="Outras opções da conta" className="flex flex-col gap-1 border-t border-border pt-4 sm:flex-row sm:justify-between">
+          <Link
+            href="/account/billing"
+            className="inline-flex items-center gap-2 rounded-lg px-2 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
-            <ProfileCategoriesList />
-          </ProfileSection>
-
-          {/* Conta — danger zone */}
-          <section className="rounded-2xl border border-red-500/20 bg-red-500/[0.03] p-6 space-y-3">
-            <div className="flex items-center gap-2">
-              <UserCircle className="h-4 w-4 text-red-500" aria-hidden="true" />
-              <h2 className="text-base font-semibold">Conta</h2>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Encerrar sua conta remove permanentemente seus dados (conversas,
-              execuções e perfil). Esta ação não pode ser desfeita.
-            </p>
-            <Link
-              href="/account/delete"
-              className="inline-flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/5 text-red-600 dark:text-red-400 hover:bg-red-500/10 hover:border-red-500/50 px-4 py-2.5 text-sm font-medium transition-colors"
-            >
-              <Trash2 className="h-4 w-4" aria-hidden="true" />
-              Excluir minha conta
-            </Link>
-          </section>
+            <CreditCard className="h-4 w-4" aria-hidden="true" />
+            Plano e pagamento
+            <ChevronRight className="h-4 w-4" aria-hidden="true" />
+          </Link>
+          <Link
+            href="/account/delete"
+            className="inline-flex items-center gap-2 rounded-lg px-2 py-2 text-sm text-muted-foreground transition-colors hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400"
+          >
+            <Trash2 className="h-4 w-4" aria-hidden="true" />
+            Excluir minha conta
+          </Link>
+        </nav>
       </div>
     </AppShell>
   );
 }
 
-function ProfileSection({
-  icon,
-  title,
-  desc,
+function Passo({
+  numero,
+  titulo,
+  descricao,
   children,
 }: {
-  icon: React.ReactNode;
-  title: string;
-  desc: string;
+  numero?: number;
+  titulo: string;
+  descricao: string;
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-2xl border border-border bg-card p-6 space-y-4">
-      <div className="space-y-1">
-        <div className="flex items-center gap-2">
-          {icon}
-          <h2 className="text-base font-semibold">{title}</h2>
+    <section className="space-y-4 rounded-2xl border border-border bg-card p-5 sm:p-6">
+      <div className="flex items-start gap-3">
+        {numero !== undefined && (
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand/15 text-sm font-semibold text-brand">
+            {numero}
+          </span>
+        )}
+        <div className="space-y-0.5">
+          <h2 className="text-base font-semibold">{titulo}</h2>
+          <p className="text-sm leading-relaxed text-muted-foreground">{descricao}</p>
         </div>
-        <p className="text-sm text-muted-foreground leading-relaxed">{desc}</p>
       </div>
       {children}
     </section>

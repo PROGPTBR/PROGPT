@@ -95,8 +95,9 @@ export function ProfileLogoUpload() {
   }
 
   return (
-    <div className="rounded-2xl border border-border bg-card p-6 space-y-4">
-      <div className="flex items-start gap-5">
+    // Sem card próprio: a seção da página de perfil já desenha a moldura.
+    <div className="space-y-3">
+      <div className="flex items-center gap-5">
         <div className="h-24 w-24 rounded-xl border border-border bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
           {loading ? (
             <span className="text-xs text-muted-foreground">…</span>
@@ -144,9 +145,8 @@ export function ProfileLogoUpload() {
           )}
         </div>
       </div>
-      <p className="text-[11px] text-muted-foreground leading-relaxed">
-        Formatos: PNG ou JPG. Tamanho ideal: 200×200 px ou superior, fundo
-        transparente (PNG) para integração limpa nos documentos.
+      <p className="text-xs text-muted-foreground leading-relaxed">
+        Dica: uma imagem quadrada, com fundo transparente (PNG), fica melhor nos documentos.
       </p>
     </div>
   );

@@ -25,6 +25,7 @@ import {
 
 import { useTourAtivo } from '@/components/onboarding/TourHost';
 import { SupportWidget } from '@/components/support/SupportWidget';
+import { UserMenu } from '@/components/auth/UserMenu';
 import { startTour, tourJaIniciado } from '@/lib/onboarding/tour-state';
 
 import { CHAT_PREFILL_KEY } from '@/lib/prompts/chat-prefill';
@@ -700,9 +701,10 @@ function ChatRootMounted({
         />
 
         {/* ====================================================
-            TEMA CLARO / ESCURO
+            TEMA CLARO / ESCURO + CONTA (canto superior direito)
         ===================================================== */}
 
+        <div className="absolute right-5 top-4 z-50 flex items-center gap-2">
         <button
           type="button"
           onClick={() =>
@@ -723,11 +725,6 @@ function ChatRootMounted({
               : 'Tema escuro'
           }
           className="
-            absolute
-            right-5
-            top-4
-            z-50
-
             inline-flex
             h-10
             w-10
@@ -773,6 +770,9 @@ function ChatRootMounted({
             />
           )}
         </button>
+
+          <UserMenu />
+        </div>
 
         {/* ====================================================
             CHAT

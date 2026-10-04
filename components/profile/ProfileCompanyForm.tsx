@@ -2,19 +2,26 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { Save } from 'lucide-react';
+import { ChevronDown, Loader2, Save } from 'lucide-react';
+
+// Dados da empresa que entram nos documentos gerados (capa do RFP, banner da
+// planilha, cláusulas). Simplificado para clientes leigos no sub-projeto 72:
+// o essencial fica à mostra e o resto em "Mais detalhes (opcional)".
+//
+// Saíram de propósito: a chave Pessoa Física/Jurídica (o CPF digitado ali
+// NUNCA era salvo — ficava só em estado local e sumia ao recarregar) e um
+// bloco "Plano Pro" com preço fixo desatualizado. Plano e preço vivem na tela
+// de Assinatura.
 
 type CompanyData = {
-  company_name: string | null;
-  company_legal_name: string | null;
-  company_cnpj: string | null;
-  company_email: string | null;
-  company_phone: string | null;
-  company_address: string | null;
-  company_description: string | null;
+  company_name: string;
+  company_legal_name: string;
+  company_cnpj: string;
+  company_email: string;
+  company_phone: string;
+  company_address: string;
+  company_description: string;
 };
-
-type CustomerType = 'pf' | 'pj';
 
 const EMPTY: CompanyData = {
   company_name: '',
@@ -26,44 +33,30 @@ const EMPTY: CompanyData = {
   company_description: '',
 };
 
-function withDefaults(d: Partial<CompanyData>): CompanyData {
-  return {
-    company_name: d.company_name ?? '',
-    company_legal_name: d.company_legal_name ?? '',
-    company_cnpj: d.company_cnpj ?? '',
-    company_email: d.company_email ?? '',
-    company_phone: d.company_phone ?? '',
-    company_address: d.company_address ?? '',
-    company_description: d.company_description ?? '',
-  };
+function withDefaults(d: Partial<Record<keyof CompanyData, string | null>>): CompanyData {
+  const out = { ...EMPTY };
+  for (const k of Object.keys(EMPTY) as (keyof CompanyData)[]) out[k] = d[k] ?? '';
+  return out;
 }
 
-const FIELD_INPUT_CLASS =
-  'w-full rounded-lg bg-muted/40 border border-border px-4 py-2.5 text-sm text-foreground placeholder-muted-foreground outline-none focus:border-brand focus:bg-muted/60 transition-colors';
-
-const FIELD_LABEL_CLASS =
-  'block text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2';
+const INPUT =
+  'w-full rounded-lg border border-border bg-muted/40 px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors focus:border-brand focus:bg-muted/60';
+const LABEL = 'mb-1.5 block text-sm font-medium text-foreground';
+const AJUDA = 'mt-1 text-xs text-muted-foreground';
 
 export function ProfileCompanyForm() {
   const [values, setValues] = useState<CompanyData>(EMPTY);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  // =========================
-  // PF / PJ
-  // =========================
-  const [customerType, setCustomerType] = useState<CustomerType>('pf');
-  const [cpf, setCpf] = useState('');
-
   const load = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch('/api/profile/company', { cache: 'no-store' });
       if (!res.ok) throw new Error(`status ${res.status}`);
-      const data = (await res.json()) as Partial<CompanyData>;
-      setValues(withDefaults(data));
-    } catch (err) {
-      toast.error('Falha ao carregar dados', { description: String(err) });
+      setValues(withDefaults((await res.json()) as Partial<Record<keyof CompanyData, string | null>>));
+    } catch {
+      toast.error('Não foi possível carregar os dados da empresa. Recarregue a página.');
     } finally {
       setLoading(false);
     }
@@ -73,7 +66,7 @@ export function ProfileCompanyForm() {
     void load();
   }, [load]);
 
-  function setField<K extends keyof CompanyData>(k: K, v: string) {
+  function set<K extends keyof CompanyData>(k: K, v: string) {
     setValues((prev) => ({ ...prev, [k]: v }));
   }
 
@@ -86,363 +79,144 @@ export function ProfileCompanyForm() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(values),
       });
-      if (!res.ok) {
-        const data = (await res.json().catch(() => ({}))) as { error?: string };
-        throw new Error(data.error ?? `status ${res.status}`);
-      }
-      toast.success('Dados salvos');
-    } catch (err) {
-      toast.error('Falha ao salvar', { description: String(err) });
+      if (!res.ok) throw new Error(`status ${res.status}`);
+      toast.success('Dados salvos. Eles já aparecem nos próximos documentos.');
+    } catch {
+      toast.error('Não foi possível salvar. Confira os campos e tente de novo.');
     } finally {
       setSaving(false);
     }
   }
 
-// =========================
-  // VALIDATION BILLING
-  // =========================
-  {/* function canCheckout() {
-    if (!values.company_name) return false;
-    if (!values.company_email) return false;
-
-    if (customerType === 'pf') {
-      return cpf.length >= 11;
-    }
-
-    return (values.company_cnpj ?? '').length >= 14;
-  }
- */}
-  // =========================
-  // CHECKOUT ASAAS
-  // =========================
-  {/* async function handleCheckout() {
-    setBillingLoading(true);
-
-    try {
-      const res = await fetch('/api/billing/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: values.company_name,
-          customerType,
-          cpf: customerType === 'pf' ? cpf : undefined,
-          cnpj: customerType === 'pj' ? values.company_cnpj : undefined,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error ?? 'checkout_error');
-      }
-
-      if (data.checkoutUrl) {
-        window.location.href = data.checkoutUrl;
-      }
-    } catch (err) {
-      toast.error('Erro ao iniciar pagamento', {
-        description: String(err),
-      });
-    } finally {
-      setBillingLoading(false);
-    }
-  } 
-
-  function PlanCard({ plan }: { plan: any }) {
-  return (
-    <div className="pt-6 border-t border-border space-y-3">
-      <h3 className="text-sm font-medium">
-        {plan.name}
-      </h3>
-    </div>
-  );
-}*/}
-
   if (loading) {
     return (
-      <div className="rounded-2xl border border-border bg-card p-6 text-xs text-muted-foreground">
+      <p className="flex items-center gap-2 text-sm text-muted-foreground">
+        <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
         Carregando…
-      </div>
+      </p>
     );
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="space-y-5 rounded-2xl border border-border bg-card p-6"
-    >
-
- {/* =========================
-          PF / PJ SWITCH
-      ========================= 
-      <div className="flex gap-2 mb-4">
-        <button
-          type="button"
-          onClick={() => setCustomerType('pf')}
-          className={`px-3 py-1 rounded-md text-sm ${
-            customerType === 'pf'
-              ? 'bg-brand-gradient text-black'
-              : 'bg-primary text-primary-foreground border border-border'
-          }`}
-        >
-          Pessoa Física
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setCustomerType('pj')}
-          className={`px-3 py-1 rounded-md text-sm ${
-            customerType === 'pj'
-              ? 'bg-brand-gradient text-black'
-              : 'bg-primary text-primary-foreground border border-border'
-          }`}
-        >
-          Pessoa Jurídica
-        </button>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label htmlFor="cf-name" className={FIELD_LABEL_CLASS}>
-            Nome fantasia
+    <form onSubmit={handleSubmit} className="space-y-5">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="sm:col-span-2">
+          <label htmlFor="cf-name" className={LABEL}>
+            Nome da empresa
           </label>
           <input
             id="cf-name"
-            value={values.company_name ?? ''}
-            onChange={(e) => setField('company_name', e.target.value)}
-            placeholder="Ex: ACME"
+            value={values.company_name}
+            onChange={(e) => set('company_name', e.target.value)}
+            placeholder="Ex.: ACME Indústria"
             maxLength={200}
-            className={FIELD_INPUT_CLASS}
+            className={INPUT}
           />
+          <p className={AJUDA}>É o nome que aparece nos documentos.</p>
         </div>
         <div>
-          <label htmlFor="cf-legal" className={FIELD_LABEL_CLASS}>
-            Razão social
-          </label>
-          <input
-            id="cf-legal"
-            value={values.company_legal_name ?? ''}
-            onChange={(e) => setField('company_legal_name', e.target.value)}
-            placeholder="Ex: ACME Indústria e Comércio Ltda."
-            maxLength={200}
-            className={FIELD_INPUT_CLASS}
-          />
-        </div>
-        <div>
-          <label htmlFor="cf-cnpj" className={FIELD_LABEL_CLASS}>
-            CNPJ
+          <label htmlFor="cf-cnpj" className={LABEL}>
+            CNPJ <span className="font-normal text-muted-foreground">(opcional)</span>
           </label>
           <input
             id="cf-cnpj"
-            value={values.company_cnpj ?? ''}
-            onChange={(e) => setField('company_cnpj', e.target.value)}
-            placeholder="XX.XXX.XXX/0001-XX"
+            value={values.company_cnpj}
+            onChange={(e) => set('company_cnpj', e.target.value)}
+            placeholder="00.000.000/0001-00"
             maxLength={32}
-            className={FIELD_INPUT_CLASS}
+            inputMode="numeric"
+            className={INPUT}
           />
         </div>
         <div>
-          <label htmlFor="cf-phone" className={FIELD_LABEL_CLASS}>
-            Telefone de contato
+          <label htmlFor="cf-phone" className={LABEL}>
+            Telefone <span className="font-normal text-muted-foreground">(opcional)</span>
           </label>
           <input
             id="cf-phone"
-            value={values.company_phone ?? ''}
-            onChange={(e) => setField('company_phone', e.target.value)}
-            placeholder="(11) 9 9999-9999"
+            value={values.company_phone}
+            onChange={(e) => set('company_phone', e.target.value)}
+            placeholder="(11) 99999-9999"
             maxLength={32}
-            className={FIELD_INPUT_CLASS}
+            inputMode="tel"
+            className={INPUT}
           />
         </div>
         <div className="sm:col-span-2">
-          <label htmlFor="cf-email" className={FIELD_LABEL_CLASS}>
-            E-mail de contato
+          <label htmlFor="cf-email" className={LABEL}>
+            E-mail de contato <span className="font-normal text-muted-foreground">(opcional)</span>
           </label>
           <input
             id="cf-email"
             type="email"
-            value={values.company_email ?? ''}
-            onChange={(e) => setField('company_email', e.target.value)}
+            value={values.company_email}
+            onChange={(e) => set('company_email', e.target.value)}
             placeholder="compras@empresa.com.br"
             maxLength={320}
-            className={FIELD_INPUT_CLASS}
+            className={INPUT}
           />
+          <p className={AJUDA}>Para onde os fornecedores devem responder.</p>
         </div>
-        <div className="sm:col-span-2">
-          <label htmlFor="cf-address" className={FIELD_LABEL_CLASS}>
-            Endereço
-          </label>
-          <input
-            id="cf-address"
-            value={values.company_address ?? ''}
-            onChange={(e) => setField('company_address', e.target.value)}
-            placeholder="Rua Exemplo, 100 — Bairro — Cidade/UF — CEP"
-            maxLength={500}
-            className={FIELD_INPUT_CLASS}
-          />
-        </div>
-        <div className="sm:col-span-2">
-          <label htmlFor="cf-desc" className={FIELD_LABEL_CLASS}>
-            Descrição da empresa
-          </label>
-          <textarea
-            id="cf-desc"
-            value={values.company_description ?? ''}
-            onChange={(e) => setField('company_description', e.target.value)}
-            placeholder="Apresentação curta usada na carta de abertura do RFP"
-            className={`${FIELD_INPUT_CLASS} min-h-[100px] resize-none`}
-            maxLength={1000}
-          />
-          <div className="text-[10px] text-muted-foreground text-right mt-1.5">
-            {(values.company_description ?? '').length}/1000
+      </div>
+
+      <details className="group rounded-xl border border-border">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 text-sm font-medium [&::-webkit-details-marker]:hidden">
+          Mais detalhes (opcional)
+          <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform group-open:rotate-180" aria-hidden="true" />
+        </summary>
+        <div className="space-y-4 border-t border-border px-4 py-4">
+          <div>
+            <label htmlFor="cf-legal" className={LABEL}>
+              Razão social
+            </label>
+            <input
+              id="cf-legal"
+              value={values.company_legal_name}
+              onChange={(e) => set('company_legal_name', e.target.value)}
+              placeholder="Ex.: ACME Indústria e Comércio Ltda."
+              maxLength={200}
+              className={INPUT}
+            />
+          </div>
+          <div>
+            <label htmlFor="cf-address" className={LABEL}>
+              Endereço
+            </label>
+            <input
+              id="cf-address"
+              value={values.company_address}
+              onChange={(e) => set('company_address', e.target.value)}
+              placeholder="Rua, número — bairro — cidade/UF — CEP"
+              maxLength={500}
+              className={INPUT}
+            />
+          </div>
+          <div>
+            <label htmlFor="cf-desc" className={LABEL}>
+              Apresentação da empresa
+            </label>
+            <textarea
+              id="cf-desc"
+              value={values.company_description}
+              onChange={(e) => set('company_description', e.target.value)}
+              placeholder="Duas ou três frases sobre a empresa. Usada na carta de abertura do RFP."
+              maxLength={1000}
+              className={`${INPUT} min-h-[96px] resize-y`}
+            />
+            <p className={`${AJUDA} text-right`}>{values.company_description.length}/1000</p>
           </div>
         </div>
-      </div>
+      </details>
 
-      <p className="text-[11px] text-muted-foreground leading-relaxed">
-        Estes dados aparecem automaticamente nos documentos gerados pelos
-        assistentes (apresentação do RFP, banner da planilha de cotação e termos
-        contratuais).
-      </p>
-*/}
-
-  {/* =========================
-          PF / PJ SWITCH
-      ========================= */}
-      <div className="flex gap-2 mb-4">
-        <button
-          type="button"
-          onClick={() => setCustomerType('pf')}
-          className={`px-3 py-1 rounded-md text-sm ${
-            customerType === 'pf'
-              ? 'bg-brand-gradient text-black'
-              : 'bg-primary text-primary-foreground border border-border'
-          }`}
-        >
-          Pessoa Física
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setCustomerType('pj')}
-          className={`px-3 py-1 rounded-md text-sm ${
-            customerType === 'pj'
-              ? 'bg-brand-gradient text-black'
-              : 'bg-primary text-primary-foreground border border-border'
-          }`}
-        >
-          Pessoa Jurídica
-        </button>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label className={FIELD_LABEL_CLASS}>Nome fantasia</label>
-          <input
-            id="cf-name"
-            value={values.company_name ?? ''}
-            onChange={(e) => setField('company_name', e.target.value)}
-            placeholder="Ex: ACME"
-            maxLength={200}
-            className={FIELD_INPUT_CLASS}
-          />
-        </div>
-        <div>
-          <label className={FIELD_LABEL_CLASS}>
-            {customerType === 'pf' ? 'CPF' : 'CNPJ'}
-          </label>
-
-          {customerType === 'pf' ? (
-            <input
-              value={cpf}
-              onChange={(e) => setCpf(e.target.value)}
-              className={FIELD_INPUT_CLASS}
-              placeholder="000.000.000-00"
-            />
-          ) : (
-            <input
-              value={values.company_cnpj ?? ''}
-              onChange={(e) => setField('company_cnpj', e.target.value)}
-              className={FIELD_INPUT_CLASS}
-              placeholder="00.000.000/0001-00"
-            />
-          )}
-        </div>
-
-        <div>
-          <label className={FIELD_LABEL_CLASS}>Razão social</label>
-          <input
-            value={values.company_legal_name ?? ''}
-            onChange={(e) => setField('company_legal_name', e.target.value)}
-            className={FIELD_INPUT_CLASS}
-          />
-        </div>
-
-        <div>
-          <label className={FIELD_LABEL_CLASS}>Telefone</label>
-          <input
-            value={values.company_phone ?? ''}
-            onChange={(e) => setField('company_phone', e.target.value)}
-            className={FIELD_INPUT_CLASS}
-          />
-        </div>
-
-        <div className="sm:col-span-2">
-          <label className={FIELD_LABEL_CLASS}>E-mail</label>
-          <input
-            type="email"
-            value={values.company_email ?? ''}
-            onChange={(e) => setField('company_email', e.target.value)}
-            className={FIELD_INPUT_CLASS}
-          />
-        </div>
-
-        <div className="sm:col-span-2">
-          <label className={FIELD_LABEL_CLASS}>Endereço</label>
-          <input
-            value={values.company_address ?? ''}
-            onChange={(e) => setField('company_address', e.target.value)}
-            className={FIELD_INPUT_CLASS}
-          />
-        </div>
-
-        <div className="sm:col-span-2">
-          <label className={FIELD_LABEL_CLASS}>Descrição</label>
-          <textarea
-            value={values.company_description ?? ''}
-            onChange={(e) => setField('company_description', e.target.value)}
-            className={`${FIELD_INPUT_CLASS} min-h-[100px]`}
-          />
-        </div>
-      </div>
-
-      {/* =========================
-          SAVE PROFILE
-      ========================= */}
-      <div className="flex justify-end pt-2 border-t border-border">
+      <div className="flex justify-end">
         <button
           type="submit"
           disabled={saving}
-          className="inline-flex items-center justify-center gap-1.5 bg-brand-gradient text-black px-6 h-10 rounded-full text-sm font-medium hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed active:scale-95 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          className="inline-flex h-10 items-center justify-center gap-1.5 rounded-full bg-brand-gradient px-6 text-sm font-medium text-black transition-all hover:opacity-90 active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          <Save className="h-4 w-4" aria-hidden="true" />
+          {saving ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Save className="h-4 w-4" aria-hidden="true" />}
           {saving ? 'Salvando…' : 'Salvar dados'}
         </button>
-      </div>
-
-      {/* =========================
-          BILLING SECTION
-      ========================= */}
- 
-                <div className="pt-6 border-t border-border space-y-3">
-        <h3 className="text-sm font-medium text-foreground"> Plano Pro</h3>
-
-        <p className="text-xs text-muted-foreground">
-          R$ 127,99/mês — assinatura mensal
-        </p>
-
-       
-
       </div>
     </form>
   );
