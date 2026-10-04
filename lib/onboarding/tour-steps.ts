@@ -98,6 +98,32 @@ export const TOUR_STEPS: TourStep[] = [
     body: 'Tudo o que você já gerou com os assistentes fica aqui: dá para reabrir, pedir ajustes conversando com a IA e baixar os arquivos de novo.',
   },
 
+  // ── Biblioteca de Prompts ─────────────────────────────────────────────
+  {
+    id: 'prompts-categorias',
+    route: '/prompts',
+    secao: 'Prompts',
+    target: '[data-tour="prompts-categorias"]',
+    title: 'Perguntas prontas por tema',
+    body: 'Dezenas de prompts de procurement organizados por categoria. Em "Favoritos" ficam os que você marcou com a estrela.',
+  },
+  {
+    id: 'prompts-busca',
+    route: '/prompts',
+    secao: 'Prompts',
+    target: '[data-tour="prompts-busca"]',
+    title: 'Busque pelo que precisa',
+    body: 'Filtre por título, resumo ou tag — por exemplo "negociação", "contrato" ou "fornecedor".',
+  },
+  {
+    id: 'prompts-lista',
+    route: '/prompts',
+    secao: 'Prompts',
+    target: '[data-tour="prompts-lista"]',
+    title: 'Do prompt ao chat em um clique',
+    body: 'Abra um prompt para ler e clique em "Usar no chat": ele chega pronto no chat, e você só ajusta os campos entre colchetes com os dados da sua compra.',
+  },
+
   // ── Fluxo de Compras ──────────────────────────────────────────────────
   {
     id: 'fluxo-trilha',
@@ -176,32 +202,6 @@ export const TOUR_STEPS: TourStep[] = [
     target: '[data-tour="fornecedores-busca"]',
     title: 'Encontre rápido',
     body: 'Busque por nome, categoria, CNAE ou cidade e filtre pelo status de cada fornecedor — de prospecto a homologado, ativo ou bloqueado.',
-  },
-
-  // ── Biblioteca de Prompts ─────────────────────────────────────────────
-  {
-    id: 'prompts-categorias',
-    route: '/prompts',
-    secao: 'Prompts',
-    target: '[data-tour="prompts-categorias"]',
-    title: 'Perguntas prontas por tema',
-    body: 'Dezenas de prompts de procurement organizados por categoria. Em "Favoritos" ficam os que você marcou com a estrela.',
-  },
-  {
-    id: 'prompts-busca',
-    route: '/prompts',
-    secao: 'Prompts',
-    target: '[data-tour="prompts-busca"]',
-    title: 'Busque pelo que precisa',
-    body: 'Filtre por título, resumo ou tag — por exemplo "negociação", "contrato" ou "fornecedor".',
-  },
-  {
-    id: 'prompts-lista',
-    route: '/prompts',
-    secao: 'Prompts',
-    target: '[data-tour="prompts-lista"]',
-    title: 'Do prompt ao chat em um clique',
-    body: 'Abra um prompt para ler e clique em "Usar no chat": ele chega pronto no chat, e você só ajusta os campos entre colchetes com os dados da sua compra.',
   },
 
   // ── Gestão de Obras (vitrine) ─────────────────────────────────────────

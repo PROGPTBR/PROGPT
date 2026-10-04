@@ -81,6 +81,12 @@ describe('Sidebar rename', () => {
   });
 });
 
+// A busca fica atrás da lupa (ao lado do "+"); estes testes abrem o campo antes.
+async function abrirBusca(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByRole('button', { name: 'Buscar conversas' }));
+  return screen.getByRole('textbox', { name: /texto da busca/i });
+}
+
 describe('Sidebar search', () => {
   it('filters the conversation list by title as the user types', async () => {
     const user = userEvent.setup();
@@ -88,7 +94,7 @@ describe('Sidebar search', () => {
     expect(screen.getByText('Conversa A')).toBeTruthy();
     expect(screen.getByText('Conversa B')).toBeTruthy();
 
-    await user.type(screen.getByRole('textbox', { name: /buscar conversas/i }), 'Conversa A');
+    await user.type(await abrirBusca(user), 'Conversa A');
 
     expect(screen.getByText('Conversa A')).toBeTruthy();
     expect(screen.queryByText('Conversa B')).toBeNull();
@@ -98,25 +104,46 @@ describe('Sidebar search', () => {
     const user = userEvent.setup();
     renderSidebar();
 
-    await user.type(
-      screen.getByRole('textbox', { name: /buscar conversas/i }),
-      'não existe nenhuma conversa assim',
-    );
+    await user.type(await abrirBusca(user), 'não existe nenhuma conversa assim');
 
     expect(screen.getByText(/nenhuma conversa encontrada/i)).toBeTruthy();
   });
 
-  it('clear button resets the search and restores the full list', async () => {
+  it('o X fecha a busca e volta a mostrar a lista inteira', async () => {
     const user = userEvent.setup();
     renderSidebar();
 
-    const input = screen.getByRole('textbox', { name: /buscar conversas/i });
-    await user.type(input, 'Conversa A');
+    await user.type(await abrirBusca(user), 'Conversa A');
     expect(screen.queryByText('Conversa B')).toBeNull();
 
-    await user.click(screen.getByRole('button', { name: /limpar busca/i }));
+    await user.click(screen.getByRole('button', { name: /fechar busca/i }));
 
     expect(screen.getByText('Conversa A')).toBeTruthy();
     expect(screen.getByText('Conversa B')).toBeTruthy();
+    expect(screen.queryByRole('textbox', { name: /texto da busca/i })).toBeNull();
+  });
+});
+
+describe('Sidebar busca discreta', () => {
+  it('a busca fica escondida atrás da lupa e aparece ao clicar', async () => {
+    const user = userEvent.setup();
+    renderSidebar();
+    expect(screen.queryByRole('textbox', { name: /texto da busca/i })).toBeNull();
+
+    await user.click(screen.getByRole('button', { name: 'Buscar conversas' }));
+    const campo = screen.getByRole('textbox', { name: /texto da busca/i });
+    await user.type(campo, 'Conversa B');
+    expect(screen.queryByText('Conversa A')).toBeNull();
+    expect(screen.getByText('Conversa B')).toBeTruthy();
+  });
+
+  it('Esc fecha a busca e volta a mostrar todas as conversas', async () => {
+    const user = userEvent.setup();
+    renderSidebar();
+    await user.click(screen.getByRole('button', { name: 'Buscar conversas' }));
+    await user.type(screen.getByRole('textbox', { name: /texto da busca/i }), 'Conversa B');
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('textbox', { name: /texto da busca/i })).toBeNull();
+    expect(screen.getByText('Conversa A')).toBeTruthy();
   });
 });

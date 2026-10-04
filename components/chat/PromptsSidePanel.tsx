@@ -178,10 +178,7 @@ export function PromptsSidePanel({
         md:h-[calc(100vh-1rem)]
         md:rounded-2xl
         md:border
-        md:shadow-panel
 
-        dark:md:ring-1
-        dark:md:ring-white/10
       "
     >
       {/* =====================================================

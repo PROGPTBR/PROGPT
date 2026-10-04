@@ -61,6 +61,14 @@ const NAV_ITEMS = [
     description: null,
     icon: Sparkles,
   },
+  // Logo abaixo de Assistentes: os dois abrem um painel lateral (seta "›")
+  // em vez de trocar de tela, então ficam juntos no topo do menu.
+  {
+    href: '/prompts',
+    label: 'Biblioteca de Prompts',
+    description: null,
+    icon: BookOpen,
+  },
   {
     href: '/fluxo',
     label: 'Fluxo de Compras',
@@ -84,12 +92,6 @@ const NAV_ITEMS = [
     label: 'Fornecedores',
     description: 'Cadastro, avaliação, homologação e histórico.',
     icon: Building2,
-  },
-  {
-    href: '/prompts',
-    label: 'Biblioteca de Prompts',
-    description: null,
-    icon: BookOpen,
   },
   // Vitrines sob demanda (sub-projeto 68): só dados de exemplo; o produto de
   // verdade é implantado por pedido ao comercial da 2B Supply.
@@ -164,6 +166,15 @@ export function Sidebar({
 
   const [search, setSearch] =
     useState('');
+
+  /* Busca discreta: só a lupa ao lado do "+"; o campo aparece ao clicar. */
+  const [searchOpen, setSearchOpen] =
+    useState(false);
+
+  function closeSearch() {
+    setSearch('');
+    setSearchOpen(false);
+  }
 
   const filteredSessions =
     search.trim()
@@ -243,10 +254,7 @@ export function Sidebar({
           md:h-[calc(100vh-1rem)]
           md:rounded-2xl
           md:border
-          md:shadow-panel
 
-          dark:md:ring-1
-          dark:md:ring-white/10
         "
       >
         {/* Topo */}
@@ -438,10 +446,7 @@ export function Sidebar({
         md:h-[calc(100vh-1rem)]
         md:rounded-2xl
         md:border
-        md:shadow-panel
 
-        dark:md:ring-1
-        dark:md:ring-white/10
       "
     >
       {/* ========================================================
@@ -687,6 +692,36 @@ export function Sidebar({
     Conversas
   </div>
 
+  <div className="flex items-center gap-0.5">
+  <button
+    type="button"
+    onClick={() =>
+      searchOpen ? closeSearch() : setSearchOpen(true)
+    }
+    aria-label="Buscar conversas"
+    aria-expanded={searchOpen}
+    title="Buscar conversas"
+    className={`
+      inline-flex
+      h-7
+      w-7
+      shrink-0
+      items-center
+      justify-center
+      rounded-md
+      transition-colors
+      hover:bg-accent
+      hover:text-foreground
+      active:scale-95
+      ${searchOpen || search ? 'text-brand' : 'text-muted-foreground'}
+    `}
+  >
+    <Search
+      className="h-4 w-4"
+      aria-hidden="true"
+    />
+  </button>
+
   <button
     type="button"
     onClick={onNew}
@@ -713,11 +748,13 @@ export function Sidebar({
       aria-hidden="true"
     />
   </button>
+  </div>
 </div>
 
 
-  {/* Busca */}
-  <div className="relative mt-3">
+  {/* Busca — só aparece depois de clicar na lupa */}
+  {searchOpen && (
+  <div className="relative mb-2">
     <Search
       className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
       aria-hidden="true"
@@ -725,12 +762,16 @@ export function Sidebar({
 
     <input
       type="text"
+      autoFocus
       value={search}
       onChange={(e) =>
         setSearch(e.target.value)
       }
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') closeSearch();
+      }}
       placeholder="Buscar conversas"
-      aria-label="Buscar conversas"
+      aria-label="Texto da busca de conversas"
       className="
         w-full
         rounded-lg
@@ -750,11 +791,11 @@ export function Sidebar({
       "
     />
 
-    {search && (
+    {searchOpen && (
       <button
         type="button"
-        onClick={() => setSearch('')}
-        aria-label="Limpar busca"
+        onClick={closeSearch}
+        aria-label="Fechar busca"
         className="
           absolute
           right-2
@@ -773,6 +814,7 @@ export function Sidebar({
       </button>
     )}
   </div>
+  )}
 </div>
 
       <ScrollArea className="min-h-0 flex-1">
