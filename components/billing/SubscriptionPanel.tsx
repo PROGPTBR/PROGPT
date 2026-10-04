@@ -58,7 +58,7 @@ export function SubscriptionPanel({ subscription }: Props) {
   // No subscription = free user
   if (!subscription) {
     return (
-      <div data-tour="conta-assinatura" className="space-y-6">
+      <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Assinatura</h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -93,7 +93,7 @@ export function SubscriptionPanel({ subscription }: Props) {
 
 
   return (
-    <div data-tour="conta-assinatura" className="space-y-6">
+    <div className="space-y-6">
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Assinatura</h1>

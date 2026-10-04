@@ -266,15 +266,9 @@ export const TOUR_STEPS: TourStep[] = [
     body: 'Basta o nome da empresa para começar; CNPJ, telefone e e-mail são opcionais. Em "Mais detalhes" ficam razão social, endereço e uma apresentação curta. No fim, clique em "Salvar dados".',
   },
 
-  // ── Conta ─────────────────────────────────────────────────────────────
-  {
-    id: 'conta-assinatura',
-    route: '/account/billing',
-    secao: 'Sua conta',
-    target: '[data-tour="conta-assinatura"]',
-    title: 'Sua assinatura',
-    body: 'Plano, situação, forma de pagamento e próxima cobrança. Se você contratou mais de um acesso, os convites da sua equipe também ficam nesta tela.',
-  },
+  // A tela de Assinatura ficou de fora do tour de propósito (pedido do
+  // diretor 2026-10-04): o tour não deve passar pelo botão de cancelamento.
+  // O passo "conta" abaixo já diz que a Assinatura fica no menu da conta.
 
   // ── De volta ao chat ──────────────────────────────────────────────────
   {

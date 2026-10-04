@@ -181,9 +181,12 @@ export function BarraProgresso({ pct, className = '' }: { pct: number; className
 export function ListaBarras({
   linhas,
   formatar = (n) => String(n),
+  neutro = false,
 }: {
   linhas: { label: string; valor: number; cor?: string; detalhe?: string }[];
   formatar?: (n: number) => string;
+  /** Barras cinza, sem cor: para quadros lado a lado não "conversarem" por cor. */
+  neutro?: boolean;
 }) {
   const max = linhas.reduce((a, l) => Math.max(a, l.valor), 0) || 1;
   return (
@@ -199,8 +202,8 @@ export function ListaBarras({
           </div>
           <div className="mt-1 h-2 w-full overflow-hidden rounded bg-muted">
             <div
-              className={`h-full rounded ${l.cor ? '' : 'bg-brand/70'}`}
-              style={{ width: `${(l.valor / max) * 100}%`, backgroundColor: l.cor }}
+              className={`h-full rounded ${neutro ? 'bg-muted-foreground/45' : l.cor ? '' : 'bg-brand/70'}`}
+              style={{ width: `${(l.valor / max) * 100}%`, backgroundColor: neutro ? undefined : l.cor }}
             />
           </div>
         </div>

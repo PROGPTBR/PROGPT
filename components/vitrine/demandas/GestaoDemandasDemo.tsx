@@ -58,14 +58,6 @@ const TOM_STATUS: Record<SpStatus, TomSelo> = {
   cancelada: 'neutro',
 };
 
-const COR_STATUS: Record<SpStatus, string> = {
-  aberta: '#64748b',
-  em_andamento: '#0ea5e9',
-  aguardando_resposta: '#f59e0b',
-  aguardando_validacao: '#8b5cf6',
-  concluida: '#10b981',
-  cancelada: '#94a3b8',
-};
 
 const TOM_PRAZO: Record<PrazoTom, TomSelo> = {
   verde: 'verde',
@@ -135,18 +127,18 @@ function VisaoGeral({ sps, hojeIso, onAbrir }: VisaoProps) {
         />
       </div>
 
+      {/* Barras neutras nos dois quadros: com cores, os status e os setores
+          pareciam a mesma legenda (pedido do diretor 2026-10-04). */}
       <div className="grid gap-4 lg:grid-cols-2">
         <Secao titulo="Distribuição por status">
-          <ListaBarras
-            linhas={porStatus.map((p) => ({ label: STATUS_LABEL[p.status], valor: p.total, cor: COR_STATUS[p.status] }))}
-          />
+          <ListaBarras neutro linhas={porStatus.map((p) => ({ label: STATUS_LABEL[p.status], valor: p.total }))} />
         </Secao>
         <Secao titulo="SPs por setor">
           <ListaBarras
+            neutro
             linhas={porSetor.map((p) => ({
               label: p.setor.nome,
               valor: p.total,
-              cor: p.setor.cor,
               detalhe: p.atrasadas ? `· ${p.atrasadas} em atraso` : undefined,
             }))}
           />
