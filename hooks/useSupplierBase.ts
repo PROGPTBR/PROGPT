@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabaseBrowser } from '@/lib/db/supabase-browser';
 import { classifyUpsert } from '@/lib/import-diff';
 import {
+  chaveFornecedor,
   cnpjBasicoOf,
   type NewSupplierInput,
   type SavedSupplier,
@@ -250,9 +251,15 @@ export function useSupplierBase(): UseSupplierBase {
 
   // ── Vendor list import (Batch L) ─────────────────────────────────────────
 
-  const byCnpjBasico = useMemo(() => {
+  // Chave de reconhecimento: CNPJ base ou, sem CNPJ, nome + e-mail/telefone/
+  // cidade (chaveFornecedor). Antes era só CNPJ — reimportar um vendor list sem
+  // CNPJ duplicava a base inteira.
+  const byChave = useMemo(() => {
     const m = new Map<string, SavedSupplier>();
-    for (const s of suppliers) if (s.cnpjBasico) m.set(s.cnpjBasico, s);
+    for (const s of suppliers) {
+      const k = chaveFornecedor(s);
+      if (k) m.set(k, s);
+    }
     return m;
   }, [suppliers]);
 
@@ -275,22 +282,22 @@ export function useSupplierBase(): UseSupplierBase {
   const previewVendorListImport = useCallback<UseSupplierBase['previewVendorListImport']>(
     (rows) => {
       const { novos, atualizados, semChave } = classifyUpsert(
-        new Set(byCnpjBasico.keys()),
+        new Set(byChave.keys()),
         rows,
-        (r) => cnpjBasicoOf(r.cnpj),
+        (r) => chaveFornecedor(r),
       );
-      // Fornecedor sem CNPJ conta como novo cadastro (não há como saber se é update).
+      // Sem nome reconhecível não há como saber se é update: conta como novo.
       return { novos: novos.length + semChave.length, atualizados: atualizados.length };
     },
-    [byCnpjBasico],
+    [byChave],
   );
 
   const applyVendorListImport = useCallback<UseSupplierBase['applyVendorListImport']>(
     async (rows) => {
       const { novos, atualizados, semChave } = classifyUpsert(
-        new Set(byCnpjBasico.keys()),
+        new Set(byChave.keys()),
         rows,
-        (r) => cnpjBasicoOf(r.cnpj),
+        (r) => chaveFornecedor(r),
       );
       const sb = supabaseBrowser();
       let inserted = 0;
@@ -312,7 +319,7 @@ export function useSupplierBase(): UseSupplierBase {
       }
 
       for (const r of atualizados) {
-        const existing = byCnpjBasico.get(cnpjBasicoOf(r.cnpj)!);
+        const existing = byChave.get(chaveFornecedor(r)!);
         if (!existing) {
           failed++;
           continue;
@@ -324,6 +331,7 @@ export function useSupplierBase(): UseSupplierBase {
         if (r.municipio) row.municipio = r.municipio;
         if (r.telefone) row.telefone = r.telefone;
         if (r.email) row.email = r.email;
+        if (r.notas) row.notas = r.notas;
         const { error } = await sb.from('suppliers').update(row).eq('id', existing.id);
         if (error) {
           console.warn('[useSupplierBase] applyVendorListImport update failed:', error.message);
@@ -342,7 +350,7 @@ export function useSupplierBase(): UseSupplierBase {
 
       return { inserted, updated, failed };
     },
-    [byCnpjBasico],
+    [byChave],
   );
 
   return {

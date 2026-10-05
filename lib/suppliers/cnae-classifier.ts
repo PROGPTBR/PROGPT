@@ -30,6 +30,12 @@ const SCOPE_VALUES = ['national', 'regional', 'state', 'city'] as const;
 
 const ExtractSchema = z.object({
   activityDescription: z.string().min(1),
+  // Pedido de PRODUTO pronto: o comércio atacadista da categoria, no
+  // vocabulário da CNAE. A tabela de CNAE só cita produto (ex.: "canetas") na
+  // FABRICAÇÃO; o comércio é nomeado por categoria ("artigos de escritório e
+  // de papelaria"). Sem esta ponte, comprar caneta em Natal virava "fabricação
+  // de canetas" e dava zero (achado 2026-10-05).
+  commerceDescription: z.string().nullish(),
   scope: z.enum(SCOPE_VALUES),
   states: z.array(z.string()).optional(),
   cities: z.array(z.string()).optional(),
@@ -39,6 +45,10 @@ const PickSchema = z.object({
   cnaeCode: z.string().nullable(),
   confidence: z.number().min(0).max(1),
   rationale: z.string(),
+  // Códigos dos candidatos que mais servem de alternativa (ex.: o varejo e a
+  // fabricação do mesmo produto). Sem isto as alternativas eram só os
+  // próximos da lista do FTS — muitas vezes sem relação nenhuma.
+  alternatives: z.array(z.string()).optional(),
 });
 
 // Mapa de regiões em PT (a LLM extrai "regional" + states populado por nome).
@@ -68,8 +78,12 @@ Campos:
   - Sul: PR, RS, SC
   - Centro-Oeste: DF, GO, MT, MS
 - cities: array de nomes de cidade quando scope = "city". Em PT-BR sem acento opcional.
+- commerceDescription: quando o pedido é COMPRAR UM PRODUTO pronto (não um serviço), a descrição do COMÉRCIO ATACADISTA da categoria desse produto, com o vocabulário oficial da CNAE. Ex.: caneta → "comércio atacadista de artigos de escritório e de papelaria"; vergalhão → "comércio atacadista de materiais de construção"; luva de segurança → "comércio atacadista de equipamentos de proteção". Para serviços, null.
+- activityDescription de PRODUTO: use "comércio atacadista de <categoria>" quando a pessoa quer comprar o item; use "fabricação de <produto>" só se ela pedir fabricação, indústria, fabricante ou item sob encomenda.
 
 Exemplos:
+- "caneta 5b em natal rn"
+  → {"activityDescription":"comércio atacadista de artigos de papelaria","commerceDescription":"comércio atacadista de artigos de escritório e de papelaria","scope":"city","cities":["Natal"],"states":["RN"]}
 - "Quero fornecedores de embalagens flexíveis no Nordeste"
   → {"activityDescription":"fabricação de embalagens flexíveis","scope":"regional","states":["AL","BA","CE","MA","PB","PE","PI","RN","SE"]}
 - "Indústrias têxteis em SP e MG"
@@ -90,8 +104,9 @@ Campos:
 
 Regras:
 - Prefira CNAE específico (sub-classe) sobre genérico (divisão).
-- Se a atividade pede "fabricação", priorize CNAEs de indústria, NÃO comércio.
-- Se a atividade pede "fornecedor de X", e há ambos fabricante e comércio, prefira FABRICAÇÃO (B2B típico de procurement).
+- Se a atividade pede "fabricação", "indústria" ou "fabricante", priorize CNAEs de indústria, NÃO comércio.
+- Se a pessoa quer COMPRAR um produto pronto (material de escritório, EPI, material de construção, peças, alimentos...), prefira o COMÉRCIO ATACADISTA da categoria — é quem vende para empresas em qualquer cidade. Fabricante quase nunca existe na cidade pedida e a busca volta vazia.
+- alternatives: até 4 códigos de candidatos que também servem, do mais útil para o menos. Quando escolher um comércio atacadista, a 1ª alternativa deve ser o comércio VAREJISTA da mesma categoria (se estiver entre os candidatos) e a fabricação do produto vem depois. Nunca repita o cnaeCode escolhido nem indique atividades sem relação com o pedido.
 - Os "Exemplos" de cada candidato são atividades REAIS classificadas naquele CNAE. Quando um exemplo descreve a atividade pedida, esse candidato ganha — mesmo que o NOME do CNAE pareça distante. O nome é jurídico; o exemplo é o que a empresa faz.
 - Se nenhum candidato encaixa bem, retorne cnaeCode=null e confidence=0.`;
 
@@ -164,27 +179,42 @@ export function termosDistintivos(descricao: string): string {
 
 async function retrieveCandidates(
   activityDescription: string,
+  commerceDescription?: string | null,
 ): Promise<CnaeAlternative[]> {
   const distintivos = termosDistintivos(activityDescription);
+  // Pedido de produto: só os termos que identificam a CATEGORIA ("artigos
+  // escritório papelaria"), buscados apenas entre atacado (46) e varejo (47).
+  // A frase inteira ("comércio atacadista de ...") se diluía: "comércio" e
+  // "equipamentos" casam com dezenas de CNAEs e a categoria certa sumia.
+  const categoria = commerceDescription
+    ? termosDistintivos(commerceDescription.replace(/\b(atacadista|varejista)\b/gi, ' '))
+    : '';
 
-  const [principal, focada] = await Promise.all([
+  const [principal, focada, comercio] = await Promise.all([
     buscarCandidatos(activityDescription),
     // Segunda passada só com o que distingue a atividade.
     distintivos && distintivos !== activityDescription.toLowerCase()
       ? buscarCandidatos(distintivos)
       : Promise.resolve([]),
+    categoria ? buscarCandidatos(categoria, ['46', '47']) : Promise.resolve([]),
   ]);
 
-  // União preservando ordem: a busca principal manda, a focada completa com
-  // o que ela não achou. O LLM decide entre as duas leituras.
-  const vistos = new Set(principal.map((c) => c.code));
-  const extras = focada.filter((c) => !vistos.has(c.code));
-
-  return [...principal, ...extras].slice(0, 15);
+  // União preservando ordem: a busca principal manda; o comércio da
+  // categoria vem logo depois, e a focada completa. O LLM decide.
+  const vistos = new Set<string>();
+  const unidos: CnaeAlternative[] = [];
+  for (const c of [...principal, ...comercio.slice(0, 8), ...focada]) {
+    if (vistos.has(c.code)) continue;
+    vistos.add(c.code);
+    unidos.push(c);
+  }
+  return unidos.slice(0, 18);
 }
 
 async function buscarCandidatos(
   activityDescription: string,
+  /** Restringe a divisões da CNAE (2 primeiros dígitos), ex.: ['46','47'] = comércio. */
+  divisoes?: string[],
 ): Promise<CnaeAlternative[]> {
   try {
     const sql = getReceitaSql();
@@ -231,6 +261,7 @@ async function buscarCandidatos(
              (case when q.tsq_and is not null and doc.tsv @@ q.tsq_and then 1 else 0 end) as exato
       from doc, q
       where q.tsq_or is not null and doc.tsv @@ q.tsq_or
+        and (${divisoes ?? null}::text[] is null or left(doc.codigo, 2) = any(${divisoes ?? null}::text[]))
       -- Quem casa com TODOS os termos vem primeiro, sempre.
       order by exato desc, score desc
       limit 12
@@ -320,7 +351,10 @@ export async function classifyCnae(query: string): Promise<ClassifyResponse> {
     };
   }
 
-  const candidates = await retrieveCandidates(extracted.activityDescription);
+  const candidates = await retrieveCandidates(
+    extracted.activityDescription,
+    extracted.commerceDescription,
+  );
   if (candidates.length === 0) {
     return {
       cnaeCode: null,
@@ -353,9 +387,16 @@ export async function classifyCnae(query: string): Promise<ClassifyResponse> {
 
   const chosen =
     candidates.find((c) => c.code === picked.cnaeCode) ?? candidates[0]!;
-  const alternatives = candidates
-    .filter((c) => c.code !== chosen.code)
-    .slice(0, 4);
+  // Alternativas: primeiro as que o LLM indicou (válidas e sem repetir a
+  // escolhida), depois completa com a ordem da busca.
+  const indicadas = (picked.alternatives ?? [])
+    .map((code) => candidates.find((c) => c.code === code))
+    .filter((c): c is CnaeAlternative => !!c && c.code !== chosen.code);
+  const vistas = new Set(indicadas.map((c) => c.code));
+  const alternatives = [
+    ...indicadas,
+    ...candidates.filter((c) => c.code !== chosen.code && !vistas.has(c.code)),
+  ].slice(0, 4);
 
   return {
     cnaeCode: chosen.code,

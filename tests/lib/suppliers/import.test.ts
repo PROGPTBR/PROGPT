@@ -34,7 +34,8 @@ describe('parseVendorListXlsx', () => {
       ['Fornecedor Genérico'],
     ]);
     const { rows, warnings } = await parseVendorListXlsx(b);
-    expect(warnings).toEqual([]);
+    // Sem CNPJ entra um AVISO informativo, não um erro.
+    expect(warnings.some((w) => /obrigat/i.test(w))).toBe(false);
     expect(rows[0]).toMatchObject({ razaoSocial: 'Fornecedor Genérico', cnpj: null });
   });
 
@@ -68,5 +69,57 @@ describe('parseVendorListXlsx', () => {
     const b = Buffer.from((await wb.xlsx.writeBuffer()) as ArrayBuffer);
     const { rows } = await parseVendorListXlsx(b);
     expect(rows[0]!.razaoSocial).toBe('Da aba certa');
+  });
+});
+
+// Layout real de cliente (Construtora Costa Feitosa, 2026-10-05): título
+// mesclado no topo, cabeçalho na linha 3, várias abas, cidade "Cidade - UF",
+// sem CNPJ. A versão anterior devolvia "coluna obrigatória não detectada".
+describe('parseVendorListXlsx — vendor list real de cliente', () => {
+  async function workbookCliente(): Promise<Buffer> {
+    const wb = new ExcelJS.Workbook();
+    // 1ª aba: controle de cotações (cabeçalho na linha 8) — não é a base.
+    const cot = wb.addWorksheet('1.0 VENDOR LIST');
+    for (let i = 0; i < 7; i++) cot.addRow(i === 1 ? ['', '', 'VENDOR LIST ORÇAMENTÁRIA'] : []);
+    cot.addRow(['Nº ORÇAMENTO', 'FORNECEDOR', 'E-MAIL', 'CONTATO', 'CELULAR/TELEFONE', 'SEGMENTO', 'STATUS']);
+    cot.addRow(['0436', 'PEDREIRA X', 'a@x.com', 'LEVI', '11 3611-0240', 'AGREGADOS', 'DECLINOU']);
+    // 2ª aba: a base de verdade.
+    const forn = wb.addWorksheet('2.0 FORNECEDORES');
+    forn.addRow(['FORNECEDORES - CONSTRUTORA']);
+    forn.mergeCells('A1:G1');
+    forn.addRow([]);
+    forn.addRow(['GRUPO DE MATERIAIS', 'FORNECEDOR ', 'E-MAIL', 'CONTATO', 'CELULAR/TELEFONE', 'CIDADE', 'OBSERVAÇÕES']);
+    forn.addRow(['AÇO', 'MESTRE AÇO', 'sp09@mestreaco.com', 'JOSÉ ADRIANO', '11 5464-1406', 'São Paulo - SP', 'Entrega em 48h']);
+    forn.addRow(['ACM ', 'GUARU SIGN', 'Contato@GuaruSign.com.br', '', '11 4969-6006', 'Guarulhos - SP', '']);
+    forn.addRow(['ACM', 'SÓ UF', '', '', '', 'SP', '(vazio)']);
+    forn.addRow(['', '', '', '', '', '', '']);
+    // 3ª aba: tabela dinâmica derivada — uma coluna só.
+    wb.addWorksheet('3.0 PLANILHA FORNECEDORES').addRow(['FORNECEDORES']);
+    return Buffer.from((await wb.xlsx.writeBuffer()) as ArrayBuffer);
+  }
+
+  it('acha a aba da base e o cabeçalho fora da linha 1', async () => {
+    const { rows, warnings } = await parseVendorListXlsx(await workbookCliente());
+    expect(warnings[0]).toMatch(/2\.0 FORNECEDORES.*linha 3/);
+    expect(rows.map((r) => r.razaoSocial)).toEqual(['MESTRE AÇO', 'GUARU SIGN', 'SÓ UF']);
+  });
+
+  it('separa cidade e UF, guarda contato e observações e normaliza o e-mail', async () => {
+    const { rows } = await parseVendorListXlsx(await workbookCliente());
+    expect(rows[0]).toMatchObject({
+      categoria: 'AÇO',
+      municipio: 'São Paulo',
+      uf: 'SP',
+      telefone: '11 5464-1406',
+      notas: 'Contato: JOSÉ ADRIANO · Entrega em 48h',
+    });
+    expect(rows[1]).toMatchObject({ categoria: 'ACM', email: 'contato@guarusign.com.br', notas: null });
+    // "SP" sozinho na coluna de cidade é UF; "(vazio)" de tabela dinâmica é vazio.
+    expect(rows[2]).toMatchObject({ municipio: null, uf: 'SP', notas: null });
+  });
+
+  it('avisa que não há CNPJ, sem tratar como erro', async () => {
+    const { warnings } = await parseVendorListXlsx(await workbookCliente());
+    expect(warnings.some((w) => /sem CNPJ/i.test(w))).toBe(true);
   });
 });

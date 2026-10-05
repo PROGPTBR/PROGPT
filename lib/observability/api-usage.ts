@@ -61,6 +61,8 @@ export type ApiOperation =
   | 'suppliers-search'
   | 'suppliers-export'
   | 'suppliers-cnae-search'
+  | 'suppliers-busca-ampliada-categorias'
+  | 'suppliers-busca-ampliada-web'
   | 'chat-transcribe'
   | 'assistant-negotiation-strategy'
   | 'assistant-negotiation-example'

@@ -31,3 +31,29 @@ describe('suppliers/base', () => {
     expect(cnpjBasicoOf(undefined)).toBeNull();
   });
 });
+
+describe('chaveFornecedor', () => {
+  it('usa o CNPJ base quando existe', async () => {
+    const { chaveFornecedor } = await import('@/lib/suppliers/base');
+    expect(chaveFornecedor({ razaoSocial: 'X', cnpj: '12.345.678/0001-90' })).toBe('cnpj:12345678');
+  });
+
+  it('sem CNPJ, reconhece o mesmo fornecedor por nome + e-mail, ignorando acento e caixa', async () => {
+    const { chaveFornecedor } = await import('@/lib/suppliers/base');
+    const a = chaveFornecedor({ razaoSocial: 'Mestre Aço ', email: 'SP09@mestreaco.com' });
+    const b = chaveFornecedor({ razaoSocial: 'MESTRE ACO', email: 'sp09@mestreaco.com' });
+    expect(a).toBe(b);
+  });
+
+  it('o mesmo fornecedor com outro contato vira outro cadastro', async () => {
+    const { chaveFornecedor } = await import('@/lib/suppliers/base');
+    const a = chaveFornecedor({ razaoSocial: 'ArcelorMittal', email: 'thais@arcelormittal.com' });
+    const b = chaveFornecedor({ razaoSocial: 'ArcelorMittal', email: 'daniel@arcelormittal.com' });
+    expect(a).not.toBe(b);
+  });
+
+  it('sem nome não há chave', async () => {
+    const { chaveFornecedor } = await import('@/lib/suppliers/base');
+    expect(chaveFornecedor({ razaoSocial: '   ' })).toBeNull();
+  });
+});

@@ -97,10 +97,11 @@ export function VendorListImportDialog({ open, onClose, preview, onConfirm }: Pr
         {!parsed ? (
           <>
             <p className="text-xs text-muted-foreground">
-              Planilha .xlsx: colunas <strong>Razão social / nome</strong> (obrigatória), CNPJ,
-              Categoria, UF, Município, Telefone, Email — os cabeçalhos são reconhecidos
-              automaticamente. Fornecedores com o mesmo CNPJ já cadastrado são atualizados, não
-              duplicados.
+              Pode subir a planilha do jeito que vocês já usam (.xlsx): a aba e a linha do
+              cabeçalho são encontradas sozinhas. Só precisa de uma coluna com o{' '}
+              <strong>nome do fornecedor</strong>; CNPJ, grupo/categoria, cidade, telefone, e-mail,
+              contato e observações entram se existirem. Fornecedor já cadastrado (mesmo CNPJ, ou
+              mesmo nome e e-mail) é atualizado, não duplicado.
             </p>
             <label className="flex items-center justify-center gap-2 text-sm cursor-pointer rounded-md border border-dashed border-input bg-background px-4 py-6 hover:bg-accent disabled:opacity-50">
               <Upload className="h-4 w-4" />

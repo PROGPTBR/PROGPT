@@ -25,6 +25,13 @@ import {
 
 import { SuppliersResults } from './SuppliersResults';
 
+import {
+  BuscaAmpliadaResultados,
+  VendorListCartao,
+  rodarBuscaAmpliada,
+  type EstadoBuscaAmpliada,
+} from './BuscaAmpliada';
+
 // ============================================================
 // FASES
 // ============================================================
@@ -85,8 +92,16 @@ function searchLabel(
 // COMPONENTE
 // ============================================================
 
-export function SuppliersAssistant() {
+export function SuppliersAssistant({
+  buscaAmpliada = false,
+}: {
+  /** Vendor list da equipe + internet (lib/suppliers/busca-ampliada.ts). */
+  buscaAmpliada?: boolean;
+} = {}) {
   const params = useSearchParams();
+
+  const [ampliada, setAmpliada] =
+    useState<EstadoBuscaAmpliada | null>(null);
 
   const initialQuery =
     params.get('q') ?? '';
@@ -243,6 +258,23 @@ export function SuppliersAssistant() {
     query: string,
   ) {
     setSaved(false);
+
+    // Busca ampliada roda em paralelo com o CNAE e não depende dele: mesmo
+    // quando a Receita não acha nada, a vendor list e a internet aparecem.
+    if (buscaAmpliada) {
+      setAmpliada({
+        status: 'carregando',
+        consulta: query,
+      });
+      void rodarBuscaAmpliada(query).then(
+        (estado) =>
+          setAmpliada((atual) =>
+            atual?.consulta === query
+              ? estado
+              : atual,
+          ),
+      );
+    }
 
     setPhase({
       kind: 'classifying',
@@ -428,6 +460,9 @@ export function SuppliersAssistant() {
     // Por enquanto buscas antigas salvas não possuem cidades.
     const cities: SupplierCity[] =
       [];
+
+    // Busca salva não guarda o texto do pedido — sem busca ampliada.
+    setAmpliada(null);
 
     setSaved(true);
 
@@ -629,6 +664,14 @@ export function SuppliersAssistant() {
     }
   }
 
+  const painelAmpliada =
+    buscaAmpliada && ampliada ? (
+      <BuscaAmpliadaResultados
+        key={ampliada.consulta}
+        estado={ampliada}
+      />
+    ) : null;
+
   // ==========================================================
   // CLASSIFICANDO
   // ==========================================================
@@ -638,16 +681,19 @@ export function SuppliersAssistant() {
     'classifying'
   ) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 gap-3 text-muted-foreground">
-        <Loader2
-          className="h-8 w-8 animate-spin text-brand"
-          aria-hidden="true"
-        />
+      <>
+        {painelAmpliada}
+        <div className="flex flex-col items-center justify-center py-20 gap-3 text-muted-foreground">
+          <Loader2
+            className="h-8 w-8 animate-spin text-brand"
+            aria-hidden="true"
+          />
 
-        <p className="text-sm">
-          Identificando CNAE…
-        </p>
-      </div>
+          <p className="text-sm">
+            Identificando CNAE…
+          </p>
+        </div>
+      </>
     );
   }
 
@@ -660,17 +706,20 @@ export function SuppliersAssistant() {
     'searching'
   ) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 gap-3 text-muted-foreground">
-        <Loader2
-          className="h-8 w-8 animate-spin text-brand"
-          aria-hidden="true"
-        />
+      <>
+        {painelAmpliada}
+        <div className="flex flex-col items-center justify-center py-20 gap-3 text-muted-foreground">
+          <Loader2
+            className="h-8 w-8 animate-spin text-brand"
+            aria-hidden="true"
+          />
 
-        <p className="text-sm">
-          Buscando
-          fornecedores…
-        </p>
-      </div>
+          <p className="text-sm">
+            Buscando
+            fornecedores…
+          </p>
+        </div>
+      </>
     );
   }
 
@@ -683,6 +732,8 @@ export function SuppliersAssistant() {
     'confirming'
   ) {
     return (
+      <>
+      {painelAmpliada}
       <SuppliersConfirm
         classify={
           phase.classify
@@ -697,6 +748,7 @@ export function SuppliersAssistant() {
         }
         isLoading={false}
       />
+      </>
     );
   }
 
@@ -706,6 +758,8 @@ export function SuppliersAssistant() {
 
   if (phase.kind === 'done') {
     return (
+      <>
+      {painelAmpliada}
       <SuppliersResults
         response={
           phase.response
@@ -734,6 +788,7 @@ export function SuppliersAssistant() {
           saved
         }
       />
+      </>
     );
   }
 
@@ -742,6 +797,7 @@ export function SuppliersAssistant() {
   // ==========================================================
 
   return (
+    <div className="space-y-6">
     <SuppliersForm
       initialQuery={
         initialQuery
@@ -762,5 +818,7 @@ export function SuppliersAssistant() {
         void deleteSearch(id)
       }
     />
+    {buscaAmpliada && <VendorListCartao />}
+    </div>
   );
 }
