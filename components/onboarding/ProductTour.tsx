@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Loader2, X } from 'lucide-react';
 
 import { placeCard, type Rect, type TourStep } from '@/lib/onboarding/tour-steps';
+import { TOUR_ABA_EVENT } from '@/lib/onboarding/tour-state';
 
 // Tour guiado com foco recortado: um retângulo transparente sobre o elemento
 // real e o resto da tela escurecido por uma sombra de espalhamento gigante —
@@ -76,6 +77,11 @@ export function ProductTour({
       const el = step.target ? document.querySelector(step.target) : null;
       const r = el?.getBoundingClientRect();
       const visivel = !!(r && r.width && r.height);
+      // Passo dentro de uma aba da tela: pede a aba enquanto o alvo não aparece.
+      // Repetir cobre a tela que ainda está montando quando o tour chega.
+      if (step.aba && !visivel) {
+        window.dispatchEvent(new CustomEvent(TOUR_ABA_EVENT, { detail: step.aba }));
+      }
       if (step.target && !visivel && Date.now() - inicio < ESPERA_ALVO_MS) {
         timer = setTimeout(procurar, INTERVALO_BUSCA_MS);
         return;
@@ -87,6 +93,10 @@ export function ProductTour({
 
     setProcurando(!!step.target);
     setRect(null);
+    // Sempre pede a aba ao entrar no passo — inclusive quando o alvo é comum a
+    // todas as abas (cabeçalho da vitrine), para "Voltar" não deixar a tela
+    // presa na aba do passo seguinte.
+    if (step.aba) window.dispatchEvent(new CustomEvent(TOUR_ABA_EVENT, { detail: step.aba }));
     procurar();
     window.addEventListener('resize', agendar);
     window.addEventListener('scroll', agendar, true);
@@ -98,7 +108,7 @@ export function ProductTour({
       window.removeEventListener('resize', agendar);
       window.removeEventListener('scroll', agendar, true);
     };
-  }, [navegando, index, step.target]);
+  }, [navegando, index, step.target, step.aba]);
 
   const carregando = navegando || procurando;
 

@@ -65,6 +65,26 @@ describe('TOUR_STEPS', () => {
     expect(repetidas).toEqual(['/chat']);
   });
 
+  // Passos com `aba` pedem à tela que troque de aba; um id que a tela não
+  // conhece seria ignorado e o passo cairia no cartão centrado sem aviso.
+  it('toda aba pedida pelo tour existe na tela do passo', () => {
+    const abasPorTela: Record<string, string[]> = {
+      '/gestao-obras': ['cockpit', 'contratos', 'medicoes', 'planejamento'],
+      '/gestao-demandas': ['visao', 'setores', 'fluxo', 'relatorios'],
+    };
+    for (const step of TOUR_STEPS) {
+      if (!step.aba) continue;
+      expect(abasPorTela[step.route], `passo "${step.id}" pede aba numa tela sem abas`).toBeDefined();
+      expect(abasPorTela[step.route], `passo "${step.id}"`).toContain(step.aba);
+    }
+  });
+
+  it('o tour explica cada aba das duas vitrines', () => {
+    const abas = (route: string) => new Set(TOUR_STEPS.filter((s) => s.route === route).map((s) => s.aba));
+    expect([...abas('/gestao-obras')].sort()).toEqual(['cockpit', 'contratos', 'medicoes', 'planejamento']);
+    expect([...abas('/gestao-demandas')].sort()).toEqual(['fluxo', 'relatorios', 'setores', 'visao']);
+  });
+
   it('visita os módulos novos (vitrines sob demanda)', () => {
     const rotas = TOUR_STEPS.map((s) => s.route);
     expect(rotas).toContain('/gestao-obras');

@@ -14,6 +14,7 @@ import {
   Selo,
   VitrineCabecalho,
   avisarSobDemanda,
+  useAbaDoTour,
   formatarBRL,
   formatarBRLCurto,
   formatarNumero,
@@ -56,6 +57,7 @@ const ABAS: { id: AbaId; label: string }[] = [
   { id: 'medicoes', label: 'Medições' },
   { id: 'planejamento', label: 'Planejamento' },
 ];
+const IDS_ABAS = ABAS.map((a) => a.id);
 
 const TOM_OBRA: Record<StatusObra, TomSelo> = { ATIVA: 'azul', CONCLUIDA: 'verde', SUSPENSA: 'amarelo' };
 const TOM_MEDICAO: Record<StatusMedicao, TomSelo> = { RASCUNHO: 'cinza', ENVIADA: 'amarelo', APROVADA: 'verde' };
@@ -72,6 +74,7 @@ function SeloPrazo({ resumo }: { resumo: ResumoObra }) {
 export function GestaoObrasDemo({ hojeIso }: { hojeIso: string }) {
   const now = useMemo(() => dataDeIso(hojeIso), [hojeIso]);
   const [aba, setAba] = useState<AbaId>('cockpit');
+  useAbaDoTour(IDS_ABAS, setAba);
   // Obra em foco compartilhada entre Medições e Planejamento (a ficha da obra
   // leva direto para elas já com a obra escolhida).
   const [obraFoco, setObraFoco] = useState<string>(OBRA_INICIAL_ID);
@@ -108,7 +111,7 @@ function Cockpit({ now, onAbrirObra }: { now: Date; onAbrirObra: (obraId: string
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+      <div data-tour="obras-kpis" className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
         <Kpi label="Contratos ativos" valor={String(ind.contratosAtivos)} />
         <Kpi label="Obras em execução" valor={String(ind.obrasEmExecucao)} detalhe={`de ${OBRAS.length} obras`} />
         <Kpi label="Valor contratado" valor={formatarBRLCurto(ind.valorContratado)} />
@@ -122,7 +125,7 @@ function Cockpit({ now, onAbrirObra }: { now: Date; onAbrirObra: (obraId: string
         <Kpi label="Aguardando o órgão" valor={formatarBRLCurto(ind.aguardandoAprovacao)} detalhe="BMs enviados" />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+      <div data-tour="obras-graficos" className="grid gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
         <Secao titulo="Medido por mês (enviado + aprovado)">
           <GraficoColunas serie={serie} formatar={formatarBRLCurto} />
         </Secao>
@@ -134,7 +137,7 @@ function Cockpit({ now, onAbrirObra }: { now: Date; onAbrirObra: (obraId: string
         </Secao>
       </div>
 
-      <Secao titulo="Carteira de obras">
+      <Secao data-tour="obras-carteira" titulo="Carteira de obras">
         <div className="-mx-4 overflow-x-auto sm:-mx-5">
           <table className="w-full min-w-[760px] text-sm">
             <thead>
@@ -253,7 +256,7 @@ function ContratosEObras({ now, onIrPara }: { now: Date; onIrPara: (aba: AbaId, 
   }
 
   return (
-    <div className="space-y-3">
+    <div data-tour="obras-contratos" className="space-y-3">
       <div className="flex justify-end">
         <button
           type="button"
@@ -490,7 +493,7 @@ function Medicoes({ now, obraId, onTrocarObra }: { now: Date; obraId: string; on
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[260px_minmax(0,1fr)]">
-        <nav aria-label="Boletins de medição" className="flex gap-2 overflow-x-auto lg:flex-col lg:overflow-visible">
+        <nav data-tour="obras-bms" aria-label="Boletins de medição" className="flex gap-2 overflow-x-auto lg:flex-col lg:overflow-visible">
           {[...obra.medicoes].reverse().map((m) => {
             const ativo = m.numero === numero;
             return (
@@ -517,7 +520,7 @@ function Medicoes({ now, obraId, onTrocarObra }: { now: Date; obraId: string; on
           })}
         </nav>
 
-        <Secao
+        <Secao data-tour="obras-boletim"
           titulo={`Boletim de medição nº ${String(numero).padStart(2, '0')} — ${rotuloMes(now, medicao.mes)}`}
           acoes={
             <div className="flex gap-1.5">
@@ -645,7 +648,7 @@ function Planejamento({ obraId, onTrocarObra }: { obraId: string; onTrocarObra: 
           Obra concluída — sem frentes de serviço em planejamento.
         </p>
       ) : (
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <div data-tour="obras-kanban" className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           {COLUNAS_KANBAN.map((col) => {
             const daColuna = tarefas.filter((t) => t.coluna === col.id);
             return (

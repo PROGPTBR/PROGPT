@@ -14,6 +14,7 @@ import {
   Selo,
   VitrineCabecalho,
   avisarSobDemanda,
+  useAbaDoTour,
   type TomSelo,
 } from '@/components/vitrine/ui';
 import { dataDeIso, formatarData } from '@/lib/vitrine/datas';
@@ -48,6 +49,7 @@ const ABAS: { id: AbaId; label: string }[] = [
   { id: 'fluxo', label: 'Quadro de fluxo' },
   { id: 'relatorios', label: 'Relatórios' },
 ];
+const IDS_ABAS = ABAS.map((a) => a.id);
 
 const TOM_STATUS: Record<SpStatus, TomSelo> = {
   aberta: 'cinza',
@@ -72,6 +74,7 @@ const nomesDe = (ids: string[]) => ids.map(nomeDe).join(', ');
 export function GestaoDemandasDemo({ hojeIso }: { hojeIso: string }) {
   const sps = useMemo(() => montarDemandasExemplo(dataDeIso(hojeIso)), [hojeIso]);
   const [aba, setAba] = useState<AbaId>('visao');
+  useAbaDoTour(IDS_ABAS, setAba);
   const [aberta, setAberta] = useState<Sp | null>(null);
 
   return (
@@ -108,7 +111,7 @@ function VisaoGeral({ sps, hojeIso, onAbrir }: VisaoProps) {
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+      <div data-tour="demandas-kpis" className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <Kpi label="Total de SPs" valor={String(ind.total)} />
         <Kpi label="Abertas" valor={String(ind.abertas)} />
         <Kpi label="Em andamento" valor={String(ind.emAndamento)} />
@@ -129,7 +132,7 @@ function VisaoGeral({ sps, hojeIso, onAbrir }: VisaoProps) {
 
       {/* Barras neutras nos dois quadros: com cores, os status e os setores
           pareciam a mesma legenda (pedido do diretor 2026-10-04). */}
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div data-tour="demandas-graficos" className="grid gap-4 lg:grid-cols-2">
         <Secao titulo="Distribuição por status">
           <ListaBarras neutro linhas={porStatus.map((p) => ({ label: STATUS_LABEL[p.status], valor: p.total }))} />
         </Secao>
@@ -145,7 +148,7 @@ function VisaoGeral({ sps, hojeIso, onAbrir }: VisaoProps) {
         </Secao>
       </div>
 
-      <Secao titulo={`Em atraso (${atrasadas.length})`}>
+      <Secao data-tour="demandas-atraso" titulo={`Em atraso (${atrasadas.length})`}>
         {atrasadas.length === 0 ? (
           <p className="text-sm text-muted-foreground">Nenhuma SP em atraso.</p>
         ) : (
@@ -175,7 +178,7 @@ function PainelSetores({ sps, hojeIso, onAbrir }: VisaoProps) {
 
   return (
     <div className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)]">
-      <nav aria-label="Setores" className="flex gap-1 overflow-x-auto lg:flex-col lg:overflow-visible">
+      <nav data-tour="demandas-setores" aria-label="Setores" className="flex gap-1 overflow-x-auto lg:flex-col lg:overflow-visible">
         {opcoesSetor.map((s) => {
           const total = s.slug === 'todos' ? sps.length : sps.filter((sp) => sp.setor === s.slug).length;
           const ativo = s.slug === setor;
@@ -239,7 +242,7 @@ function PainelSetores({ sps, hojeIso, onAbrir }: VisaoProps) {
             Nenhuma SP com esses filtros.
           </p>
         ) : (
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          <div data-tour="demandas-cartoes" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {visiveis.map((sp) => (
               <CartaoSp key={sp.id} sp={sp} hojeIso={hojeIso} onAbrir={onAbrir} />
             ))}
@@ -309,7 +312,7 @@ function QuadroFluxo({ sps, hojeIso, onAbrir }: VisaoProps) {
         Ninguém arrasta cartão: cada SP muda de coluna sozinha quando o setor confirma o recebimento, quando o
         responsável começa a trabalhar e quando a entrega vai para validação.
       </p>
-      <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-5">
+      <div data-tour="demandas-fluxo" className="grid gap-3 md:grid-cols-3 xl:grid-cols-5">
         {FLUXO_COLUNAS.map((col) => {
           const doFluxo = sps.filter((s) => colunaDoFluxo(s) === col.id);
           return (
@@ -372,7 +375,7 @@ function Relatorios({ sps, hojeIso, onAbrir }: VisaoProps) {
   const seletor = 'h-9 rounded-lg border border-input bg-card px-3 text-sm';
 
   return (
-    <Secao
+    <Secao data-tour="demandas-relatorios"
       titulo={`Relatório de SPs (${linhas.length})`}
       acoes={
         <div className="flex gap-1.5">

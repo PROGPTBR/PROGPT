@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen, within } from '@testing-library/react';
+import { act, cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 const { toastMock } = vi.hoisted(() => ({ toastMock: vi.fn() }));
@@ -90,5 +90,29 @@ describe('Gestão de Obras (vitrine)', () => {
     for (const col of ['Planejado', 'Em execução', 'Conferência', 'Concluído']) {
       expect(screen.getAllByRole('heading', { name: col }).length).toBeGreaterThan(0);
     }
+  });
+});
+
+describe('vitrines + tour guiado', () => {
+  const pedirAba = (id: string) =>
+    act(() => {
+      window.dispatchEvent(new CustomEvent('progpt:tour-aba', { detail: id }));
+    });
+
+  it('Gestão de Obras troca de aba quando o tour pede', () => {
+    render(<GestaoObrasDemo hojeIso={HOJE} />);
+    pedirAba('medicoes');
+    expect(screen.getByRole('tab', { name: 'Medições' }).getAttribute('aria-selected')).toBe('true');
+    expect(document.querySelector('[data-tour="obras-boletim"]')).not.toBeNull();
+    pedirAba('planejamento');
+    expect(document.querySelector('[data-tour="obras-kanban"]')).not.toBeNull();
+  });
+
+  it('Gestão de Demandas troca de aba e ignora aba desconhecida', () => {
+    render(<GestaoDemandasDemo hojeIso={HOJE} />);
+    pedirAba('fluxo');
+    expect(document.querySelector('[data-tour="demandas-fluxo"]')).not.toBeNull();
+    pedirAba('aba-que-nao-existe');
+    expect(screen.getByRole('tab', { name: 'Quadro de fluxo' }).getAttribute('aria-selected')).toBe('true');
   });
 });

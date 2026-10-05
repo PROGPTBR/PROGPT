@@ -18,6 +18,11 @@ export type TourStep = {
   route: string;
   /** Nome da seção mostrado no cartão ("Fluxo de Compras · Passo 9 de 29"). */
   secao?: string;
+  /**
+   * Aba interna da tela onde o passo acontece (telas com abas próprias, como
+   * as vitrines). O tour pede a troca via TOUR_ABA_EVENT antes de procurar o alvo.
+   */
+  aba?: string;
   target?: string;
   title: string;
   body: string;
@@ -205,21 +210,88 @@ export const TOUR_STEPS: TourStep[] = [
   },
 
   // ── Gestão de Obras (vitrine) ─────────────────────────────────────────
+  // Roteiro detalhado (pedido do diretor 2026-10-04, para treinar o time):
+  // passa por cada aba da tela, trocando a aba sozinho via `aba`.
   {
     id: 'obras-abas',
     route: '/gestao-obras',
     secao: 'Gestão de Obras',
+    aba: 'cockpit',
     target: '[data-tour="vitrine-abas"]',
     title: 'Gestão de Obras',
-    body: 'Gestão de obras públicas: visão geral da carteira, contratos e obras com a planilha orçamentária, boletins de medição e planejamento das frentes por quinzena. Navegue pelas abas — os dados desta tela são de exemplo.',
+    body: 'Sistema para construtoras que executam obras públicas: contrato com o órgão, obras, planilha orçamentária, boletins de medição e planejamento das frentes. A tela tem quatro abas e o tour vai passar por todas. Os dados são de exemplo.',
+  },
+  {
+    id: 'obras-kpis',
+    route: '/gestao-obras',
+    secao: 'Gestão de Obras',
+    aba: 'cockpit',
+    target: '[data-tour="obras-kpis"]',
+    title: 'A carteira em números',
+    body: 'Valor contratado é a soma das planilhas de todas as obras, já com BDI e desconto da licitação. Medido acumulado soma os boletins enviados ao órgão e os aprovados. Saldo a medir é o que falta medir. "Aguardando o órgão" é o valor já enviado que o órgão ainda não aprovou.',
+  },
+  {
+    id: 'obras-graficos',
+    route: '/gestao-obras',
+    secao: 'Gestão de Obras',
+    aba: 'cockpit',
+    target: '[data-tour="obras-graficos"]',
+    title: 'Faturamento e avanço',
+    body: 'À esquerda, quanto foi medido em cada um dos últimos 6 meses — boletim em rascunho não entra, só o enviado ou aprovado. À direita, o avanço de cada obra: quanto já foi medido em relação ao valor contratado.',
+  },
+  {
+    id: 'obras-carteira',
+    route: '/gestao-obras',
+    secao: 'Gestão de Obras',
+    aba: 'cockpit',
+    target: '[data-tour="obras-carteira"]',
+    title: 'Carteira de obras',
+    body: 'Uma linha por obra: órgão, engenheiro responsável, avanço, valor e prazo. O término previsto vem da ordem de serviço mais o prazo do contrato; o selo fica verde com folga, amarelo a 60 dias ou menos do fim e vermelho quando venceu. Clicar no nome da obra abre as medições dela.',
+  },
+  {
+    id: 'obras-contratos',
+    route: '/gestao-obras',
+    secao: 'Gestão de Obras',
+    aba: 'contratos',
+    target: '[data-tour="obras-contratos"]',
+    title: 'Contratos e obras',
+    body: 'Cada contrato com um órgão (Estado ou Prefeitura) pode ter várias obras. Clique no contrato para ver as obras e, numa obra, a planilha orçamentária por grupo de serviço (fontes SINAPI, SICRO ou própria). O preço unitário final é o de referência mais o BDI, menos o desconto dado na licitação.',
+  },
+  {
+    id: 'obras-bms',
+    route: '/gestao-obras',
+    secao: 'Gestão de Obras',
+    aba: 'medicoes',
+    target: '[data-tour="obras-bms"]',
+    title: 'Boletins de medição',
+    body: 'Cada mês a obra gera um boletim de medição (BM), que passa por três situações: rascunho, enviado ao órgão e aprovado. Escolha a obra no seletor acima e clique num boletim para abri-lo.',
+  },
+  {
+    id: 'obras-boletim',
+    route: '/gestao-obras',
+    secao: 'Gestão de Obras',
+    aba: 'medicoes',
+    target: '[data-tour="obras-boletim"]',
+    title: 'O boletim, item a item',
+    body: 'Para cada serviço: quantidade contratada, o que já foi medido antes, o que entra nesta medição, o acumulado, o percentual executado e o valor deste boletim. No sistema contratado o boletim sai em PDF e Excel, no modelo pedido pelo órgão.',
+  },
+  {
+    id: 'obras-kanban',
+    route: '/gestao-obras',
+    secao: 'Gestão de Obras',
+    aba: 'planejamento',
+    target: '[data-tour="obras-kanban"]',
+    title: 'Planejamento por quinzena',
+    body: 'As frentes de serviço de cada quinzena (dias 1 a 15 e 16 ao fim do mês) passam por quatro colunas: Planejado, Em execução, Conferência e Concluído. Cada cartão aponta o item da planilha e a equipe responsável, ligando o que foi planejado ao que vai ser medido.',
   },
   {
     id: 'obras-contato',
     route: '/gestao-obras',
     secao: 'Gestão de Obras',
+    aba: 'cockpit',
     target: '[data-tour="vitrine-contato"]',
     title: 'Implantado sob demanda',
-    body: 'Este módulo é implantado com os contratos, obras e o processo da sua empresa. Quer na sua operação? Fale com a 2B Supply por aqui.',
+    body: 'O sistema é implantado com os contratos, as obras e o processo de medição de cada empresa. Interessou? O pedido é por aqui, direto no WhatsApp da 2B Supply.',
   },
 
   // ── Gestão de Demandas (vitrine) ──────────────────────────────────────
@@ -227,17 +299,82 @@ export const TOUR_STEPS: TourStep[] = [
     id: 'demandas-abas',
     route: '/gestao-demandas',
     secao: 'Gestão de Demandas',
+    aba: 'visao',
     target: '[data-tour="vitrine-abas"]',
     title: 'Gestão de Demandas',
-    body: 'Solicitações entre setores com responsável, prazo, percentual de conclusão, histórico e validação da entrega — mais o quadro de fluxo e os relatórios. Também com dados de exemplo.',
+    body: 'Controla as Solicitações de Providência (SPs): um setor pede a outro uma ação, com responsável, prazo e uma entrega que quem pediu precisa validar. São quatro abas, e o tour vai passar por todas. Os dados são de exemplo.',
+  },
+  {
+    id: 'demandas-kpis',
+    route: '/gestao-demandas',
+    secao: 'Gestão de Demandas',
+    aba: 'visao',
+    target: '[data-tour="demandas-kpis"]',
+    title: 'Os indicadores',
+    body: 'Quantas SPs existem e em que situação estão. "Conclusão no prazo" é a parte das concluídas que foi entregue até a data prevista; "tempo médio" é quantos dias, em média, uma SP leva da emissão à conclusão.',
+  },
+  {
+    id: 'demandas-graficos',
+    route: '/gestao-demandas',
+    secao: 'Gestão de Demandas',
+    aba: 'visao',
+    target: '[data-tour="demandas-graficos"]',
+    title: 'Por status e por setor',
+    body: 'À esquerda, quantas SPs há em cada situação, de aberta a concluída. À direita, quantas cada setor recebeu — e, ao lado do número, quantas estão em atraso.',
+  },
+  {
+    id: 'demandas-atraso',
+    route: '/gestao-demandas',
+    secao: 'Gestão de Demandas',
+    aba: 'visao',
+    target: '[data-tour="demandas-atraso"]',
+    title: 'O que está atrasado',
+    body: 'As SPs com o prazo vencido, da mais antiga para a mais nova. Clique em qualquer linha para abrir a SP completa.',
+  },
+  {
+    id: 'demandas-setores',
+    route: '/gestao-demandas',
+    secao: 'Gestão de Demandas',
+    aba: 'setores',
+    target: '[data-tour="demandas-setores"]',
+    title: 'O painel de cada setor',
+    body: 'Escolha um setor para ver só as SPs dele. Acima dos cartões ficam a busca (por código, tema ou responsável), o filtro de situação e o botão "Nova SP".',
+  },
+  {
+    id: 'demandas-cartoes',
+    route: '/gestao-demandas',
+    secao: 'Gestão de Demandas',
+    aba: 'setores',
+    target: '[data-tour="demandas-cartoes"]',
+    title: 'Como ler um cartão',
+    body: 'O código mostra setor, número e ano (ex.: SP-MKT-08/2026). A barra mostra o percentual concluído e os quatro tracinhos, a etapa: aberta, em andamento, validação e concluída. O selo de prazo fica verde com folga, amarelo quando vence em até 5 dias e vermelho quando atrasa. Clique no cartão para ver o histórico, os anexos e os pedidos de prorrogação.',
+  },
+  {
+    id: 'demandas-fluxo',
+    route: '/gestao-demandas',
+    secao: 'Gestão de Demandas',
+    aba: 'fluxo',
+    target: '[data-tour="demandas-fluxo"]',
+    title: 'Quadro de fluxo',
+    body: 'Cinco colunas: Enviada, Recebida, Em andamento, Aguardando validação e Concluída. Ninguém arrasta cartão: a SP muda de coluna sozinha quando o setor confirma o recebimento, quando o responsável começa a trabalhar e quando a entrega vai para validação.',
+  },
+  {
+    id: 'demandas-relatorios',
+    route: '/gestao-demandas',
+    secao: 'Gestão de Demandas',
+    aba: 'relatorios',
+    target: '[data-tour="demandas-relatorios"]',
+    title: 'Relatórios',
+    body: 'Filtre por setor, situação e prazo (no prazo, vencendo, atrasadas ou encerradas) para montar a lista que precisar. No sistema contratado, a lista é exportada em Excel ou PDF.',
   },
   {
     id: 'demandas-contato',
     route: '/gestao-demandas',
     secao: 'Gestão de Demandas',
+    aba: 'visao',
     target: '[data-tour="vitrine-contato"]',
     title: 'Também sob demanda',
-    body: 'Os setores, as pessoas e as regras de prazo são configurados para a sua empresa na implantação. O pedido é por aqui.',
+    body: 'Os setores, as pessoas e as regras de prazo são configurados para cada empresa na implantação. O pedido é por aqui.',
   },
 
   // ── Meu perfil ────────────────────────────────────────────────────────

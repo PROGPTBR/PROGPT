@@ -11,6 +11,11 @@
 
 export const TOUR_STATE_KEY = 'progpt_tour_v2';
 export const TOUR_EVENT = 'progpt:tour-change';
+/**
+ * Pedido do tour para a tela abrir uma aba interna (detail = id da aba).
+ * Usado pelas telas com abas próprias, como as vitrines de Obras e Demandas.
+ */
+export const TOUR_ABA_EVENT = 'progpt:tour-aba';
 /** Marca que o tour já foi aberto nesta aba (ver tourJaIniciado). */
 export const TOUR_INICIADO_KEY = 'progpt_tour_iniciado_v2';
 

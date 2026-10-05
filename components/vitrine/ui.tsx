@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { toast } from 'sonner';
 import { MessageCircle, Sparkles } from 'lucide-react';
 
@@ -8,6 +9,7 @@ import {
   solicitarProdutoHref,
   type ProdutoVitrine,
 } from '@/lib/vitrine/contato';
+import { TOUR_ABA_EVENT } from '@/lib/onboarding/tour-state';
 
 // Kit visual das vitrines sob demanda (sub-projeto 68). Segue o mesmo
 // vocabulário do Painel (components/dashboard/UnifiedDashboard.tsx): cartões
@@ -85,6 +87,21 @@ export function avisarSobDemanda(produto: ProdutoVitrine, acao: string) {
 
 // ─── Navegação por abas ───────────────────────────────────────────────────
 
+/**
+ * Deixa o tour guiado abrir uma aba desta tela (passos com `aba` em
+ * lib/onboarding/tour-steps.ts). Ids desconhecidos são ignorados.
+ */
+export function useAbaDoTour<T extends string>(ids: readonly T[], abrir: (id: T) => void) {
+  useEffect(() => {
+    const aoPedir = (e: Event) => {
+      const id = (e as CustomEvent<unknown>).detail;
+      if (typeof id === 'string' && (ids as readonly string[]).includes(id)) abrir(id as T);
+    };
+    window.addEventListener(TOUR_ABA_EVENT, aoPedir);
+    return () => window.removeEventListener(TOUR_ABA_EVENT, aoPedir);
+  }, [ids, abrir]);
+}
+
 export function Abas<T extends string>({
   abas,
   ativa,
@@ -145,14 +162,17 @@ export function Secao({
   acoes,
   children,
   className = '',
+  'data-tour': dataTour,
 }: {
   titulo: string;
   acoes?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
+  /** Âncora do tour guiado (lib/onboarding/tour-steps.ts). */
+  'data-tour'?: string;
 }) {
   return (
-    <section className={`rounded-xl border border-border bg-card p-4 sm:p-5 ${className}`}>
+    <section data-tour={dataTour} className={`rounded-xl border border-border bg-card p-4 sm:p-5 ${className}`}>
       <div className="mb-4 flex items-center justify-between gap-3">
         <h2 className="text-sm font-medium">{titulo}</h2>
         {acoes}
