@@ -99,7 +99,43 @@ export interface CatmatMatch {
 
 type PickCandidate = { codigo: number; nome: string };
 
+const semAcento = (x: string) => x.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
+/** Candidatos cujo nome contém algum termo do item (radical de 5 letras). */
+export function candidatosPorPalavra(texto: string, candidatos: PickCandidate[]): PickCandidate[] {
+  const termos = semAcento(texto)
+    .split(/[^a-z0-9]+/)
+    .filter((t) => t.length >= 4)
+    .map((t) => t.slice(0, 5));
+  if (termos.length === 0) return [];
+  return candidatos.filter((c) => {
+    const nome = semAcento(c.nome);
+    return termos.some((t) => nome.includes(t));
+  });
+}
+
+/**
+ * Escolhe o candidato. Lista longa (as ~711 classes CATMAT) com termo do item
+ * no nome de algumas: pergunta primeiro só entre essas. Com a lista inteira o
+ * modelo às vezes devolve o código errado (ex.: 895 em vez de 8925 para
+ * "açúcar refinado", visto em produção 2026-10-07) e o item ficava sem preço.
+ */
 async function llmPick(
+  texto: string,
+  nivel: 'classe' | 'PDM' | 'item',
+  candidatos: PickCandidate[],
+): Promise<{ codigo: number | null; confianca: number; rationale: string } | null> {
+  if (candidatos.length > 60) {
+    const curtos = candidatosPorPalavra(texto, candidatos);
+    if (curtos.length > 0 && curtos.length <= 60) {
+      const r = await llmPickLista(texto, nivel, curtos);
+      if (r?.codigo != null) return r;
+    }
+  }
+  return llmPickLista(texto, nivel, candidatos);
+}
+
+async function llmPickLista(
   texto: string,
   nivel: 'classe' | 'PDM' | 'item',
   candidatos: PickCandidate[],
@@ -192,9 +228,20 @@ export async function buscarCatmat(texto: string): Promise<CatmatMatch | null> {
       pdms.map((p) => ({ codigo: p.codigoPdm, nome: p.nomePdm })),
     );
     if (!pickPdm?.codigo) return null;
-    const pdm = pdms.find((p) => p.codigoPdm === pickPdm.codigo)!;
-
-    const itens = await listItemsByPdm(pdm.codigoPdm);
+    // PDM escolhido sem item ativo: tenta os próximos que batem pela palavra
+    // (ex.: "AÇÚCAR" vazio, "AÇÚCAR CRISTAL" com itens) em vez de desistir.
+    const ordem = [
+      pdms.find((p) => p.codigoPdm === pickPdm.codigo)!,
+      ...candidatosPorPalavra(limpo, pdms.map((p) => ({ codigo: p.codigoPdm, nome: p.nomePdm })))
+        .filter((c) => c.codigo !== pickPdm.codigo)
+        .map((c) => pdms.find((p) => p.codigoPdm === c.codigo)!),
+    ].slice(0, 4);
+    let pdm = ordem[0]!;
+    let itens: CatmatItem[] = [];
+    for (const cand of ordem) {
+      itens = await listItemsByPdm(cand.codigoPdm);
+      if (itens.length > 0) { pdm = cand; break; }
+    }
     if (itens.length === 0) return null;
     const pickItem = await llmPick(
       limpo,

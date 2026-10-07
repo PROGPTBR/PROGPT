@@ -112,6 +112,12 @@ describe('detectAssistantToolCTA', () => {
 });
 
 describe('stripAssistantPaths', () => {
+  it('removes the bold/code marks around the path too (no "em ****." left)', () => {
+    expect(stripAssistantPaths('use a ferramenta em **/assistants/indicadores**.')).toBe('use a ferramenta.');
+    expect(stripAssistantPaths('abra `/assistants/rfp` agora')).toBe('abra agora');
+    expect(stripAssistantPaths('veja em **/simulador**.')).toBe('veja.');
+  });
+
   it('removes "em /assistants/<type>" leaving natural text (the card carries the CTA)', () => {
     expect(
       stripAssistantPaths('use a ferramenta dedicada em /assistants/rfp — ela gera'),

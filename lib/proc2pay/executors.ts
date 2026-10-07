@@ -63,7 +63,8 @@ async function runObject<T extends z.ZodTypeAny>(
 ): Promise<{ object: z.infer<T>; usage: ExecResult['usage']; model: string; operation: string }> {
   const model = getOpenAIModel('generation');
   const out = await generateObject({
-    model: openaiClient()(model),
+    // structuredOutputs: false — ver o comentário em lib/proc2pay/intake.ts.
+    model: openaiClient()(model, { structuredOutputs: false }),
     system,
     schema,
     messages: [{ role: 'user', content: user }],

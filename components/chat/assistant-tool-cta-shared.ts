@@ -248,12 +248,16 @@ const ASSISTANTS_OR_CUSTOM = CUSTOM_PATH_ALTERNATION
 // "...em /assistants/rfp" (ou "...em /simulador-logistico") → remove a
 // preposição + o caminho, deixando a frase natural ("use a ferramenta
 // dedicada — ela gera...").
+// O modelo costuma destacar o caminho (**/assistants/x** ou `/assistants/x`):
+// a marcação em volta sai junto, senão sobrava "em ****." na resposta
+// (visto em produção, 2026-10-07).
+const MARCA = '(\\*{1,2}|`|_{1,2})?';
 const STRIP_PREP_RE = new RegExp(
-  `\\s+(?:em|no|na|via|in|at)\\s+(?:${ASSISTANTS_OR_CUSTOM})\\b`,
+  `\\s+(?:em|no|na|via|in|at)\\s+${MARCA}(?:${ASSISTANTS_OR_CUSTOM})\\b\\1?`,
   'gi',
 );
 // Qualquer caminho cru remanescente.
-const STRIP_BARE_RE = new RegExp(`(?:${ASSISTANTS_OR_CUSTOM})\\b`, 'gi');
+const STRIP_BARE_RE = new RegExp(`${MARCA}(?:${ASSISTANTS_OR_CUSTOM})\\b\\1?`, 'gi');
 
 export function stripAssistantPaths(md: string): string {
   return md

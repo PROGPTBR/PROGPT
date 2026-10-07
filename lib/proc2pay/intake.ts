@@ -10,6 +10,11 @@ import { requireEnv } from '@/lib/env';
 import { recordApiUsage } from '@/lib/observability/api-usage';
 import type { RequisicaoPayload } from './types';
 
+// O esquema tem campos opcionais de propósito; o tier de geração (gpt-5.x) é
+// tratado como modelo de raciocínio pelo @ai-sdk/openai e ligaria o modo
+// estrito, que recusa esquema com campo opcional (bug em produção até
+// 2026-10-07). Sem o modo estrito o esquema vai na instrução e o zod segue
+// validando a resposta.
 const Schema = z.object({
   solicitante: z.string().describe('Quem pediu / setor. "Não informado" se ausente.'),
   categoria: z.string().optional(),
@@ -51,7 +56,7 @@ export async function structureRequisicaoFromText(
   try {
     const model = getOpenAIModel('generation');
     const out = await generateObject({
-      model: createOpenAI({ apiKey: requireEnv('OPENAI_API_KEY') })(model),
+      model: createOpenAI({ apiKey: requireEnv('OPENAI_API_KEY') })(model, { structuredOutputs: false }),
       schema: Schema,
       system:
         'Você é um analista de compras. Extraia uma requisição de compra estruturada a partir do e-mail/texto da área solicitante. Não invente itens nem quantidades que não estejam no texto — use defaults só quando o campo não existir.',

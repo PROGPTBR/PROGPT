@@ -8,6 +8,11 @@ import type { FluxoStageId } from './stages';
 // da etapa, igual ao infográfico) e o comprador vê sempre as mesmas seções —
 // o que a IA fez, o que ele precisa conferir, e qual é a saída se ele seguir.
 
+// Todos os campos são OBRIGATÓRIOS de propósito: o tier de geração em produção
+// (gpt-5.4-mini) é tratado como modelo de raciocínio pelo @ai-sdk/openai, que
+// liga o modo estrito do structured output — e ele recusa o esquema inteiro se
+// algum campo for opcional (.default/.optional). Foi isso que fez TODA etapa do
+// Fluxo falhar em produção até 2026-10-07. Lista vazia é resposta válida.
 export const FluxoStageOutputSchema = z.object({
   resumo: z
     .string()
@@ -15,24 +20,20 @@ export const FluxoStageOutputSchema = z.object({
 
   campos: z
     .array(z.object({ rotulo: z.string(), valor: z.string() }))
-    .default([])
     .describe('Dados estruturados que a etapa produziu (rótulo → valor).'),
 
   itens: z
     .array(z.object({ titulo: z.string(), detalhe: z.string() }))
-    .default([])
     .describe(
       'Lista da etapa: itens da requisição, fornecedores da shortlist, propostas comparadas, linhas do pedido.',
     ),
 
   pontos_de_revisao: z
     .array(z.string())
-    .default([])
     .describe('O que o comprador precisa conferir antes de decidir.'),
 
   alertas: z
     .array(z.string())
-    .default([])
     .describe('Riscos, divergências e desvios de política. Vazio se não houver.'),
 
   saida: z
