@@ -1,0 +1,1 @@
+import{r as e}from"./react-SIfiwpqq.js";import{f as t}from"./index-xX1WzA8m.js";var n=e({__iconNode:()=>r,default:()=>i}),r=[[`path`,{d:`m11 17-5-5 5-5`,key:`13zhaf`}],[`path`,{d:`m18 17-5-5 5-5`,key:`h8a8et`}]],i=t(`chevrons-left`,r);export{n,i as t};

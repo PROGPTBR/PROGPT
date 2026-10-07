@@ -1,0 +1,1 @@
+import{r as e}from"./react-SIfiwpqq.js";import{f as t}from"./index-xX1WzA8m.js";var n=e({__iconNode:()=>r,default:()=>i}),r=[[`rect`,{x:`14`,y:`3`,width:`5`,height:`18`,rx:`1`,key:`kaeet6`}],[`rect`,{x:`5`,y:`3`,width:`5`,height:`18`,rx:`1`,key:`1wsw3u`}]],i=t(`pause`,r);export{n,i as t};

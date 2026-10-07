@@ -1,0 +1,1 @@
+import{Wt as e}from"./index-xX1WzA8m.js";import{t}from"./whatsapp-CkDzfNEl.js";var n=0,r=6e4;async function i(i=!1){if(!(!i&&Date.now()-n<r)){n=Date.now();try{let{data:n}=await e.auth.getSession(),r=n.session?.access_token;if(!r)return;await t({data:{token:r}})}catch{}}}export{i as t};

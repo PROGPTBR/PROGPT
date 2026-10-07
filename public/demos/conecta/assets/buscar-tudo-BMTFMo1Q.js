@@ -1,0 +1,1 @@
+var e=1e3;async function t(t){let n=[];for(let r=0;;r+=1){let i=r*e,{data:a,error:o}=await t().range(i,i+e-1);if(o)throw Error(o.message);let s=a??[];if(n.push(...s),s.length<e||n.length>=50*e)return n}}export{t};

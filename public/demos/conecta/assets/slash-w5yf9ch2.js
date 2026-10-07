@@ -1,0 +1,1 @@
+import{f as e}from"./index-xX1WzA8m.js";var t=[[`path`,{d:`M22 2 2 22`,key:`y4kqgn`}]],n=e(`slash`,t);export{t as __iconNode,n as default};

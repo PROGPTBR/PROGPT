@@ -1,0 +1,1 @@
+import{r as e}from"./react-SIfiwpqq.js";import{f as t}from"./index-xX1WzA8m.js";var n=e({__iconNode:()=>r,default:()=>i}),r=[[`circle`,{cx:`12`,cy:`12`,r:`10`,key:`1mglay`}],[`path`,{d:`M4.929 4.929 19.07 19.071`,key:`196cmz`}]],i=t(`ban`,r);export{n,i as t};

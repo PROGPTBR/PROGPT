@@ -1,0 +1,1 @@
+import{r as e}from"./react-SIfiwpqq.js";import{f as t}from"./index-xX1WzA8m.js";var n=e({__iconNode:()=>r,default:()=>i}),r=[[`path`,{d:`m9 18 6-6-6-6`,key:`mthhwq`}]],i=t(`chevron-right`,r);export{n,i as t};

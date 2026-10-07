@@ -1,0 +1,1 @@
+import{Yt as e,qt as t}from"./index-xX1WzA8m.js";function n(e){let t=(e??``).replace(/\D/g,``);return t?t.startsWith(`55`)?t.length>=12&&t.length<=13?t:null:t.length===10||t.length===11?`55${t}`:null:null}async function r(e){return{enviados:0,falhas:0,pendentes:0}}async function i(n){throw await e(),new t}async function a(n){throw await e(200),new t}export{i,n,a as r,r as t};

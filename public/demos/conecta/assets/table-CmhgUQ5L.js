@@ -1,0 +1,1 @@
+import{r as e}from"./react-SIfiwpqq.js";import{f as t}from"./index-xX1WzA8m.js";var n=e({__iconNode:()=>r,default:()=>i}),r=[[`path`,{d:`M12 3v18`,key:`108xh3`}],[`rect`,{width:`18`,height:`18`,x:`3`,y:`3`,rx:`2`,key:`afitv7`}],[`path`,{d:`M3 9h18`,key:`1pudct`}],[`path`,{d:`M3 15h18`,key:`5xshup`}]],i=t(`table`,r);export{n,i as t};

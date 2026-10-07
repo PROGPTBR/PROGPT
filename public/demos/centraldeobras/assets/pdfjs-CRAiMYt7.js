@@ -1,0 +1,1 @@
+import{_ as r}from"./index-C5VnQKw8.js";let e=!1;async function i(){const t=await r(()=>import("./pdf-CcZYcL52.js"),[]);if(!e){const o=(await r(async()=>{const{default:_}=await import("./pdf.worker.min-Brvfh3R5.js");return{default:_}},[])).default;t.GlobalWorkerOptions.workerSrc=o,e=!0}return t}export{i as g};

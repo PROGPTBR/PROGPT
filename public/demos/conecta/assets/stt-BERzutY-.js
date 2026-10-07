@@ -1,0 +1,1 @@
+import{Yt as e,qt as t}from"./index-xX1WzA8m.js";var n=`STT_LIMITE:`;function r(e){let t=/~\s*(\d+)\s*(segundo|minuto)/i.exec(e);if(!t)return 60;let n=Number(t[1]);return Math.max(5,t[2].toLowerCase().startsWith(`minuto`)?n*60:n)}async function i(n){throw await e(),new t}export{r as n,i as r,n as t};

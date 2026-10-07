@@ -50,6 +50,18 @@ const nextConfig = {
     ],
   },
 
+  // Sistemas completos de demonstração (sub-projeto 74) são SPAs estáticas em
+  // public/demos/. Qualquer subcaminho que não seja um arquivo cai no
+  // index.html do sistema (fallback roda DEPOIS de checar os arquivos).
+  async rewrites() {
+    return {
+      fallback: [
+        { source: '/demos/centraldeobras/:path*', destination: '/demos/centraldeobras/index.html' },
+        { source: '/demos/conecta/:path*', destination: '/demos/conecta/index.html' },
+      ],
+    };
+  },
+
   experimental: {
     // `@napi-rs/canvas` ships platform-specific `.node` binaries that
     // webpack can't bundle (parses as "Unexpected character"). Treating

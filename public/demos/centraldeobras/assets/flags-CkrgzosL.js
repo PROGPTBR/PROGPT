@@ -1,0 +1,6 @@
+import{j as c}from"./index-C5VnQKw8.js";import"./react-BAfsePbU.js";/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const d=c("ToggleRight",[["rect",{width:"20",height:"12",x:"2",y:"6",rx:"6",ry:"6",key:"f2vt7d"}],["circle",{cx:"16",cy:"12",r:"2",key:"4ma0v8"}]]),t=[{chave:"avisos_central",label:"Avisos via Central (WhatsApp)",grupo:"WhatsApp",padrao:!1,descricao:"Permite à operação disparar avisos pelo WhatsApp a partir da Central (exige uma conexão WhatsApp configurada)."},{chave:"sac_abrir_whatsapp",label:'Botão "Abrir no WhatsApp"',grupo:"SAC Compras",padrao:!1,descricao:"Mostra o atalho para abrir a conversa no WhatsApp nas solicitações do SAC Compras."},{chave:"compras_col_numero_erp",label:'Coluna "Nº no ERP" nas Solicitações',grupo:"Compras",padrao:!1,descricao:"Exibe o número do pedido no ERP na lista de solicitações de compra."}],i=Object.fromEntries(t.map(a=>[a.chave,a]));function f(a,o,p=!1){var r,s;const e=(r=a==null?void 0:a.flags)==null?void 0:r[o];return typeof e=="boolean"?e:((s=i[o])==null?void 0:s.padrao)??p}function h(){const a=new Map;for(const o of t)a.set(o.grupo,[...a.get(o.grupo)??[],o]);return[...a.entries()]}export{t as F,d as T,h as f,f as v};

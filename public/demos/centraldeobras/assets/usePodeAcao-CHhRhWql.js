@@ -1,0 +1,1 @@
+import{c}from"./react-BAfsePbU.js";import{ac as i}from"./index-C5VnQKw8.js";function n(r,s){const e=c.c(3);let o;return e[0]!==s||e[1]!==r?(o=t=>t.podeAcao(r,s),e[0]=s,e[1]=r,e[2]=o):o=e[2],i(o)}export{n as u};
