@@ -3,6 +3,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
 import { PricingTable } from '@/components/billing/PricingTable';
+import { HeroVideo } from './HeroVideo';
 import { FaWhatsapp } from "react-icons/fa";
 import { FiMail, FiFileText } from "react-icons/fi";
 import {
@@ -515,27 +516,7 @@ Menos trabalho operacional. Mais capacidade para decidir melhor.
         </div>
         <div className={styles.heroVisual}>
           <div className={styles.systemShot}>
-            {/* Vídeo do sistema em uso (chat, assistentes, Equalizador, Fluxo,
-                obras e demandas), sem som e em loop. A capa aparece enquanto
-                carrega e fica no lugar para quem pede menos movimento. */}
-            <video
-              ref={(v) => {
-                // Quem pede menos movimento no sistema fica com a capa parada.
-                if (v && typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-                  v.autoplay = false;
-                  v.pause();
-                }
-              }}
-              className={styles.systemVideo}
-              src="/videos/progpt-sistema.mp4"
-              poster="/videos/progpt-sistema-capa.jpg"
-              autoPlay
-              muted
-              loop
-              playsInline
-              preload="auto"
-              aria-label="O PROGPT em uso: chat, assistentes, fluxo de compras e gestão de obras"
-            />
+            <HeroVideo />
           </div>
           <div
             className={`${styles.floatCard} ${styles.floatOne}`}
