@@ -476,9 +476,10 @@
     font-size:11px;
     margin-bottom:3px
 }
+/* embaixo, à esquerda: em cima ficava sobre a legenda do vídeo do sistema */
 .floatOne{
     left:-40px;
-    top:50px
+    bottom:150px
 }
 .floatTwo{
     right:-25px;
@@ -1129,7 +1130,7 @@
     }
     .floatOne{
         left:-8px;
-        top:22px
+        bottom:70px
     }
     .floatTwo{
         right:-8px;
@@ -1421,6 +1422,15 @@
  .systemShot img{
     object-fit:cover;
     object-position:center
+}
+ .systemVideo{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    object-position:center;
+    display:block
 }
  .intelligence{
     max-width:1220px;

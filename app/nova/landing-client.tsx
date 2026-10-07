@@ -515,12 +515,26 @@ Menos trabalho operacional. Mais capacidade para decidir melhor.
         </div>
         <div className={styles.heroVisual}>
           <div className={styles.systemShot}>
-            <Image
-              src="/imagens/imagem-de-fundo-entrada-chatsupply-01.png"
-              alt="Tela real da plataforma PROGPT"
-              fill
-              sizes="(max-width: 950px) 90vw, 52vw"
-              priority
+            {/* Vídeo do sistema em uso (chat, assistentes, Equalizador, Fluxo,
+                obras e demandas), sem som e em loop. A capa aparece enquanto
+                carrega e fica no lugar para quem pede menos movimento. */}
+            <video
+              ref={(v) => {
+                // Quem pede menos movimento no sistema fica com a capa parada.
+                if (v && typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                  v.autoplay = false;
+                  v.pause();
+                }
+              }}
+              className={styles.systemVideo}
+              src="/videos/progpt-sistema.mp4"
+              poster="/videos/progpt-sistema-capa.jpg"
+              autoPlay
+              muted
+              loop
+              playsInline
+              preload="auto"
+              aria-label="O PROGPT em uso: chat, assistentes, fluxo de compras e gestão de obras"
             />
           </div>
           <div
