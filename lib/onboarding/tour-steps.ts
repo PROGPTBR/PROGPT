@@ -45,6 +45,14 @@ export const TOUR_STEPS: TourStep[] = [
     body: 'Escreva aqui qualquer dúvida de compras. As respostas são fundamentadas na base de conhecimento de Strategic Sourcing — e, quando não há fonte, o PROGPT diz isso em vez de inventar. Dá para anexar contrato ou proposta pelo clipe.',
   },
   {
+    id: 'anexo',
+    route: '/chat',
+    secao: 'Chat',
+    target: '[data-tour="anexo"]',
+    title: 'Anexe o documento da compra',
+    body: 'Pelo botão de mais, você anexa contrato, proposta, planilha ou foto (PDF, Word, Excel, PNG, JPG). O PROGPT lê o arquivo e responde em cima dele: resume cláusulas, compara propostas, aponta riscos.',
+  },
+  {
     id: 'atalhos',
     route: '/chat',
     secao: 'Chat',
@@ -101,6 +109,60 @@ export const TOUR_STEPS: TourStep[] = [
     target: '[data-tour="assistentes-historico"]',
     title: 'Histórico de execuções',
     body: 'Tudo o que você já gerou com os assistentes fica aqui: dá para reabrir, pedir ajustes conversando com a IA e baixar os arquivos de novo.',
+  },
+
+  // ── Equalizador de Propostas ──────────────────────────────────────────
+  {
+    id: 'equalizador-topo',
+    route: '/assistants/comprador',
+    secao: 'Equalizador',
+    target: '[data-tour="equalizador-topo"]',
+    title: 'Equalizador de Propostas',
+    body: 'A sua caixa de cotações. Cole ou importe as propostas dos fornecedores e o PROGPT compara pelo custo total (TCO), confere item a item contra o pedido de cotação e aponta desvios da sua política.',
+  },
+  {
+    id: 'equalizador-nova',
+    route: '/assistants/comprador',
+    secao: 'Equalizador',
+    target: '[data-tour="equalizador-nova"]',
+    title: 'Comece por uma nova cotação',
+    body: 'Clique em "Nova cotação". Para ver funcionando sem dados seus, use "Carregar exemplo" e depois "Analisar". O resultado traz a recomendação, o comparativo, os alertas e um rascunho de resposta ao fornecedor, que só sai com a sua aprovação.',
+  },
+
+  // ── Busca de Fornecedores ─────────────────────────────────────────────
+  {
+    id: 'busca-pedido',
+    route: '/assistants/suppliers',
+    secao: 'Busca de Fornecedores',
+    target: '[data-tour="busca-pedido"]',
+    title: 'Ache fornecedores reais',
+    body: 'Descreva o que você compra e onde, em português mesmo. A IA identifica a atividade econômica e busca empresas ativas na base da Receita Federal, com porte, contato e cidade, para exportar ou salvar na sua base.',
+  },
+  {
+    id: 'busca-exemplos',
+    route: '/assistants/suppliers',
+    secao: 'Busca de Fornecedores',
+    target: '[data-tour="busca-exemplos"]',
+    title: 'Use os exemplos como ponto de partida',
+    body: 'Clique num exemplo para ver o formato do pedido. As buscas que você salvar aparecem logo acima, para rodar de novo com um clique.',
+  },
+
+  // ── Matriz de Kraljic ─────────────────────────────────────────────────
+  {
+    id: 'kraljic-form',
+    route: '/assistants/kraljic',
+    secao: 'Matriz de Kraljic',
+    target: '[data-tour="kraljic-form"]',
+    title: 'Classifique o seu portfólio',
+    body: 'Liste os itens ou categorias com o gasto e as notas de risco e impacto. O PROGPT posiciona cada um nos quatro quadrantes (estratégico, alavancagem, gargalo e não crítico) e devolve o plano de ação de cada quadrante, com gráfico.',
+  },
+  {
+    id: 'kraljic-exemplo',
+    route: '/assistants/kraljic',
+    secao: 'Matriz de Kraljic',
+    target: '[data-tour="kraljic-exemplo"]',
+    title: 'Teste com um exemplo pronto',
+    body: '"Carregar exemplo" preenche um portfólio de demonstração. Também dá para importar a sua planilha. No fim, baixe o relatório em Word e a planilha em Excel.',
   },
 
   // ── Biblioteca de Prompts ─────────────────────────────────────────────

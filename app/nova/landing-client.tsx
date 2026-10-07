@@ -25,8 +25,6 @@ import {
   ShieldCheck,
   Sparkles,
   Sun,
-  Target,
-  Users,
   X,
   Zap,
 } from 'lucide-react';
@@ -517,24 +515,6 @@ Menos trabalho operacional. Mais capacidade para decidir melhor.
         <div className={styles.heroVisual}>
           <div className={styles.systemShot}>
             <HeroVideo />
-          </div>
-          <div
-            className={`${styles.floatCard} ${styles.floatOne}`}
-          >
-            <Target />
-            <span>
-              <b>Economia potencial</b>
-              8,7% identificada
-            </span>
-          </div>
-          <div
-            className={`${styles.floatCard} ${styles.floatTwo}`}
-          >
-            <Users />
-            <span>
-              <b>Fornecedores</b>
-              42 qualificados
-            </span>
           </div>
         </div>
       </section>

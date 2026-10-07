@@ -32,7 +32,7 @@ export const FAQ_SUPORTE: FaqSecao[] = [
         id: 'rever-tour',
         pergunta: 'Como revejo o tour da plataforma?',
         resposta:
-          'No chat, clique em "Ver o tour da plataforma", no topo do menu da barra lateral (com a barra recolhida, é o ícone de bússola). O tour passa por cada tela e pode ser fechado a qualquer momento.',
+          'No chat, clique em "Ver o tour da plataforma", no topo do menu da barra lateral (com a barra recolhida, é o ícone de bússola). O tour passa por cada tela e pode ser fechado a qualquer momento. Em cada passo, o assistente explica a tela em áudio: use o play para ouvir de novo e o ícone de som para desligar a voz.',
       },
       {
         id: 'celular',

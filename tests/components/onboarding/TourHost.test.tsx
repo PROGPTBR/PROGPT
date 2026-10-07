@@ -21,10 +21,14 @@ beforeEach(() => {
   nav.push.mockReset();
   fetchMock.mockClear();
   vi.stubGlobal('fetch', fetchMock);
+  // jsdom não toca mídia: o áudio do assistente do tour é simulado.
+  vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined);
+  vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {});
 });
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 const indiceDe = (id: string) => TOUR_STEPS.findIndex((s) => s.id === id);

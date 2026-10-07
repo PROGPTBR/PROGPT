@@ -571,6 +571,7 @@ export function Composer({
                     uploading ||
                     isLoading
                   }
+                  data-tour="anexo"
                   aria-label="Adicionar"
                   aria-expanded={
                     attachmentMenuOpen
@@ -993,6 +994,7 @@ export function Composer({
                 uploading ||
                 isLoading
               }
+              data-tour="anexo"
               aria-label="Anexar arquivo"
               title="Anexar arquivo (PDF, DOCX, XLSX, PNG, JPG)"
               className="

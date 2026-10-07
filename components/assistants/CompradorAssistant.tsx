@@ -116,7 +116,7 @@ export function CompradorAssistant() {
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       {/* Hero */}
-      <div className="flex items-start justify-between gap-4 flex-wrap">
+      <div data-tour="equalizador-topo" className="flex items-start justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3">
           <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-gradient text-black brand-glow">
             <Inbox className="h-5 w-5" aria-hidden="true" />
@@ -136,6 +136,7 @@ export function CompradorAssistant() {
               <SettingsIcon className="h-4 w-4 mr-1.5" /> Configurar
             </Button>
             <button
+              data-tour="equalizador-nova"
               onClick={() => setView('new')}
               className="inline-flex items-center gap-1.5 rounded-full bg-brand-gradient text-black h-9 px-4 text-sm font-semibold brand-glow hover:brightness-110 active:scale-95 transition-all"
             >

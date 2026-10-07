@@ -1,10 +1,11 @@
 'use client';
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { Loader2, X } from 'lucide-react';
+import { Loader2, Pause, Play, Volume2, VolumeX, X } from 'lucide-react';
 
 import { placeCard, type Rect, type TourStep } from '@/lib/onboarding/tour-steps';
 import { TOUR_ABA_EVENT } from '@/lib/onboarding/tour-state';
+import { urlVozDoPasso, VOZ_TOUR_STORAGE_KEY } from '@/lib/onboarding/tour-voz';
 
 // Tour guiado com foco recortado: um retângulo transparente sobre o elemento
 // real e o resto da tela escurecido por uma sombra de espalhamento gigante —
@@ -49,6 +50,44 @@ export function ProductTour({
   const nextRef = useRef<HTMLButtonElement>(null);
 
   const isLast = index === total - 1;
+
+  // ── Assistente de voz (sub-projeto 77): lê o passo em voz alta ──────────
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [vozLigada, setVozLigada] = useState(true);
+  const [falando, setFalando] = useState(false);
+  const [bloqueado, setBloqueado] = useState(false);
+
+  useEffect(() => {
+    try {
+      if (window.localStorage.getItem(VOZ_TOUR_STORAGE_KEY) === '0') setVozLigada(false);
+    } catch {
+      /* sem storage: voz ligada */
+    }
+    const a = new Audio();
+    a.preload = 'auto';
+    const on = () => setFalando(true);
+    const off = () => setFalando(false);
+    a.addEventListener('play', on);
+    a.addEventListener('pause', off);
+    a.addEventListener('ended', off);
+    audioRef.current = a;
+    return () => {
+      a.pause();
+      a.removeEventListener('play', on);
+      a.removeEventListener('pause', off);
+      a.removeEventListener('ended', off);
+      audioRef.current = null;
+    };
+  }, []);
+
+  const tocar = (a: HTMLAudioElement) => {
+    try {
+      const r = a.play();
+      if (r && typeof r.then === 'function') r.then(() => setBloqueado(false)).catch(() => setBloqueado(true));
+    } catch {
+      setBloqueado(true);
+    }
+  };
 
   // Acha o alvo (esperando a página carregar), traz para a área visível uma
   // vez e passa a acompanhar a geometria dele.
@@ -111,6 +150,32 @@ export function ProductTour({
   }, [navegando, index, step.target, step.aba]);
 
   const carregando = navegando || procurando;
+
+  // A cada passo (depois que a tela abriu), troca a fala. O navegador pode
+  // bloquear som antes do primeiro clique na página: aí o botão de ouvir pisca.
+  useEffect(() => {
+    const a = audioRef.current;
+    if (!a) return;
+    try { a.pause(); } catch { /* ok */ }
+    if (carregando || !vozLigada) return;
+    a.src = urlVozDoPasso(step);
+    tocar(a);
+  }, [index, carregando, vozLigada, step]);
+
+  function ouvir() {
+    const a = audioRef.current;
+    if (!a) return;
+    if (falando) { a.pause(); return; }
+    if (!a.src) a.src = urlVozDoPasso(step);
+    tocar(a);
+  }
+
+  function alternarVoz() {
+    const liga = !vozLigada;
+    setVozLigada(liga);
+    if (!liga) audioRef.current?.pause();
+    try { window.localStorage.setItem(VOZ_TOUR_STORAGE_KEY, liga ? '1' : '0'); } catch { /* ok */ }
+  }
 
   // O cartão só tem altura depois de renderizar — medir aqui evita o pulo.
   useLayoutEffect(() => {
@@ -202,6 +267,54 @@ export function ProductTour({
         <h2 id="tour-title" className="mt-1 pr-7 text-base font-semibold text-foreground">
           {step.title}
         </h2>
+
+        <div className="mt-3 flex items-center gap-2.5 rounded-xl bg-brand-gradient-soft px-3 py-2">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/icon-192.png"
+            alt=""
+            className={`h-8 w-8 shrink-0 ${falando ? 'animate-spin [animation-duration:6s]' : ''}`}
+          />
+          <div className="min-w-0 flex-1">
+            <div className="text-xs font-semibold text-foreground">Assistente PROGPT</div>
+            <div className="truncate text-[11px] text-muted-foreground">
+              {!vozLigada
+                ? 'Voz desligada'
+                : falando
+                  ? 'Explicando esta tela…'
+                  : bloqueado
+                    ? 'Toque no play para ouvir a explicação'
+                    : 'Explicação em áudio'}
+            </div>
+          </div>
+          <span className="flex h-5 items-end gap-0.5" aria-hidden="true">
+            {[0, 1, 2, 3].map((i) => (
+              <i
+                key={i}
+                className={`block w-1 rounded-full bg-brand ${falando ? 'animate-pulse' : ''}`}
+                style={{ height: falando ? `${[60, 100, 75, 45][i]}%` : '25%', animationDelay: `${i * 0.15}s` }}
+              />
+            ))}
+          </span>
+          <button
+            type="button"
+            onClick={ouvir}
+            disabled={carregando || !vozLigada}
+            aria-label={falando ? 'Pausar explicação' : 'Ouvir explicação'}
+            className={`inline-flex h-8 w-8 items-center justify-center rounded-full bg-brand-gradient text-black transition-all hover:brightness-110 disabled:opacity-40 ${bloqueado && vozLigada && !falando ? 'animate-pulse' : ''}`}
+          >
+            {falando ? <Pause className="h-4 w-4" aria-hidden="true" /> : <Play className="h-4 w-4" aria-hidden="true" />}
+          </button>
+          <button
+            type="button"
+            onClick={alternarVoz}
+            aria-label={vozLigada ? 'Desligar a voz do tour' : 'Ligar a voz do tour'}
+            aria-pressed={vozLigada}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          >
+            {vozLigada ? <Volume2 className="h-4 w-4" aria-hidden="true" /> : <VolumeX className="h-4 w-4" aria-hidden="true" />}
+          </button>
+        </div>
 
         {carregando ? (
           <p className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">

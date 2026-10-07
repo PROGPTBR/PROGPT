@@ -87,13 +87,14 @@ export function KraljicForm({ onSubmit }: { onSubmit: (v: KraljicFormValues) => 
 
   return (
     <form
+      data-tour="kraljic-form"
       className="space-y-5 max-w-5xl"
       onSubmit={(e) => {
         e.preventDefault();
         if (valid) onSubmit({ ...values, items: validItems });
       }}
     >
-      <div className="flex justify-end">
+      <div data-tour="kraljic-exemplo" className="flex justify-end">
         <Button type="button" variant="outline" size="sm" onClick={loadExample}>
           Carregar exemplo
         </Button>

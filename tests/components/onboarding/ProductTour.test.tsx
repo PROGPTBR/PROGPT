@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { useState } from 'react';
-import { describe, expect, it, vi, afterEach } from 'vitest';
+import { describe, expect, it, vi, afterEach, beforeEach } from 'vitest';
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 
 import { ProductTour } from '@/components/onboarding/ProductTour';
@@ -13,6 +13,12 @@ const STEPS: TourStep[] = [
 ];
 
 afterEach(cleanup);
+// jsdom não toca mídia: o áudio do assistente do tour é simulado em todos os testes.
+beforeEach(() => {
+  vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined);
+  vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {});
+});
+afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
 // O ProductTour é controlado (quem guarda o passo é o TourHost); aqui um
 // controlador mínimo em memória faz o papel do host.
@@ -90,5 +96,38 @@ describe('ProductTour', () => {
     renderTour(vi.fn(), true);
     expect(screen.getByText(/Abrindo a tela/)).toBeTruthy();
     expect((screen.getByRole('button', { name: 'Próximo' }) as HTMLButtonElement).disabled).toBe(true);
+  });
+});
+
+describe('ProductTour — assistente de voz', () => {
+  afterEach(() => { cleanup(); vi.restoreAllMocks(); window.localStorage.clear(); });
+
+  it('lê o passo em voz alta ao abrir, com o áudio daquele passo', async () => {
+    const play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined);
+    vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {});
+    renderTour();
+    expect(screen.getByText('Assistente PROGPT')).toBeTruthy();
+    await Promise.resolve();
+    expect(play).toHaveBeenCalled();
+    const audio = play.mock.instances[0] as unknown as HTMLAudioElement;
+    expect(audio.src).toMatch(/\/tour\/voz\/um\.mp3\?v=[0-9a-f]{8}$/);
+  });
+
+  it('desligar a voz para de falar e fica lembrado', () => {
+    vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined);
+    const pause = vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {});
+    renderTour();
+    fireEvent.click(screen.getByRole('button', { name: 'Desligar a voz do tour' }));
+    expect(pause).toHaveBeenCalled();
+    expect(window.localStorage.getItem('progpt_tour_voz_v1')).toBe('0');
+    expect(screen.getByText('Voz desligada')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Ligar a voz do tour' })).toBeTruthy();
+  });
+
+  it('com o som bloqueado pelo navegador, pede um toque no play', async () => {
+    vi.spyOn(HTMLMediaElement.prototype, 'play').mockRejectedValue(new Error('NotAllowedError'));
+    vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {});
+    renderTour();
+    expect(await screen.findByText('Toque no play para ouvir a explicação')).toBeTruthy();
   });
 });

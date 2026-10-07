@@ -55,7 +55,7 @@ export function SuppliersForm({
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form data-tour="busca-pedido" onSubmit={handleSubmit} className="space-y-4">
         <div className="relative">
           <textarea
             value={query}
@@ -117,7 +117,7 @@ export function SuppliersForm({
         </div>
       )}
 
-      <div className="space-y-2">
+      <div data-tour="busca-exemplos" className="space-y-2">
         <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
           Exemplos
         </div>
