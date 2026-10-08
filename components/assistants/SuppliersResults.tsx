@@ -8,6 +8,7 @@ import {
   Bookmark,
   BookmarkCheck,
   Download,
+  FileDown,
   Filter,
   FolderOpen,
   FolderPlus,
@@ -20,6 +21,8 @@ import type { SupplierEnrichment } from '@/lib/suppliers/enrichment';
 import { passesFiscalFilter, pickMatriz, type FiscalFilter } from '@/lib/suppliers/ranking';
 import { useSupplierBase, type SaveFromSearchInput } from '@/hooks/useSupplierBase';
 import { SuppliersResultCard } from './SuppliersResultCard';
+import type { EstadoBuscaAmpliada } from './BuscaAmpliada';
+import { montarRelatorioBusca, nomeArquivoRelatorio } from '@/lib/suppliers/relatorio-busca';
 
 const ENRICH_CAP = 30;
 
@@ -39,6 +42,10 @@ type Props = {
   onExport: () => void;
   isExporting: boolean;
   onSave?: () => void;
+  /** Para o relatório PDF/Excel: o pedido digitado, a região e a busca ampliada (se houver). */
+  pedido?: string;
+  regiao?: string;
+  ampliada?: EstadoBuscaAmpliada | null;
   saved?: boolean;
 };
 
@@ -72,6 +79,9 @@ export function SuppliersResults({
   onExport,
   isExporting,
   onSave,
+  pedido = '',
+  regiao = '',
+  ampliada = null,
   saved,
 }: Props) {
   const [sizeFilter, setSizeFilter] = useState<SizeFilter>('all');
@@ -133,6 +143,40 @@ export function SuppliersResults({
       return true;
     });
   }, [response.groups, sizeFilter, contactOnly, enrichMap, fiscalFilter]);
+
+  // Relatório da busca para baixar (PDF no navegador, Excel no servidor).
+  const [gerandoRelatorio, setGerandoRelatorio] = useState<'pdf' | 'xlsx' | null>(null);
+  async function baixarRelatorio(formato: 'pdf' | 'xlsx') {
+    setGerandoRelatorio(formato);
+    try {
+      const vendorList = ampliada && ampliada.vendorList !== 'carregando' ? ampliada.vendorList.resultados : ampliada ? [] : null;
+      const web = ampliada && ampliada.web !== 'carregando' ? ampliada.web.fornecedores : ampliada ? [] : null;
+      const rel = montarRelatorioBusca({ pedido, cnae, cnaeName: response.cnaeName, regiao: regiao || ufs.join(', '), receita: filtered, vendorList, web });
+      const nome = nomeArquivoRelatorio(pedido || response.cnaeName || cnae);
+      if (formato === 'pdf') {
+        const { baixarRelatorioPdf } = await import('@/lib/suppliers/relatorio-busca-pdf');
+        await baixarRelatorioPdf(rel, nome);
+      } else {
+        const res = await fetch('/api/suppliers/relatorio', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ relatorio: rel, nomeArquivo: nome }),
+        });
+        if (!res.ok) throw new Error(String(res.status));
+        const url = URL.createObjectURL(await res.blob());
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${nome}.xlsx`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+      toast.success('Relatório baixado');
+    } catch {
+      toast.error('Não foi possível gerar o relatório agora. Tente de novo.');
+    } finally {
+      setGerandoRelatorio(null);
+    }
+  }
 
   const totalLabel =
     response.total >= 500 ? '500+' : response.total.toString();
@@ -264,6 +308,24 @@ export function SuppliersResults({
                   {saved ? 'Busca salva' : 'Salvar busca'}
                 </button>
               )}
+              <button
+                type="button"
+                onClick={() => void baixarRelatorio('pdf')}
+                disabled={!!gerandoRelatorio}
+                className="inline-flex items-center gap-2 rounded-full border border-border bg-card hover:bg-accent hover:border-brand/30 text-foreground px-5 h-10 text-sm font-medium transition-all duration-300 active:scale-95 disabled:opacity-60"
+              >
+                {gerandoRelatorio === 'pdf' ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> : <FileDown className="h-3.5 w-3.5" aria-hidden="true" />}
+                Relatório PDF
+              </button>
+              <button
+                type="button"
+                onClick={() => void baixarRelatorio('xlsx')}
+                disabled={!!gerandoRelatorio}
+                className="inline-flex items-center gap-2 rounded-full border border-border bg-card hover:bg-accent hover:border-brand/30 text-foreground px-5 h-10 text-sm font-medium transition-all duration-300 active:scale-95 disabled:opacity-60"
+              >
+                {gerandoRelatorio === 'xlsx' ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> : <FileDown className="h-3.5 w-3.5" aria-hidden="true" />}
+                Relatório Excel
+              </button>
               <button
                 type="button"
                 onClick={onExport}

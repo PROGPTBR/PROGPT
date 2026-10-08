@@ -117,6 +117,9 @@ export function SuppliersAssistant({
     setIsExporting,
   ] = useState(false);
 
+  // Pedido como foi digitado: vai no relatório PDF/Excel.
+  const [pedido, setPedido] = useState(initialQuery);
+
   const [saved, setSaved] =
     useState(false);
 
@@ -259,6 +262,7 @@ export function SuppliersAssistant({
     query: string,
   ) {
     setSaved(false);
+    setPedido(query);
 
     // Busca ampliada roda em paralelo com o CNAE e não depende dele: mesmo
     // quando a Receita não acha nada, a vendor list e a internet aparecem.
@@ -461,6 +465,7 @@ export function SuppliersAssistant({
 
     // Busca salva não guarda o texto do pedido — sem busca ampliada.
     setAmpliada(null);
+    setPedido(s.label);
 
     setSaved(true);
 
@@ -785,6 +790,9 @@ export function SuppliersAssistant({
         saved={
           saved
         }
+        pedido={pedido}
+        regiao={[...phase.cities.map((c) => `${c.name}/${c.uf}`), ...(phase.cities.length ? [] : phase.ufs)].join(', ')}
+        ampliada={buscaAmpliada ? ampliada : null}
       />
       </>
     );
