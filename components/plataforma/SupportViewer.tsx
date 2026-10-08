@@ -57,7 +57,7 @@ export function SupportViewer({ userId, userEmail }: { userId: string; userEmail
         <div className="flex items-center gap-2 text-sm text-amber-800 dark:text-amber-300">
           <Eye className="h-4 w-4 shrink-0" />
           <span>
-            Você está vendo a conta de <strong>{userEmail}</strong> como suporte. Só leitura — a equipe vê seu
+            Você está vendo a conta de <strong>{userEmail}</strong> como suporte. Só leitura, a equipe vê seu
             acesso e tudo fica na trilha de auditoria.
           </span>
         </div>

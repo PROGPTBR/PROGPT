@@ -7,6 +7,7 @@ import remarkGfm from 'remark-gfm';
 import { ArrowLeft, FileDown, FileText, LayoutDashboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { RfpChatPanel } from './RfpChatPanel';
+import { semTravessao } from '@/lib/texto/sem-travessao';
 
 type Props = {
   runId: string;
@@ -49,7 +50,7 @@ export function PastSpendView({ runId, initialOutput, analysisName }: Props) {
       </div>
 
       <article className="prose prose-sm dark:prose-invert max-w-none rounded-lg border border-border bg-card p-5">
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>{output}</ReactMarkdown>
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>{semTravessao(output)}</ReactMarkdown>
       </article>
 
       <RfpChatPanel runId={runId} onRfpUpdated={(md) => setOutput(md)} />

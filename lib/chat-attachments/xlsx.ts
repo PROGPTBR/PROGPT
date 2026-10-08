@@ -16,14 +16,14 @@ import ExcelJS from 'exceljs';
 const MAX_ROWS_PER_SHEET = 200;   // truncation guard for huge workbooks
 const MAX_COLS_PER_SHEET = 30;    // wide sheets get clipped
 
-export async function parseXlsxToMarkdown(buf: Buffer): Promise<string> {
+export async function parseXlsxToMarkdown(buf: Buffer, maxRows: number = MAX_ROWS_PER_SHEET): Promise<string> {
   const wb = new ExcelJS.Workbook();
   await wb.xlsx.load(buf as unknown as ArrayBuffer);
 
   const sections: string[] = [];
   for (const ws of wb.worksheets) {
     if (!ws || ws.state === 'hidden' || ws.state === 'veryHidden') continue;
-    const rendered = renderSheet(ws);
+    const rendered = renderSheet(ws, maxRows);
     if (rendered) sections.push(rendered);
   }
 
@@ -33,13 +33,13 @@ export async function parseXlsxToMarkdown(buf: Buffer): Promise<string> {
   return sections.join('\n\n');
 }
 
-function renderSheet(ws: ExcelJS.Worksheet): string | null {
+function renderSheet(ws: ExcelJS.Worksheet, maxRows: number = MAX_ROWS_PER_SHEET): string | null {
   const rows = collectRows(ws);
   if (rows.length === 0) return null;
 
   const header = rows[0]!;
-  const body = rows.slice(1, MAX_ROWS_PER_SHEET + 1);
-  const truncated = rows.length - 1 > MAX_ROWS_PER_SHEET;
+  const body = rows.slice(1, maxRows + 1);
+  const truncated = rows.length - 1 > maxRows;
   const colCount = Math.min(header.length, MAX_COLS_PER_SHEET);
 
   const out: string[] = [`# ${ws.name}`];
@@ -57,7 +57,7 @@ function renderSheet(ws: ExcelJS.Worksheet): string | null {
 
   if (truncated) {
     out.push('');
-    out.push(`_… ${rows.length - 1 - MAX_ROWS_PER_SHEET} linha(s) adicional(is) omitida(s)_`);
+    out.push(`_… ${rows.length - 1 - maxRows} linha(s) adicional(is) omitida(s)_`);
   }
   return out.join('\n');
 }

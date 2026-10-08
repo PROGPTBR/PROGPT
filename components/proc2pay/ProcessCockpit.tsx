@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { CheckCircle2, Circle, Lock, Loader2, Play, ArrowLeft, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { STAGES, isStageComplete, canRunStage } from '@/lib/proc2pay/stages';
 import type { Proc2PayProcess, Proc2PayStageRun, Stage, StageId } from '@/lib/proc2pay/types';
+import { semTravessao } from '@/lib/texto/sem-travessao';
 
 const MVP_STAGES = STAGES.filter((s) => s.mvp);
 
@@ -121,7 +122,7 @@ export function ProcessCockpit({
 
       {example && (
         <div className="rounded-xl border border-amber-500/30 bg-amber-500/[0.06] px-4 py-3 text-sm text-amber-700 dark:text-amber-300">
-          <strong>Exemplo</strong> — este é um processo de demonstração já concluído, para você ver o fluxo de ponta a ponta.{' '}
+          <strong>Exemplo</strong>, este é um processo de demonstração já concluído, para você ver o fluxo de ponta a ponta.{' '}
           <Link href="/proc2pay" className="underline hover:no-underline">Abra um processo real</Link>.
         </div>
       )}
@@ -214,7 +215,7 @@ export function ProcessCockpit({
                 <details className="mt-3 group" open={example || (done && runnableNext(stage, process))}>
                   <summary className="cursor-pointer text-sm text-brand hover:text-brand/80">Ver resultado</summary>
                   <div className="prose prose-sm dark:prose-invert max-w-none mt-2 rounded-lg border border-border bg-background p-3">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{artifact}</ReactMarkdown>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{semTravessao(artifact)}</ReactMarkdown>
                   </div>
                 </details>
               )}
@@ -225,7 +226,7 @@ export function ProcessCockpit({
 
       {process.state === 'concluido' && (
         <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/[0.05] p-4 text-sm text-emerald-700 dark:text-emerald-300">
-          ✅ Processo concluído — a ordem de compra foi gerada na última etapa.
+          ✅ Processo concluído, a ordem de compra foi gerada na última etapa.
         </div>
       )}
     </div>

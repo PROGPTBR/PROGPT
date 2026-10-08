@@ -94,7 +94,7 @@ function ThemeButton({
       aria-current={active ? 'true' : undefined}
       onClick={onClick}
       className={`${base} ${colors} ${dim}`}
-      title={candidate ? 'Tema proposto pela IA — promova a canônico se aprovar' : undefined}
+      title={candidate ? 'Tema proposto pela IA, promova a canônico se aprovar' : undefined}
     >
       <span className="truncate">{label}</span>
       <span className="text-xs text-muted-foreground tabular-nums ml-2">{count}</span>

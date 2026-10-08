@@ -41,7 +41,7 @@ function friendlyError(code: string): string {
     case 'user_already_exists':
       return 'Já existe uma conta com este email. Use Entrar.';
     case 'invalid_cpf':
-      return 'CPF inválido — verifique os dígitos.';
+      return 'CPF inválido, verifique os dígitos.';
     case 'captcha_invalid':
       return 'Verificação anti-bot falhou. Recarregue e tente de novo.';
     case 'rate_limited':
@@ -157,7 +157,7 @@ export function SignupForm() {
           <p className="text-sm text-muted-foreground leading-relaxed">
             Seus dados foram recebidos. Falta só{' '}
             <strong className="text-foreground">cadastrar o cartão</strong> pra
-            liberar seus 3 dias grátis — <strong className="text-foreground">nada é cobrado agora</strong>.
+            liberar seus 3 dias grátis, <strong className="text-foreground">nada é cobrado agora</strong>.
           </p>
         </div>
         <a
@@ -183,14 +183,14 @@ export function SignupForm() {
           Criar conta <span className="text-brand">.</span>
         </h1>
         <p className="text-sm text-muted-foreground">
-          Comece seus 3 dias grátis — leva menos de 1 minuto.
+          Comece seus 3 dias grátis, leva menos de 1 minuto.
         </p>
       </div>
 
       <div className="flex items-center gap-2.5 rounded-lg border border-brand/20 bg-brand/5 px-3 py-2.5">
         <ShieldCheck className="h-4 w-4 text-brand flex-shrink-0" aria-hidden="true" />
         <p className="text-xs text-foreground/80">
-          Cadastre o cartão pra ativar — <strong>nada é cobrado hoje</strong>. A senha
+          Cadastre o cartão pra ativar, <strong>nada é cobrado hoje</strong>. A senha
           você define depois, por e-mail.
         </p>
       </div>
@@ -242,7 +242,7 @@ export function SignupForm() {
           />
           {cpfInput.length > 0 && !cpfOk && (
             <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
-              CPF inválido — verifique os dígitos.
+              CPF inválido, verifique os dígitos.
             </p>
           )}
         </div>

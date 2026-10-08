@@ -1,4 +1,5 @@
 import { generateObject } from 'ai';
+import { semTravessaoProfundo } from '@/lib/texto/sem-travessao';
 import { createOpenAI } from '@ai-sdk/openai';
 import { getOpenAIModel } from '@/lib/llm/openai';
 import { z } from 'zod';
@@ -11,12 +12,13 @@ import { requireEnv } from '@/lib/env';
 
 export const CompradorInputSchema = z.object({
   escopo: z.string().trim().max(8000).optional().default(''),
-  propostas: z.string().trim().min(1).max(60000),
+  // Lote de propostas importadas (até ~40 documentos inteiros).
+  propostas: z.string().trim().min(1).max(400_000),
   politica: z.string().trim().max(8000).optional().default(''),
   // Pedido de Cotação (RFQ) original — documento de referência. Opcional:
   // sem ele, a análise segue como sempre (só TCO entre propostas). Mesmo
   // limite de `propostas` (RFQs com muitos itens podem ser longos).
-  pedidoCotacao: z.string().trim().max(60000).optional().default(''),
+  pedidoCotacao: z.string().trim().max(150_000).optional().default(''),
 });
 export type CompradorInput = z.infer<typeof CompradorInputSchema>;
 
@@ -135,6 +137,8 @@ Recomende o melhor fornecedor pelo TCO E pela conformidade com a política (pref
 precisa_humano = true quando: gerar PO, custo recomendado acima da alçada, houver desvio de política, proposta única, divergência de escopo ou dados críticos faltando.
 severidade: "danger" (desvio/acima da alçada/risco), "warn" (dados faltando/ambiguidade), "info" (limpo e dentro da alçada).
 
+Escreva em português simples, para quem não é especialista. NUNCA use travessão (— ou –): use vírgula, ponto ou dois-pontos.
+
 A análise é assistiva e baseada apenas nas propostas fornecidas — não substitui a cotação oficial nem a aprovação formal de Compras. Na dúvida, escale.`;
 
 export async function analyzeComprador(input: CompradorInput): Promise<{
@@ -175,7 +179,7 @@ ${input.politica || '(não fornecida — avalie por boas práticas e pela alçad
   })();
 
   return {
-    result: out.object,
+    result: semTravessaoProfundo(out.object),
     usage: { tokensIn: out.usage.promptTokens, tokensOut: out.usage.completionTokens, tokensCached },
     model,
   };

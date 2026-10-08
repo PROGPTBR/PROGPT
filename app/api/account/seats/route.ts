@@ -19,7 +19,7 @@ const REASON_MESSAGE: Record<string, string> = {
   no_subscription: 'Não encontramos uma assinatura ativa nesta conta.',
   no_seats_available: 'Todos os acessos do seu plano já estão em uso. Remova um acesso ou aumente o plano.',
   already_invited: 'Este e-mail já tem um acesso nesta assinatura.',
-  self: 'Este e-mail é o seu — sua conta já é o primeiro acesso.',
+  self: 'Este e-mail é o seu, sua conta já é o primeiro acesso.',
   persist_failed: 'Não foi possível criar o convite agora. Tente de novo em instantes.',
 };
 

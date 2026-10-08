@@ -69,3 +69,24 @@ describe('importAllFiles', () => {
     expect(importFn).not.toHaveBeenCalled();
   });
 });
+
+describe('importAllFiles em lote (vários ao mesmo tempo)', () => {
+  it('lê em paralelo mas entrega na ordem escolhida, mesmo se o 1º demorar mais', async () => {
+    const { importAllFiles } = await import('@/components/assistants/CompradorImportDialog');
+    const espera = (ms: number) => new Promise((r) => setTimeout(r, ms));
+    const files = ['lento.pdf', 'rapido-1.pdf', 'rapido-2.pdf', 'rapido-3.pdf'].map((n) => ({ name: n }) as File);
+    const onImported = vi.fn();
+    const status: string[] = [];
+    await importAllFiles(
+      files,
+      onImported,
+      async (f) => { await espera(f.name === 'lento.pdf' ? 40 : 5); return { text: `texto de ${f.name}`, filename: f.name, truncated: false }; },
+      undefined,
+      (i, st) => status.push(`${i}:${st}`),
+    );
+    expect(onImported.mock.calls.map((c) => c[0])).toEqual([
+      'texto de lento.pdf', 'texto de rapido-1.pdf', 'texto de rapido-2.pdf', 'texto de rapido-3.pdf',
+    ]);
+    expect(status.filter((s) => s.endsWith(':ok'))).toHaveLength(4);
+  });
+});

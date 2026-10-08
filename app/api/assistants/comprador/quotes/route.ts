@@ -14,9 +14,9 @@ const Body = z.object({
   supplier_name: z.string().trim().max(160).optional(),
   supplier_email: z.string().trim().email().max(254).optional().or(z.literal('')),
   escopo: z.string().trim().max(8000).optional().default(''),
-  propostas: z.string().trim().min(1).max(60000),
+  propostas: z.string().trim().min(1).max(400_000), // lote de propostas importadas
   politica: z.string().trim().max(8000).optional().default(''),
-  pedido_cotacao: z.string().trim().max(60000).optional().default(''),
+  pedido_cotacao: z.string().trim().max(150_000).optional().default(''),
 });
 
 // POST — analisa as propostas e SALVA a cotação na caixa.

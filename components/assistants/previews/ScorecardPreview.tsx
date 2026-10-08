@@ -61,7 +61,7 @@ export function ScorecardPreview() {
         fillOpacity="0.4"
         letterSpacing="0.8"
       >
-        RANKING DE FORNECEDORES · SCORE 0–100
+        RANKING DE FORNECEDORES · SCORE 0-100
       </text>
 
       {/* Threshold lines */}

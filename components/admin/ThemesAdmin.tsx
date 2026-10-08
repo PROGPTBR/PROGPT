@@ -66,7 +66,7 @@ export function ThemesAdmin() {
       });
       if (!res.ok) throw new Error(`status ${res.status}`);
       const data = (await res.json()) as { promoted?: number };
-      toast.success(`Promovido a canônico — ${data.promoted ?? 0} artigos`);
+      toast.success(`Promovido a canônico, ${data.promoted ?? 0} artigos`);
       await fetchRows();
     } catch (err) {
       toast.error('Falha ao promover', { description: String(err) });
@@ -88,7 +88,7 @@ export function ThemesAdmin() {
         throw new Error(data.detail ?? `status ${res.status}`);
       }
       const data = (await res.json()) as { demoted?: number };
-      toast.success(`Demovido para candidato — ${data.demoted ?? 0} artigos`);
+      toast.success(`Demovido para candidato, ${data.demoted ?? 0} artigos`);
       await fetchRows();
     } catch (err) {
       toast.error('Falha ao demover', { description: String(err) });
@@ -114,7 +114,7 @@ export function ThemesAdmin() {
       }
       const data = (await res.json()) as { moved?: number; newStatus?: string };
       toast.success(
-        `Tema ${verb} → "${to}" — ${data.moved ?? 0} artigos · status ${data.newStatus}`,
+        `Tema ${verb} → "${to}", ${data.moved ?? 0} artigos · status ${data.newStatus}`,
       );
       await fetchRows();
       return true;
@@ -190,7 +190,7 @@ export function ThemesAdmin() {
                   {r.inConstant && (
                     <span
                       className="ml-2 text-[10px] rounded px-1 py-0.5 bg-muted text-muted-foreground"
-                      title="Faz parte de CANONICAL_THEMES — protegido contra demote"
+                      title="Faz parte de CANONICAL_THEMES, protegido contra demote"
                     >
                       no constant
                     </span>
@@ -446,7 +446,7 @@ function MergeWithExistingModal({
               onChange={(e) => onTargetChange(e.target.value)}
               className="w-full h-9 rounded-md border border-input bg-background px-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
             >
-              <option value="">— escolha um tema —</option>
+              <option value="">Escolha um tema</option>
               {canonicalConstant.length > 0 && (
                 <optgroup label="Canônicos (no constant)">
                   {canonicalConstant.map((r) => (

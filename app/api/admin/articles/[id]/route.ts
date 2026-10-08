@@ -21,7 +21,7 @@ const PatchBody = z
       .string()
       .transform(normalizeCandidateTheme)
       .refine((s) => s.length >= 1 && s.length <= MAX_THEME_LENGTH, {
-        message: `theme must be 1–${MAX_THEME_LENGTH} chars after trim`,
+        message: `theme must be 1-${MAX_THEME_LENGTH} chars after trim`,
       })
       .optional(),
   })

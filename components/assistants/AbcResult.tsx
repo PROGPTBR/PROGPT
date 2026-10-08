@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { Download, RotateCcw, Copy, FileSpreadsheet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SendEmailButton } from './SendEmailButton';
+import { semTravessao } from '@/lib/texto/sem-travessao';
 
 type Props = {
   markdown: string;
@@ -85,7 +86,7 @@ export function AbcResult({
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="text-sm">
           <div className="text-muted-foreground">
-            Análise ABC — {analysisName.slice(0, 80)}
+            Análise ABC, {analysisName.slice(0, 80)}
             {analysisName.length > 80 ? '…' : ''}
           </div>
           {generating && (
@@ -110,7 +111,7 @@ export function AbcResult({
             Copiar
           </Button>
           <SendEmailButton
-            subject={`Curva ABC — ${analysisName.slice(0, 60)}`}
+            subject={`Curva ABC, ${analysisName.slice(0, 60)}`}
             body={markdown}
             disabled={generating}
           />
@@ -140,7 +141,7 @@ export function AbcResult({
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={`/api/assistants/runs/${runId}/chart`}
-            alt="Curva ABC — gráfico de Pareto"
+            alt="Curva ABC, gráfico de Pareto"
             className="w-full h-auto rounded bg-white"
             loading="lazy"
           />
@@ -156,7 +157,7 @@ export function AbcResult({
             Classificando itens e gerando relatório… ~5-15 segundos.
           </p>
         ) : (
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{markdown}</ReactMarkdown>
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{semTravessao(markdown)}</ReactMarkdown>
         )}
         {generating && markdown.length > 0 && (
           <span className="inline-block w-2 h-4 bg-primary/50 align-middle animate-pulse ml-1" />

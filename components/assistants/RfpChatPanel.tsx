@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { Send, Sparkles, User as UserIcon, FilePlus2, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { readAssistantChunk } from '@/lib/assistants/stream-client';
+import { semTravessao } from '@/lib/texto/sem-travessao';
 
 // Painel de refino de um run concluído (compartilhado por todos os tipos).
 //
@@ -159,7 +160,7 @@ export function RfpChatPanel({ runId, onRfpUpdated }: Props) {
         <Sparkles className="h-4 w-4 text-primary" />
         Refinar com o especialista
         <span className="text-xs text-muted-foreground font-normal ml-1">
-          — perguntas usando este RFP + a base de conhecimento
+        , perguntas usando este RFP + a base de conhecimento
         </span>
       </div>
 
@@ -206,7 +207,7 @@ export function RfpChatPanel({ runId, onRfpUpdated }: Props) {
                   <p className="italic text-muted-foreground">Pensando…</p>
                 ) : (
                   <>
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{semTravessao(m.content)}</ReactMarkdown>
                     {/* Apply-to-RFP — only on completed assistant messages */}
                     {m.content.length > 0 && !streaming && (
                       <div className="not-prose mt-2">

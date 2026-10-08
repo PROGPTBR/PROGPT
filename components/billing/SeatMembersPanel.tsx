@@ -119,7 +119,7 @@ export function SeatMembersPanel() {
       </div>
 
       <p className="text-xs text-muted-foreground">
-        Sua conta é o primeiro acesso. Convide as outras pessoas pelo e-mail — cada uma terá login,
+        Sua conta é o primeiro acesso. Convide as outras pessoas pelo e-mail, cada uma terá login,
         histórico e assistentes próprios, pagos por esta assinatura.
       </p>
 
@@ -135,7 +135,7 @@ export function SeatMembersPanel() {
             <div className="min-w-0">
               <div className="text-sm truncate">{m.email}</div>
               <div className="text-xs text-muted-foreground">
-                {m.accepted_at ? 'Ativo' : 'Convite enviado — aguardando aceite'}
+                {m.accepted_at ? 'Ativo' : 'Convite enviado, aguardando aceite'}
               </div>
             </div>
 

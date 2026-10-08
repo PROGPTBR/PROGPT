@@ -6,7 +6,7 @@ import { priceBenchmark } from '@/lib/assistants/comprador-benchmark';
 const brl = (n: number) =>
   Number.isFinite(n)
     ? n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-    : '—';
+    : '-';
 
 // Gráfico de balizamento de preços — barras horizontais (div, sem lib) do
 // custo total comparável por fornecedor, do mais barato ao mais caro, com o

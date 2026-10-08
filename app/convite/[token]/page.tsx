@@ -18,7 +18,7 @@ export default async function ConvitePage({ params }: { params: { token: string 
           <p className="text-sm text-muted-foreground">
             {found?.seat.accepted_at
               ? 'Este convite já foi usado. Entre normalmente com seu e-mail e senha.'
-              : 'Este convite não é mais válido — ele pode ter sido removido ou substituído. Peça um novo para quem contratou o PROGPT.'}
+              : 'Este convite não é mais válido, ele pode ter sido removido ou substituído. Peça um novo para quem contratou o PROGPT.'}
           </p>
           <a
             href="/login"

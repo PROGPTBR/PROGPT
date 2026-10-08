@@ -26,7 +26,7 @@ const ASSISTANT_LABELS: Record<string, string> = {
 
 const fmt = (n: number) => new Intl.NumberFormat('pt-BR').format(n);
 const pct = (num: number, den: number) =>
-  den > 0 ? `${((num / den) * 100).toFixed(1)}%` : '—';
+  den > 0 ? `${((num / den) * 100).toFixed(1)}%` : '-';
 
 function Kpi({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (

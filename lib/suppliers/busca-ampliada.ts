@@ -41,6 +41,8 @@ export function equipeDoUsuario(email: string | null | undefined): EquipeBuscaAm
 // ─── Vendor list ──────────────────────────────────────────────────────────
 
 export type FornecedorVendorList = {
+  /** Id da linha em `suppliers` (busca na própria base devolve quem bateu). */
+  id?: string;
   razaoSocial: string;
   nomeFantasia: string | null;
   cnpj: string | null;
@@ -241,5 +243,27 @@ export function extrairFornecedoresWeb(texto: string): FornecedorWeb[] {
       oQueVende: str(o.oQueVende),
     });
   }
-  return out.slice(0, 12);
+  return out.slice(0, 15);
+}
+
+/**
+ * Junta as listas das buscas na internet (local + ampla) sem repetir a mesma
+ * empresa — mesmo site ou mesmo nome — e corta no limite. A primeira lista
+ * (a local) vem antes.
+ */
+export function juntarFornecedoresWeb(listas: readonly FornecedorWeb[][], limite = 20): FornecedorWeb[] {
+  const vistos = new Set<string>();
+  const out: FornecedorWeb[] = [];
+  for (const lista of listas) {
+    for (const f of lista) {
+      let host = '';
+      try { host = f.site ? new URL(f.site).hostname.replace(/^www\./, '') : ''; } catch { host = ''; }
+      const chaves = [host && `site:${host}`, `nome:${normalizar(f.nome)}`].filter(Boolean) as string[];
+      if (chaves.some((k) => vistos.has(k))) continue;
+      chaves.forEach((k) => vistos.add(k));
+      out.push(f);
+      if (out.length >= limite) return out;
+    }
+  }
+  return out;
 }

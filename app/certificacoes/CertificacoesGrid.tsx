@@ -81,7 +81,7 @@ export default function CertificacoesGrid({
               Nossas certificações
             </span>
             <DialogTitle className="text-left text-xl font-bold leading-tight text-white md:text-2xl">
-              {selecionado?.numero} — {selecionado?.titulo}
+              {selecionado?.numero}, {selecionado?.titulo}
             </DialogTitle>
           </DialogHeader>
 

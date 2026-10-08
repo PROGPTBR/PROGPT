@@ -74,7 +74,7 @@ export function KraljicForm({ onSubmit }: { onSubmit: (v: KraljicFormValues) => 
       // KraljicItem.spendMM é number; o input usa string.
       items: p.items.map((it) => ({ ...it, spendMM: String(it.spendMM) })),
     }));
-    toast.success('Exemplo carregado — ajuste e gere');
+    toast.success('Exemplo carregado, ajuste e gere');
   }
 
   const validItems = values.items.filter(

@@ -297,7 +297,7 @@ export function SignupWizard({
         expMonth < currentMonth
       )
     ) {
-      return "Cartão vencido — confira a validade informada.";
+      return "Cartão vencido, confira a validade informada.";
     }
 
     const cvv =

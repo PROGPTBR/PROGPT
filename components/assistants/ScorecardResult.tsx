@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { Download, RotateCcw, Copy, FileSpreadsheet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SendEmailButton } from './SendEmailButton';
+import { semTravessao } from '@/lib/texto/sem-travessao';
 
 type Props = {
   markdown: string;
@@ -79,7 +80,7 @@ export function ScorecardResult({ markdown, runId, scorecardName, generating, on
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="text-sm">
           <div className="text-muted-foreground">
-            Supplier Scorecard — {scorecardName.slice(0, 80)}
+            Supplier Scorecard, {scorecardName.slice(0, 80)}
             {scorecardName.length > 80 ? '…' : ''}
           </div>
           {generating && (
@@ -104,7 +105,7 @@ export function ScorecardResult({ markdown, runId, scorecardName, generating, on
             Copiar
           </Button>
           <SendEmailButton
-            subject={`Supplier Scorecard — ${scorecardName.slice(0, 60)}`}
+            subject={`Supplier Scorecard, ${scorecardName.slice(0, 60)}`}
             body={markdown}
             disabled={generating}
           />
@@ -135,12 +136,12 @@ export function ScorecardResult({ markdown, runId, scorecardName, generating, on
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={`/api/assistants/runs/${runId}/chart`}
-            alt="Supplier Scorecard — ranking de fornecedores por score ponderado"
+            alt="Supplier Scorecard, ranking de fornecedores por score ponderado"
             className="w-full h-auto rounded bg-white"
             loading="lazy"
           />
           <figcaption className="text-xs text-muted-foreground text-center">
-            Ranking de fornecedores · score ponderado 0–100 · faixas Estratégico / Desenvolvimento / Saída
+            Ranking de fornecedores · score ponderado 0-100 · faixas Estratégico / Desenvolvimento / Saída
           </figcaption>
         </figure>
       )}
@@ -151,7 +152,7 @@ export function ScorecardResult({ markdown, runId, scorecardName, generating, on
             Calculando scores e gerando relatório… ~5-10 segundos.
           </p>
         ) : (
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{markdown}</ReactMarkdown>
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{semTravessao(markdown)}</ReactMarkdown>
         )}
         {generating && markdown.length > 0 && (
           <span className="inline-block w-2 h-4 bg-primary/50 align-middle animate-pulse ml-1" />

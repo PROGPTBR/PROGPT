@@ -137,7 +137,7 @@ export async function POST(req: Request): Promise<Response> {
       );
     } else {
       console.warn(
-        `[api/chat] perfilId ${parsed.perfilId} invalid/foreign/not-done — falling back to default`,
+        `[api/chat] perfilId ${parsed.perfilId} invalid/foreign/not-done, falling back to default`,
       );
     }
   }

@@ -83,7 +83,7 @@ export function HomologacaoForm({
       typeof p.faturamentoAnualBRL === 'number' ? String(p.faturamentoAnualBRL) : '',
     );
     setNotas(p.notas ?? '');
-    toast.success('Exemplo carregado — ajuste e gere');
+    toast.success('Exemplo carregado, ajuste e gere');
   }
 
   const cnpjValid = onlyDigits(cnpj).length === 14;
@@ -168,7 +168,7 @@ export function HomologacaoForm({
         </div>
         <div>
           <label className="text-xs font-medium block mb-1">
-            Setor (opcional — para comparar regime tributário)
+            Setor (opcional, para comparar regime tributário)
           </label>
           <select
             value={setor}
@@ -177,7 +177,7 @@ export function HomologacaoForm({
             }
             className="w-full rounded-md border border-input bg-background p-2 text-sm"
           >
-            <option value="">—</option>
+            <option value="">-</option>
             <option value="comércio">Comércio</option>
             <option value="serviços">Serviços</option>
             <option value="indústria">Indústria</option>

@@ -55,7 +55,7 @@ export const ASSISTANTS: readonly AssistantDefinition[] = [
     href: '/painel',
     title: 'Painel',
     short:
-      'Dashboard moderna que reúne TODOS os seus dados num só lugar: conversas, execuções, gasto por categoria, top fornecedores e evolução mensal — atualizado em tempo real, sem planilha nem Power BI.',
+      'Dashboard moderna que reúne TODOS os seus dados num só lugar: conversas, execuções, gasto por categoria, top fornecedores e evolução mensal, atualizado em tempo real, sem planilha nem Power BI.',
     sideSubtitle: 'Visão geral da plataforma',
     bullets: [
       'KPIs e gráficos interativos (SVG, tema claro/escuro)',
@@ -192,7 +192,7 @@ export const ASSISTANTS: readonly AssistantDefinition[] = [
     href: '/assistants/comprador',
     title: 'Equalizador de Propostas',
     short:
-      'Chegaram as cotações? Jogue as propostas dos fornecedores aqui e ele compara por TCO (preço + frete + impostos), aponta quem não atende a política ou está fora do padrão, e já monta o rascunho do Pedido de Compra — com sua aprovação.',
+      'Chegaram as cotações? Jogue as propostas dos fornecedores aqui e ele compara por TCO (preço + frete + impostos), aponta quem não atende a política ou está fora do padrão, e já monta o rascunho do Pedido de Compra, com sua aprovação.',
     sideSubtitle: 'Compare propostas de fornecedores por TCO',
     bullets: [
       'Sobe/cola propostas de vários fornecedores de uma vez',
@@ -260,7 +260,7 @@ export const ASSISTANTS: readonly AssistantDefinition[] = [
     href: '/assistants/homologacao',
     title: 'Homologação de Fornecedor',
     short:
-      'Informe o CNPJ e ele consulta situação cadastral, score de risco, compliance e certidões na Receita — e gera o relatório de homologação.',
+      'Informe o CNPJ e ele consulta situação cadastral, score de risco, compliance e certidões na Receita, e gera o relatório de homologação.',
     sideSubtitle: 'Consulte risco e compliance',
     bullets: [
       'Consulta CNPJ na Receita (BrasilAPI)',
@@ -278,10 +278,10 @@ export const ASSISTANTS: readonly AssistantDefinition[] = [
     href: '/assistants/pesquisa_precos',
     title: 'Pesquisa de Preços',
     short:
-      'Descreva os itens e ele busca o preço de referência nas compras públicas (CATMAT / Painel de Preços) — mediana, faixa e fontes.',
+      'Descreva os itens e ele busca o preço de referência nas compras públicas (CATMAT / Painel de Preços), mediana, faixa e fontes.',
     sideSubtitle: 'Pesquise preços de referência',
     bullets: [
-      'Preço de referência por item (mediana + faixa p25–p75)',
+      'Preço de referência por item (mediana + faixa p25-p75)',
       'Fonte: compras públicas reais (Painel de Preços)',
       'Mapa de preços em .docx para RFP e negociação',
     ],
@@ -352,7 +352,7 @@ export const ASSISTANTS: readonly AssistantDefinition[] = [
     bullets: [
       'Cole a tabela direto no formulário ou anexe CSV/XLSX',
       'Detecta categoria, valor e o melhor tipo de gráfico sozinho',
-      'Baixe o PNG pronto — sem depender de outro assistente',
+      'Baixe o PNG pronto, sem depender de outro assistente',
     ],
     previewKey: 'grafico_rapido',
   },

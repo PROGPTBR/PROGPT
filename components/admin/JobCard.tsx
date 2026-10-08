@@ -56,7 +56,7 @@ export function JobCard({ job, onRetry }: Props) {
           {job.status === 'queued' && 'Em fila'}
           {job.status === 'done' && (
             job.stage === 'deduplicated'
-              ? `Já estava na base — não duplicado · ${relative(job.finished_at ?? job.updated_at)}`
+              ? `Já estava na base, não duplicado · ${relative(job.finished_at ?? job.updated_at)}`
               : `${job.chunks_count ?? '?'} chunks · ${relative(job.finished_at ?? job.updated_at)}`
           )}
           {job.status === 'error' && (

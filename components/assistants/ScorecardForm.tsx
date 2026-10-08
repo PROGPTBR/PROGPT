@@ -30,8 +30,8 @@ type CriterionDraft = {
   id: string; // stable — slug of original label; kept when label changes
   label: string;
   weight: string; // string for input, coerced on submit
-  group: string; // '' = sem grupo (modo simples) — Batch J
-  basis: string; // "base para pontuação" — Batch J
+  group: string; // '' = sem grupo (modo simples), Batch J
+  basis: string; // "base para pontuação", Batch J
 };
 
 type SupplierDraft = {
@@ -305,7 +305,7 @@ export function ScorecardForm({ onSubmit }: { onSubmit: (v: ScorecardFormValues)
     setNotes(p.notes ?? '');
     setStrategicThreshold(String(p.thresholds.strategic));
     setDevelopmentThreshold(String(p.thresholds.development));
-    toast.success('Exemplo carregado — ajuste e gere o scorecard');
+    toast.success('Exemplo carregado, ajuste e gere o scorecard');
   }
 
   // ── Validation ────────────────────────────────────────────────────────────
@@ -437,19 +437,19 @@ export function ScorecardForm({ onSubmit }: { onSubmit: (v: ScorecardFormValues)
                     : 'text-muted-foreground hover:bg-accent'
                 }`}
               >
-                0–{s}
+                0-{s}
               </button>
             ))}
           </div>
           <p className="text-[10px] text-muted-foreground mt-1">
-            1–5 segue a planilha do diretor (Batch J); trocar re-ajusta notas já digitadas.
+            1-5 segue a planilha do diretor (Batch J); trocar re-ajusta notas já digitadas.
           </p>
         </div>
       </div>
 
       {/* ── Thresholds ───────────────────────────────────────────────────── */}
       <div>
-        <label className="text-sm font-medium block mb-2">Thresholds de faixa (0–100)</label>
+        <label className="text-sm font-medium block mb-2">Thresholds de faixa (0-100)</label>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div>
             <label className="text-xs text-muted-foreground block mb-1">
@@ -480,7 +480,7 @@ export function ScorecardForm({ onSubmit }: { onSubmit: (v: ScorecardFormValues)
           <div className="sm:col-span-2 flex items-end pb-0.5">
             {!thresholdsValid && (
               <p className="text-xs text-destructive">
-                Estratégico deve ser maior que Desenvolvimento (e entre 1–100).
+                Estratégico deve ser maior que Desenvolvimento (e entre 1-100).
               </p>
             )}
           </div>
@@ -594,7 +594,7 @@ export function ScorecardForm({ onSubmit }: { onSubmit: (v: ScorecardFormValues)
           </table>
         </div>
         <p className="text-[10px] text-muted-foreground mt-1">
-          Grupo e base para pontuação são opcionais — usados no relatório e nas planilhas exportadas para organizar critérios em grupos (ex.: Requisitos, Termos e condições) com uma justificativa qualitativa por critério.
+          Grupo e base para pontuação são opcionais, usados no relatório e nas planilhas exportadas para organizar critérios em grupos (ex.: Requisitos, Termos e condições) com uma justificativa qualitativa por critério.
         </p>
         {totalWeight === 0 && criteria.length > 0 && (
           <p className="text-xs text-destructive mt-1">
@@ -631,7 +631,7 @@ export function ScorecardForm({ onSubmit }: { onSubmit: (v: ScorecardFormValues)
                   <th
                     key={c.id}
                     className="p-2 font-medium text-center whitespace-nowrap"
-                    title={c.group ? `${c.group} — ${c.label || '(sem nome)'}` : c.label || '(sem nome)'}
+                    title={c.group ? `${c.group}, ${c.label || '(sem nome)'}` : c.label || '(sem nome)'}
                   >
                     {c.group && (
                       <span className="block text-[9px] font-normal text-muted-foreground normal-case">
@@ -640,9 +640,9 @@ export function ScorecardForm({ onSubmit }: { onSubmit: (v: ScorecardFormValues)
                     )}
                     {c.label.length > 0
                       ? c.label.slice(0, 12) + (c.label.length > 12 ? '…' : '')
-                      : '—'}
+                      : '-'}
                     <span className="block text-[9px] font-normal text-muted-foreground">
-                      0–{scale}
+                      0-{scale}
                     </span>
                   </th>
                 ))}
@@ -720,7 +720,7 @@ export function ScorecardForm({ onSubmit }: { onSubmit: (v: ScorecardFormValues)
         <label className="text-sm font-medium block mb-2">
           Capacidades estratégicas{' '}
           <span className="text-xs font-normal text-muted-foreground">
-            (opcional — cada item marcado soma +{1} ponto ao score final do fornecedor)
+            (opcional, cada item marcado soma +{1} ponto ao score final do fornecedor)
           </span>
         </label>
         <div className="rounded-md border border-border overflow-x-auto">
@@ -753,7 +753,7 @@ export function ScorecardForm({ onSubmit }: { onSubmit: (v: ScorecardFormValues)
                           type="checkbox"
                           checked={s.strategicCapabilities.includes(cap.id)}
                           onChange={() => toggleSupplierCapability(si, cap.id)}
-                          aria-label={`${s.name} — ${cap.label}`}
+                          aria-label={`${s.name}, ${cap.label}`}
                         />
                       </td>
                     ))}

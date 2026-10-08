@@ -121,7 +121,7 @@ export function ProfileForm({
     const ex = PROFILE_EXAMPLES[0];
     if (!ex) return;
     applyExtracted(ex.params);
-    toast.success('Exemplo carregado — ajuste e gere o perfil');
+    toast.success('Exemplo carregado, ajuste e gere o perfil');
   }
 
   async function handleExtract(file: File) {
@@ -360,7 +360,7 @@ export function ProfileForm({
         </div>
         <div>
           <label className="text-xs font-medium block mb-1">
-            Escopo — incluído <span className="text-destructive">*</span>
+            Escopo, incluído <span className="text-destructive">*</span>
           </label>
           <textarea
             value={escopoIncluido}
@@ -372,7 +372,7 @@ export function ProfileForm({
         </div>
         <div>
           <label className="text-xs font-medium block mb-1">
-            Escopo — não incluído (opcional)
+            Escopo, não incluído (opcional)
           </label>
           <textarea
             value={escopoNaoIncluido}
@@ -451,7 +451,7 @@ export function ProfileForm({
           <textarea
             value={requisitosTecnicos}
             onChange={(e) => setRequisitosTecnicos(e.target.value)}
-            placeholder="Normas, performance, especificações. Texto literal — será preservado palavra por palavra no doc."
+            placeholder="Normas, performance, especificações. Texto literal, será preservado palavra por palavra no doc."
             className="w-full rounded-md border border-input bg-background p-2 text-sm min-h-[90px]"
             maxLength={3000}
           />
@@ -463,7 +463,7 @@ export function ProfileForm({
           <textarea
             value={restricoesRegulatorias}
             onChange={(e) => setRestricoesRegulatorias(e.target.value)}
-            placeholder="Ex: ANVISA RDC 91/2001, ABNT NBR 14937. Texto literal — preservado no doc."
+            placeholder="Ex: ANVISA RDC 91/2001, ABNT NBR 14937. Texto literal, preservado no doc."
             className="w-full rounded-md border border-input bg-background p-2 text-sm min-h-[70px]"
             maxLength={2000}
           />
@@ -472,7 +472,7 @@ export function ProfileForm({
           <label className="text-xs font-medium block mb-1">
             Critérios de avaliação priorizados <span className="text-destructive">*</span>{' '}
             <span className="text-[10px] text-muted-foreground">
-              (ordem importa — primeiro = mais importante)
+              (ordem importa, primeiro = mais importante)
             </span>
           </label>
           {criteriosAvaliacao.map((c, i) => (

@@ -26,7 +26,7 @@ const SuggestionSchema = z.object({
   technicalSpec: ScoreField.describe('Complexidade das Especificações Técnicas (1-4)'),
   customerValue: ScoreField.describe('Valor Percebido pelo Cliente Final (1-4)'),
   marketStructure: ScoreField.describe(
-    'Estrutura do Mercado — concentração de fornecedores (1=mercado pulverizado, 4=oligopólio/monopólio)',
+    'Estrutura do Mercado, concentração de fornecedores (1=mercado pulverizado, 4=oligopólio/monopólio)',
   ),
   marketRivalry: ScoreField.describe(
     'Rivalidade do Mercado entre fornecedores (1=alta competição, 4=baixa competição)',
@@ -46,7 +46,7 @@ const SYSTEM_PROMPT = `Você é um analista sênior de procurement ajudando um c
 
 Sua tarefa: propor scores de 1 a 4 para 7 sub-critérios.
 
-## Eixo IMPACTO NO NEGÓCIO (somente 3 critérios — o 4º, Spend, é calculado pelo sistema):
+## Eixo IMPACTO NO NEGÓCIO (somente 3 critérios, o 4º, Spend, é calculado pelo sistema):
 - **criticality**: o quanto a falha/atraso desta categoria afeta operação ou receita. 1=baixo (substituível, não-crítico operacional), 2=moderado, 3=alto, 4=parada de operação se faltar.
 - **technicalSpec**: complexidade técnica das especificações. 1=commodity sem spec, 2=spec leve, 3=spec detalhada, 4=engenharia customizada/regulada.
 - **customerValue**: o quanto o cliente final percebe valor neste insumo. 1=invisível, 2=indireto, 3=relevante, 4=diferenciador competitivo.

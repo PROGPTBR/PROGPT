@@ -224,7 +224,7 @@ export function Composer({
                     data.max_bytes /
                       (1024 * 1024)
                   )
-                : '5–10';
+                : '5-10';
 
             toast.error(
               'Arquivo grande demais',
@@ -259,7 +259,7 @@ export function Composer({
 
         if (parsed.truncated) {
           toast.info(
-            'Arquivo grande — apenas o início foi enviado pra IA.',
+            'Arquivo grande, apenas o início foi enviado pra IA.',
             {
               description:
                 'Cap de 8000 caracteres aplicado.',
@@ -768,7 +768,7 @@ export function Composer({
                     }
                     data-tour="voz"
                     aria-label="Conversar por voz em tempo real"
-                    title="Conversar por voz — fale com o assistente em tempo real"
+                    title="Conversar por voz, fale com o assistente em tempo real"
                     className="
                       inline-flex
                       h-9
@@ -805,8 +805,8 @@ export function Composer({
                       !!personalMode
                     }
                     data-tour="modo-livre"
-                    aria-label="Modo Pessoal — pergunte qualquer coisa, com busca ao vivo"
-                    title="Modo Pessoal — pergunte qualquer coisa, com busca ao vivo"
+                    aria-label="Modo Pessoal, pergunte qualquer coisa, com busca ao vivo"
+                    title="Modo Pessoal, pergunte qualquer coisa, com busca ao vivo"
                     className={
                       personalMode
                         ? `
@@ -1050,7 +1050,7 @@ export function Composer({
                 }
                 data-tour="voz"
                 aria-label="Conversar por voz em tempo real"
-                title="Conversar por voz — fale com o assistente em tempo real"
+                title="Conversar por voz, fale com o assistente em tempo real"
                 className="
                   inline-flex
                   h-9
@@ -1093,8 +1093,8 @@ export function Composer({
                   !!personalMode
                 }
                 data-tour="modo-livre"
-                aria-label="Modo Pessoal — pergunte qualquer coisa, com busca ao vivo"
-                title="Modo Pessoal — pergunte qualquer coisa, com busca ao vivo"
+                aria-label="Modo Pessoal, pergunte qualquer coisa, com busca ao vivo"
+                title="Modo Pessoal, pergunte qualquer coisa, com busca ao vivo"
                 className={
                   personalMode
                     ? `

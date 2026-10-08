@@ -10,7 +10,7 @@ import { MaterialsBase } from '@/components/materials/MaterialsBase';
 
 type Tab = 'fornecedores' | 'materiais';
 
-export function FornecedoresBaseTabs() {
+export function FornecedoresBaseTabs({ buscaNaInternet = false }: { buscaNaInternet?: boolean } = {}) {
   const [tab, setTab] = useState<Tab>('fornecedores');
 
   return (
@@ -24,7 +24,7 @@ export function FornecedoresBaseTabs() {
         </TabButton>
       </div>
 
-      {tab === 'fornecedores' ? <SupplierBase /> : <MaterialsBase />}
+      {tab === 'fornecedores' ? <SupplierBase buscaNaInternet={buscaNaInternet} /> : <MaterialsBase />}
     </div>
   );
 }

@@ -48,7 +48,7 @@ export default async function AssistantRunDetailPage({
         <h1 className="text-xl font-semibold">Análise em andamento</h1>
         <p className="text-sm text-muted-foreground">
           Este run está com status <span className="font-medium">{run.status}</span>
-          {run.error_message ? ` — ${run.error_message}` : ''}. Aguarde a finalização ou
+          {run.error_message ? `, ${run.error_message}` : ''}. Aguarde a finalização ou
           gere novamente.
         </p>
       </div>

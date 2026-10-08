@@ -15,6 +15,7 @@ import {
   PageBreak,
 } from 'docx';
 import type { CompanyData } from '@/lib/db/user-company';
+import { semTravessao } from '@/lib/texto/sem-travessao';
 
 export type DocxLogo = { buffer: Buffer; mime: 'image/png' | 'image/jpeg' };
 
@@ -325,7 +326,8 @@ export async function mdToDocxBuffer(
   } = {},
 ): Promise<Buffer> {
   // Strip the literal logo-placeholder line — handled by the cover page.
-  const cleaned = md
+  // Sem travessão no documento entregue ao cliente (pedido do diretor, 2026-10-08).
+  const cleaned = semTravessao(md)
     .split('\n')
     .filter((l) => !/\[INSERIR LOGO DO CLIENTE\]/i.test(l))
     .join('\n');

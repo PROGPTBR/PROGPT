@@ -46,18 +46,18 @@ type Template = {
 };
 
 const WEIGHT_LABELS: Record<number, string> = {
-  0: '0 — não se aplica',
-  1: '1 — menos relevante',
-  2: '2 — relevante',
-  3: '3 — mais relevante',
+  0: '0, não se aplica',
+  1: '1, menos relevante',
+  2: '2, relevante',
+  3: '3, mais relevante',
 };
 
 const SCORE_LABELS: Record<number, string> = {
-  1: '1 — absolutamente falsa',
-  2: '2 — falsa, com exceções',
-  3: '3 — parcial',
-  4: '4 — correta, com exceções',
-  5: '5 — completamente correta',
+  1: '1, absolutamente falsa',
+  2: '2, falsa, com exceções',
+  3: '3, parcial',
+  4: '4, correta, com exceções',
+  5: '5, completamente correta',
 };
 
 // Default each statement to weight=2 (relevant) + score=3 (middle).
@@ -116,7 +116,7 @@ export function PorterForm({
     setEscopo(p.escopo ?? '');
     setObservacoes(p.observacoes ?? '');
     setStatements(p.statements);
-    toast.success('Exemplo carregado — ajuste e gere');
+    toast.success('Exemplo carregado, ajuste e gere');
   }
 
   function updateStatement(id: string, patch: Partial<PorterStatementScore>) {
@@ -251,7 +251,7 @@ export function PorterForm({
               Para cada afirmação, atribua <strong>peso</strong> (relevância dela
               neste setor) e <strong>nota</strong> (quão verdadeira ela é hoje).
               O sistema calcula a intensidade de cada força por média
-              ponderada — o LLM produz só a narrativa.
+              ponderada, o LLM produz só a narrativa.
             </p>
           </div>
           <div className="text-right">
@@ -259,7 +259,7 @@ export function PorterForm({
               Pressão geral
             </div>
             <div className="text-lg font-semibold">
-              {overallAvg > 0 ? overallAvg.toFixed(2) : '—'}
+              {overallAvg > 0 ? overallAvg.toFixed(2) : '-'}
               <span className="text-xs text-muted-foreground ml-2">
                 {overallAvg > 0
                   ? PORTER_INTENSITY_LABELS[intensityFromScore(overallAvg)]
@@ -295,7 +295,7 @@ export function PorterForm({
                   {list.length} afirmações
                 </span>
                 <span className="text-xs font-medium tabular-nums w-12 text-right">
-                  {avg > 0 ? avg.toFixed(2) : '—'}
+                  {avg > 0 ? avg.toFixed(2) : '-'}
                 </span>
                 <span className="text-[10px] uppercase tracking-wider text-primary w-12 text-right">
                   {avg > 0 ? PORTER_INTENSITY_LABELS[intensityFromScore(avg)] : ''}

@@ -49,7 +49,7 @@ export async function POST(req: Request) {
       {
         error: 'protected_canonical',
         detail:
-          'Tema está em CANONICAL_THEMES — edite lib/ingest/taxonomy.ts via PR para remover.',
+          'Tema está em CANONICAL_THEMES, edite lib/ingest/taxonomy.ts via PR para remover.',
       },
       { status: 409 },
     );

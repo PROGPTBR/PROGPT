@@ -102,7 +102,7 @@ export function AcceptInviteForm({ token, email, inviterName, inviterEmail }: Pr
       <div className="space-y-2">
         <h1 className="text-2xl font-bold tracking-tight">Seu acesso ao PROGPT</h1>
         <p className="text-sm text-muted-foreground">
-          <strong>{who}</strong> reservou um acesso para você. Crie sua senha para entrar — sem
+          <strong>{who}</strong> reservou um acesso para você. Crie sua senha para entrar, sem
           cartão, a assinatura é da empresa.
         </p>
       </div>
@@ -150,7 +150,7 @@ export function AcceptInviteForm({ token, email, inviterName, inviterEmail }: Pr
       </form>
 
       <p className="text-xs text-muted-foreground text-center">
-        Já tem conta com este e-mail? Pode criar a senha mesmo assim — vamos apenas vincular o
+        Já tem conta com este e-mail? Pode criar a senha mesmo assim, vamos apenas vincular o
         acesso e manter sua senha atual.
       </p>
     </div>

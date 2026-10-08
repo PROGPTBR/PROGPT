@@ -434,7 +434,7 @@ export function RfpHistoryList() {
                             ? 'Homologação fiscal'
                             : isPesquisaPrecos
                               ? `${r.params.itens?.length ?? 0} item(ns)`
-                              : (r.params.category ?? '—');
+                              : (r.params.category ?? '-');
             const client =
               isKraljic ||
               isPorter ||

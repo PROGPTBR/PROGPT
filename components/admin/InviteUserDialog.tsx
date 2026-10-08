@@ -43,7 +43,7 @@ export function InviteUserDialog({ open, onOpenChange }: Props) {
       if (res.status === 409 || body.error === 'user_already_exists') {
         setError('Este email já está cadastrado.');
       } else {
-        setError('Não foi possível enviar o convite — tente novamente.');
+        setError('Não foi possível enviar o convite, tente novamente.');
       }
     } finally {
       setBusy(false);

@@ -221,7 +221,7 @@ export function MicRecorderButton({
         type="button"
         onClick={stop}
         aria-label="Parar gravação e transcrever"
-        title={`Gravando ${formatElapsed(state.elapsedMs)} — clique pra transcrever`}
+        title={`Gravando ${formatElapsed(state.elapsedMs)}, clique pra transcrever`}
         className={`${dim} relative inline-flex items-center justify-center rounded-full bg-red-500/15 border border-red-500/50 text-red-600 hover:bg-red-500/25 transition-all duration-150 active:scale-95 flex-shrink-0`}
       >
         <Square className={`${iconSize} fill-current`} aria-hidden="true" />

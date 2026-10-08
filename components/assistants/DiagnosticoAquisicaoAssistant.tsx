@@ -106,7 +106,7 @@ export function DiagnosticoAquisicaoAssistant() {
         </h1>
         <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
           Classifique a compra como CAPEX ou OPEX, informe criticidade, complexidade de mercado e
-          impacto operacional — o assistente recomenda os KPIs certos e a estratégia (SOURCE,
+          impacto operacional, o assistente recomenda os KPIs certos e a estratégia (SOURCE,
           CONTRACT ou BUY) para conduzir a aquisição.
         </p>
       </div>

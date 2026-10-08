@@ -89,7 +89,7 @@ export function GestaoObrasDemo({ hojeIso }: { hojeIso: string }) {
       <VitrineCabecalho
         produto={PRODUTO}
         titulo="Gestão de Obras"
-        descricao="Contratos com órgãos públicos, planilha orçamentária, boletins de medição e planejamento das frentes de serviço — com a visão financeira de toda a carteira de obras."
+        descricao="Contratos com órgãos públicos, planilha orçamentária, boletins de medição e planejamento das frentes de serviço, com a visão financeira de toda a carteira de obras."
       />
       <AvisoDemonstracao produto={PRODUTO} />
       <Abas abas={ABAS} ativa={aba} onChange={setAba} />
@@ -454,7 +454,7 @@ function SeletorObra({ obraId, onTrocar }: { obraId: string; onTrocar: (id: stri
       className="h-9 w-full rounded-lg border border-input bg-card px-3 text-sm sm:w-auto sm:min-w-[320px]"
     >
       {CONTRATOS.map((c) => (
-        <optgroup key={c.id} label={`Contrato ${c.numero} — ${c.orgao}`}>
+        <optgroup key={c.id} label={`Contrato ${c.numero}, ${c.orgao}`}>
           {obrasDoContrato(c.id).map((o) => (
             <option key={o.id} value={o.id}>
               {o.nome}
@@ -521,7 +521,7 @@ function Medicoes({ now, obraId, onTrocarObra }: { now: Date; obraId: string; on
         </nav>
 
         <Secao data-tour="obras-boletim"
-          titulo={`Boletim de medição nº ${String(numero).padStart(2, '0')} — ${rotuloMes(now, medicao.mes)}`}
+          titulo={`Boletim de medição nº ${String(numero).padStart(2, '0')}, ${rotuloMes(now, medicao.mes)}`}
           acoes={
             <div className="flex gap-1.5">
               <button
@@ -576,12 +576,12 @@ function Medicoes({ now, obraId, onTrocarObra }: { now: Date; obraId: string; on
                       {formatarNumero(l.quantidadeAnterior)}
                     </td>
                     <td className="whitespace-nowrap px-2 py-2 text-right font-medium tabular-nums">
-                      {l.quantidadeMedicao ? formatarNumero(l.quantidadeMedicao) : '—'}
+                      {l.quantidadeMedicao ? formatarNumero(l.quantidadeMedicao) : '-'}
                     </td>
                     <td className="whitespace-nowrap px-2 py-2 text-right tabular-nums">{formatarNumero(l.quantidadeAcumulada)}</td>
                     <td className="whitespace-nowrap px-2 py-2 text-right tabular-nums">{formatarNumero(l.percentualAcumulado, 1)}%</td>
                     <td className="whitespace-nowrap px-4 py-2 text-right tabular-nums sm:px-5">
-                      {l.valorMedicao ? formatarBRL(l.valorMedicao) : '—'}
+                      {l.valorMedicao ? formatarBRL(l.valorMedicao) : '-'}
                     </td>
                   </tr>
                 ))}
@@ -628,7 +628,7 @@ function Planejamento({ obraId, onTrocarObra }: { obraId: string; onTrocarObra: 
                   (quinzena === q ? 'bg-card shadow-sm' : 'text-muted-foreground hover:text-foreground')
                 }
               >
-                {q === 1 ? '1ª quinzena (1–15)' : '2ª quinzena (16–fim)'}
+                {q === 1 ? '1ª quinzena (1-15)' : '2ª quinzena (16-fim)'}
               </button>
             ))}
           </div>
@@ -645,7 +645,7 @@ function Planejamento({ obraId, onTrocarObra }: { obraId: string; onTrocarObra: 
 
       {obra.status === 'CONCLUIDA' ? (
         <p className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-          Obra concluída — sem frentes de serviço em planejamento.
+          Obra concluída, sem frentes de serviço em planejamento.
         </p>
       ) : (
         <div data-tour="obras-kanban" className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">

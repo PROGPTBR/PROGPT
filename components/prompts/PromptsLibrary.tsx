@@ -52,7 +52,7 @@ export function PromptsLibrary({ prompts, initialFavorites }: Props) {
           Biblioteca de Prompts <span className="text-brand">.</span>
         </h1>
         <p className="text-sm text-muted-foreground mt-2">
-          {prompts.length} prompts de procurement prontos para usar — abra um, copie
+          {prompts.length} prompts de procurement prontos para usar, abra um, copie
           ou mande direto pro chat e ajuste os{' '}
           <code className="text-brand">[colchetes]</code>.
         </p>

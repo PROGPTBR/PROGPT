@@ -33,6 +33,25 @@ export const SIZE_LIMITS: Record<string, number> = {
   'image/jpeg': 5 * 1024 * 1024,
 };
 
+/**
+ * Tipo do arquivo a partir do nome quando o navegador não informa ou informa
+ * genérico (Excel no Windows costuma chegar vazio ou como
+ * application/octet-stream). Mantém o tipo informado se ele já é aceito.
+ */
+export function mimeDoArquivo(nome: string, informado: string): string {
+  if (ACCEPTED_MIMES.has(informado)) return informado;
+  const ext = (nome.split('.').pop() ?? '').toLowerCase();
+  const porExt: Record<string, string> = {
+    pdf: 'application/pdf',
+    docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    png: 'image/png',
+    jpg: 'image/jpeg',
+    jpeg: 'image/jpeg',
+  };
+  return porExt[ext] ?? informado;
+}
+
 export type AttachmentKind = 'pdf' | 'docx' | 'xlsx' | 'image';
 
 export type ParsedAttachment = {
@@ -57,6 +76,10 @@ export async function parseChatAttachment(input: {
   buf: Buffer;
   mime: string;
   filename: string;
+  /** Teto de caracteres do texto extraído. Chat: 8 mil; Equalizador lê a proposta inteira. */
+  maxChars?: number;
+  /** Linhas por aba de planilha. */
+  xlsxMaxRows?: number;
 }): Promise<ParsedAttachment> {
   const { buf, mime, filename } = input;
 
@@ -128,7 +151,7 @@ export async function parseChatAttachment(input: {
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     ) {
       kind = 'xlsx';
-      parsedRaw = await parseXlsxToMarkdown(buf);
+      parsedRaw = await parseXlsxToMarkdown(buf, input.xlsxMaxRows);
       parser = 'exceljs';
       void recordApiUsage({
         provider: 'openai',
@@ -167,9 +190,10 @@ export async function parseChatAttachment(input: {
     );
   }
 
-  const truncated = cleaned.length > MAX_PARSED_CHARS;
+  const teto = input.maxChars ?? MAX_PARSED_CHARS;
+  const truncated = cleaned.length > teto;
   const parsedText = truncated
-    ? cleaned.slice(0, MAX_PARSED_CHARS).trimEnd() + '\n\n…[truncado]'
+    ? cleaned.slice(0, teto).trimEnd() + '\n\n…[truncado]'
     : cleaned;
 
   return {

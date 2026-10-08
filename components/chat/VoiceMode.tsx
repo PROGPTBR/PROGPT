@@ -195,7 +195,7 @@ export function VoiceMode({ onClose }: Props) {
           >
             {VOICE_OPTIONS.map((o) => (
               <option key={o.id} value={o.id}>
-                {o.label} — {o.description}
+                {o.label}, {o.description}
               </option>
             ))}
           </select>
@@ -249,7 +249,7 @@ export function VoiceMode({ onClose }: Props) {
         <div className="max-w-2xl mx-auto space-y-3">
           {archivedTurns.length === 0 && turns.length === 0 && !partialAssistant && status === 'live' && (
             <p className="text-center text-sm text-muted-foreground pt-4">
-              Pode falar — pergunte qualquer coisa de compras e suprimentos.
+              Pode falar, pergunte qualquer coisa de compras e suprimentos.
               <br />
               Anexe um contrato ou proposta no clipe pra conversar sobre ele.
             </p>

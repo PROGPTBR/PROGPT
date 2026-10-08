@@ -64,7 +64,7 @@ export const FAQ_SUPORTE: FaqSecao[] = [
         id: 'anexar',
         pergunta: 'Posso enviar arquivos no chat?',
         resposta:
-          'Sim. Use o clipe ao lado da caixa de mensagem para anexar PDF, DOCX, XLSX, PNG ou JPG — por exemplo um contrato ou uma proposta — e faça a pergunta sobre ele.',
+          'Sim. Use o clipe ao lado da caixa de mensagem para anexar PDF, DOCX, XLSX, PNG ou JPG, por exemplo um contrato ou uma proposta, e faça a pergunta sobre ele.',
         termos: 'anexo upload pdf planilha contrato proposta',
       },
       {
@@ -85,7 +85,7 @@ export const FAQ_SUPORTE: FaqSecao[] = [
         id: 'ferramentas-automaticas',
         pergunta: 'O chat consegue executar tarefas sozinho?',
         resposta:
-          'Algumas, sim. Ao pedir um preço de referência, os indicadores econômicos do mês, a situação de um CNPJ ou um diagnóstico rápido de aquisição, o próprio chat aciona a ferramenta e responde com o resultado — e sugere a tela completa quando houver mais a fazer.',
+          'Algumas, sim. Ao pedir um preço de referência, os indicadores econômicos do mês, a situação de um CNPJ ou um diagnóstico rápido de aquisição, o próprio chat aciona a ferramenta e responde com o resultado, e sugere a tela completa quando houver mais a fazer.',
       },
       {
         id: 'historico',
@@ -189,6 +189,13 @@ export const FAQ_SUPORTE: FaqSecao[] = [
         termos: 'vendor list importar materiais cnae',
       },
       {
+        id: 'fornecedores-busca-ia',
+        pergunta: 'Como acho um fornecedor na minha base sem saber o nome?',
+        resposta:
+          'Em Fornecedores, escreva o que você precisa na busca, do jeito que falaria (por exemplo "material para alvenaria em SP"), e clique em "Perguntar à IA" ou aperte Enter. A IA encontra na sua base os fornecedores dos grupos que atendem o pedido e mostra o motivo de cada um. A busca comum também ignora acento e plural.',
+        termos: 'buscar procurar pesquisar fornecedor ia inteligente chatgpt google categoria grupo',
+      },
+      {
         id: 'prompts',
         pergunta: 'Para que serve a Biblioteca de Prompts?',
         resposta:
@@ -198,7 +205,7 @@ export const FAQ_SUPORTE: FaqSecao[] = [
         id: 'vitrines',
         pergunta: 'Gestão de Obras e Gestão de Demandas são de verdade?',
         resposta:
-          'As telas mostram demonstrações com dados fictícios. Os dois sistemas são implantados sob demanda, com os dados e o processo da sua empresa — para contratar, use o botão "Quero na minha empresa" ou fale com o suporte pelo WhatsApp.',
+          'As telas mostram demonstrações com dados fictícios. Os dois sistemas são implantados sob demanda, com os dados e o processo da sua empresa, para contratar, use o botão "Quero na minha empresa" ou fale com o suporte pelo WhatsApp.',
         termos: 'obras demandas demonstração contratar',
       },
     ],
@@ -259,7 +266,7 @@ export const FAQ_SUPORTE: FaqSecao[] = [
         id: 'lgpd',
         pergunta: 'Como meus dados são tratados?',
         resposta:
-          'De acordo com a LGPD. Os detalhes — quais dados, para quê e por quanto tempo — estão na Política de Privacidade, no rodapé do site.',
+          'De acordo com a LGPD. Os detalhes, quais dados, para quê e por quanto tempo, estão na Política de Privacidade, no rodapé do site.',
         termos: 'lgpd dados pessoais política',
       },
     ],

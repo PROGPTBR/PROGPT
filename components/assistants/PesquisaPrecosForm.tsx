@@ -111,7 +111,7 @@ export function PesquisaPrecosForm({
       })),
     );
     setNotas(p.notas ?? '');
-    toast.success('Exemplo carregado — ajuste e gere');
+    toast.success('Exemplo carregado, ajuste e gere');
   }
 
   function updateItem(idx: number, patch: Partial<ItemRow>) {
@@ -183,7 +183,7 @@ export function PesquisaPrecosForm({
           <Input
             value={titulo}
             onChange={(e) => setTitulo(e.target.value)}
-            placeholder="Ex: Cesta de materiais de escritório — Q3"
+            placeholder="Ex: Cesta de materiais de escritório, Q3"
             maxLength={200}
           />
         </div>
@@ -211,7 +211,7 @@ export function PesquisaPrecosForm({
         </label>
         <p className="text-[11px] text-muted-foreground mb-2">
           Digite a descrição e escolha o item no catálogo do governo que aparece
-          abaixo — isso fixa o código CATMAT e evita preço de material errado. Sem
+          abaixo, isso fixa o código CATMAT e evita preço de material errado. Sem
           escolher, o assistente tenta resolver sozinho.
         </p>
         <div className="space-y-2">
@@ -425,7 +425,7 @@ function CatmatItemRow({
             )}
             {!loading && searched && suggestions.length === 0 && (
               <div className="px-3 py-2 text-xs text-muted-foreground">
-                Sem itens do catálogo para esta descrição — o assistente vai tentar
+                Sem itens do catálogo para esta descrição, o assistente vai tentar
                 resolver sozinho ao gerar.
               </div>
             )}
@@ -438,7 +438,7 @@ function CatmatItemRow({
                 className="w-full text-left px-3 py-2 text-xs hover:bg-accent border-b border-border/50 last:border-b-0"
               >
                 <span className="font-medium text-foreground">{s.codigoItem}</span>{' '}
-                <span className="text-muted-foreground">— {s.descricaoItem}</span>
+                <span className="text-muted-foreground">- {s.descricaoItem}</span>
               </button>
             ))}
           </div>

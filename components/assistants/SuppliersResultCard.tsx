@@ -109,7 +109,7 @@ function EnrichmentSelos({
       {sancoes.temSancao && (
         <span
           className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-semibold border bg-red-600/10 border-red-600/40 text-red-600 dark:text-red-400"
-          title={`Sanção ativa no CEIS/CNEP (Portal da Transparência) — ${sancoes.total} registro${
+          title={`Sanção ativa no CEIS/CNEP (Portal da Transparência), ${sancoes.total} registro${
             sancoes.total === 1
               ? ''
               : 's'
@@ -136,7 +136,7 @@ function EnrichmentSelos({
           title="Situação cadastral na Receita"
         >
           {fiscal.situacao ??
-            '—'}
+            '-'}
         </span>
       )}
 

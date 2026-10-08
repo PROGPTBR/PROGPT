@@ -26,7 +26,7 @@ export function SendEmailButton({
     const plainBody = plain ? body : markdownToPlainText(body);
     const { href, truncated } = buildMailtoHref({ subject, body: plainBody });
     if (truncated) {
-      toast.info('Conteúdo longo — texto cortado.', {
+      toast.info('Conteúdo longo, texto cortado.', {
         description: 'Baixe o .docx pra versão completa.',
       });
     }

@@ -91,7 +91,7 @@ export function AbcForm({
     setNotes(p.notes ?? '');
     setConsolidate(p.consolidate ?? true);
     setItems(p.items);
-    toast.success('Exemplo carregado — ajuste e gere');
+    toast.success('Exemplo carregado, ajuste e gere');
   }
 
   async function handleImport(file: File) {

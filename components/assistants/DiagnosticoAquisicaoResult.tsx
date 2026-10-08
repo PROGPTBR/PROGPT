@@ -6,6 +6,7 @@ import remarkGfm from 'remark-gfm';
 import { toast } from 'sonner';
 import { Download, RotateCcw, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { semTravessao } from '@/lib/texto/sem-travessao';
 
 type Props = {
   markdown: string;
@@ -60,7 +61,7 @@ export function DiagnosticoAquisicaoResult({
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="text-sm">
           <div className="text-muted-foreground">
-            Diagnóstico de Aquisição — {descricaoCompra.slice(0, 80)}
+            Diagnóstico de Aquisição, {descricaoCompra.slice(0, 80)}
             {descricaoCompra.length > 80 ? '…' : ''}
           </div>
           {generating && (
@@ -99,7 +100,7 @@ export function DiagnosticoAquisicaoResult({
         {markdown.length === 0 && generating ? (
           <p className="text-muted-foreground italic">Analisando a aquisição… ~10-15 segundos.</p>
         ) : (
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{markdown}</ReactMarkdown>
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{semTravessao(markdown)}</ReactMarkdown>
         )}
         {generating && markdown.length > 0 && (
           <span className="inline-block w-2 h-4 bg-primary/50 align-middle animate-pulse ml-1" />

@@ -141,7 +141,7 @@ export function RfpForm({ onSubmit }: { onSubmit: (v: RfpFormValues) => void }) 
       buyerContact: p.buyerContact ?? '',
       sampleRequired: p.sampleRequired ?? false,
     }));
-    toast.success('Exemplo carregado — ajuste e gere');
+    toast.success('Exemplo carregado, ajuste e gere');
   }
 
   function toggleCriterion(c: string) {
@@ -194,7 +194,7 @@ export function RfpForm({ onSubmit }: { onSubmit: (v: RfpFormValues) => void }) 
             {templates.map((t) => (
               <option key={t.id} value={t.id}>
                 {t.name}
-                {t.description ? ` — ${t.description.slice(0, 50)}` : ''}
+                {t.description ? `, ${t.description.slice(0, 50)}` : ''}
               </option>
             ))}
           </select>
@@ -212,7 +212,7 @@ export function RfpForm({ onSubmit }: { onSubmit: (v: RfpFormValues) => void }) 
           maxLength={200}
         />
         <p className="text-[10px] text-muted-foreground mt-0.5">
-          Nome da empresa/órgão que está comprando — aparece nos termos do RFP.
+          Nome da empresa/órgão que está comprando, aparece nos termos do RFP.
         </p>
       </div>
 
@@ -262,7 +262,7 @@ export function RfpForm({ onSubmit }: { onSubmit: (v: RfpFormValues) => void }) 
           <Input
             value={values.budget}
             onChange={(e) => setValues((v) => ({ ...v, budget: e.target.value }))}
-            placeholder="Ex: R$ 200k–400k/ano, USD 50k one-time + 20k/ano"
+            placeholder="Ex: R$ 200k-400k/ano, USD 50k one-time + 20k/ano"
             maxLength={200}
           />
         </div>
@@ -303,7 +303,7 @@ export function RfpForm({ onSubmit }: { onSubmit: (v: RfpFormValues) => void }) 
           Condições comerciais (opcional)
         </div>
         <p className="text-[10px] text-muted-foreground mb-3">
-          Preencha o que já estiver definido — entra no documento como
+          Preencha o que já estiver definido, entra no documento como
           exigência da cotação. O que ficar em branco é omitido.
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">

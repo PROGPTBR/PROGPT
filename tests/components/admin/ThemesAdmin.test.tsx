@@ -81,7 +81,7 @@ describe('ThemesAdmin', () => {
     fireEvent.click(mergeButtons[0]!);
     await waitFor(() => screen.getByLabelText(/Tema de destino/i));
     // Dropdown is a <select>; verify the placeholder option exists
-    expect(screen.getByText(/— escolha um tema —/)).toBeTruthy();
+    expect(screen.getByText(/Escolha um tema/)).toBeTruthy();
   });
 
   it('merge dropdown excludes the source theme and surfaces other rows as options', async () => {

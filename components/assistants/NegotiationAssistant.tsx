@@ -330,7 +330,7 @@ function StrategyOverlay({
 }) {
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm overflow-y-auto">
-      <div className="max-w-6xl mx-auto p-4 md:p-8">
+      <div className="w-full p-4 md:p-8">
         <button
           type="button"
           onClick={onClose}

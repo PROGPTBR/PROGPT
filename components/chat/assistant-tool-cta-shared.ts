@@ -75,7 +75,7 @@ export const META: Record<AssistantToolType, AssistantToolMeta> = {
   kraljic: {
     title: 'Matriz de Kraljic',
     blurb:
-      'Classifica suas categorias em estratégico, alavancagem, gargalo e não-crítico — com plano de ação por quadrante e bubble chart.',
+      'Classifica suas categorias em estratégico, alavancagem, gargalo e não-crítico, com plano de ação por quadrante e bubble chart.',
     Icon: Layers,
   },
   porter: {
@@ -93,13 +93,13 @@ export const META: Record<AssistantToolType, AssistantToolMeta> = {
   financial: {
     title: 'Análise Financeira do Fornecedor',
     blurb:
-      'Score 0–100 de saúde financeira a partir de 12 indicadores (liquidez, endividamento, margem, rentabilidade).',
+      'Score 0-100 de saúde financeira a partir de 12 indicadores (liquidez, endividamento, margem, rentabilidade).',
     Icon: Briefcase,
   },
   scorecard: {
     title: 'Supplier Scorecard',
     blurb:
-      'Pontua e ranqueia seus fornecedores por critérios ponderados (0–100), classifica em estratégico / desenvolvimento / saída e gera ranking + planilha.',
+      'Pontua e ranqueia seus fornecedores por critérios ponderados (0-100), classifica em estratégico / desenvolvimento / saída e gera ranking + planilha.',
     Icon: Star,
   },
   profile: {
@@ -111,13 +111,13 @@ export const META: Record<AssistantToolType, AssistantToolMeta> = {
   negotiation: {
     title: 'Simulador de Negociação',
     blurb:
-      'Monta a estratégia (BATNA, SWOT, metas SMART) e simula a negociação com a IA no papel do fornecedor — com score no final.',
+      'Monta a estratégia (BATNA, SWOT, metas SMART) e simula a negociação com a IA no papel do fornecedor, com score no final.',
     Icon: MessageCircle,
   },
   pesquisa_precos: {
     title: 'Pesquisa de Preços',
     blurb:
-      'Descreva os itens e ele busca o preço de referência nas compras públicas (CATMAT / Painel de Preços) — mediana, faixa e fontes para ancorar RFP, custo e negociação.',
+      'Descreva os itens e ele busca o preço de referência nas compras públicas (CATMAT / Painel de Preços), mediana, faixa e fontes para ancorar RFP, custo e negociação.',
     Icon: Coins,
   },
   spend_analysis: {
@@ -129,7 +129,7 @@ export const META: Record<AssistantToolType, AssistantToolMeta> = {
   indicadores: {
     title: 'Indicadores Econômicos',
     blurb:
-      'Painel ao vivo do Banco Central (Selic, CDI, IPCA, IGP-M, dólar, euro) com gráfico e leitura para compras — custo de capital, reajuste contratual e câmbio.',
+      'Painel ao vivo do Banco Central (Selic, CDI, IPCA, IGP-M, dólar, euro) com gráfico e leitura para compras, custo de capital, reajuste contratual e câmbio.',
     Icon: LineChart,
   },
   simulador_logistico: {
@@ -154,14 +154,14 @@ export const META: Record<AssistantToolType, AssistantToolMeta> = {
   simulador_tributario: {
     title: 'Simulador Tributário',
     blurb:
-      'Compare o Simples Nacional com o novo modelo da Reforma Tributária (IBS/CBS) — carga tributária e impacto no status contábil, com consulta de CNPJ pra preencher os dados.',
+      'Compare o Simples Nacional com o novo modelo da Reforma Tributária (IBS/CBS), carga tributária e impacto no status contábil, com consulta de CNPJ pra preencher os dados.',
     Icon: Landmark,
     path: '/simulador',
   },
   fluxo_compras: {
     title: 'Fluxo Automatizado de Compras',
     blurb:
-      'O processo inteiro, da solicitação à chegada do produto: 8 etapas encadeadas em que a IA executa e você decide SIGA ou AJUSTAR a cada passo — solicitação, aprovação, fornecedores, RFQ, análise, PO, entrega e recebimento.',
+      'O processo inteiro, da solicitação à chegada do produto: 8 etapas encadeadas em que a IA executa e você decide SIGA ou AJUSTAR a cada passo, solicitação, aprovação, fornecedores, RFQ, análise, PO, entrega e recebimento.',
     Icon: Workflow,
     path: '/fluxo',
   },

@@ -291,7 +291,7 @@ export function CostsDashboard() {
                       u.userEmail ??
                       (u.userId
                         ? u.userId.slice(0, 8) + '…'
-                        : '(sem usuário — pré-feature)');
+                        : '(sem usuário, pré-feature)');
                     return (
                       <>
                         <TableRow

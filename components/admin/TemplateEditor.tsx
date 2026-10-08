@@ -114,7 +114,7 @@ export function TemplateEditor({ open, initial, onCancel, onSave }: Props) {
               value={draft.body_md}
               onChange={(e) => setDraft((d) => ({ ...d, body_md: e.target.value }))}
               className="font-mono text-xs rounded-md border border-input bg-background p-2 min-h-[400px] focus:outline-none focus:ring-1 focus:ring-ring"
-              placeholder={`# Request for Proposal — {{categoria}}\n\n## 1. Escopo do trabalho\n\n{{escopo}}\n\n## 2. Critérios de avaliação\n\n...`}
+              placeholder={`# Request for Proposal, {{categoria}}\n\n## 1. Escopo do trabalho\n\n{{escopo}}\n\n## 2. Critérios de avaliação\n\n...`}
               spellCheck={false}
             />
             <div className="text-[10px] text-muted-foreground text-right mt-1">

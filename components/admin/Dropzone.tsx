@@ -75,7 +75,7 @@ export function Dropzone({ onJobsCreated }: Props) {
       >
         <Upload className="h-7 w-7 text-muted-foreground" />
         <div className="text-sm font-medium">Arraste arquivos aqui ou clique para selecionar</div>
-        <div className="text-xs text-muted-foreground">PDF, DOCX, TXT — máx {MAX_MB} MB por arquivo</div>
+        <div className="text-xs text-muted-foreground">PDF, DOCX, TXT, máx {MAX_MB} MB por arquivo</div>
         <input
           ref={inputRef}
           type="file"

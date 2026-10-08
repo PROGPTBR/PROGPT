@@ -30,7 +30,7 @@ type Props = {
 };
 
 function formatRelative(iso: string | null): string {
-  if (!iso) return '—';
+  if (!iso) return '-';
   const ms = Date.now() - new Date(iso).getTime();
   const min = Math.floor(ms / 60_000);
   if (min < 1) return 'agora';
@@ -101,7 +101,7 @@ export function UsersTable({ users, currentUserId }: Props) {
         body: JSON.stringify({ active }),
       });
       if (res.ok) {
-        toast.success(active ? 'Acesso reativado.' : 'Acesso desativado — o login fica bloqueado.');
+        toast.success(active ? 'Acesso reativado.' : 'Acesso desativado, o login fica bloqueado.');
         router.refresh();
       } else {
         const body = (await res.json().catch(() => null)) as { error?: string } | null;

@@ -8,6 +8,7 @@ import { Download, RotateCcw, Copy, FileSpreadsheet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SendEmailButton } from './SendEmailButton';
 import { SendEmailWithAttachmentButton } from './SendEmailWithAttachmentButton';
+import { semTravessao } from '@/lib/texto/sem-travessao';
 
 type Props = {
   markdown: string;
@@ -79,7 +80,7 @@ export function RfpResult({ markdown, runId, scope, generating, onReset }: Props
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="text-sm">
-          <div className="text-muted-foreground">RFP — {scope.slice(0, 80)}{scope.length > 80 ? '…' : ''}</div>
+          <div className="text-muted-foreground">RFP, {scope.slice(0, 80)}{scope.length > 80 ? '…' : ''}</div>
           {generating && (
             <div className="text-xs text-primary mt-0.5 flex items-center gap-1.5">
               <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
@@ -102,7 +103,7 @@ export function RfpResult({ markdown, runId, scope, generating, onReset }: Props
             Copiar
           </Button>
           <SendEmailButton
-            subject={`RFP — ${scope.slice(0, 60)}`}
+            subject={`RFP, ${scope.slice(0, 60)}`}
             body={markdown}
             disabled={generating}
           />
@@ -143,7 +144,7 @@ export function RfpResult({ markdown, runId, scope, generating, onReset }: Props
             Iniciando geração… isso costuma levar 30-60 segundos pra um RFP completo.
           </p>
         ) : (
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{markdown}</ReactMarkdown>
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{semTravessao(markdown)}</ReactMarkdown>
         )}
         {generating && markdown.length > 0 && (
           <span className="inline-block w-2 h-4 bg-primary/50 align-middle animate-pulse ml-1" />

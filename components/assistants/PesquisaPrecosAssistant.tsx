@@ -147,7 +147,7 @@ export function PesquisaPrecosAssistant() {
         <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
           Descreva os itens que você precisa comprar e o assistente busca o preço
           de referência nas compras públicas (catálogo CATMAT / Painel de Preços),
-          com mediana, faixa e fontes — pronto para ancorar RFP, estimativa de custo
+          com mediana, faixa e fontes, pronto para ancorar RFP, estimativa de custo
           e negociação.
         </p>
       </div>

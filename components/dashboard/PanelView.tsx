@@ -92,18 +92,18 @@ export function PanelView({
                   label={cfg.type === 'gauge' || cfg.type === 'kpi' ? 'Coluna' : 'Por'}
                   value={cfg.dimension ?? ''}
                   onChange={(v) => set({ dimension: v || null, matchValue: null })}
-                  options={[['', '—'], ...plan.dimensions.map((d) => [d, d] as [string, string])]}
+                  options={[['', '-'], ...plan.dimensions.map((d) => [d, d] as [string, string])]}
                 />
               )}
               {(cfg.type === 'stacked' || cfg.type === 'heatmap') && (
-                <Sel label="Cruzar" value={cfg.dimension2 ?? ''} onChange={(v) => set({ dimension2: v || null })} options={[['', '—'], ...plan.dimensions.map((d) => [d, d] as [string, string])]} />
+                <Sel label="Cruzar" value={cfg.dimension2 ?? ''} onChange={(v) => set({ dimension2: v || null })} options={[['', '-'], ...plan.dimensions.map((d) => [d, d] as [string, string])]} />
               )}
               {(cfg.type === 'gauge' || cfg.type === 'kpi') && cfg.dimension && (
                 <Sel
                   label="Conta quando é"
                   value={cfg.matchValue ?? ''}
                   onChange={(v) => set({ matchValue: v || null })}
-                  options={[['', '— (não é taxa)'], ...matchOptions.map((v) => [v, v] as [string, string])]}
+                  options={[['', '- (não é taxa)'], ...matchOptions.map((v) => [v, v] as [string, string])]}
                 />
               )}
               {cfg.type === 'kpi' && cfg.matchValue && (
@@ -119,14 +119,14 @@ export function PanelView({
                 label="Só quando"
                 value={cfg.filterColumn ?? ''}
                 onChange={(v) => set({ filterColumn: v || null, filterValue: null })}
-                options={[['', '— (tudo)'], ...plan.dimensions.map((d) => [d, d] as [string, string])]}
+                options={[['', '- (tudo)'], ...plan.dimensions.map((d) => [d, d] as [string, string])]}
               />
               {cfg.filterColumn && (
                 <Sel
                   label="for"
                   value={cfg.filterValue ?? ''}
                   onChange={(v) => set({ filterValue: v || null })}
-                  options={[['', '—'], ...filterOptions.map((v) => [v, v] as [string, string])]}
+                  options={[['', '-'], ...filterOptions.map((v) => [v, v] as [string, string])]}
                 />
               )}
               {cfg.type === 'gauge' && (
@@ -143,7 +143,7 @@ export function PanelView({
                 </label>
               )}
               {cfg.type === 'line' && (
-                <Sel label="Data" value={cfg.dateColumn ?? ''} onChange={(v) => set({ dateColumn: v || null })} options={[['', '—'], ...dataset.columns.filter((c) => c.type === 'date').map((c) => [c.name, c.name] as [string, string])]} />
+                <Sel label="Data" value={cfg.dateColumn ?? ''} onChange={(v) => set({ dateColumn: v || null })} options={[['', '-'], ...dataset.columns.filter((c) => c.type === 'date').map((c) => [c.name, c.name] as [string, string])]} />
               )}
             </>
           )}

@@ -25,7 +25,7 @@ const BENEFITS = [
     icon: BarChart3,
     title: 'Dashboard moderna',
     blurb:
-      'Um painel visual e interativo reúne TODOS os seus dados em tempo real — gasto por categoria, top fornecedores, evolução mensal e uso da plataforma. É a sua central de BI, sem precisar montar um Power BI.',
+      'Um painel visual e interativo reúne TODOS os seus dados em tempo real, gasto por categoria, top fornecedores, evolução mensal e uso da plataforma. É a sua central de BI, sem precisar montar um Power BI.',
   },
   {
     icon: Search,
@@ -73,7 +73,7 @@ const USE_CASES = [
     id: 'dashboard',
     tab: 'Dashboard',
     label: 'Painel · Todos os seus dados',
-    desc: 'Uma dashboard moderna e interativa que mostra todos os seus dados em tempo real — gasto por categoria, top fornecedores, evolução mensal e uso da plataforma. Sem planilha, sem Power BI.',
+    desc: 'Uma dashboard moderna e interativa que mostra todos os seus dados em tempo real, gasto por categoria, top fornecedores, evolução mensal e uso da plataforma. Sem planilha, sem Power BI.',
     href: '/painel',
     soon: false,
     image:
@@ -89,7 +89,7 @@ const USE_CASES = [
     soon: false,
     image:
       'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=1200&h=800&q=80&auto=format&fit=crop',
-    alt: 'Documentos e cotações — RFI/RFQ (placeholder)',
+    alt: 'Documentos e cotações, RFI/RFQ (placeholder)',
   },
   {
     id: 'abc',
@@ -100,7 +100,7 @@ const USE_CASES = [
     soon: false,
     image:
       'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200&h=800&q=80&auto=format&fit=crop',
-    alt: 'Dashboard de analytics — Curva ABC (placeholder)',
+    alt: 'Dashboard de analytics, Curva ABC (placeholder)',
   },
   {
     id: 'tco',
@@ -111,7 +111,7 @@ const USE_CASES = [
     soon: true,
     image:
       'https://images.unsplash.com/photo-1554224154-26032ffc0d07?w=1200&h=800&q=80&auto=format&fit=crop',
-    alt: 'Calculadora e planilhas — TCO (placeholder)',
+    alt: 'Calculadora e planilhas, TCO (placeholder)',
   },
   {
     id: 'pedidos',
@@ -144,7 +144,7 @@ const USE_CASES = [
     soon: true,
     image:
       'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1200&h=800&q=80&auto=format&fit=crop',
-    alt: 'Gráficos de custo — Should Cost (placeholder)',
+    alt: 'Gráficos de custo, Should Cost (placeholder)',
   },
 ];
 
@@ -155,7 +155,7 @@ const FEATURE_CARDS = [
       'Uma das melhores bases de conhecimento do mercado de IA em Suprimentos agora trabalha junto com o seu time. Reunimos centenas de processos e referências importantes, como Kraljic, Porter, Lean Six Sigma, PMI, dentre outras fontes, para criar uma inteligência capaz de responder como um especialista sênior da área de Suprimentos. Basta perguntar sua dúvida de forma simples, como você perguntaria a um colega experiente.',
     image:
       'https://images.unsplash.com/photo-1568667256549-094345857637?w=800&h=600&q=80&auto=format&fit=crop',
-    alt: 'Biblioteca em espiral repleta de livros — base de conhecimento curada',
+    alt: 'Biblioteca em espiral repleta de livros, base de conhecimento curada',
   },
   {
     title: 'Dezenas de assistentes que executam',
@@ -163,7 +163,7 @@ const FEATURE_CARDS = [
       'Diversos assistentes já desenvolvidos que podem trabalhar para você de maneira automática.',
     image:
       'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=800&h=600&q=80&auto=format&fit=crop',
-    alt: 'Documentos financeiros e calculadora — artefatos prontos para usar',
+    alt: 'Documentos financeiros e calculadora, artefatos prontos para usar',
   },
   {
     title: 'Base checada por centenas de especialistas de Suprimentos',
@@ -171,7 +171,7 @@ const FEATURE_CARDS = [
       'Uma das melhores bases de IA em Suprimentos, criada com fontes confiáveis e selecionadas. O Chat busca as respostas com precisão, evita informações inventadas e não cria citações falsas. Quando não encontra uma fonte segura, ele simplesmente informa.',
     image:
       'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=800&h=600&q=80&auto=format&fit=crop',
-    alt: 'Mão assinando um contrato — fundamentação documentada',
+    alt: 'Mão assinando um contrato, fundamentação documentada',
   },
 ];
 

@@ -98,7 +98,7 @@ export function MaterialsImportDialog({ open, onClose, preview, onConfirm }: Pro
           <>
             <p className="text-xs text-muted-foreground">
               Planilha .xlsx: colunas <strong>Descrição</strong> (obrigatória), Código/SKU,
-              Categoria, Unidade, NCM, CNPJ do fornecedor padrão, Preço, Moeda — os cabeçalhos
+              Categoria, Unidade, NCM, CNPJ do fornecedor padrão, Preço, Moeda, os cabeçalhos
               são reconhecidos automaticamente. Materiais com o mesmo código já cadastrado são
               atualizados, não duplicados.
             </p>

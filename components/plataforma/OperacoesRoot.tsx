@@ -136,7 +136,7 @@ export function OperacoesRoot() {
         <h1 className="text-2xl font-semibold tracking-tight">Operações</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Orgs (tenants) da plataforma PROGPT. Cada org é isolada por usuário via{' '}
-          <code>profiles.org_id</code> — a Fase 2 estende isso pra dados compartilhados por org.
+          <code>profiles.org_id</code>, a Fase 2 estende isso pra dados compartilhados por org.
         </p>
       </div>
 

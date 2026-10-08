@@ -170,7 +170,7 @@ export function ProcessoRoot({ processoInicial, etapasIniciais }: Props) {
           <div>
             <div className="text-xs font-semibold uppercase tracking-wider text-brand">
               Etapa {stage.num} de {FLUXO_STAGES.length} ·{' '}
-              {stage.trilha === 's2c' ? 'S2C — da necessidade ao contrato' : 'P2P — da compra ao pagamento'}
+              {stage.trilha === 's2c' ? 'S2C, da necessidade ao contrato' : 'P2P, da compra ao pagamento'}
             </div>
             <h2 className="mt-1 text-lg font-semibold">{stage.label}</h2>
             <p className="mt-1 text-sm text-muted-foreground">{stage.automacao}.</p>
@@ -347,7 +347,7 @@ export function ProcessoRoot({ processoInicial, etapasIniciais }: Props) {
                         : 'text-orange-600 dark:text-orange-400'
                     }
                   >
-                    — {e.decisao === 'siga' ? 'SIGA' : 'AJUSTAR'}
+                  , {e.decisao === 'siga' ? 'SIGA' : 'AJUSTAR'}
                   </span>
                   {e.rodada > 1 && (
                     <span className="text-xs text-muted-foreground"> (rodada {e.rodada})</span>

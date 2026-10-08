@@ -84,8 +84,8 @@ function searchLabel(
       : `CNAE ${cnae}`;
 
   return ufs.length > 0
-    ? `${head} — ${ufs.join(', ')}`
-    : `${head} — Nacional`;
+    ? `${head}, ${ufs.join(', ')}`
+    : `${head}, Nacional`;
 }
 
 // ============================================================
@@ -544,7 +544,7 @@ export function SuppliersAssistant({
       setSaved(true);
 
       toast.success(
-        'Busca salva — aparece em "Buscas recentes"',
+        'Busca salva, aparece em "Buscas recentes"',
       );
     } else {
       toast.error(

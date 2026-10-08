@@ -133,3 +133,54 @@ export function cnpjBasicoOf(cnpj: string | null | undefined): string | null {
   const d = cnpj.replace(/\D/g, '');
   return d.length >= 8 ? d.slice(0, 8) : null;
 }
+
+// ─── Busca na base (2026-10-07) ────────────────────────────────────────────
+// Pedido de cliente: "a busca está limitada, quero igual ao ChatGPT". A busca
+// era "contém o texto exato": "blocos" não achava o grupo "BLOCO DE CONCRETO".
+// Agora ignora acento e plural, procura em todos os campos de texto e aceita
+// várias palavras (todas precisam aparecer em algum campo).
+
+/** Radical simples para o português: tira o plural ("blocos" → "bloco", "telhas" → "telha"). */
+function radical(t: string): string {
+  if (t.length > 4 && t.endsWith('oes')) return t.slice(0, -3) + 'ao';
+  if (t.length > 4 && t.endsWith('aes')) return t.slice(0, -3) + 'ao';
+  if (t.length > 4 && t.endsWith('es') && /[rsz]es$/.test(t)) return t.slice(0, -2);
+  if (t.length > 3 && t.endsWith('s')) return t.slice(0, -1);
+  return t;
+}
+
+const PALAVRAS_VAZIAS = new Set(['de', 'da', 'do', 'das', 'dos', 'e', 'em', 'para', 'pra', 'com', 'a', 'o', 'as', 'os']);
+
+export function termosDeBusca(q: string): string[] {
+  return normalizarTexto(q)
+    .split(' ')
+    .filter((t) => t.length >= 2 && !PALAVRAS_VAZIAS.has(t))
+    .map(radical);
+}
+
+/**
+ * Filtra e ordena a base pela busca. Nome e grupo/categoria pesam mais que
+ * cidade e observações; sem busca, mantém a ordem original.
+ */
+export function filtrarBase<T extends Pick<SavedSupplier, 'razaoSocial' | 'nomeFantasia' | 'categoria' | 'cnae' | 'cnaeName' | 'municipio' | 'uf' | 'cnpj' | 'notas' | 'email'>>(
+  suppliers: readonly T[],
+  q: string,
+): T[] {
+  const termos = termosDeBusca(q);
+  if (termos.length === 0) return [...suppliers];
+  const campo = (v: string | null | undefined) => ` ${normalizarTexto(v).split(' ').map(radical).join(' ')} `;
+  const pontuados: { s: T; p: number }[] = [];
+  for (const s of suppliers) {
+    const fortes = campo(`${s.razaoSocial} ${s.nomeFantasia ?? ''} ${s.categoria ?? ''} ${s.cnaeName ?? ''}`);
+    const fracos = campo(`${s.cnae ?? ''} ${s.municipio ?? ''} ${s.uf ?? ''} ${s.cnpj ?? ''} ${s.notas ?? ''} ${s.email ?? ''}`);
+    let p = 0;
+    let todos = true;
+    for (const t of termos) {
+      if (fortes.includes(` ${t}`)) p += 3;
+      else if (fracos.includes(` ${t}`) || fracos.replace(/\D/g, '').includes(t)) p += 1;
+      else { todos = false; break; }
+    }
+    if (todos) pontuados.push({ s, p });
+  }
+  return pontuados.sort((a, b) => b.p - a.p).map((x) => x.s);
+}

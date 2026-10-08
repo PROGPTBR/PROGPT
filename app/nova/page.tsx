@@ -3,7 +3,7 @@ import { getPlans } from '@/lib/billing/planos';
 import { getCurrentUser } from '@/lib/auth';
 
 export const metadata = {
-  title: 'PROGPT — Inteligência para Suprimentos',
+  title: 'PROGPT | Inteligência para Suprimentos',
   description: 'A plataforma de IA feita para profissionais de Suprimentos.',
 };
 

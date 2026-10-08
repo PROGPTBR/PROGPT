@@ -787,7 +787,7 @@ export async function POST(req: Request) {
         // Se isto falhar, sobra uma assinatura órfã cobrando. Loga o id CRU
         // pra dar pra achar e apagar no painel do Asaas.
         console.error(
-          `[${requestId}] ⚠️ ASSINATURA ÓRFÃ NO ASAAS — cancelar manualmente: ${subscriptionId}`,
+          `[${requestId}] ⚠️ ASSINATURA ÓRFÃ NO ASAAS, cancelar manualmente: ${subscriptionId}`,
           rollbackError,
         );
       }

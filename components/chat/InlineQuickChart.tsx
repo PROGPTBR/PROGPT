@@ -32,8 +32,8 @@ type QuickChartResult = {
 const ERROR_LABEL: Record<string, string> = {
   no_data: 'Não encontrei dado pra plotar nessa mensagem.',
   file_too_large: 'Arquivo maior que 5 MB.',
-  need_two_columns: 'Preciso de pelo menos 2 colunas (categoria e valor) — cole a tabela completa.',
-  no_rows: 'Não consegui ler uma tabela nessa mensagem — cole os dados em formato de tabela.',
+  need_two_columns: 'Preciso de pelo menos 2 colunas (categoria e valor), cole a tabela completa.',
+  no_rows: 'Não consegui ler uma tabela nessa mensagem, cole os dados em formato de tabela.',
   no_series: 'Não encontrei categoria + valor numérico válidos nessa mensagem.',
   render_failed: 'Falha ao desenhar o gráfico.',
   invalid_form: 'Formulário inválido.',
@@ -56,10 +56,10 @@ export function InlineQuickChart({ sourceText }: Props) {
       form.set('text', sourceText);
       const res = await fetch('/api/tools/quick-chart', { method: 'POST', body: form });
 
-      if (res.status === 401) throw new Error('Sessão expirada — faça login novamente.');
+      if (res.status === 401) throw new Error('Sessão expirada, faça login novamente.');
       if (res.status === 429) {
         const body = await res.json().catch(() => null);
-        throw new Error(`Muitas requisições — tente novamente em ${body?.retry_after_secs ?? 30}s.`);
+        throw new Error(`Muitas requisições, tente novamente em ${body?.retry_after_secs ?? 30}s.`);
       }
 
       const data = await res.json();
@@ -109,7 +109,7 @@ export function InlineQuickChart({ sourceText }: Props) {
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="text-sm">
             <span className="font-medium text-foreground">{result.spec.title}</span>
-            <span className="text-muted-foreground"> — {result.rowsUsed} linha(s)</span>
+            <span className="text-muted-foreground">, {result.rowsUsed} linha(s)</span>
           </div>
           <Button variant="outline" size="sm" onClick={handleDownload}>
             <Download className="h-3.5 w-3.5 mr-1.5" />

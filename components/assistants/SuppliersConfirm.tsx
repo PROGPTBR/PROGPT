@@ -573,7 +573,7 @@ export function SuppliersConfirm({
         ) : (
           <div className="text-sm text-muted-foreground italic">
             Nenhum CNAE
-            selecionado — busque
+            selecionado, busque
             abaixo.
           </div>
         )}

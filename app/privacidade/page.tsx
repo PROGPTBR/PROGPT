@@ -16,7 +16,7 @@ const PRIVACIDADE_MD = `
 Esta Política de Privacidade descreve como o ${PRODUCT_NAME}
 ("Plataforma", "nós") coleta, usa, armazena e compartilha seus dados
 pessoais, em conformidade com a **Lei Geral de Proteção de Dados
-(Lei 13.709/2018 — LGPD)** e o **Marco Civil da Internet (Lei
+(Lei 13.709/2018, LGPD)** e o **Marco Civil da Internet (Lei
 12.965/2014)**.
 
 Ao usar a Plataforma, você concorda com as práticas descritas aqui.
@@ -36,9 +36,9 @@ Encarregado de Proteção de Dados (DPO) e canal de contato:
 | Dado | Quando | Finalidade |
 |---|---|---|
 | **Email** | Cadastro | Login, recuperação de senha, comunicação transacional |
-| **Senha (hash)** | Cadastro | Autenticação. Nunca armazenamos senha em texto puro — apenas hash bcrypt via Supabase Auth |
+| **Senha (hash)** | Cadastro | Autenticação. Nunca armazenamos senha em texto puro, apenas hash bcrypt via Supabase Auth |
 | **Nome completo** | Upgrade pra Pro | Emissão de nota fiscal pela Asaas |
-| **CPF** | Upgrade pra Pro | Identificação fiscal exigida pela Asaas. **Não armazenamos seu CPF no nosso banco de dados** — repassamos diretamente pra Asaas, que cuida do tratamento conforme política deles |
+| **CPF** | Upgrade pra Pro | Identificação fiscal exigida pela Asaas. **Não armazenamos seu CPF no nosso banco de dados**, repassamos diretamente pra Asaas, que cuida do tratamento conforme política deles |
 | **Conteúdo de chats** | Uso do chat | Gerar respostas via IA, manter histórico pra você acessar depois |
 | **Parâmetros de assistentes** | Uso de assistentes | Gerar RFPs/análises/etc. Mantemos no histórico (\`assistant_runs\`) |
 | **Feedback** (👍/👎 + comentário) | Botões de feedback | Melhorar o produto |
@@ -48,7 +48,7 @@ Encarregado de Proteção de Dados (DPO) e canal de contato:
 
 | Dado | Como | Finalidade |
 |---|---|---|
-| **Endereço IP (hash)** | Pré-cadastro / reset de senha | Rate-limit anti-bot. **Não armazenamos o IP cru** — apenas um hash criptográfico (SHA-256 + salt secreto) na tabela \`rate_limit_events_anon\`. Impossível reverter pra IP original sem o salt |
+| **Endereço IP (hash)** | Pré-cadastro / reset de senha | Rate-limit anti-bot. **Não armazenamos o IP cru**, apenas um hash criptográfico (SHA-256 + salt secreto) na tabela \`rate_limit_events_anon\`. Impossível reverter pra IP original sem o salt |
 | **Cookies de sessão** | Login | Manter você autenticado (detalhes na [Política de Cookies](/cookies)) |
 | **Token Cloudflare Turnstile** | Signup / reset | Verificação anti-bot (verifique [docs da Cloudflare](https://www.cloudflare.com/turnstile/)) |
 | **Logs de uso de API** | Cada chamada LLM | Contabilidade interna de custos. Armazenamos *qual operação* e *quanto custou*, sem conteúdo |
@@ -56,8 +56,8 @@ Encarregado de Proteção de Dados (DPO) e canal de contato:
 ### 2.3 Dados que NÃO coletamos
 
 - Geolocalização precisa
-- Dados sensíveis (saúde, orientação sexual, opinião política, etc.) — não envie esse tipo de informação no chat
-- Dados de menores de 18 anos — a Plataforma não é destinada a menores
+- Dados sensíveis (saúde, orientação sexual, opinião política, etc.), não envie esse tipo de informação no chat
+- Dados de menores de 18 anos, a Plataforma não é destinada a menores
 
 ## 3. Por Que Coletamos (Bases Legais LGPD)
 
@@ -97,8 +97,8 @@ sociais ou data brokers.
 | Dado | Retenção |
 |---|---|
 | Conta + perfil + histórico de chats e assistentes | Até você excluir a conta. Após exclusão: apagado em até 24h |
-| Logs de API (anonimizados) | Indefinido — sem vínculo direto com usuário após exclusão |
-| Dados fiscais (Asaas) | 5 anos conforme legislação tributária — gerenciado pela Asaas |
+| Logs de API (anonimizados) | Indefinido, sem vínculo direto com usuário após exclusão |
+| Dados fiscais (Asaas) | 5 anos conforme legislação tributária, gerenciado pela Asaas |
 | Rate-limit events | 2 horas (cleanup automático) |
 | Feedback (👍/👎) | Até você excluir a conta |
 
@@ -106,18 +106,18 @@ sociais ou data brokers.
 
 Como titular dos dados, você tem direito a:
 
-1. **Confirmação** de que tratamos seus dados — basta logar e ver seu perfil
-2. **Acesso** aos seus dados — exporte chats e assistant_runs via API ou solicite via ${LEGAL_CONTACT_EMAIL}
-3. **Correção** de dados incompletos ou desatualizados — edite no \`/profile\`
-4. **Anonimização ou eliminação** — exclua sua conta em \`/account/delete\` (irreversível)
-5. **Portabilidade** — solicite cópia em formato JSON via ${LEGAL_CONTACT_EMAIL} (atendemos em até 15 dias)
-6. **Eliminação dos dados tratados com consentimento** — revogue cookies em \`/cookies\` ou exclua a conta
-7. **Informação sobre compartilhamento** — esta Política já lista todos os operadores (Seção 4)
-8. **Revogação do consentimento** — a qualquer momento, sem ônus
-9. **Oposição** a tratamento baseado em legítimo interesse — fale com nosso DPO
+1. **Confirmação** de que tratamos seus dados, basta logar e ver seu perfil
+2. **Acesso** aos seus dados, exporte chats e assistant_runs via API ou solicite via ${LEGAL_CONTACT_EMAIL}
+3. **Correção** de dados incompletos ou desatualizados, edite no \`/profile\`
+4. **Anonimização ou eliminação**, exclua sua conta em \`/account/delete\` (irreversível)
+5. **Portabilidade**, solicite cópia em formato JSON via ${LEGAL_CONTACT_EMAIL} (atendemos em até 15 dias)
+6. **Eliminação dos dados tratados com consentimento**, revogue cookies em \`/cookies\` ou exclua a conta
+7. **Informação sobre compartilhamento**, esta Política já lista todos os operadores (Seção 4)
+8. **Revogação do consentimento**, a qualquer momento, sem ônus
+9. **Oposição** a tratamento baseado em legítimo interesse, fale com nosso DPO
 
 Para exercer qualquer direito, escreva pra **${LEGAL_CONTACT_EMAIL}** com
-o assunto "LGPD — Solicitação de Direitos". Respondemos em até 15 dias
+o assunto "LGPD, Solicitação de Direitos". Respondemos em até 15 dias
 úteis (prazo da ANPD).
 
 ## 7. Segurança
@@ -127,8 +127,8 @@ dados:
 
 - TLS/SSL em todo tráfego (HTTPS-only)
 - Senhas com hash bcrypt (nunca em texto puro)
-- IP nunca armazenado cru — sempre hash com salt secreto
-- CPF não armazenado no nosso DB — repassado diretamente pra Asaas
+- IP nunca armazenado cru, sempre hash com salt secreto
+- CPF não armazenado no nosso DB, repassado diretamente pra Asaas
 - Cookies httpOnly + secure + sameSite
 - Captcha (Cloudflare Turnstile) em endpoints públicos
 - Rate-limit em chat (10/min, 60/h) e em signup/reset (3/min por IP)

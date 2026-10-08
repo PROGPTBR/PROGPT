@@ -45,7 +45,7 @@ export async function POST(
         hint: !config.hasKey
           ? 'SMTP_HOST/SMTP_USER/SMTP_PASSWORD ausente no ambiente.'
           : config.isSandboxFrom
-            ? `EMAIL_FROM (${config.from}) não bate com a caixa SMTP autenticada — o provedor pode rejeitar ou marcar spam.`
+            ? `EMAIL_FROM (${config.from}) não bate com a caixa SMTP autenticada, o provedor pode rejeitar ou marcar spam.`
             : null,
       },
       { status: 502 },

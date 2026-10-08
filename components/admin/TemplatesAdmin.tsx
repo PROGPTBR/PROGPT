@@ -143,7 +143,7 @@ export function TemplatesAdmin() {
                   </span>
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground truncate max-w-[420px]">
-                  {r.description ?? '—'}
+                  {r.description ?? '-'}
                 </TableCell>
                 <TableCell className="text-right tabular-nums text-xs text-muted-foreground">
                   {(r.body_md.length / 1024).toFixed(1)} KB

@@ -103,7 +103,7 @@ export async function GET(req: Request) {
     created_at: string | null;
     auth_created_at: string | null;
   }>;
-  const emailById = new Map(profiles.map((p) => [p.id, p.email ?? '—']));
+  const emailById = new Map(profiles.map((p) => [p.id, p.email ?? '-']));
   const roleById = new Map(profiles.map((p) => [p.id, p.role ?? 'user']));
 
   const subsByStatus: Record<string, number> = {};
@@ -204,7 +204,7 @@ export async function GET(req: Request) {
         sub && proratedPlanCentsBrl > 0 ? (spendCentsBrl / proratedPlanCentsBrl) * 100 : null;
       return {
         userId,
-        email: emailById.get(userId) ?? '—',
+        email: emailById.get(userId) ?? '-',
         role: roleById.get(userId) ?? 'user',
         sessions: a.sessions,
         runs: a.runs,
@@ -228,7 +228,7 @@ export async function GET(req: Request) {
       return {
         sessionId,
         userId: info?.userId ?? null,
-        email: info?.userId ? emailById.get(info.userId) ?? '—' : '—',
+        email: info?.userId ? emailById.get(info.userId) ?? '-' : '-',
         title: info?.title ?? '(sessão fora do período)',
         calls: a.calls,
         tokensIn: a.tokensIn,

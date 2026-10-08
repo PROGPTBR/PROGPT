@@ -140,8 +140,8 @@ Dados cadastrais
   {docInvalid && (
     <p className="mt-1 text-xs text-amber-500">
       {isPj
-        ? "CNPJ inválido — verifique os dígitos."
-        : "CPF inválido — verifique os dígitos."}
+        ? "CNPJ inválido, verifique os dígitos."
+        : "CPF inválido, verifique os dígitos."}
     </p>
   )}
 </div>
@@ -249,7 +249,7 @@ CEP
 )}
 {cepStatus === "not_found" && (
   <p className="mt-1 text-xs text-amber-500">
-    Não encontramos esse CEP automaticamente — preencha o endereço abaixo manualmente.
+    Não encontramos esse CEP automaticamente, preencha o endereço abaixo manualmente.
   </p>
 )}
 </div>

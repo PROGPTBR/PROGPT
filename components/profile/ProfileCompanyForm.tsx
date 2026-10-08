@@ -186,7 +186,7 @@ export function ProfileCompanyForm() {
               id="cf-address"
               value={values.company_address}
               onChange={(e) => set('company_address', e.target.value)}
-              placeholder="Rua, número — bairro — cidade/UF — CEP"
+              placeholder="Rua, número, bairro, cidade/UF, CEP"
               maxLength={500}
               className={INPUT}
             />

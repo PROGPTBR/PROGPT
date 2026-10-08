@@ -106,9 +106,9 @@ export function ScorecardAssistant() {
           </h1>
           <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
             Configure critérios com pesos (agrupáveis, com base de pontuação), insira notas por
-            fornecedor na escala 0–10 ou 1–5, marque capacidades estratégicas como bônus e
+            fornecedor na escala 0-10 ou 1-5, marque capacidades estratégicas como bônus e
             defina os thresholds de faixa. O sistema calcula o score ponderado, gera ranking com
-            faixas Estratégico / Desenvolvimento / Saída e plano de ação — pronto para .docx e
+            faixas Estratégico / Desenvolvimento / Saída e plano de ação, pronto para .docx e
             .xlsx.
           </p>
         </div>

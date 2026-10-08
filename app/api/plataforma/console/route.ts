@@ -68,10 +68,10 @@ export async function GET() {
       totalTemplates: (templates ?? []).length,
     },
     alerts: {
-      pastDue: pastDue.map((s) => ({ userId: s.user_id, email: emailByUser.get(s.user_id) ?? '—' })),
+      pastDue: pastDue.map((s) => ({ userId: s.user_id, email: emailByUser.get(s.user_id) ?? '-' })),
       trialEndingSoon: trialEndingSoon.map((s) => ({
         userId: s.user_id,
-        email: emailByUser.get(s.user_id) ?? '—',
+        email: emailByUser.get(s.user_id) ?? '-',
         trialEnd: s.trial_end,
       })),
     },

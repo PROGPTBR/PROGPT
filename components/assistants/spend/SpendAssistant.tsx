@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button';
 import { handlePaywallResponse } from '@/lib/billing/handle-paywall';
 import { SPEND_ANALYSIS_EXAMPLES } from '@/lib/assistants/examples';
 import { SPEND_MAX_FILE_BYTES, SPEND_MAX_INVOICES } from '@/lib/assistants/types';
+import { semTravessao } from '@/lib/texto/sem-travessao';
 
 type Phase = 'form' | 'uploading' | 'processing' | 'done';
 type Counts = {
@@ -94,7 +95,7 @@ export function SpendAssistant() {
     setPeriod(ex.params.period ?? '');
     setReferenceCurrency(ex.params.referenceCurrency ?? 'BRL');
     setNotes(ex.params.notes ?? '');
-    toast.info('Exemplo carregado — agora arraste suas invoices (PDF) ou uma planilha.');
+    toast.info('Exemplo carregado, agora arraste suas invoices (PDF) ou uma planilha.');
   }
 
   const totalFiles = pdfs.length + (sheet ? 1 : 0);
@@ -160,7 +161,7 @@ export function SpendAssistant() {
         return;
       }
       if (res.status === 429) {
-        toast.error('Muitas requisições — aguarde um instante.');
+        toast.error('Muitas requisições, aguarde um instante.');
         setPhase('form');
         return;
       }
@@ -255,7 +256,7 @@ export function SpendAssistant() {
               <input
                 value={analysisName}
                 onChange={(e) => setAnalysisName(e.target.value)}
-                placeholder="Ex.: Gastos com fornecedores — 2025"
+                placeholder="Ex.: Gastos com fornecedores, 2025"
                 className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
                 maxLength={200}
               />
@@ -378,7 +379,7 @@ export function SpendAssistant() {
             </Button>
           </div>
           <p className="text-xs text-muted-foreground">
-            Lotes grandes podem levar vários minutos — você pode fechar a aba e o processamento continua.
+            Lotes grandes podem levar vários minutos, você pode fechar a aba e o processamento continua.
           </p>
         </div>
       )}
@@ -434,7 +435,7 @@ export function SpendAssistant() {
             </div>
           </div>
           <article className="prose prose-sm dark:prose-invert max-w-none rounded-lg border border-border bg-card p-5">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{report}</ReactMarkdown>
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{semTravessao(report)}</ReactMarkdown>
           </article>
         </div>
       )}

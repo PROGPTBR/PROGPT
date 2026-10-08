@@ -85,9 +85,9 @@ function auditDetail(row: AuditLogRow): string {
   const m = row.metadata ?? {};
   switch (row.action) {
     case 'user.role_change':
-      return `novo papel: ${m.toRole ?? '—'}`;
+      return `novo papel: ${m.toRole ?? '-'}`;
     case 'user.impersonate':
-      return `conta: ${m.targetEmail ?? '—'}`;
+      return `conta: ${m.targetEmail ?? '-'}`;
     case 'article.bulk_delete':
       return `${Number(m.deleted ?? 0)} artigo(s)`;
     case 'theme.promote':
@@ -95,11 +95,11 @@ function auditDetail(row: AuditLogRow): string {
     case 'theme.demote':
       return `${Number(m.demoted ?? 0)} artigo(s)`;
     case 'theme.rename':
-      return `→ "${m.to ?? '—'}" (${Number(m.moved ?? 0)} artigo(s))`;
+      return `→ "${m.to ?? '-'}" (${Number(m.moved ?? 0)} artigo(s))`;
     case 'article.update':
-      return Object.keys(m).filter((k) => k !== 'theme_status').join(', ') || '—';
+      return Object.keys(m).filter((k) => k !== 'theme_status').join(', ') || '-';
     default:
-      return row.resourceId ?? '—';
+      return row.resourceId ?? '-';
   }
 }
 
@@ -121,7 +121,7 @@ const brl = (v: number) => `R$ ${v.toFixed(2).replace('.', ',')}`;
 const ROLE_LABEL: Record<string, string> = { admin: 'Admin', gestor: 'Gestor', user: 'Usuário' };
 
 function relative(iso: string): string {
-  if (!iso || iso.startsWith('1970')) return '—';
+  if (!iso || iso.startsWith('1970')) return '-';
   const ms = Date.now() - new Date(iso).getTime();
   const min = Math.floor(ms / 60_000);
   if (min < 1) return 'agora';
@@ -194,7 +194,7 @@ export function MonitorDashboard() {
             Painel do site <span className="text-brand">.</span>
           </h1>
           <p className="mt-0.5 text-sm text-muted-foreground">
-            Usuários, tokens, gastos por sessão e log de auditoria — visão completa da operação.
+            Usuários, tokens, gastos por sessão e log de auditoria, visão completa da operação.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -268,8 +268,8 @@ export function MonitorDashboard() {
                 head={['Cliente', 'Plano', 'Status', '% do plano', 'Gasto real (API)', 'Último acesso']}
                 rows={data.consumptionAlerts.users.map((u) => [
                   u.email,
-                  u.plan ?? '—',
-                  u.subStatus ?? '—',
+                  u.plan ?? '-',
+                  u.subStatus ?? '-',
                   pct(u.pctOfPlan ?? 0),
                   usd(u.spendCents),
                   relative(u.lastActive),
@@ -333,7 +333,7 @@ export function MonitorDashboard() {
                   int(u.sessions),
                   int(u.runs),
                   usd(u.spendCents),
-                  u.pctOfPlan !== null ? pct(u.pctOfPlan) : '—',
+                  u.pctOfPlan !== null ? pct(u.pctOfPlan) : '-',
                   relative(u.lastActive),
                 ])}
                 numericCols={[2, 3, 4, 5]}
@@ -383,7 +383,7 @@ export function MonitorDashboard() {
               (gestor não vê: dado mais sensível do painel). */}
           <Panel
             title="Logs de auditoria"
-            subtitle="Ações administrativas — papéis, artigos, temas, feedback"
+            subtitle="Ações administrativas, papéis, artigos, temas, feedback"
             action={
               !data.auditLogRestricted && data.auditLog.length > 0 ? (
                 <ExportBtn
@@ -392,7 +392,7 @@ export function MonitorDashboard() {
                       `auditoria-${data.rangeDays}d.csv`,
                       data.auditLog.map((a) => ({
                         quando: a.createdAt,
-                        quem: a.actorEmail ?? '—',
+                        quem: a.actorEmail ?? '-',
                         acao: AUDIT_ACTION_LABEL[a.action] ?? a.action,
                         recurso: `${a.resourceType ?? ''} ${a.resourceId ?? ''}`.trim(),
                         detalhes: auditDetail(a),
@@ -415,9 +415,9 @@ export function MonitorDashboard() {
                 head={['Quando', 'Quem', 'Ação', 'Recurso', 'Detalhes']}
                 rows={data.auditLog.slice(0, 200).map((a) => [
                   relative(a.createdAt),
-                  a.actorEmail ?? '—',
+                  a.actorEmail ?? '-',
                   AUDIT_ACTION_LABEL[a.action] ?? a.action,
-                  a.resourceType ?? '—',
+                  a.resourceType ?? '-',
                   auditDetail(a),
                 ])}
               />

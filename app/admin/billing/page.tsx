@@ -56,7 +56,7 @@ export default async function AdminBillingPage() {
         | undefined;
       return {
         id: p.id,
-        email: p.email ?? '—',
+        email: p.email ?? '-',
         role: p.role ?? 'user',
         status: sub?.status ?? 'none',
         trialEnd: sub?.trial_end ?? null,

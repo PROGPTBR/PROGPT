@@ -260,7 +260,7 @@ export function PainelRoot() {
             />
             <Kpi
               rotulo="Ciclo médio"
-              valor={dados.cicloMedioDias ?? '—'}
+              valor={dados.cicloMedioDias ?? '-'}
               sufixo={dados.cicloMedioDias != null ? 'dias' : undefined}
               Icon={Clock}
             />
@@ -394,13 +394,13 @@ export function PainelRoot() {
                             : ''
                         }`}
                       >
-                        {e.retrabalhoPct > 0 ? `${e.retrabalhoPct}%` : '—'}
+                        {e.retrabalhoPct > 0 ? `${e.retrabalhoPct}%` : '-'}
                       </td>
                       <td className="py-2 px-3 text-right">
-                        {e.horasAteDecisao != null ? `${e.horasAteDecisao} h` : '—'}
+                        {e.horasAteDecisao != null ? `${e.horasAteDecisao} h` : '-'}
                       </td>
                       <td className="py-2 px-3 text-right text-muted-foreground">
-                        {e.metaHoras != null ? `${e.metaHoras} h` : '—'}
+                        {e.metaHoras != null ? `${e.metaHoras} h` : '-'}
                       </td>
                       <td
                         className={`py-2 pl-3 text-right ${
@@ -409,7 +409,7 @@ export function PainelRoot() {
                             : ''
                         }`}
                       >
-                        {e.dentroDaMetaPct != null ? `${e.dentroDaMetaPct}%` : '—'}
+                        {e.dentroDaMetaPct != null ? `${e.dentroDaMetaPct}%` : '-'}
                       </td>
                     </tr>
                   ))}

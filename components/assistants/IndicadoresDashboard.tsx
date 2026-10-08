@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Sparkline } from './Sparkline';
 import { IndicadorDetailDialog, type DetailCard } from './IndicadorDetailDialog';
 import { INDICADORES_DISCLAIMER } from '@/lib/legal/disclaimers';
+import { semTravessao } from '@/lib/texto/sem-travessao';
 
 type IndicadorTipo = 'taxa' | 'indice' | 'cambio' | 'expectativa';
 type Tendencia = 'up' | 'down' | 'flat';
@@ -137,7 +138,7 @@ export function IndicadoresDashboard() {
       const res = await fetch(`/api/govdata/indicadores${force ? '?refresh=1' : ''}`, {
         cache: 'no-store',
       });
-      if (res.status === 429) throw new Error('Muitas consultas — aguarde um instante.');
+      if (res.status === 429) throw new Error('Muitas consultas, aguarde um instante.');
       if (!res.ok) throw new Error(`status ${res.status}`);
       const data = (await res.json()) as Painel;
       setPainel(data);
@@ -158,7 +159,7 @@ export function IndicadoresDashboard() {
     setLeitura('');
     try {
       const res = await fetch('/api/assistants/indicadores/leitura', { method: 'POST' });
-      if (res.status === 429) throw new Error('Muitas consultas — aguarde um instante.');
+      if (res.status === 429) throw new Error('Muitas consultas, aguarde um instante.');
       if (!res.ok) throw new Error(`status ${res.status}`);
       const data = (await res.json()) as { leitura: string };
       setLeitura(data.leitura);
@@ -266,7 +267,7 @@ export function IndicadoresDashboard() {
             </p>
           ) : (
             <article className="prose prose-sm dark:prose-invert max-w-none">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{leitura}</ReactMarkdown>
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{semTravessao(leitura)}</ReactMarkdown>
             </article>
           )}
         </div>
@@ -296,7 +297,7 @@ export function IndicadoresDashboard() {
             </table>
           </div>
           <p className="text-[10px] text-muted-foreground">
-            Indicador econômico não é cotação de mercado — combine com preços recentes e
+            Indicador econômico não é cotação de mercado, combine com preços recentes e
             propostas de fornecedores antes de usar num pedido de compra.
           </p>
         </div>
@@ -308,7 +309,7 @@ export function IndicadoresDashboard() {
             Outras fontes de referência
           </h2>
           <p className="text-xs text-muted-foreground">
-            Sem integração ao vivo nesta versão — link direto pra consulta.
+            Sem integração ao vivo nesta versão, link direto pra consulta.
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {painel.fontesReferenciadas.map((f) => (

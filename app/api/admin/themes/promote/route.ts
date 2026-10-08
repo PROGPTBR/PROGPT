@@ -23,7 +23,7 @@ const Body = z.object({
     .string()
     .transform(normalizeCandidateTheme)
     .refine((s) => s.length >= 1 && s.length <= MAX_THEME_LENGTH, {
-      message: `theme must be 1–${MAX_THEME_LENGTH} chars`,
+      message: `theme must be 1-${MAX_THEME_LENGTH} chars`,
     }),
 });
 

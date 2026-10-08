@@ -250,7 +250,7 @@ export function GraficoColunas({
           return (
             <div key={p.rotulo} className="flex min-w-0 flex-1 flex-col items-center justify-end gap-1">
               <span className="truncate text-[10px] tabular-nums text-muted-foreground">
-                {p.valor > 0 ? formatar(p.valor) : '—'}
+                {p.valor > 0 ? formatar(p.valor) : '-'}
               </span>
               <div
                 className="w-full max-w-[56px] rounded-t-md bg-gradient-to-t from-brand/60 to-brand"

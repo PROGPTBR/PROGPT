@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
 import { AppShell } from '@/components/layout/AppShell';
 import { FornecedoresBaseTabs } from '@/components/suppliers/FornecedoresBaseTabs';
+import { equipeDoUsuario } from '@/lib/suppliers/busca-ampliada';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,7 +15,8 @@ export default async function FornecedoresPage() {
 
   return (
     <AppShell back={{ href: '/chat', label: 'Voltar ao chat' }}>
-      <FornecedoresBaseTabs />
+      {/* Busca na internet só para as equipes liberadas (lib/suppliers/busca-ampliada.ts). */}
+      <FornecedoresBaseTabs buscaNaInternet={equipeDoUsuario(user.email) !== null} />
     </AppShell>
   );
 }

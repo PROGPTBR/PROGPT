@@ -143,7 +143,7 @@ export function DifalSimulator() {
               <option value="">Selecione</option>
               {UF_LIST.map((uf) => (
                 <option key={uf} value={uf}>
-                  {uf} — {UF_INFO[uf].nome}
+                  {uf}, {UF_INFO[uf].nome}
                 </option>
               ))}
             </select>
@@ -160,7 +160,7 @@ export function DifalSimulator() {
               <option value="">Selecione</option>
               {UF_LIST.map((uf) => (
                 <option key={uf} value={uf}>
-                  {uf} — {UF_INFO[uf].nome}
+                  {uf}, {UF_INFO[uf].nome}
                 </option>
               ))}
             </select>
@@ -218,13 +218,13 @@ export function DifalSimulator() {
 
           {resultado.mesmoEstado && (
             <p className="mb-4 text-xs text-muted-foreground">
-              Origem e destino são a mesma UF — não há operação interestadual,
+              Origem e destino são a mesma UF, não há operação interestadual,
               logo não existe DIFAL a recolher aqui.
             </p>
           )}
           {resultado.avisoRevenda && (
             <p className="mb-4 rounded-md bg-amber-500/10 border border-amber-500/30 px-3 py-2 text-xs text-amber-700 dark:text-amber-400">
-              Finalidade &quot;Revenda&quot;: normalmente não há DIFAL nessa operação —
+              Finalidade &quot;Revenda&quot;: normalmente não há DIFAL nessa operação -
               a mercadoria será revendida com ICMS próprio na saída. O número
               abaixo é calculado mesmo assim, a título de referência.
             </p>
@@ -281,7 +281,7 @@ export function DifalSimulator() {
                 <option value="">UF de origem</option>
                 {UF_LIST.map((uf) => (
                   <option key={uf} value={uf}>
-                    {uf} — {UF_INFO[uf].nome}
+                    {uf}, {UF_INFO[uf].nome}
                   </option>
                 ))}
               </select>
@@ -310,7 +310,7 @@ export function DifalSimulator() {
         </div>
 
         <p className="mt-3 text-[11px] text-muted-foreground">
-          Não estimamos frete — não há fonte pública confiável de tarifa de
+          Não estimamos frete, não há fonte pública confiável de tarifa de
           frete no Brasil. Informe o valor que você já cotou com cada
           transportadora/fornecedor pra comparar o custo total pousado.
         </p>
@@ -333,7 +333,7 @@ export function DifalSimulator() {
                     className={`border-b border-border/60 last:border-0 ${i === 0 ? 'bg-brand/5' : ''}`}
                   >
                     <td className="px-3 py-1.5">
-                      {c.ufOrigem} — {UF_INFO[c.ufOrigem].nome}
+                      {c.ufOrigem}, {UF_INFO[c.ufOrigem].nome}
                       {i === 0 && (
                         <span className="ml-2 rounded-full bg-brand/15 px-2 py-0.5 text-[10px] font-semibold text-brand">
                           menor custo

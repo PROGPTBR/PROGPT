@@ -107,7 +107,7 @@ export function ProfileAssistant() {
             Assistente Perfil <span className="text-brand">.</span>
           </h1>
           <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
-            Perfil da Categoria (Strategic Sourcing Step 1) — caracterização
+            Perfil da Categoria (Strategic Sourcing Step 1), caracterização
             estruturada que alimenta os próximos passos (ABC, Kraljic, Porter, RFP).
           </p>
         </div>
@@ -116,7 +116,7 @@ export function ProfileAssistant() {
             href="/templates/profile-template.md"
             filename="Perfil-Categoria-referencia.md"
             format=".md"
-            description="Roteiro de Perfil da Categoria baseado em Monczka + O'Brien — 15 campos em 5 blocos. Use offline como guia para preencher o form ou para preparar a entrevista com stakeholders."
+            description="Roteiro de Perfil da Categoria baseado em Monczka + O'Brien, 15 campos em 5 blocos. Use offline como guia para preencher o form ou para preparar a entrevista com stakeholders."
           />
         )}
       </div>

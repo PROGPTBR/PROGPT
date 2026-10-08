@@ -34,7 +34,7 @@ export const TOUR_STEPS: TourStep[] = [
     id: 'boas-vindas',
     route: '/chat',
     title: 'Bem-vindo ao PROGPT',
-    body: 'Vamos passar por cada tela da plataforma, uma por uma, e mostrar o que cada uma faz. Pode sair quando quiser — e rever o tour depois pelo botão "Ver o tour da plataforma", no topo da barra lateral.',
+    body: 'Vamos passar por cada tela da plataforma, uma por uma, e mostrar o que cada uma faz. Pode sair quando quiser, e rever o tour depois pelo botão "Ver o tour da plataforma", no topo da barra lateral.',
   },
   {
     id: 'composer',
@@ -42,7 +42,7 @@ export const TOUR_STEPS: TourStep[] = [
     secao: 'Chat',
     target: '[data-tour="composer"]',
     title: 'Comece perguntando',
-    body: 'Escreva aqui qualquer dúvida de compras. As respostas são fundamentadas na base de conhecimento de Strategic Sourcing — e, quando não há fonte, o PROGPT diz isso em vez de inventar. Dá para anexar contrato ou proposta pelo clipe.',
+    body: 'Escreva aqui qualquer dúvida de compras. As respostas são fundamentadas na base de conhecimento de Strategic Sourcing, e, quando não há fonte, o PROGPT diz isso em vez de inventar. Dá para anexar contrato ou proposta pelo clipe.',
   },
   {
     id: 'anexo',
@@ -82,7 +82,7 @@ export const TOUR_STEPS: TourStep[] = [
     secao: 'Chat',
     target: '[data-tour="conversas"]',
     title: 'Suas conversas ficam salvas',
-    body: 'Cada conversa fica no histórico, com busca. Dá para renomear e continuar de onde parou — inclusive de outro computador.',
+    body: 'Cada conversa fica no histórico, com busca. Dá para renomear e continuar de onde parou, inclusive de outro computador.',
   },
   {
     id: 'navegacao',
@@ -90,7 +90,7 @@ export const TOUR_STEPS: TourStep[] = [
     secao: 'Chat',
     target: '[data-tour="navegacao"]',
     title: 'Os módulos da plataforma',
-    body: 'Cada item deste menu abre um módulo. A partir do próximo passo, o tour visita um por um — é só ir clicando em "Próximo".',
+    body: 'Cada item deste menu abre um módulo. A partir do próximo passo, o tour visita um por um, é só ir clicando em "Próximo".',
   },
 
   // ── Assistentes ───────────────────────────────────────────────────────
@@ -180,7 +180,7 @@ export const TOUR_STEPS: TourStep[] = [
     secao: 'Prompts',
     target: '[data-tour="prompts-busca"]',
     title: 'Busque pelo que precisa',
-    body: 'Filtre por título, resumo ou tag — por exemplo "negociação", "contrato" ou "fornecedor".',
+    body: 'Filtre por título, resumo ou tag, por exemplo "negociação", "contrato" ou "fornecedor".',
   },
   {
     id: 'prompts-lista',
@@ -216,7 +216,7 @@ export const TOUR_STEPS: TourStep[] = [
     secao: 'Painel',
     target: '[data-tour="painel-cabecalho"]',
     title: 'Tudo o que você fez, num lugar',
-    body: 'O Painel junta os dados de todas as ferramentas da sua conta. Os números são recalculados sempre que você abre a tela — e o botão "Atualizar" recarrega na hora.',
+    body: 'O Painel junta os dados de todas as ferramentas da sua conta. Os números são recalculados sempre que você abre a tela, e o botão "Atualizar" recarrega na hora.',
   },
   {
     id: 'painel-kpis',
@@ -234,7 +234,7 @@ export const TOUR_STEPS: TourStep[] = [
     secao: 'Dashboard',
     target: '[data-tour="dashboard-upload"]',
     title: 'Sua planilha vira dashboard',
-    body: 'Arraste aqui uma planilha .xlsx ou .csv e o PROGPT monta os painéis sozinho, com rankings e cruzamentos — sem precisar desenhar gráfico à mão.',
+    body: 'Arraste aqui uma planilha .xlsx ou .csv e o PROGPT monta os painéis sozinho, com rankings e cruzamentos, sem precisar desenhar gráfico à mão.',
   },
   {
     id: 'dashboard-exemplos',
@@ -267,8 +267,8 @@ export const TOUR_STEPS: TourStep[] = [
     route: '/fornecedores',
     secao: 'Fornecedores',
     target: '[data-tour="fornecedores-busca"]',
-    title: 'Encontre rápido',
-    body: 'Busque por nome, categoria, CNAE ou cidade e filtre pelo status de cada fornecedor — de prospecto a homologado, ativo ou bloqueado.',
+    title: 'Encontre rápido, ou pergunte à IA',
+    body: 'Busque por nome, grupo, cidade ou contato, sem se preocupar com acento ou plural. Ou escreva o que precisa, como no ChatGPT ("material para alvenaria em SP"), e clique em "Perguntar à IA": ela acha na sua base os fornecedores que atendem e diz por quê. Filtre também pelo status de cada fornecedor.',
   },
 
   // ── Gestão de Obras (vitrine) ─────────────────────────────────────────
@@ -299,7 +299,7 @@ export const TOUR_STEPS: TourStep[] = [
     aba: 'cockpit',
     target: '[data-tour="obras-graficos"]',
     title: 'Faturamento e avanço',
-    body: 'À esquerda, quanto foi medido em cada um dos últimos 6 meses — boletim em rascunho não entra, só o enviado ou aprovado. À direita, o avanço de cada obra: quanto já foi medido em relação ao valor contratado.',
+    body: 'À esquerda, quanto foi medido em cada um dos últimos 6 meses, boletim em rascunho não entra, só o enviado ou aprovado. À direita, o avanço de cada obra: quanto já foi medido em relação ao valor contratado.',
   },
   {
     id: 'obras-carteira',
@@ -382,7 +382,7 @@ export const TOUR_STEPS: TourStep[] = [
     aba: 'visao',
     target: '[data-tour="demandas-graficos"]',
     title: 'Por status e por setor',
-    body: 'À esquerda, quantas SPs há em cada situação, de aberta a concluída. À direita, quantas cada setor recebeu — e, ao lado do número, quantas estão em atraso.',
+    body: 'À esquerda, quantas SPs há em cada situação, de aberta a concluída. À direita, quantas cada setor recebeu, e, ao lado do número, quantas estão em atraso.',
   },
   {
     id: 'demandas-atraso',
@@ -446,7 +446,7 @@ export const TOUR_STEPS: TourStep[] = [
     secao: 'Meu perfil',
     target: '[data-tour="perfil-topo"]',
     title: 'Seu perfil, em dois passos',
-    body: 'Aqui você preenche uma vez os dados da sua empresa. Depois disso, eles entram sozinhos em todo documento e planilha que o PROGPT gerar — não precisa digitar de novo.',
+    body: 'Aqui você preenche uma vez os dados da sua empresa. Depois disso, eles entram sozinhos em todo documento e planilha que o PROGPT gerar, não precisa digitar de novo.',
   },
   {
     id: 'perfil-logo',

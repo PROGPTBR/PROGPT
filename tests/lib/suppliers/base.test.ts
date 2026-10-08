@@ -57,3 +57,29 @@ describe('chaveFornecedor', () => {
     expect(chaveFornecedor({ razaoSocial: '   ' })).toBeNull();
   });
 });
+
+describe('filtrarBase', () => {
+  const base = [
+    { razaoSocial: 'DF BLOCOS', nomeFantasia: null, categoria: 'BLOCO DE CONCRETO', cnae: null, cnaeName: null, municipio: 'Sorocaba', uf: 'SP', cnpj: null, notas: 'Contato: LUCIANA', email: 'comercial@dfblocos.com' },
+    { razaoSocial: 'Cerâmica Paulista', nomeFantasia: null, categoria: 'BLOCO CERÂMICO', cnae: null, cnaeName: null, municipio: 'Itu', uf: 'SP', cnpj: null, notas: null, email: null },
+    { razaoSocial: 'Gerdau', nomeFantasia: null, categoria: 'AÇO', cnae: null, cnaeName: null, municipio: 'São Paulo', uf: 'SP', cnpj: '33611500000119', notas: null, email: null },
+  ];
+
+  it('ignora plural e acento: "blocos" acha o grupo BLOCO, "ceramico" acha "Cerâmica"', async () => {
+    const { filtrarBase } = await import('@/lib/suppliers/base');
+    expect(filtrarBase(base, 'blocos').map((s) => s.razaoSocial)).toEqual(['DF BLOCOS', 'Cerâmica Paulista']);
+    expect(filtrarBase(base, 'ceramico').map((s) => s.razaoSocial)).toEqual(['Cerâmica Paulista']);
+  });
+
+  it('várias palavras: todas precisam aparecer (nome/grupo pesam mais que cidade)', async () => {
+    const { filtrarBase } = await import('@/lib/suppliers/base');
+    expect(filtrarBase(base, 'bloco sorocaba').map((s) => s.razaoSocial)).toEqual(['DF BLOCOS']);
+    expect(filtrarBase(base, 'luciana').map((s) => s.razaoSocial)).toEqual(['DF BLOCOS']);
+    expect(filtrarBase(base, '33611500').map((s) => s.razaoSocial)).toEqual(['Gerdau']);
+  });
+
+  it('sem busca devolve tudo na ordem original', async () => {
+    const { filtrarBase } = await import('@/lib/suppliers/base');
+    expect(filtrarBase(base, '  ')).toHaveLength(3);
+  });
+});

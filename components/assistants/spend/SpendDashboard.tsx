@@ -160,7 +160,7 @@ export function SpendDashboard({ runId }: { runId: string }) {
     setSort((s) => (s.key === key ? { key, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: 'desc' }));
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6 space-y-5">
+    <div className="w-full px-4 py-6 space-y-5">
       {/* Header */}
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
@@ -300,11 +300,11 @@ export function SpendDashboard({ runId }: { runId: string }) {
               {sortedRows.map((r) => (
                 <tr key={r.id} className="border-b border-border/60 hover:bg-muted/30">
                   <td className="px-2 py-1.5">
-                    {r.supplier || '—'}
+                    {r.supplier || '-'}
                     {r.lowConfidence && <span className="ml-1 text-amber-500" title="baixa certeza">⚠</span>}
                   </td>
                   <td className="px-2 py-1.5">{r.category}</td>
-                  <td className="px-2 py-1.5 text-muted-foreground">{r.invoiceNumber ?? '—'}</td>
+                  <td className="px-2 py-1.5 text-muted-foreground">{r.invoiceNumber ?? '-'}</td>
                   <td className="px-2 py-1.5">
                     {hasPo(r.poNumber) ? (
                       r.poNumber
@@ -312,12 +312,12 @@ export function SpendDashboard({ runId }: { runId: string }) {
                       <span className="text-amber-600">Sem PO</span>
                     )}
                   </td>
-                  <td className="px-2 py-1.5">{r.country || '—'}</td>
+                  <td className="px-2 py-1.5">{r.country || '-'}</td>
                   <td className="px-2 py-1.5 text-right tabular-nums">
                     {r.totalRef != null ? money(r.totalRef) : <span className="text-muted-foreground">s/ câmbio</span>}
                   </td>
-                  <td className="px-2 py-1.5 text-muted-foreground">{r.paymentTerms ?? '—'}</td>
-                  <td className="px-2 py-1.5 text-muted-foreground">{r.invoiceDate ?? '—'}</td>
+                  <td className="px-2 py-1.5 text-muted-foreground">{r.paymentTerms ?? '-'}</td>
+                  <td className="px-2 py-1.5 text-muted-foreground">{r.invoiceDate ?? '-'}</td>
                 </tr>
               ))}
               {sortedRows.length === 0 && (

@@ -30,6 +30,7 @@ import { readAssistantChunk } from '@/lib/assistants/stream-client';
 import { MicRecorderButton } from '@/components/chat/MicRecorderButton';
 import { wrapWithAttachment } from '@/components/chat/ChatSession';
 import type { ChatAttachment } from '@/components/chat/Composer';
+import { semTravessao } from '@/lib/texto/sem-travessao';
 import {
   KRALJIC_QUADRANT_LABELS,
   NEGOTIATION_OBJECTIVE_LABELS,
@@ -189,7 +190,7 @@ export function NegotiationChat({
       }
       setAttachment(data as ChatAttachment);
       if ((data as ChatAttachment).truncated) {
-        toast.info('Documento grande — apenas o início foi anexado.');
+        toast.info('Documento grande, apenas o início foi anexado.');
       }
     } catch (err) {
       toast.error('Falha ao enviar', { description: String(err) });
@@ -411,7 +412,7 @@ export function NegotiationChat({
                 ? strategy.kraljic.label
                 : params.kraljicQuadrant
                   ? KRALJIC_QUADRANT_LABELS[params.kraljicQuadrant]
-                  : '—'}
+                  : '-'}
             </div>
           </div>
         </div>
@@ -465,7 +466,7 @@ export function NegotiationChat({
             onClick={toggleVoice}
             aria-pressed={voiceOn}
             aria-label={voiceOn ? 'Desativar voz do fornecedor' : 'Ativar voz do fornecedor'}
-            title={voiceOn ? 'Voz ligada — o fornecedor fala as respostas' : 'Voz desligada'}
+            title={voiceOn ? 'Voz ligada, o fornecedor fala as respostas' : 'Voz desligada'}
             className={`ml-auto inline-flex items-center gap-1.5 rounded-full border h-7 px-2.5 text-[11px] font-medium transition-colors active:scale-95 ${
               voiceOn
                 ? 'border-brand/40 bg-brand/10 text-brand'
@@ -507,7 +508,7 @@ export function NegotiationChat({
                   )}
                   {m.role === 'assistant' ? (
                     <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-1">
-                      <ReactMarkdown>{m.content || ' '}</ReactMarkdown>
+                      <ReactMarkdown>{semTravessao(m.content || ' ')}</ReactMarkdown>
                     </div>
                   ) : (
                     m.content
@@ -604,7 +605,7 @@ export function NegotiationChat({
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading || busy}
             aria-label="Anexar contrato ou proposta"
-            title="Anexar contrato/proposta (PDF, DOCX, XLSX) — o fornecedor simulado passa a conhecer o documento"
+            title="Anexar contrato/proposta (PDF, DOCX, XLSX), o fornecedor simulado passa a conhecer o documento"
             className="inline-flex items-center justify-center rounded-full border border-border bg-muted/40 text-muted-foreground hover:text-foreground hover:bg-accent w-11 h-11 transition-all duration-300 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
           >
             <Paperclip className="h-4 w-4" aria-hidden="true" />
@@ -633,7 +634,7 @@ export function NegotiationChat({
             onClick={() => void askCoach()}
             disabled={busy || negotiationMessages.length === 0}
             aria-label="Pedir conselho ao coach"
-            title="Pedir conselho ao coach — pausa tática (o fornecedor não vê). Texto digitado vira sua pergunta."
+            title="Pedir conselho ao coach, pausa tática (o fornecedor não vê). Texto digitado vira sua pergunta."
             className="inline-flex items-center justify-center rounded-full border border-violet-500/40 bg-violet-500/10 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 disabled:opacity-40 disabled:cursor-not-allowed w-11 h-11 transition-all duration-300 active:scale-95 flex-shrink-0"
           >
             {coachStreaming ? (

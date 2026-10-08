@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { Download, RotateCcw, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SendEmailButton } from './SendEmailButton';
+import { semTravessao } from '@/lib/texto/sem-travessao';
 
 type Props = {
   markdown: string;
@@ -61,7 +62,7 @@ export function PorterResult({
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="text-sm">
           <div className="text-muted-foreground">
-            5 Forças de Porter — {categoria.slice(0, 80)}
+            5 Forças de Porter, {categoria.slice(0, 80)}
             {categoria.length > 80 ? '…' : ''}
           </div>
           {generating && (
@@ -86,7 +87,7 @@ export function PorterResult({
             Copiar
           </Button>
           <SendEmailButton
-            subject={`Análise Porter — ${categoria.slice(0, 60)}`}
+            subject={`Análise Porter, ${categoria.slice(0, 60)}`}
             body={markdown}
             disabled={generating}
           />
@@ -108,7 +109,7 @@ export function PorterResult({
             segundos.
           </p>
         ) : (
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{markdown}</ReactMarkdown>
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{semTravessao(markdown)}</ReactMarkdown>
         )}
         {generating && markdown.length > 0 && (
           <span className="inline-block w-2 h-4 bg-primary/50 align-middle animate-pulse ml-1" />

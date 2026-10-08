@@ -134,7 +134,7 @@ export function KraljicAssistant() {
           <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
             Liste suas categorias com spend + 7 sub-scores. O sistema classifica cada item na
             Matriz de Kraljic e gera relatório executivo, plano de ação por quadrante e gráfico
-            bubble 2×2 — pronto para .docx e .xlsx.
+            bubble 2×2, pronto para .docx e .xlsx.
           </p>
         </div>
         {phase === 'form' && (

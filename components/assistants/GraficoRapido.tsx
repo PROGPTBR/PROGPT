@@ -33,13 +33,13 @@ const ERROR_LABEL: Record<string, string> = {
   no_data: 'Cole um dado ou anexe uma planilha.',
   file_too_large: 'Arquivo maior que 5 MB.',
   need_two_columns: 'Preciso de pelo menos 2 colunas (categoria e valor).',
-  no_rows: 'Não consegui ler linhas de dado — confira o formato.',
+  no_rows: 'Não consegui ler linhas de dado, confira o formato.',
   no_series: 'Não encontrei categoria + valor numérico válidos nessa tabela.',
   render_failed: 'Falha ao desenhar o gráfico.',
   invalid_form: 'Formulário inválido.',
 };
 
-const PLACEHOLDER = `Cole uma tabela — ex.:
+const PLACEHOLDER = `Cole uma tabela, ex.:
 Fornecedor\tGasto
 ACME Ltda\t120000
 Globex SA\t80500
@@ -74,10 +74,10 @@ export function GraficoRapido() {
 
       const res = await fetch('/api/tools/quick-chart', { method: 'POST', body: form });
 
-      if (res.status === 401) throw new Error('Sessão expirada — faça login novamente.');
+      if (res.status === 401) throw new Error('Sessão expirada, faça login novamente.');
       if (res.status === 429) {
         const body = await res.json().catch(() => null);
-        throw new Error(`Muitas requisições — tente novamente em ${body?.retry_after_secs ?? 30}s.`);
+        throw new Error(`Muitas requisições, tente novamente em ${body?.retry_after_secs ?? 30}s.`);
       }
 
       const data = await res.json();
@@ -196,7 +196,7 @@ export function GraficoRapido() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               disabled={loading}
-              placeholder="Ex.: Gasto por fornecedor — Q2"
+              placeholder="Ex.: Gasto por fornecedor, Q2"
               className="block w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-sm"
             />
           </div>
@@ -223,7 +223,7 @@ export function GraficoRapido() {
               <span className="font-medium text-foreground">{result.spec.title}</span>
               <span className="text-muted-foreground">
                 {' '}
-                — categoria: {result.spec.categoryColumn} · valor: {result.spec.valueColumn} ·{' '}
+                , categoria: {result.spec.categoryColumn} · valor: {result.spec.valueColumn} ·{' '}
                 {result.rowsUsed} linha(s)
               </span>
             </div>

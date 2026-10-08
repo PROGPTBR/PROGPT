@@ -2285,11 +2285,11 @@ export function ProfitabilityDashboard() {
           </td>
 
           <td className="px-4 py-3 text-right text-sm text-muted-foreground">
-            —
+            -
           </td>
 
           <td className="px-4 py-3 text-right text-sm text-muted-foreground">
-            —
+            -
           </td>
         </tr>
       </tfoot>
@@ -2522,7 +2522,7 @@ export function ProfitabilityDashboard() {
 
                         <TableCell className="text-muted-foreground">
                           {cost.description ||
-                            '—'}
+                            '-'}
                         </TableCell>
 
                         <TableCell className="text-right">
@@ -3679,7 +3679,7 @@ function PlanBadge({
 }) {
   return (
     <span className="inline-flex rounded-full border border-border bg-muted/40 px-2 py-0.5 text-[11px] font-medium">
-      {plan || '—'}
+      {plan || '-'}
     </span>
   );
 }

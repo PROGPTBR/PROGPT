@@ -135,7 +135,7 @@ export function ActiveProfileChip({ activePerfilId, onChange }: Props) {
         }`}
         title={
           activePerfilId
-            ? 'Categoria ativa — click pra trocar'
+            ? 'Categoria ativa, click pra trocar'
             : 'Selecionar Perfil da Categoria'
         }
       >

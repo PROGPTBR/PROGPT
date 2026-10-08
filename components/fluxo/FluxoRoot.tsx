@@ -140,7 +140,7 @@ export function FluxoRoot({ processosIniciais }: { processosIniciais: FluxoProce
               id="titulo"
               value={titulo}
               onChange={(e) => setTitulo(e.target.value)}
-              placeholder="Ex.: Compra de notebooks — TI"
+              placeholder="Ex.: Compra de notebooks, TI"
               className="w-full rounded-lg border border-input bg-background px-3 h-10 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
             />
           </div>

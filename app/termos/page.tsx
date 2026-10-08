@@ -47,7 +47,7 @@ contexto profissional.
 
 Acesso gratuito permanente ao chat especialista e **1 (uma) execução
 vitalícia** de cada um dos assistentes (RFP, Kraljic, Porter, Financeiro,
-ABC, Perfil, Negociação — 7 execuções totais por conta).
+ABC, Perfil, Negociação, 7 execuções totais por conta).
 
 ### 3.2 Plano Pro
 
@@ -63,7 +63,7 @@ automaticamente todo mês na mesma data.
 
 Você pode cancelar a assinatura Pro a qualquer momento em
 \`/account/billing\`. **O cancelamento entra em vigor ao fim do ciclo
-atual já pago** — você mantém acesso Pro até essa data e não recebe
+atual já pago**, você mantém acesso Pro até essa data e não recebe
 estorno proporcional.
 
 ### 3.4 Pagamento em atraso
@@ -79,7 +79,7 @@ Conforme o **Art. 49 do Código de Defesa do Consumidor**, você tem
 direito de arrependimento em até 7 (sete) dias corridos da contratação
 inicial, com reembolso integral, **desde que não tenha executado
 nenhum assistente Pro** nesse período. Após 7 dias ou após uso de
-qualquer assistente Pro, não há reembolso retroativo — apenas
+qualquer assistente Pro, não há reembolso retroativo, apenas
 cancelamento end-of-period (cláusula 3.3).
 
 ### 3.6 Mudanças de preço
@@ -148,7 +148,7 @@ requisição e gerar a resposta.
 ### 6.3 Dos outputs gerados
 
 Os outputs gerados pela IA (respostas do chat, RFPs, análises Kraljic,
-etc.) são **seus** — você pode usar livremente, inclusive
+etc.) são **seus**, você pode usar livremente, inclusive
 comercialmente. **Ressalva**: outputs podem conter referências a
 frameworks acadêmicos (Kraljic 1983, Porter 1979, etc.) cujos direitos
 autorais permanecem dos autores originais. Você é responsável por
@@ -181,7 +181,7 @@ responsabilidade total perante você fica limitada ao **valor pago nos
 ## 8. Privacidade e Proteção de Dados
 
 O tratamento de dados pessoais segue a Lei Geral de Proteção de Dados
-(Lei 13.709/2018 — LGPD) e está detalhado na nossa
+(Lei 13.709/2018, LGPD) e está detalhado na nossa
 [Política de Privacidade](/privacidade), parte integrante destes Termos.
 
 ## 9. Alterações nos Termos

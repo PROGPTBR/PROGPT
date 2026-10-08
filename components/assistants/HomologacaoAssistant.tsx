@@ -113,7 +113,7 @@ export function HomologacaoAssistant() {
         </h1>
         <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
           Informe o CNPJ e o assistente consulta situação cadastral, score de
-          risco, compliance e certidões na Receita — e gera um relatório de
+          risco, compliance e certidões na Receita, e gera um relatório de
           homologação com recomendação e próximos passos.
         </p>
       </div>

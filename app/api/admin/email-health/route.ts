@@ -30,7 +30,7 @@ export async function GET() {
     from,
     isSandboxFrom,
     warning: !hasKey
-      ? 'SMTP_HOST/SMTP_USER/SMTP_PASSWORD ausente — todo envio é silenciosamente pulado (fail-soft).'
+      ? 'SMTP_HOST/SMTP_USER/SMTP_PASSWORD ausente, todo envio é silenciosamente pulado (fail-soft).'
       : isSandboxFrom
         ? `EMAIL_FROM (${from}) não bate com a caixa SMTP autenticada (SMTP_USER). Muitos provedores (Titan/Hostgator incluso) rejeitam ou marcam spam nesse caso.`
         : null,
@@ -54,7 +54,7 @@ export async function POST(req: Request) {
 
   const result = await sendEmail({
     to: parsed.data.to,
-    subject: 'PROGPT — teste de entrega (admin)',
+    subject: 'PROGPT, teste de entrega (admin)',
     html: '<p>Se você recebeu isso, o envio via SMTP está funcionando ponta a ponta.</p>',
   });
 

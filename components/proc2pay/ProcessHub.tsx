@@ -123,7 +123,7 @@ export function ProcessHub({
             Proc2Pay <span className="text-brand">.</span>
           </h1>
           <p className="text-sm text-muted-foreground">
-            Da requisição ao envio da ordem de compra — um fluxo só, com os assistentes encadeados.
+            Da requisição ao envio da ordem de compra, um fluxo só, com os assistentes encadeados.
           </p>
         </div>
         <Link
@@ -190,7 +190,7 @@ export function ProcessHub({
                   <p className="text-xs text-muted-foreground">
                     Ou encaminhe a solicitação para{' '}
                     <code className="rounded bg-muted px-1.5 py-0.5 text-foreground">{inboundAlias}</code>{' '}
-                    — o processo abre sozinho.
+                    , o processo abre sozinho.
                   </p>
                 )}
                 <button
@@ -213,7 +213,7 @@ export function ProcessHub({
               </Field>
               <Field label="Criticidade">
                 <select value={criticidade} onChange={(e) => setCriticidade(e.target.value)} className={inputCls}>
-                  <option value="">—</option>
+                  <option value="">-</option>
                   <option value="baixa">Baixa</option>
                   <option value="media">Média</option>
                   <option value="alta">Alta</option>

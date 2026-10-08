@@ -70,7 +70,7 @@ export function ConsoleRoot() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Console</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Visão geral da plataforma. Cada cliente pagante é 1 usuário — gerencie cada um em{' '}
+          Visão geral da plataforma. Cada cliente pagante é 1 usuário, gerencie cada um em{' '}
           <Link href="/plataforma/usuarios" className="underline underline-offset-2">
             Usuários
           </Link>
@@ -121,7 +121,7 @@ export function ConsoleRoot() {
             {data.recentActivity.map((a) => (
               <li key={a.id} className="flex items-center justify-between gap-3 border-b border-border/60 last:border-0 pb-2 last:pb-0">
                 <span className="truncate">
-                  <span className="font-medium">{a.actorEmail ?? '—'}</span>{' '}
+                  <span className="font-medium">{a.actorEmail ?? '-'}</span>{' '}
                   {ACTION_LABEL[a.action] ?? a.action}
                   {a.resourceType && <span className="text-muted-foreground"> · {a.resourceType}</span>}
                 </span>
@@ -154,7 +154,7 @@ function AlertRow({ userId, title, detail }: { userId: string; title: string; de
       className="flex items-center justify-between gap-3 rounded-lg border border-amber-500/20 bg-background px-3 py-2 text-xs hover:border-amber-500/40 transition-colors"
     >
       <span>
-        <span className="font-medium">{title}</span> — {detail}
+        <span className="font-medium">{title}</span>, {detail}
       </span>
       <span className="text-amber-600 dark:text-amber-400 shrink-0">Gerenciar →</span>
     </Link>

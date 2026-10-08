@@ -67,7 +67,7 @@ export function UnifiedDashboard() {
             <span className="text-brand">.</span>
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Todos os seus dados em um só lugar — atualizado em tempo real, sem
+            Todos os seus dados em um só lugar, atualizado em tempo real, sem
             planilha nem Power BI.
           </p>
         </div>
@@ -113,7 +113,7 @@ export function UnifiedDashboard() {
             <Kpi
               icon={<Wallet className="h-4 w-4" />}
               label="Gasto analisado"
-              value={data.overview.spendAnalyzedRef > 0 ? money(data.overview.spendAnalyzedRef) : '—'}
+              value={data.overview.spendAnalyzedRef > 0 ? money(data.overview.spendAnalyzedRef) : '-'}
             />
             <Kpi
               icon={<Receipt className="h-4 w-4" />}
@@ -370,7 +370,7 @@ function SpendEmptyState() {
       <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
         Rode a <strong>Análise de Gastos</strong> com suas notas fiscais (PDF ou
         planilha) e este painel passa a mostrar gasto por categoria, top
-        fornecedores, evolução mensal e cobertura de PO — automaticamente.
+        fornecedores, evolução mensal e cobertura de PO, automaticamente.
       </p>
       <Link
         href="/assistants/spend_analysis"

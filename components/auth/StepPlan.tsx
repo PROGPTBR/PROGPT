@@ -90,7 +90,7 @@ export default function StepPlan({
             </p>
 
             <p className="text-xs text-muted-foreground mt-1">
-              Pode deixar em branco e informar depois — não impede a
+              Pode deixar em branco e informar depois, não impede a
               contratação. Sua conta já é o 1º acesso.
             </p>
           </div>

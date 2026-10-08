@@ -48,7 +48,7 @@ export default async function ProfilePage() {
           <Passo
             numero={2}
             titulo="Dados da empresa"
-            descricao="Nome, contato e apresentação usados nos documentos — por exemplo, na capa e na carta de abertura do RFP."
+            descricao="Nome, contato e apresentação usados nos documentos, por exemplo, na capa e na carta de abertura do RFP."
           >
             <ProfileCompanyForm />
           </Passo>

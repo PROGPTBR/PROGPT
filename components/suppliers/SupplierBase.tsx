@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import {
   Building2,
+  Globe,
   Loader2,
   Mail,
   MapPin,
@@ -11,6 +12,7 @@ import {
   Phone,
   Plus,
   Search,
+  Sparkles,
   Trash2,
   Upload,
   X,
@@ -20,6 +22,7 @@ import { VendorListImportDialog } from './VendorListImportDialog';
 import {
   SUPPLIER_STATUSES,
   SUPPLIER_STATUS_LABEL,
+  filtrarBase,
   SUPPLIER_STATUS_STYLE,
   type SavedSupplier,
   type SupplierStatus,
@@ -96,7 +99,16 @@ function normalizePhoneForStorage(phone: string | null | undefined): string | nu
   return trimmed;
 }
 
-export function SupplierBase() {
+type BuscaIa =
+  | { status: 'carregando'; consulta: string }
+  | { status: 'pronto'; consulta: string; categorias: string[]; resultados: { id: string; motivo: string }[] }
+  | { status: 'erro'; consulta: string };
+
+/**
+ * @param buscaNaInternet equipe liberada para a busca ampliada (vendor list +
+ * internet, lib/suppliers/busca-ampliada.ts): ganha o atalho "Buscar na internet".
+ */
+export function SupplierBase({ buscaNaInternet = false }: { buscaNaInternet?: boolean } = {}) {
   const {
     suppliers,
     loading,
@@ -108,19 +120,50 @@ export function SupplierBase() {
   } = useSupplierBase();
   const [statusFilter, setStatusFilter] = useState<'all' | SupplierStatus>('all');
   const [q, setQ] = useState('');
+  const [ia, setIa] = useState<BuscaIa | null>(null);
+
+  // "Perguntar à IA": entende o pedido como o ChatGPT ("material para alvenaria
+  // em SP") e devolve, da sua base, quem atende e por quê.
+  async function perguntarIa() {
+    const consulta = q.trim();
+    if (consulta.length < 2) return;
+    setIa({ status: 'carregando', consulta });
+    try {
+      const res = await fetch('/api/suppliers/base-ia', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ consulta }),
+      });
+      if (res.status === 429) {
+        toast.error('Muitas buscas seguidas. Tente de novo em instantes.');
+        setIa(null);
+        return;
+      }
+      if (!res.ok) throw new Error(String(res.status));
+      const data = (await res.json()) as { categorias: string[]; resultados: { id: string; motivo: string }[] };
+      setIa({ status: 'pronto', consulta, categorias: data.categorias, resultados: data.resultados });
+    } catch {
+      setIa({ status: 'erro', consulta });
+    }
+  }
+  const iaAtiva = ia && ia.consulta === q.trim() ? ia : null;
+  const motivoIa = useMemo(
+    () => new Map(iaAtiva?.status === 'pronto' ? iaAtiva.resultados.map((r) => [r.id, r.motivo]) : []),
+    [iaAtiva],
+  );
   const [showAdd, setShowAdd] = useState(false);
   const [showImport, setShowImport] = useState(false);
 
   const filtered = useMemo(() => {
-    const needle = q.trim().toLowerCase();
-    return suppliers.filter((s) => {
-      if (statusFilter !== 'all' && s.status !== statusFilter) return false;
-      if (!needle) return true;
-      return [s.razaoSocial, s.nomeFantasia, s.categoria, s.cnae, s.municipio, s.uf, s.cnpj]
-        .filter(Boolean)
-        .some((v) => v!.toLowerCase().includes(needle));
-    });
-  }, [suppliers, statusFilter, q]);
+    const porStatus = suppliers.filter((s) => statusFilter === 'all' || s.status === statusFilter);
+    // Com resposta da IA para esta mesma busca, a lista é a da IA, na ordem dela.
+    if (iaAtiva?.status === 'pronto') {
+      const porId = new Map(porStatus.map((s) => [s.id, s]));
+      return iaAtiva.resultados.map((r) => porId.get(r.id)).filter((s): s is SavedSupplier => !!s);
+    }
+    return filtrarBase(porStatus, q);
+  }, [suppliers, statusFilter, q, iaAtiva]);
+  const internetHref = `/assistants/suppliers?q=${encodeURIComponent(q.trim())}`;
 
   const counts = useMemo(() => {
     const m = new Map<SupplierStatus, number>();
@@ -188,10 +231,33 @@ export function SupplierBase() {
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Buscar por nome, categoria, CNAE, cidade…"
+            onKeyDown={(e) => { if (e.key === 'Enter') void perguntarIa(); }}
+            placeholder="Busque por nome, grupo, cidade… ou pergunte: material para alvenaria em SP"
             className="w-full h-9 rounded-md bg-background border border-border pl-9 pr-3 text-sm outline-none focus:border-brand/50"
           />
         </div>
+        {q.trim().length >= 2 && (
+          <div className="flex flex-wrap gap-1.5">
+            <button
+              type="button"
+              onClick={() => void perguntarIa()}
+              disabled={iaAtiva?.status === 'carregando'}
+              className="inline-flex h-9 items-center gap-1.5 rounded-full bg-brand-gradient px-3.5 text-xs font-semibold text-black brand-glow hover:brightness-110 disabled:opacity-60"
+            >
+              {iaAtiva?.status === 'carregando' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+              Perguntar à IA
+            </button>
+            {buscaNaInternet && (
+              <a
+                href={internetHref}
+                className="inline-flex h-9 items-center gap-1.5 rounded-full border border-brand/30 bg-brand/5 px-3.5 text-xs font-medium text-brand hover:bg-brand/10"
+              >
+                <Globe className="h-3.5 w-3.5" />
+                Buscar na internet
+              </a>
+            )}
+          </div>
+        )}
         <div className="flex flex-wrap gap-1">
           <FilterChip
             active={statusFilter === 'all'}
@@ -213,6 +279,27 @@ export function SupplierBase() {
         </div>
       </div>
 
+      {iaAtiva && iaAtiva.status !== 'carregando' && (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-brand/30 bg-brand/5 px-4 py-2.5 text-sm">
+          <span className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-brand" />
+            {iaAtiva.status === 'erro'
+              ? 'A IA não respondeu agora. Tente de novo.'
+              : iaAtiva.resultados.length > 0
+                ? `A IA encontrou ${iaAtiva.resultados.length} ${iaAtiva.resultados.length === 1 ? 'fornecedor' : 'fornecedores'} na sua base${iaAtiva.categorias.length ? ` · grupos: ${iaAtiva.categorias.join(', ')}` : ''}`
+                : 'A IA não encontrou fornecedor para esse pedido na sua base.'}
+          </span>
+          <span className="flex items-center gap-3">
+            {buscaNaInternet && (
+              <a href={internetHref} className="font-medium text-brand hover:underline">Buscar também na internet →</a>
+            )}
+            <button type="button" onClick={() => setIa(null)} className="text-muted-foreground hover:text-foreground">
+              Limpar
+            </button>
+          </span>
+        </div>
+      )}
+
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20 gap-3 text-muted-foreground">
           <Loader2 className="h-8 w-8 animate-spin text-brand" aria-hidden="true" />
@@ -224,7 +311,7 @@ export function SupplierBase() {
           <p className="text-sm max-w-sm">
             {suppliers.length === 0
               ? 'Sua base está vazia. Vá na Busca de Fornecedores e clique em "Salvar na base", ou adicione um fornecedor à mão aqui.'
-              : 'Nenhum fornecedor bate com o filtro.'}
+              : 'Nenhum fornecedor bate com essas palavras. Experimente "Perguntar à IA": ela entende o pedido e procura pelos grupos da sua base.'}
           </p>
         </div>
       ) : (
@@ -233,6 +320,7 @@ export function SupplierBase() {
             <SupplierRow
               key={s.id}
               supplier={s}
+              motivoIa={motivoIa.get(s.id)}
               onStatus={(status) => void updateSupplier(s.id, { status })}
               onSave={async (patch) => {
                 const ok = await updateSupplier(s.id, patch);
@@ -288,11 +376,14 @@ function StatusBadge({ status }: { status: SupplierStatus }) {
 
 function SupplierRow({
   supplier: s,
+  motivoIa,
   onStatus,
   onSave,
   onDelete,
 }: {
   supplier: SavedSupplier;
+  /** Por que a IA trouxe este fornecedor (só na resposta do "Perguntar à IA"). */
+  motivoIa?: string;
   onStatus: (status: SupplierStatus) => void;
   onSave: (patch: {
     categoria: string | null;
@@ -341,6 +432,11 @@ function SupplierRow({
           </div>
           {s.nomeFantasia && s.nomeFantasia !== s.razaoSocial && (
             <div className="text-xs text-muted-foreground">{s.nomeFantasia}</div>
+          )}
+          {motivoIa && (
+            <div className="inline-flex items-center gap-1 text-[11px] font-medium text-brand">
+              <Sparkles className="h-3 w-3" aria-hidden="true" /> IA: {motivoIa}
+            </div>
           )}
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
             {formatCnpj(s.cnpj) && (
@@ -440,13 +536,13 @@ function SupplierRow({
               className="editinput"
             />
           </Field>
-          <Field label="Rating (0–5)">
+          <Field label="Rating (0-5)">
             <select
               value={rating ?? ''}
               onChange={(e) => setRating(e.target.value === '' ? null : Number(e.target.value))}
               className="editinput"
             >
-              <option value="">—</option>
+              <option value="">-</option>
               {[0, 1, 2, 3, 4, 5].map((n) => (
                 <option key={n} value={n}>
                   {n}

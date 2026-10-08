@@ -47,7 +47,7 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 const usd = (cents: number) => `US$ ${(cents / 100).toFixed(cents > 0 && cents < 100 ? 4 : 2)}`;
-const fmtDate = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString('pt-BR') : '—');
+const fmtDate = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString('pt-BR') : '-');
 
 export function UserDetailRoot({ userId }: { userId: string }) {
   const [data, setData] = useState<Payload | null>(null);
@@ -113,7 +113,7 @@ export function UserDetailRoot({ userId }: { userId: string }) {
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">{profile.email}</h1>
             <p className="text-sm text-muted-foreground mt-0.5">
-              {org?.name ?? '—'} · papel {profile.role}
+              {org?.name ?? '-'} · papel {profile.role}
               {profile.superAdmin && ' · super admin'}
               {!profile.active && ' · '}
               {!profile.active && <span className="text-destructive font-medium">login desativado</span>}
@@ -154,7 +154,7 @@ export function UserDetailRoot({ userId }: { userId: string }) {
         {subscription ? (
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
             <Field label="Status" value={STATUS_LABEL[subscription.status] ?? subscription.status} />
-            <Field label="Plano" value={subscription.plan ?? '—'} />
+            <Field label="Plano" value={subscription.plan ?? '-'} />
             {/* Assinatura por usuário: quantos acessos foram pagos e, quando
                 informados na contratação, pra quem provisionar. */}
             <Field
@@ -167,7 +167,7 @@ export function UserDetailRoot({ userId }: { userId: string }) {
                 value={subscription.seat_emails.join(', ')}
               />
             )}
-            <Field label="Pagamento" value={subscription.payment_method ?? '—'} />
+            <Field label="Pagamento" value={subscription.payment_method ?? '-'} />
             <Field label="Trial até" value={fmtDate(subscription.trial_end)} />
             <Field label="Período atual até" value={fmtDate(subscription.current_period_end)} />
             <Field label="Cancela ao fim do ciclo" value={subscription.cancel_at_period_end ? 'Sim' : 'Não'} />

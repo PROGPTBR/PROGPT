@@ -5,7 +5,7 @@ import type { MetadataRoute } from 'next';
 // Screen), launching standalone (no browser chrome).
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'PROGPT — IA de Procurement',
+    name: 'PROGPT, IA de Procurement',
     short_name: 'PROGPT',
     description:
       'Chat especialista + assistentes de Strategic Sourcing da 2BSUPPLY.',

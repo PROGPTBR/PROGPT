@@ -30,7 +30,7 @@ Classificamos cookies em duas categorias:
 
 Estes cookies são **estritamente necessários** pro funcionamento básico
 da Plataforma. Sem eles, você não consegue logar nem usar o serviço.
-Não exigem consentimento (Art. 7º, V LGPD — execução de contrato).
+Não exigem consentimento (Art. 7º, V LGPD, execução de contrato).
 
 | Cookie | Origem | Propósito | Duração |
 |---|---|---|---|
@@ -66,8 +66,8 @@ e não temos controle direto sobre eles.
 
 Na primeira visita, você verá um banner com 2 opções:
 
-- **Aceitar todos** — concorda com cookies essenciais e futuros não-essenciais
-- **Apenas essenciais** — só cookies estritamente necessários
+- **Aceitar todos**, concorda com cookies essenciais e futuros não-essenciais
+- **Apenas essenciais**, só cookies estritamente necessários
 
 Sua escolha é salva e respeitada em visitas futuras. Você pode rever ou
 trocar a qualquer momento clicando em "Gerenciar cookies" no rodapé.
@@ -88,7 +88,7 @@ Plataforma. Bloquear não-essenciais não afeta funcionalidade.
 
 Você pode revisar tudo que armazenamos sobre você acessando o seu
 perfil em \`/profile\` ou solicitando exportação completa via
-${LEGAL_CONTACT_EMAIL} (direito de portabilidade — Art. 18 LGPD).
+${LEGAL_CONTACT_EMAIL} (direito de portabilidade, Art. 18 LGPD).
 
 ## 5. Mudanças nesta Política
 

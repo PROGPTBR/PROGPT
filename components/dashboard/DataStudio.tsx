@@ -543,7 +543,7 @@ function DataTable({ dataset, rows }: { dataset: Dataset; rows: Row[] }) {
               <tr key={i} className="border-b border-border/60 last:border-0 hover:bg-muted/30">
                 {cols.map((c) => (
                   <td key={c.name} className="px-3 py-1.5 whitespace-nowrap tabular-nums text-foreground/90 max-w-[220px] truncate" title={r[c.name] == null ? '' : String(r[c.name])}>
-                    {c.type === 'number' ? (coerceNumber(r[c.name]) != null ? fmtNumber(coerceNumber(r[c.name])!) : '—') : r[c.name] == null || r[c.name] === '' ? '—' : String(r[c.name])}
+                    {c.type === 'number' ? (coerceNumber(r[c.name]) != null ? fmtNumber(coerceNumber(r[c.name])!) : '-') : r[c.name] == null || r[c.name] === '' ? '-' : String(r[c.name])}
                   </td>
                 ))}
               </tr>

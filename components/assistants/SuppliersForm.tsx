@@ -49,7 +49,7 @@ export function SuppliersForm({
           Busca de Fornecedores <span className="text-brand">.</span>
         </h1>
         <p className="text-sm text-muted-foreground max-w-2xl leading-relaxed">
-          Descreva o que você procura em linguagem natural — atividade, região,
+          Descreva o que você procura em linguagem natural, atividade, região,
           porte. A IA identifica o CNAE e busca empresas reais ativas na base
           da Receita Federal.
         </p>

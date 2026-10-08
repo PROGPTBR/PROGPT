@@ -127,7 +127,7 @@ export function KraljicScoringAssistant({ open, rowIndex, current, onClose, onAp
         </div>
 
         <p className="text-xs text-muted-foreground">
-          Descreva o item com mais contexto possível — mercado de fornecedores, criticidade na sua operação, especificações técnicas. O assistente propõe scores 1-4 para os 7 critérios.
+          Descreva o item com mais contexto possível, mercado de fornecedores, criticidade na sua operação, especificações técnicas. O assistente propõe scores 1-4 para os 7 critérios.
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

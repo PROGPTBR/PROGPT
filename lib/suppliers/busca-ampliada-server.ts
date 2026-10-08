@@ -4,6 +4,7 @@ import { getOpenAI, getOpenAIModel } from '@/lib/llm/openai';
 import { recordApiUsage } from '@/lib/observability/api-usage';
 import {
   extrairFornecedoresWeb,
+  juntarFornecedoresWeb,
   semDuplicados,
   type EquipeBuscaAmpliada,
   type FornecedorVendorList,
@@ -122,13 +123,23 @@ export async function escolherCategorias(consulta: string, categorias: readonly 
   }
 }
 
-function promptWeb(consulta: string): string {
+// Duas buscas em paralelo (pedido de cliente 2026-10-07: "quero a busca igual
+// ao ChatGPT, lá vem tudo"): a LOCAL, priorizando a cidade do pedido, e a
+// AMPLA, com distribuidores, atacadistas, fabricantes e lojas B2B que atendem
+// a região ou o Brasil. O resultado junta as duas sem repetir empresa.
+type Angulo = 'local' | 'amplo';
+
+function promptWeb(consulta: string, angulo: Angulo): string {
   const hoje = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+  const foco =
+    angulo === 'local'
+      ? 'Priorize empresas da cidade e do estado citados no pedido (lojas, revendas, distribuidores locais); se houver poucas, inclua as cidades vizinhas.'
+      : 'Agora pense amplo, como um comprador experiente: distribuidores, atacadistas, fabricantes que vendem direto e lojas B2B online que ENTREGAM na região do pedido ou no Brasil todo. Varie as buscas (nome do item, sinônimos, a categoria do material) e prefira empresas diferentes das óbvias.';
   return `Hoje é ${hoje}. Um comprador de uma construtora brasileira precisa comprar: "${consulta}".
-Pesquise na internet EMPRESAS QUE VENDEM esse item (lojas, distribuidores, atacadistas, fabricantes que vendem direto), priorizando a cidade/estado citados no pedido; se não houver na cidade, inclua as mais próximas ou lojas online que entregam lá.
+Pesquise na internet EMPRESAS QUE VENDEM esse item. ${foco}
 Não liste marketplaces genéricos (Mercado Livre, Amazon, Shopee) a menos que não exista nenhuma outra opção.
 Não invente empresas, telefones nem sites: inclua só o que encontrou nas páginas.
-Responda SOMENTE com um array JSON (sem texto antes ou depois), até 10 itens, no formato:
+Responda SOMENTE com um array JSON (sem texto antes ou depois), até 15 itens, no formato:
 [{"nome":"...","site":"https://...","telefone":"...","cidade":"...","uf":"RN","oQueVende":"resumo curto do que a empresa vende"}]
 Campo que não encontrou: null.`;
 }
@@ -141,13 +152,20 @@ export type ResultadoWeb = {
 };
 
 export async function buscarFornecedoresNaWeb(consulta: string): Promise<ResultadoWeb> {
+  const [local, amplo] = await Promise.all([buscarAngulo(consulta, 'local'), buscarAngulo(consulta, 'amplo')]);
+  const fornecedores = juntarFornecedoresWeb([local.fornecedores, amplo.fornecedores], 20);
+  if (fornecedores.length > 0) return { fornecedores, texto: null, erro: null };
+  return { fornecedores: [], texto: local.texto ?? amplo.texto, erro: local.erro && amplo.erro ? local.erro : null };
+}
+
+async function buscarAngulo(consulta: string, angulo: Angulo): Promise<ResultadoWeb> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), WEB_TIMEOUT_MS);
   try {
     const ai = getOpenAI();
     const model = getOpenAIModel('routing');
     const res = await ai.responses.create(
-      { model, tools: [{ type: 'web_search' } as never], input: promptWeb(consulta) },
+      { model, tools: [{ type: 'web_search', search_context_size: 'high' } as never], input: promptWeb(consulta, angulo) },
       { signal: controller.signal },
     );
     const out = res as { output_text?: string; usage?: { input_tokens?: number; output_tokens?: number } };
@@ -157,7 +175,7 @@ export async function buscarFornecedoresNaWeb(consulta: string): Promise<Resulta
       model,
       tokensIn: out.usage?.input_tokens ?? 0,
       tokensOut: out.usage?.output_tokens ?? 0,
-      metadata: { web_search: true },
+      metadata: { web_search: true, angulo },
     });
     const texto = (out.output_text ?? '').trim();
     const fornecedores = extrairFornecedoresWeb(texto);

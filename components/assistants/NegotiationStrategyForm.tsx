@@ -406,13 +406,13 @@ export function NegotiationStrategyForm({
           </h2>
           <p className="text-xs text-muted-foreground -mt-1">
             Se você já tem o diagnóstico desta negociação, escreva aqui. A IA
-            parte do que você trouxe — refina, completa o que faltar e monta a
+            parte do que você trouxe, refina, completa o que faltar e monta a
             matriz no relatório. Deixando em branco, ela gera a SWOT sozinha.
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className={LABEL_CLASS}>
-                Forças — o que nos dá vantagem nesta negociação?
+                Forças, o que nos dá vantagem nesta negociação?
               </label>
               <textarea
                 value={swotStrengths}
@@ -426,7 +426,7 @@ export function NegotiationStrategyForm({
             </div>
             <div>
               <label className={LABEL_CLASS}>
-                Fraquezas — onde estamos vulneráveis?
+                Fraquezas, onde estamos vulneráveis?
               </label>
               <textarea
                 value={swotWeaknesses}
@@ -440,7 +440,7 @@ export function NegotiationStrategyForm({
             </div>
             <div>
               <label className={LABEL_CLASS}>
-                Oportunidades — o que o mercado abre a nosso favor?
+                Oportunidades, o que o mercado abre a nosso favor?
               </label>
               <textarea
                 value={swotOpportunities}
@@ -454,7 +454,7 @@ export function NegotiationStrategyForm({
             </div>
             <div>
               <label className={LABEL_CLASS}>
-                Ameaças — o que pode jogar contra?
+                Ameaças, o que pode jogar contra?
               </label>
               <textarea
                 value={swotThreats}

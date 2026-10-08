@@ -24,7 +24,7 @@ import { buildComparisonMatrix } from '@/lib/assistants/comprador-comparison';
 import type { CompradorResult, ItemStatus } from '@/lib/assistants/comprador';
 
 const brl = (n: number) =>
-  Number.isFinite(n) ? n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '—';
+  Number.isFinite(n) ? n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '-';
 
 type Sev = 'info' | 'warn' | 'danger';
 type QuoteSummary = {
@@ -114,7 +114,7 @@ export function CompradorAssistant() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6">
+    <div className="w-full space-y-6">
       {/* Hero */}
       <div data-tour="equalizador-topo" className="flex items-start justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3">
@@ -126,7 +126,7 @@ export function CompradorAssistant() {
               Equalizador de Propostas <span className="text-brand">.</span>
             </h1>
             <p className="text-sm text-muted-foreground">
-              Sua caixa de cotações: compara por TCO, aponta desvios e responde aos fornecedores — com sua aprovação.
+              Sua caixa de cotações: compara pelo custo total, aponta o que está fora e responde aos fornecedores com a sua aprovação.
             </p>
           </div>
         </div>
@@ -252,8 +252,8 @@ function QuotesList({
 const EXEMPLO = {
   pedidoCotacao:
     'Pedido de Cotação PC-0042\n' +
-    '1) 200 paletes PBR (1200x1000mm), madeira de pinus tratada — qtd 200un\n' +
-    '2) Cantoneira de proteção de carga, papelão reforçado — qtd 400un\n' +
+    '1) 200 paletes PBR (1200x1000mm), madeira de pinus tratada, qtd 200un\n' +
+    '2) Cantoneira de proteção de carga, papelão reforçado, qtd 400un\n' +
     'Entrega: Porto de Santos, em até 30 dias. Pagamento: 28 ddl.',
   escopo: '200 paletes PBR (1200x1000), entrega no Porto de Santos, até 30 dias.',
   propostas:
@@ -322,31 +322,31 @@ function NewQuote({ onCancel, onCreated }: { onCancel: () => void; onCreated: (i
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="space-y-1.5">
           <label className={lbl}>Fornecedor (opcional)</label>
-          <Input value={supplierName} onChange={(e) => setSupplierName(e.target.value)} placeholder="Nome do fornecedor" />
+          <Input className="rounded-xl" value={supplierName} onChange={(e) => setSupplierName(e.target.value)} placeholder="Nome do fornecedor" />
         </div>
         <div className="space-y-1.5">
           <label className={lbl}>E-mail do fornecedor (pra responder)</label>
-          <Input value={supplierEmail} onChange={(e) => setSupplierEmail(e.target.value)} placeholder="contato@fornecedor.com" />
+          <Input className="rounded-xl" value={supplierEmail} onChange={(e) => setSupplierEmail(e.target.value)} placeholder="contato@fornecedor.com" />
         </div>
       </div>
 
       <div className="space-y-1.5">
         <div className="flex items-center justify-between">
-          <label className={lbl}>Pedido de Cotação (RFQ) — documento de referência (opcional)</label>
+          <label className={lbl}>Pedido de Cotação (opcional): o que você pediu aos fornecedores</label>
           <Button type="button" variant="outline" size="sm" onClick={() => setImportRfqOpen(true)}>
             <Paperclip className="h-3.5 w-3.5 mr-1" /> Importar (PDF/Excel)
           </Button>
         </div>
-        <Textarea
+        <Textarea className="rounded-xl"
           value={pedidoCotacao}
           onChange={(e) => setPedidoCotacao(e.target.value)}
           rows={6}
-          placeholder="Cole ou importe o Pedido de Cotação original — itens, quantidades, especificações e condições pedidas. Com isso, o Equalizador compara cada proposta item a item contra o que foi solicitado."
+          placeholder="Cole ou importe o Pedido de Cotação original: itens, quantidades, especificações e condições pedidas. Com isso, o Equalizador compara cada proposta item a item contra o que foi solicitado."
         />
       </div>
       <div className="space-y-1.5">
         <label className={lbl}>Escopo / requisição</label>
-        <Input value={escopo} onChange={(e) => setEscopo(e.target.value)} placeholder="O que comprar, quantidade, prazo, local…" />
+        <Input className="rounded-xl" value={escopo} onChange={(e) => setEscopo(e.target.value)} placeholder="O que comprar, quantidade, prazo, local…" />
       </div>
       <div className="space-y-1.5">
         <div className="flex items-center justify-between">
@@ -355,11 +355,11 @@ function NewQuote({ onCancel, onCreated }: { onCancel: () => void; onCreated: (i
             <Paperclip className="h-3.5 w-3.5 mr-1" /> Importar (PDF/Excel)
           </Button>
         </div>
-        <Textarea value={propostas} onChange={(e) => setPropostas(e.target.value)} rows={9} placeholder="Cole as propostas recebidas (uma por bloco)…" />
+        <Textarea className="rounded-xl" value={propostas} onChange={(e) => setPropostas(e.target.value)} rows={9} placeholder="Cole as propostas recebidas (uma por bloco)…" />
       </div>
       <div className="space-y-1.5">
         <label className={lbl}>Política de compras / base homologada (opcional)</label>
-        <Textarea value={politica} onChange={(e) => setPolitica(e.target.value)} rows={3} placeholder="Alçada, nº de cotações, fornecedores homologados…" />
+        <Textarea className="rounded-xl" value={politica} onChange={(e) => setPolitica(e.target.value)} rows={3} placeholder="Alçada, nº de cotações, fornecedores homologados…" />
       </div>
       <button
         onClick={criar}
@@ -367,15 +367,17 @@ function NewQuote({ onCancel, onCreated }: { onCancel: () => void; onCreated: (i
         className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-brand-gradient text-black h-11 text-sm font-semibold brand-glow hover:brightness-110 disabled:opacity-50 transition-all"
       >
         {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-        {loading ? 'Analisando…' : 'Analisar e salvar na caixa'}
+        {loading ? 'Analisando as propostas… (com muitos documentos pode levar até 1 minuto)' : 'Analisar e salvar na caixa'}
       </button>
 
       <CompradorImportDialog
+        titulo="Importar propostas dos fornecedores"
         open={importOpen}
         onClose={() => setImportOpen(false)}
         onImported={(t) => setPropostas((p) => (p ? p + '\n\n' : '') + t)}
       />
       <CompradorImportDialog
+        titulo="Importar pedido de cotação"
         open={importRfqOpen}
         onClose={() => setImportRfqOpen(false)}
         onImported={(t) => setPedidoCotacao((p) => (p ? p + '\n\n' : '') + t)}
@@ -451,8 +453,8 @@ function QuoteDetail({ id, onBack }: { id: string; onBack: () => void }) {
                 <h2 className="text-sm font-semibold">Recomendação</h2>
                 <div className="text-sm font-medium text-brand">{a.recomendacao_fornecedor}</div>
                 <p className="text-sm text-muted-foreground">{a.justificativa}</p>
-                <div className={'rounded-md border px-3 py-2 text-xs ' + (a.precisa_humano ? 'border-amber-500/40 bg-amber-500/10' : 'border-emerald-500/40 bg-emerald-500/10')}>
-                  {a.precisa_humano ? `Requer aprovação humana — ${a.motivo_escalonamento}` : 'Dentro da alçada do agente.'}
+                <div className={'rounded-xl border px-3 py-2 text-xs ' + (a.precisa_humano ? 'border-amber-500/40 bg-amber-500/10' : 'border-emerald-500/40 bg-emerald-500/10')}>
+                  {a.precisa_humano ? `Precisa da sua aprovação: ${a.motivo_escalonamento}` : 'Dentro da alçada do agente.'}
                 </div>
               </div>
 
@@ -498,7 +500,7 @@ function QuoteDetail({ id, onBack }: { id: string; onBack: () => void }) {
                                   const cell = row.porFornecedor[f];
                                   if (!cell) {
                                     return (
-                                      <td key={f} className="min-w-[10rem] px-3 py-2 text-muted-foreground">—</td>
+                                      <td key={f} className="min-w-[10rem] px-3 py-2 text-muted-foreground">-</td>
                                     );
                                   }
                                   const badge = ITEM_STATUS_BADGE[cell.status];
@@ -529,7 +531,7 @@ function QuoteDetail({ id, onBack }: { id: string; onBack: () => void }) {
                   <ul className="space-y-1 text-sm">
                     {a.itens_nao_solicitados.map((it, i) => (
                       <li key={i} className="text-red-600 dark:text-red-400">
-                        ⛔ {it.fornecedor} — {it.item}{it.detalhe ? `: ${it.detalhe}` : ''}
+                        ⛔ {it.fornecedor}: {it.item}{it.detalhe ? `: ${it.detalhe}` : ''}
                       </li>
                     ))}
                   </ul>
@@ -642,9 +644,9 @@ function QuoteDetail({ id, onBack }: { id: string; onBack: () => void }) {
             ) : (
               <div className="space-y-3">
                 <p className="text-sm text-muted-foreground">
-                  O robô rascunha uma resposta (pedir dados faltantes, negociar) baseada na análise — você revisa e aprova antes de enviar.
+                  O robô rascunha uma resposta (pedir dados faltantes, negociar) baseada na análise. Você revisa e aprova antes de enviar.
                 </p>
-                <Input
+                <Input className="rounded-xl"
                   value={instruction}
                   onChange={(e) => setInstruction(e.target.value)}
                   placeholder="Intenção (opcional): ex. negociar 8%, pedir frete CIF…"
@@ -724,11 +726,11 @@ function ReplyEditor({ reply, hasEmail, onChanged }: { reply: Reply; hasEmail: b
 
   return (
     <div className="space-y-3">
-      <div className="rounded-md bg-brand/10 border border-brand/20 px-2.5 py-1.5 text-[11px] text-brand">
-        Rascunho — nada é enviado sem sua aprovação.
+      <div className="rounded-xl bg-brand/10 border border-brand/20 px-2.5 py-1.5 text-[11px] text-brand">
+        Rascunho: nada é enviado sem a sua aprovação.
       </div>
-      <Input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Assunto" />
-      <Textarea value={body} onChange={(e) => setBody(e.target.value)} rows={10} />
+      <Input className="rounded-xl" value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Assunto" />
+      <Textarea className="rounded-xl" value={body} onChange={(e) => setBody(e.target.value)} rows={10} />
       <div className="flex flex-wrap gap-2">
         <button
           onClick={enviar}
@@ -843,7 +845,7 @@ function SettingsPanel({ onBack }: { onBack: () => void }) {
 
       <div className="space-y-1.5">
         <label className={lbl}>Regras (sempre respeitadas)</label>
-        <Textarea
+        <Textarea className="rounded-xl"
           value={s.rules}
           onChange={(e) => setS({ ...s, rules: e.target.value })}
           rows={4}
@@ -853,11 +855,11 @@ function SettingsPanel({ onBack }: { onBack: () => void }) {
 
       <div className="space-y-1.5">
         <label className={lbl}>Assinatura</label>
-        <Textarea
+        <Textarea className="rounded-xl"
           value={s.signature}
           onChange={(e) => setS({ ...s, signature: e.target.value })}
           rows={3}
-          placeholder={'Atenciosamente,\nEquipe de Compras — 2BSUPPLY'}
+          placeholder={'Atenciosamente,\nEquipe de Compras, 2BSUPPLY'}
         />
       </div>
 
@@ -889,10 +891,10 @@ function SettingsPanel({ onBack }: { onBack: () => void }) {
         {alias ? (
           <div className="space-y-2">
             <p className="text-xs text-muted-foreground">
-              Encaminhe (ou peça pros fornecedores enviarem) as cotações para este endereço — elas caem na sua caixa já analisadas:
+              Encaminhe (ou peça pros fornecedores enviarem) as cotações para este endereço. Elas chegam na sua caixa já analisadas:
             </p>
             <div className="flex items-center gap-2">
-              <code className="flex-1 rounded-md bg-card border border-border px-2.5 py-1.5 text-xs break-all">{alias}</code>
+              <code className="flex-1 rounded-xl bg-card border border-border px-2.5 py-1.5 text-xs break-all">{alias}</code>
               <Button
                 size="sm"
                 variant="outline"
@@ -906,7 +908,7 @@ function SettingsPanel({ onBack }: { onBack: () => void }) {
             </div>
 
             {/* Guia de conexão Gmail/Outlook */}
-            <div className="rounded-lg border border-border bg-card p-3 space-y-3">
+            <div className="rounded-2xl border border-border bg-card p-3 space-y-3">
               <div className="flex items-center gap-2">
                 {(['gmail', 'outlook'] as const).map((p) => (
                   <button
@@ -924,7 +926,7 @@ function SettingsPanel({ onBack }: { onBack: () => void }) {
                 <ol className="list-decimal pl-4 space-y-1.5 text-xs text-muted-foreground">
                   <li>No Gmail: ⚙️ → <strong>Ver todas as configurações</strong> → aba <strong>Encaminhamento e POP/IMAP</strong>.</li>
                   <li><strong>Adicionar um endereço de encaminhamento</strong> → cole o endereço acima → Avançar.</li>
-                  <li>O Gmail envia um <strong>código de confirmação</strong> pra esse endereço — ele aparece <strong>aqui embaixo</strong> em instantes. Use o código/link e confirme no Gmail.</li>
+                  <li>O Gmail envia um <strong>código de confirmação</strong> para esse endereço. Ele aparece <strong>aqui embaixo</strong> em instantes. Use o código/link e confirme no Gmail.</li>
                   <li>De volta ao Gmail: marque <strong>Encaminhar uma cópia</strong> para o endereço → <strong>Salvar alterações</strong>.</li>
                   <li>(Opcional) Crie um <strong>filtro</strong> (ex.: assunto contém &quot;cotação&quot;/&quot;proposta&quot;) que encaminha só os e-mails de fornecedores.</li>
                 </ol>
@@ -939,9 +941,9 @@ function SettingsPanel({ onBack }: { onBack: () => void }) {
             </div>
 
             {inboundConfirm && (
-              <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs space-y-1">
+              <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-xs space-y-1">
                 <div className="font-semibold text-amber-600 dark:text-amber-300">
-                  Confirmação do Gmail recebida — use no Gmail:
+                  Confirmação do Gmail recebida. Use no Gmail:
                 </div>
                 <pre className="whitespace-pre-wrap break-words text-muted-foreground max-h-40 overflow-auto">{inboundConfirm}</pre>
               </div>

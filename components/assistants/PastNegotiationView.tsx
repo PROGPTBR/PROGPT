@@ -25,6 +25,7 @@ import { NegotiationChat, type Msg } from './NegotiationChat';
 import { NegotiationScoreView } from './NegotiationScoreView';
 import { NegotiationSimulatorSetupView } from './NegotiationSimulatorSetup';
 import { SendEmailButton } from './SendEmailButton';
+import { semTravessao } from '@/lib/texto/sem-travessao';
 
 // Sub-projeto 22 (follow-up²) — visualização + retomar/reiniciar de um
 // run salvo de /assistants/negotiation.
@@ -211,7 +212,7 @@ export function PastNegotiationView({
         </Link>
         <div className="flex flex-wrap gap-2">
           <SendEmailButton
-            subject={`Transcript de Negociação — ${params.supplierName}`}
+            subject={`Transcript de Negociação, ${params.supplierName}`}
             body={transcript
               .map(
                 (t) =>
@@ -418,7 +419,7 @@ function SimulationView({
                 >
                   {t.role === 'assistant' ? (
                     <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-1">
-                      <ReactMarkdown>{t.content}</ReactMarkdown>
+                      <ReactMarkdown>{semTravessao(t.content)}</ReactMarkdown>
                     </div>
                   ) : (
                     t.content

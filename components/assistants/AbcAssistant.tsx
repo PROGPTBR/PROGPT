@@ -119,7 +119,7 @@ export function AbcAssistant() {
           </h1>
           <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
             Análise ABC (Curva de Pareto) de spend. Suba sua planilha de pedidos ou
-            itens com valor — o sistema ranqueia, classifica em A/B/C pelos cortes
+            itens com valor, o sistema ranqueia, classifica em A/B/C pelos cortes
             80/95% cumulativo e gera plano de ação por classe.
           </p>
         </div>

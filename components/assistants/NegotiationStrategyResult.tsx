@@ -276,7 +276,7 @@ export function NegotiationStrategyResult({
         </div>
         <div className="flex flex-wrap gap-2 justify-end">
           <SendEmailButton
-            subject={`Estratégia de Negociação — ${params.supplierName}`}
+            subject={`Estratégia de Negociação, ${params.supplierName}`}
             body={strategyToMarkdown(params, result)}
           />
           <button

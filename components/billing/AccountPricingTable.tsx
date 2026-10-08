@@ -475,7 +475,7 @@ function CheckoutForm({
 
             {cpfInput.length > 0 && !cpfOk && (
               <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
-                CPF inválido — verifique os dígitos.
+                CPF inválido, verifique os dígitos.
               </p>
             )}
           </div>

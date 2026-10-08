@@ -170,7 +170,7 @@ export function FinancialForm({
         if (!tempoMercadoAnos.trim() && data.tempoMercadoAnos != null) {
           setTempoMercadoAnos(String(data.tempoMercadoAnos));
         }
-        toast.success('CNPJ consultado — entra no relatório.');
+        toast.success('CNPJ consultado, entra no relatório.');
       }
     } catch (err) {
       toast.error('Falha na consulta', { description: String(err) });
@@ -214,7 +214,7 @@ export function FinancialForm({
     setBusinessSector(p.businessSector ?? '');
     setTempoMercadoAnos(p.tempoMercadoAnos != null ? String(p.tempoMercadoAnos) : '');
     setPendencias(p.pendencias ?? '');
-    toast.success('Exemplo carregado — ajuste e gere');
+    toast.success('Exemplo carregado, ajuste e gere');
   }
 
   function setField(key: keyof FinancialIndicators, raw: string) {
@@ -489,7 +489,7 @@ export function FinancialForm({
             maxLength={1000}
           />
           <p className="mt-1 text-[11px] text-muted-foreground">
-            Sem API pública gratuita — pesquise manualmente antes de preencher:{' '}
+            Sem API pública gratuita, pesquise manualmente antes de preencher:{' '}
             <a
               href="https://www.cenprot.org.br/"
               target="_blank"
@@ -622,7 +622,7 @@ export function FinancialForm({
                 <Input
                   value={displayValue(f.key)}
                   onChange={(e) => setField(f.key, e.target.value)}
-                  placeholder="—"
+                  placeholder="-"
                   inputMode="decimal"
                   className="h-8 text-sm tabular-nums"
                 />

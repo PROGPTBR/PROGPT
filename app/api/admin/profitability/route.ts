@@ -1204,14 +1204,14 @@ export async function GET(
 
           email:
             profile.email ??
-            '—',
+            '-',
 
           plan:
             subscription
               ?.plan_slug ??
             subscription
               ?.plan ??
-            '—',
+            '-',
 
           status:
             subscription

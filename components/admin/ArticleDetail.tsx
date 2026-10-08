@@ -129,7 +129,7 @@ useEffect(() => {
       onUpdated?.(article.id, { theme_status: 'canonical' });
       toast.success(
         data.promoted && data.promoted > 1
-          ? `Promovido — ${data.promoted} artigos atualizados`
+          ? `Promovido, ${data.promoted} artigos atualizados`
           : 'Promovido a canônico',
       );
     } catch (err) {

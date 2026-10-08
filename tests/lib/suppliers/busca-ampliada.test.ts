@@ -125,3 +125,14 @@ describe('internet', () => {
     expect(siteSeguro('http://loja.com.br/x')).toBe('http://loja.com.br/x');
   });
 });
+
+describe('juntarFornecedoresWeb', () => {
+  it('junta local + ampla sem repetir empresa (mesmo site ou mesmo nome) e respeita o limite', async () => {
+    const { juntarFornecedoresWeb } = await import('@/lib/suppliers/busca-ampliada');
+    const w = (nome: string, site: string | null) => ({ nome, site, telefone: null, cidade: null, uf: null, oQueVende: null });
+    const local = [w('Loja A', 'https://www.loja-a.com.br/'), w('Loja B', null)];
+    const amplo = [w('Loja A Matriz', 'https://loja-a.com.br/produtos'), w('loja b', null), w('Distribuidora C', 'https://c.com.br/')];
+    expect(juntarFornecedoresWeb([local, amplo]).map((f) => f.nome)).toEqual(['Loja A', 'Loja B', 'Distribuidora C']);
+    expect(juntarFornecedoresWeb([local, amplo], 2)).toHaveLength(2);
+  });
+});

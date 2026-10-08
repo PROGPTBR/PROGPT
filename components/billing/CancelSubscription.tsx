@@ -44,7 +44,7 @@ export function CancelSubscription({
       <div className="flex items-start gap-2 rounded-lg border border-border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
         <CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-500 flex-shrink-0" aria-hidden="true" />
         <span>
-          Cancelamento confirmado — <strong className="text-foreground">não haverá cobrança</strong>.
+          Cancelamento confirmado, <strong className="text-foreground">não haverá cobrança</strong>.
           {accessUntil ? ` Você mantém o acesso até ${accessUntil}.` : ''}
         </span>
       </div>

@@ -82,7 +82,7 @@ const faqs = [
   ],
   [
     'Qual a diferença para uma IA genérica?',
-    'O PROGPT reúne contexto, fluxos e assistentes desenhados para a rotina de Compras — com entregáveis práticos e linguagem da área.',
+    'O PROGPT reúne contexto, fluxos e assistentes desenhados para a rotina de Compras, com entregáveis práticos e linguagem da área.',
   ],
   [
     'Como a tecnologia da PROGPT torna as respostas mais rápidas e precisas ?',

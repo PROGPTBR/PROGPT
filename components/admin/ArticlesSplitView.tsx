@@ -286,7 +286,7 @@ export function ArticlesSplitView() {
                       return (
                         <>
                           <div className="text-xs text-muted-foreground font-mono truncate max-w-[420px]">
-                            {fn ?? '—'}
+                            {fn ?? '-'}
                           </div>
                           <div className="text-[11px] text-muted-foreground">
                             {[
@@ -303,7 +303,7 @@ export function ArticlesSplitView() {
                     })()}
                   </TableCell>
                   <TableCell className="text-right tabular-nums text-xs text-muted-foreground">
-                    {r.chunks_count ?? '—'}
+                    {r.chunks_count ?? '-'}
                   </TableCell>
                 </TableRow>
               ))}

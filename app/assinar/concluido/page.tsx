@@ -41,7 +41,7 @@ export default async function TrialConfirmedPage({
               </h1>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 Seus <strong className="text-foreground">3 dias grátis</strong> estão
-                liberados — sem cobrança agora. Enviamos um e-mail
+                liberados, sem cobrança agora. Enviamos um e-mail
                 {email ? (
                   <>
                     {' '}para <span className="font-medium text-brand">{email}</span>

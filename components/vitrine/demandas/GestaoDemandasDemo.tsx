@@ -68,7 +68,7 @@ const TOM_PRAZO: Record<PrazoTom, TomSelo> = {
   neutro: 'cinza',
 };
 
-const nomeDe = (id: string | undefined) => (id ? (pessoaPorId(id)?.nome ?? id) : '—');
+const nomeDe = (id: string | undefined) => (id ? (pessoaPorId(id)?.nome ?? id) : '-');
 const nomesDe = (ids: string[]) => ids.map(nomeDe).join(', ');
 
 export function GestaoDemandasDemo({ hojeIso }: { hojeIso: string }) {
@@ -82,7 +82,7 @@ export function GestaoDemandasDemo({ hojeIso }: { hojeIso: string }) {
       <VitrineCabecalho
         produto={PRODUTO}
         titulo="Gestão de Demandas"
-        descricao="Solicitações de Providência entre setores: quem pediu, quem responde, prazo, percentual de conclusão, histórico e validação da entrega — tudo rastreável em um só lugar."
+        descricao="Solicitações de Providência entre setores: quem pediu, quem responde, prazo, percentual de conclusão, histórico e validação da entrega, tudo rastreável em um só lugar."
       />
       <AvisoDemonstracao produto={PRODUTO} />
       <Abas abas={ABAS} ativa={aba} onChange={setAba} />
@@ -120,12 +120,12 @@ function VisaoGeral({ sps, hojeIso, onAbrir }: VisaoProps) {
         <Kpi label="Em atraso" valor={String(ind.emAtraso)} tom={ind.emAtraso ? 'alerta' : 'padrao'} />
         <Kpi
           label="Conclusão no prazo"
-          valor={ind.conclusaoNoPrazo === null ? '—' : `${ind.conclusaoNoPrazo}%`}
+          valor={ind.conclusaoNoPrazo === null ? '-' : `${ind.conclusaoNoPrazo}%`}
           detalhe="das SPs concluídas"
         />
         <Kpi
           label="Tempo médio"
-          valor={ind.tempoMedioDias === null ? '—' : `${ind.tempoMedioDias.toLocaleString('pt-BR')} dias`}
+          valor={ind.tempoMedioDias === null ? '-' : `${ind.tempoMedioDias.toLocaleString('pt-BR')} dias`}
           detalhe="da emissão à conclusão"
         />
       </div>
@@ -552,7 +552,7 @@ function ConteudoDetalhe({ sp, hojeIso }: { sp: Sp; hojeIso: string }) {
         <Campo rotulo={sp.responsaveis.length > 1 ? 'Responsáveis' : 'Responsável'} valor={nomesDe(sp.responsaveis)} />
         <Campo rotulo="Emissão" valor={formatarData(sp.dataEmissao)} />
         <Campo rotulo="Entrega prevista" valor={formatarData(sp.dataPrevista)} />
-        <Campo rotulo="Conclusão" valor={sp.dataConclusao ? formatarData(sp.dataConclusao) : '—'} />
+        <Campo rotulo="Conclusão" valor={sp.dataConclusao ? formatarData(sp.dataConclusao) : '-'} />
       </dl>
 
       <div>
@@ -570,7 +570,7 @@ function ConteudoDetalhe({ sp, hojeIso }: { sp: Sp; hojeIso: string }) {
         <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-sm">
           <div className="flex items-center gap-2 font-medium">
             <Clock className="h-4 w-4 text-amber-600" aria-hidden="true" />
-            Prorrogação de {sp.prorrogacao.dias} dias —{' '}
+            Prorrogação de {sp.prorrogacao.dias} dias -{' '}
             {sp.prorrogacao.situacao === 'pendente'
               ? 'aguardando aprovação'
               : sp.prorrogacao.situacao === 'aprovada'

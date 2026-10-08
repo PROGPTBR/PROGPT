@@ -46,23 +46,23 @@ const FEATURE_CARDS = [
       'Acesse conhecimento aplicado em Strategic Sourcing, Kraljic, Porter, negociação, fornecedores, contratos e custos.<br/>Pergunte como faria a um profissional sênior da área e receba apoio para analisar, estruturar e decidir melhor.',
     image:
       'https://images.unsplash.com/photo-1568667256549-094345857637?w=800&h=600&q=80&auto=format&fit=crop',
-    alt: 'Biblioteca em espiral repleta de livros — base de conhecimento curada',
+    alt: 'Biblioteca em espiral repleta de livros, base de conhecimento curada',
   },
   {
     title: 'Dezenas de assistentes que executam',
     blurb:
-      'Perfil de Categoria, ABC, Porter, Busca de Fornecedores, Kraljic, RFP, Negociação, Análise Financeira — cada passo do Strategic Sourcing com um assistente próprio que entrega o artefato pronto em .docx/.xlsx.',
+      'Perfil de Categoria, ABC, Porter, Busca de Fornecedores, Kraljic, RFP, Negociação, Análise Financeira, cada passo do Strategic Sourcing com um assistente próprio que entrega o artefato pronto em .docx/.xlsx.',
     image:
       'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=800&h=600&q=80&auto=format&fit=crop',
-    alt: 'Documentos financeiros e calculadora — artefatos prontos para usar',
+    alt: 'Documentos financeiros e calculadora, artefatos prontos para usar',
   },
   {
     title: 'Base curada',
     blurb:
-      'Retrieval híbrido (vetorial + lexical + rerank) com gate de relevância — sem alucinação, sem citação fake. Quando não tem fonte na base, o bot diz.',
+      'Retrieval híbrido (vetorial + lexical + rerank) com gate de relevância, sem alucinação, sem citação fake. Quando não tem fonte na base, o bot diz.',
     image:
       'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=800&h=600&q=80&auto=format&fit=crop',
-    alt: 'Mão assinando um contrato — fundamentação documentada',
+    alt: 'Mão assinando um contrato, fundamentação documentada',
   },
 ];
 
@@ -75,7 +75,7 @@ const USE_CASES = [
     href: '/assistants/kraljic',
     image:
       'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200&h=800&q=80&auto=format&fit=crop',
-    alt: 'Dashboard de analytics com gráficos — visualização de portfólio',
+    alt: 'Dashboard de analytics com gráficos, visualização de portfólio',
   },
 ];
 
@@ -84,7 +84,7 @@ const STEPS = [
     n: 1,
     title: 'Pergunte',
     blurb:
-      'Texto livre, PT ou EN. Faça a pergunta como faria para um colega sênior — sem reescrever em "linguagem de IA".',
+      'Texto livre, PT ou EN. Faça a pergunta como faria para um colega sênior, sem reescrever em "linguagem de IA".',
   },
   {
     n: 2,
@@ -96,7 +96,7 @@ const STEPS = [
     n: 3,
     title: 'Aplique',
     blurb:
-      'Receba uma resposta com profundidade de especialista — ou, se for um assistente, um artefato pronto em .docx / .xlsx.',
+      'Receba uma resposta com profundidade de especialista, ou, se for um assistente, um artefato pronto em .docx / .xlsx.',
   },
 ];
 
@@ -104,7 +104,7 @@ const BENEFITS = [
   {
     icon: Layers,
     title: 'Retrieval híbrido',
-    blurb: 'Vetorial + lexical FTS + Cohere rerank — nunca só cosine.',
+    blurb: 'Vetorial + lexical FTS + Cohere rerank, nunca só cosine.',
   },
   {
     icon: ShieldCheck,
@@ -128,7 +128,7 @@ const BENEFITS = [
     icon: Clock,
     title: 'Histórico persistente',
     blurb:
-      'Cada conversa e cada RFP/análise fica salva — recuperável a qualquer momento.',
+      'Cada conversa e cada RFP/análise fica salva, recuperável a qualquer momento.',
   },
   {
     icon: Zap,
@@ -361,7 +361,7 @@ const isDark = !mounted || resolvedTheme !== 'light';
             </h1>
             <p className="text-lg md:text-xl text-gray-300 mb-10 max-w-xl mx-auto reveal reveal-delay-1 leading-relaxed font-light">
               Um especialista de procurement com a clareza de quem leu Kraljic,
-              Porter, Monczka e Cousins — e a velocidade da IA.
+              Porter, Monczka e Cousins, e a velocidade da IA.
             </p>
             <div className="reveal reveal-delay-2 flex flex-wrap gap-3 justify-center">
               <Link
@@ -767,7 +767,7 @@ const isDark = !mounted || resolvedTheme !== 'light';
                 <span className="text-brand">sem fricção.</span>
               </h2>
               <p className="text-gray-300 mb-8 leading-relaxed">
-                Crie sua conta grátis em minutos — chat especialista ilimitado
+                Crie sua conta grátis em minutos, chat especialista ilimitado
                 e uma execução de cada assistente por conta da casa.
               </p>
               <Link
@@ -789,7 +789,7 @@ const isDark = !mounted || resolvedTheme !== 'light';
                 <BrandLogo size="lg" />
               </div>
               <p className="text-sm text-gray-500 leading-relaxed">
-                PROGPT — plataforma 2B Supply. Inteligência aplicada para cada
+                PROGPT, plataforma 2B Supply. Inteligência aplicada para cada
                 passo do Strategic Sourcing.
               </p>
             </div>

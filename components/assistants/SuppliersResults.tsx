@@ -214,7 +214,7 @@ export function SuppliersResults({
             <p className="text-xs text-muted-foreground">
               {totalLabel} {response.total === 1 ? 'empresa' : 'empresas'}
               {response.total >= 500
-                ? ' (limitado a 500 — refine para ver mais)'
+                ? ' (limitado a 500, refine para ver mais)'
                 : ''}
             </p>
           </div>

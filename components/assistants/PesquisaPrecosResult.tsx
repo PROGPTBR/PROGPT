@@ -10,6 +10,7 @@ import { SendEmailButton } from './SendEmailButton';
 import type { ItemSemAmostra } from './PesquisaPrecosAssistant';
 import { PRICING_NCM_DISCLAIMER } from '@/lib/legal/disclaimers';
 import type { PrecoAproximadoResult } from '@/lib/assistants/precos-aproximado';
+import { semTravessao } from '@/lib/texto/sem-travessao';
 
 type Props = {
   markdown: string;
@@ -66,7 +67,7 @@ export function PesquisaPrecosResult({
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="text-sm">
           <div className="text-muted-foreground">
-            Mapa de preços — {titulo.slice(0, 80)}
+            Mapa de preços, {titulo.slice(0, 80)}
             {titulo.length > 80 ? '…' : ''}
           </div>
           {generating && (
@@ -91,7 +92,7 @@ export function PesquisaPrecosResult({
             Copiar
           </Button>
           <SendEmailButton
-            subject={`Mapa de preços — ${titulo.slice(0, 60)}`}
+            subject={`Mapa de preços, ${titulo.slice(0, 60)}`}
             body={markdown}
             disabled={generating}
           />
@@ -113,7 +114,7 @@ export function PesquisaPrecosResult({
             ~10-25 segundos.
           </p>
         ) : (
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{markdown}</ReactMarkdown>
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{semTravessao(markdown)}</ReactMarkdown>
         )}
         {generating && markdown.length > 0 && (
           <span className="inline-block w-2 h-4 bg-primary/50 align-middle animate-pulse ml-1" />
@@ -211,7 +212,7 @@ function ItemAproximadoRow({ item }: { item: ItemSemAmostra }) {
             {result.ncm && (
               <span>
                 <span className="text-muted-foreground">NCM:</span> {result.ncm}
-                {result.ncmDescricao ? ` — ${result.ncmDescricao}` : ''}
+                {result.ncmDescricao ? `, ${result.ncmDescricao}` : ''}
               </span>
             )}
             <span className="rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 px-2 py-0.5 font-medium">

@@ -221,7 +221,7 @@ export function BuscaAmpliadaResultados({ estado }: { estado: EstadoBuscaAmpliad
           )}
         </h2>
         <p className="mt-1 text-xs text-muted-foreground">
-          Resultado de busca na web — confirme preço, estoque e dados antes de comprar.
+          Resultado de busca na web, confirme preço, estoque e dados antes de comprar.
         </p>
 
         {web.erro ? (

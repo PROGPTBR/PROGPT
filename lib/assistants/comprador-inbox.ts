@@ -1,4 +1,5 @@
 import { generateObject } from 'ai';
+import { semTravessaoProfundo } from '@/lib/texto/sem-travessao';
 import { createOpenAI } from '@ai-sdk/openai';
 import { getOpenAIModel } from '@/lib/llm/openai';
 import { z } from 'zod';
@@ -34,7 +35,7 @@ export const ReplySchema = z.object({
 export type DraftedReply = z.infer<typeof ReplySchema>;
 
 const TONE_HINT: Record<CompradorTone, string> = {
-  cordial: 'cordial e profissional — parceiro, mas objetivo',
+  cordial: 'cordial e profissional, parceiro, mas objetivo',
   formal: 'formal e protocolar',
   firme: 'firme e assertivo, deixando claras as condições, sem ser ríspido',
 };
@@ -78,7 +79,8 @@ Regras do comprador (respeite SEMPRE): ${settings.rules.trim() || '(nenhuma regr
 Princípios:
 - Seja claro, educado e acionável. Peça APENAS dados realmente faltantes (com base nos alertas/desvios).
 - Ao negociar, fundamente em fatos da análise (preço fora da curva, prazo, condição de pagamento) — nunca invente números.
-- NUNCA prometa fechamento/pedido — toda decisão depende de aprovação interna de Compras.
+- NUNCA prometa fechamento/pedido: toda decisão depende de aprovação interna de Compras.
+- NUNCA use travessão (— ou –): use vírgula, ponto ou dois-pontos.
 - Português do Brasil, sem placeholders ("[nome]", "[empresa]"): escreva o texto final.
 - Se houver assinatura fornecida, encerre com ela.`;
 
@@ -110,7 +112,7 @@ Redija o e-mail de resposta (subject curto + body pronto pra enviar).`;
   })();
 
   return {
-    reply: out.object,
+    reply: semTravessaoProfundo(out.object),
     usage: {
       tokensIn: out.usage.promptTokens,
       tokensOut: out.usage.completionTokens,
