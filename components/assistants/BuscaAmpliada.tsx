@@ -22,25 +22,46 @@ export type RespostaBuscaAmpliada = {
   web: { fornecedores: FornecedorWeb[]; texto: string | null; erro: string | null };
 };
 
-export type EstadoBuscaAmpliada =
-  | { status: 'carregando'; consulta: string }
-  | { status: 'pronto'; consulta: string; resposta: RespostaBuscaAmpliada }
-  | { status: 'erro'; consulta: string; mensagem: string };
+/** Cada lado chega quando fica pronto: a vendor list na hora, a internet depois. */
+export type EstadoBuscaAmpliada = {
+  consulta: string;
+  vendorList: RespostaBuscaAmpliada['vendorList'] | 'carregando';
+  web: RespostaBuscaAmpliada['web'] | 'carregando';
+};
 
-export async function rodarBuscaAmpliada(consulta: string): Promise<EstadoBuscaAmpliada> {
-  try {
-    const res = await fetch('/api/suppliers/busca-ampliada', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ consulta }),
-    });
-    if (res.status === 429) {
-      return { status: 'erro', consulta, mensagem: 'Limite de buscas atingido. Tente de novo em instantes.' };
-    }
-    if (!res.ok) return { status: 'erro', consulta, mensagem: 'A busca ampliada não respondeu agora.' };
-    return { status: 'pronto', consulta, resposta: (await res.json()) as RespostaBuscaAmpliada };
-  } catch {
-    return { status: 'erro', consulta, mensagem: 'A busca ampliada não respondeu agora.' };
+export function estadoInicialBuscaAmpliada(consulta: string): EstadoBuscaAmpliada {
+  return { consulta, vendorList: 'carregando', web: 'carregando' };
+}
+
+/** Dispara as duas buscas em paralelo e avisa cada uma quando termina. */
+export function rodarBuscaAmpliada(
+  consulta: string,
+  aoChegar: <K extends 'vendorList' | 'web'>(parte: K, valor: RespostaBuscaAmpliada[K]) => void,
+): void {
+  const falhaVendor = (erro: string) => ({ total: 0, categorias: [], resultados: [], erro });
+  const falhaWeb = (erro: string) => ({ fornecedores: [], texto: null, erro });
+  for (const parte of ['vendorList', 'web'] as const) {
+    void (async () => {
+      let erro = parte === 'web' ? 'A busca na internet não respondeu agora. Tente de novo em instantes.' : 'Não consegui ler a vendor list agora.';
+      try {
+        const res = await fetch('/api/suppliers/busca-ampliada', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ consulta, parte }),
+        });
+        if (res.ok) {
+          const json = (await res.json()) as Partial<RespostaBuscaAmpliada>;
+          const valor = json[parte];
+          if (valor) { aoChegar(parte, valor as RespostaBuscaAmpliada[typeof parte]); return; }
+        } else if (res.status === 429) {
+          erro = 'Muitas buscas seguidas. Tente de novo em instantes.';
+        }
+      } catch {
+        /* cai no erro abaixo */
+      }
+      if (parte === 'web') aoChegar('web', falhaWeb(erro));
+      else aoChegar('vendorList', falhaVendor(erro));
+    })();
   }
 }
 
@@ -121,24 +142,15 @@ const VISIVEIS_VENDOR_LIST = 12;
 export function BuscaAmpliadaResultados({ estado }: { estado: EstadoBuscaAmpliada }) {
   const [todos, setTodos] = useState(false);
 
-  if (estado.status === 'carregando') {
-    return (
-      <div className="mb-6 flex items-center gap-2 rounded-2xl border border-brand/30 bg-brand/5 px-4 py-3 text-sm text-muted-foreground">
-        <Loader2 className="h-4 w-4 animate-spin text-brand" aria-hidden="true" />
-        Procurando também na sua vendor list e na internet…
-      </div>
-    );
-  }
-  if (estado.status === 'erro') {
-    return (
-      <div className="mb-6 rounded-2xl border border-border bg-card px-4 py-3 text-sm text-muted-foreground">
-        {estado.mensagem}
-      </div>
-    );
-  }
-
-  const { vendorList, web } = estado.resposta;
-  const lista = todos ? vendorList.resultados : vendorList.resultados.slice(0, VISIVEIS_VENDOR_LIST);
+  const carregando = (texto: string) => (
+    <p className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
+      <Loader2 className="h-4 w-4 animate-spin text-brand" aria-hidden="true" />
+      {texto}
+    </p>
+  );
+  const vendorList = estado.vendorList === 'carregando' ? null : estado.vendorList;
+  const web = estado.web === 'carregando' ? null : estado.web;
+  const lista = !vendorList ? [] : todos ? vendorList.resultados : vendorList.resultados.slice(0, VISIVEIS_VENDOR_LIST);
 
   return (
     <div className="mb-6 grid gap-4 lg:grid-cols-2">
@@ -147,17 +159,21 @@ export function BuscaAmpliadaResultados({ estado }: { estado: EstadoBuscaAmpliad
         <h2 className="flex items-center gap-2 text-sm font-medium">
           <FileSpreadsheet className="h-4 w-4 text-brand" aria-hidden="true" />
           Na sua vendor list
-          <span className="text-xs font-normal text-muted-foreground">
-            {vendorList.resultados.length} de {vendorList.total.toLocaleString('pt-BR')}
-          </span>
+          {vendorList && (
+            <span className="text-xs font-normal text-muted-foreground">
+              {vendorList.resultados.length} de {vendorList.total.toLocaleString('pt-BR')}
+            </span>
+          )}
         </h2>
-        {vendorList.categorias.length > 0 && (
+        {vendorList && vendorList.categorias.length > 0 && (
           <p className="mt-1 text-xs text-muted-foreground">
             Grupos relacionados: {vendorList.categorias.join(', ')}
           </p>
         )}
 
-        {vendorList.erro ? (
+        {!vendorList ? (
+          carregando('Procurando na sua vendor list…')
+        ) : vendorList.erro ? (
           <p className="mt-3 text-sm text-muted-foreground">{vendorList.erro}</p>
         ) : vendorList.total === 0 ? (
           <p className="mt-3 text-sm text-muted-foreground">
@@ -200,7 +216,7 @@ export function BuscaAmpliadaResultados({ estado }: { estado: EstadoBuscaAmpliad
             ))}
           </ul>
         )}
-        {vendorList.resultados.length > VISIVEIS_VENDOR_LIST && (
+        {vendorList && vendorList.resultados.length > VISIVEIS_VENDOR_LIST && (
           <button
             type="button"
             onClick={() => setTodos((v) => !v)}
@@ -216,7 +232,7 @@ export function BuscaAmpliadaResultados({ estado }: { estado: EstadoBuscaAmpliad
         <h2 className="flex items-center gap-2 text-sm font-medium">
           <Globe className="h-4 w-4 text-brand" aria-hidden="true" />
           Na internet
-          {web.fornecedores.length > 0 && (
+          {web && web.fornecedores.length > 0 && (
             <span className="text-xs font-normal text-muted-foreground">{web.fornecedores.length} encontrados</span>
           )}
         </h2>
@@ -224,7 +240,9 @@ export function BuscaAmpliadaResultados({ estado }: { estado: EstadoBuscaAmpliad
           Resultado de busca na web, confirme preço, estoque e dados antes de comprar.
         </p>
 
-        {web.erro ? (
+        {!web ? (
+          carregando('Procurando na internet… costuma levar uns 15 segundos.')
+        ) : web.erro ? (
           <p className="mt-3 text-sm text-muted-foreground">{web.erro}</p>
         ) : web.fornecedores.length > 0 ? (
           <ul className="mt-3 divide-y divide-border">

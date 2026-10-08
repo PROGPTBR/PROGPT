@@ -45,26 +45,34 @@ export async function GET(): Promise<Response> {
   }
 }
 
-const BodySchema = z.object({ consulta: z.string().trim().min(3).max(500) });
+// `parte` deixa a tela pedir a vendor list e a internet separadas: a vendor
+// list (rápida) aparece na hora e a internet (uns 15 s) chega depois.
+const BodySchema = z.object({
+  consulta: z.string().trim().min(3).max(500),
+  parte: z.enum(['vendorList', 'web', 'tudo']).optional().default('tudo'),
+});
 
 export async function POST(req: Request): Promise<Response> {
   const r = await equipeOu404();
   if (r.erro) return r.erro;
 
-  const rl = await checkChatRateLimit();
-  if (!rl.allowed) {
-    return NextResponse.json(
-      { error: 'rate_limited', retry_after_secs: rl.retryAfterSecs },
-      { status: 429, headers: { 'Retry-After': String(rl.retryAfterSecs) } },
-    );
-  }
-
   const body = BodySchema.safeParse(await req.json().catch(() => null));
   if (!body.success) return NextResponse.json({ error: 'invalid_body' }, { status: 400 });
-  const { consulta } = body.data;
+  const { consulta, parte } = body.data;
+
+  // Só a busca na internet conta no limite: é a parte cara.
+  if (parte !== 'vendorList') {
+    const rl = await checkChatRateLimit();
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: 'rate_limited', retry_after_secs: rl.retryAfterSecs },
+        { status: 429, headers: { 'Retry-After': String(rl.retryAfterSecs) } },
+      );
+    }
+  }
 
   // Vendor list e internet em paralelo; uma falhar não derruba a outra.
-  const vendorListP = (async () => {
+  const vendorListP = parte === 'web' ? Promise.resolve(null as never) : (async () => {
     try {
       const rows = await carregarVendorListDaEquipe(r.equipe);
       const categorias = await escolherCategorias(consulta, categoriasDistintas(rows));
@@ -80,6 +88,8 @@ export async function POST(req: Request): Promise<Response> {
     }
   })();
 
+  if (parte === 'vendorList') return NextResponse.json({ consulta, vendorList: await vendorListP });
+  if (parte === 'web') return NextResponse.json({ consulta, web: await buscarFornecedoresNaWeb(consulta) });
   const [vendorList, web] = await Promise.all([vendorListP, buscarFornecedoresNaWeb(consulta)]);
   return NextResponse.json({ consulta, vendorList, web });
 }

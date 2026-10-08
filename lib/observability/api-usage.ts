@@ -83,6 +83,7 @@ export type ApiOperation =
   | 'govdata-catmat-pick'
   | 'govdata-catmat-suggest'
   | 'comprador-analyze'
+  | 'comprador-condense'
   | 'comprador-draft-reply'
   | 'assistant-indicadores-leitura'
   | 'assistant-spend-extract'

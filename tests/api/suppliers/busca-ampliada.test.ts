@@ -36,10 +36,9 @@ function mockServer() {
     escolherCategorias: vi.fn().mockResolvedValue(['AÇO']),
     buscarFornecedoresNaWeb: web,
   }));
-  vi.doMock('@/lib/rate-limit', () => ({
-    checkChatRateLimit: vi.fn().mockResolvedValue({ allowed: true }),
-  }));
-  return { carregar, web };
+  const rl = vi.fn().mockResolvedValue({ allowed: true });
+  vi.doMock('@/lib/rate-limit', () => ({ checkChatRateLimit: rl }));
+  return { carregar, web, rl };
 }
 
 function post(body: unknown) {
@@ -104,5 +103,27 @@ describe('/api/suppliers/busca-ampliada', () => {
     const { GET } = await import('@/app/api/suppliers/busca-ampliada/route');
     const json = await (await GET()).json();
     expect(json).toEqual({ equipe: 'Costa Feitosa', total: 1, categorias: 1 });
+  });
+
+  it('parte vendorList responde só a vendor list, sem internet e sem gastar o limite', async () => {
+    mockAuth(LIBERADA);
+    const { web, rl } = mockServer();
+    const { POST } = await import('@/app/api/suppliers/busca-ampliada/route');
+    const json = await (await POST(post({ consulta: 'vergalhão', parte: 'vendorList' }))).json();
+    expect(json.vendorList.resultados[0].razaoSocial).toBe('GERDAU');
+    expect(json.web).toBeUndefined();
+    expect(web).not.toHaveBeenCalled();
+    expect(rl).not.toHaveBeenCalled();
+  });
+
+  it('parte web responde só a internet e conta no limite', async () => {
+    mockAuth(LIBERADA);
+    const { carregar, rl } = mockServer();
+    const { POST } = await import('@/app/api/suppliers/busca-ampliada/route');
+    const json = await (await POST(post({ consulta: 'vergalhão', parte: 'web' }))).json();
+    expect(json.web.fornecedores[0].nome).toBe('Loja X');
+    expect(json.vendorList).toBeUndefined();
+    expect(carregar).not.toHaveBeenCalled();
+    expect(rl).toHaveBeenCalled();
   });
 });

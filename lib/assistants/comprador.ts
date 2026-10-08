@@ -1,4 +1,5 @@
-import { generateObject } from 'ai';
+import { generateObject, generateText } from 'ai';
+import { recordApiUsage } from '@/lib/observability/api-usage';
 import { semTravessaoProfundo } from '@/lib/texto/sem-travessao';
 import { createOpenAI } from '@ai-sdk/openai';
 import { getOpenAIModel } from '@/lib/llm/openai';
@@ -141,6 +142,89 @@ Escreva em português simples, para quem não é especialista. NUNCA use travess
 
 A análise é assistiva e baseada apenas nas propostas fornecidas — não substitui a cotação oficial nem a aprovação formal de Compras. Na dúvida, escale.`;
 
+// ─── Lote grande: toda proposta entra na análise (2026-10-08) ─────────────
+// Com dezenas de documentos o texto passa do que cabe numa leitura só e as
+// últimas propostas ficariam de fora. Então cada proposta é condensada em
+// paralelo (sem perder item, quantidade, preço ou condição) e a comparação
+// roda sobre todas.
+
+export type DocumentoProposta = { titulo: string; texto: string };
+
+/** Separa as propostas pelo cabeçalho "### Documento: <arquivo>" da importação. */
+export function dividirPropostas(texto: string): DocumentoProposta[] {
+  const partes = texto.split(/^### Documento:\s*/m);
+  const docs: DocumentoProposta[] = [];
+  const antes = partes[0]!.trim();
+  if (antes) docs.push({ titulo: 'Proposta colada', texto: antes });
+  for (const p of partes.slice(1)) {
+    const quebra = p.indexOf('\n');
+    const titulo = (quebra < 0 ? p : p.slice(0, quebra)).trim() || 'Documento';
+    const corpo = (quebra < 0 ? '' : p.slice(quebra + 1)).trim();
+    if (corpo) docs.push({ titulo, texto: corpo });
+  }
+  return docs;
+}
+
+export const LOTE_GRANDE_CARACTERES = 60_000;
+export const LOTE_GRANDE_DOCUMENTOS = 6;
+
+export function precisaCondensar(docs: DocumentoProposta[]): boolean {
+  const total = docs.reduce((n, d) => n + d.texto.length, 0);
+  return docs.length > LOTE_GRANDE_DOCUMENTOS || total > LOTE_GRANDE_CARACTERES;
+}
+
+const CONDENSAR_SYSTEM = `Você extrai os dados de UMA proposta comercial de fornecedor para comparação de compras.
+Reescreva a proposta de forma compacta, SEM omitir nada que importe para comparar:
+- Fornecedor (nome, CNPJ se houver) e contato.
+- TODOS os itens, um por linha: descrição/especificação, marca, quantidade, unidade, preço unitário e total.
+- Frete, impostos (inclusos ou não), descontos, condição de pagamento, prazo de entrega, validade, garantia.
+- Exceções, ressalvas, itens não cotados e observações.
+Nunca resuma vários itens num só, nunca invente valores: o que não estiver na proposta, escreva "não informado".
+Responda só com o texto compacto, em português, sem travessão.`;
+
+async function condensarProposta(doc: DocumentoProposta, model: string, openai: ReturnType<typeof createOpenAI>): Promise<string> {
+  try {
+    const out = await generateText({
+      model: openai(model),
+      system: CONDENSAR_SYSTEM,
+      messages: [{ role: 'user', content: `Arquivo: ${doc.titulo}\n\n${doc.texto}` }],
+    });
+    void recordApiUsage({
+      provider: 'openai',
+      operation: 'comprador-condense',
+      model,
+      tokensIn: out.usage.promptTokens,
+      tokensOut: out.usage.completionTokens,
+      callCount: 1,
+    });
+    return out.text.trim() || doc.texto.slice(0, 15_000);
+  } catch (err) {
+    // Falhou a condensação: a proposta entra assim mesmo (começo do texto),
+    // nunca some da análise.
+    console.warn('[comprador] condensar falhou:', doc.titulo, err instanceof Error ? err.message : err);
+    return doc.texto.slice(0, 15_000);
+  }
+}
+
+/** Condensa todas as propostas, algumas ao mesmo tempo, mantendo a ordem. */
+export async function condensarTodas(
+  docs: DocumentoProposta[],
+  condensar: (d: DocumentoProposta) => Promise<string>,
+  simultaneos = 5,
+): Promise<string[]> {
+  const out: string[] = new Array(docs.length);
+  let proximo = 0;
+  await Promise.all(
+    Array.from({ length: Math.min(simultaneos, docs.length) }, async () => {
+      while (proximo < docs.length) {
+        const i = proximo++;
+        out[i] = await condensar(docs[i]!);
+      }
+    }),
+  );
+  return out;
+}
+
 export async function analyzeComprador(input: CompradorInput): Promise<{
   result: CompradorResult;
   usage: { tokensIn: number; tokensOut: number; tokensCached: number };
@@ -149,6 +233,17 @@ export async function analyzeComprador(input: CompradorInput): Promise<{
   const openai = createOpenAI({ apiKey: requireEnv('OPENAI_API_KEY') });
   const model = getOpenAIModel('generation');
 
+  const docs = dividirPropostas(input.propostas);
+  let propostas = input.propostas;
+  if (precisaCondensar(docs)) {
+    const condensadas = await condensarTodas(docs, (d) => condensarProposta(d, model, openai));
+    propostas = docs.map((d, i) => `### Documento: ${d.titulo}\n${condensadas[i]}`).join('\n\n');
+  }
+  const listaDocs =
+    docs.length > 1
+      ? `\n\nSão ${docs.length} documentos. Analise TODOS, sem deixar nenhum de fora: ${docs.map((d) => d.titulo).join('; ')}.`
+      : '';
+
   const out = await generateObject({
     model: openai(model),
     system: SYSTEM_PROMPT,
@@ -156,7 +251,7 @@ export async function analyzeComprador(input: CompradorInput): Promise<{
     messages: [
       {
         role: 'user',
-        content: `Compare as propostas, detecte desvios de política e gere o rascunho de PO.
+        content: `Compare as propostas, detecte desvios de política e gere o rascunho de PO.${listaDocs}
 
 ESCOPO / REQUISIÇÃO:
 ${input.escopo || '(não detalhado)'}
@@ -165,7 +260,7 @@ PEDIDO DE COTAÇÃO (documento de referência — compare cada proposta contra i
 ${input.pedidoCotacao || '(não fornecido — compare as propostas apenas entre si por TCO, sem checar contra um pedido original; comparativo_itens e itens_nao_solicitados ficam vazios)'}
 
 PROPOSTAS RECEBIDAS:
-${input.propostas}
+${propostas}
 
 POLÍTICA DE COMPRAS / BASE HOMOLOGADA:
 ${input.politica || '(não fornecida — avalie por boas práticas e pela alçada)'}`,

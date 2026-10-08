@@ -29,6 +29,7 @@ import {
   BuscaAmpliadaResultados,
   VendorListCartao,
   rodarBuscaAmpliada,
+  estadoInicialBuscaAmpliada,
   type EstadoBuscaAmpliada,
 } from './BuscaAmpliada';
 
@@ -262,17 +263,14 @@ export function SuppliersAssistant({
     // Busca ampliada roda em paralelo com o CNAE e não depende dele: mesmo
     // quando a Receita não acha nada, a vendor list e a internet aparecem.
     if (buscaAmpliada) {
-      setAmpliada({
-        status: 'carregando',
-        consulta: query,
-      });
-      void rodarBuscaAmpliada(query).then(
-        (estado) =>
-          setAmpliada((atual) =>
-            atual?.consulta === query
-              ? estado
-              : atual,
-          ),
+      setAmpliada(estadoInicialBuscaAmpliada(query));
+      // Cada lado entra na tela assim que fica pronto.
+      rodarBuscaAmpliada(query, (parte, valor) =>
+        setAmpliada((atual) =>
+          atual?.consulta === query
+            ? { ...atual, [parte]: valor }
+            : atual,
+        ),
       );
     }
 
