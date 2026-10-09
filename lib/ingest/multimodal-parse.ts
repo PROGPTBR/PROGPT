@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { Block } from '@/lib/ingest/types';
+import { apagarArquivoOpenAI } from '@/lib/llm/openai-files';
 import { getOpenAI, getOpenAIModel, withRateLimitRetry } from '@/lib/llm/openai';
 import { recordApiUsage } from '@/lib/observability/api-usage';
 
@@ -198,6 +199,8 @@ async function callOpenAI(
     async () => {
       const res = await ai.responses.create(
         {
+          // Sem guardar a resposta na OpenAI (privacidade, sub-projeto 82).
+          store: false,
           model,
           input: [
             {
@@ -300,5 +303,6 @@ async function parsePdfMultimodalViaFiles(
     return { blocks };
   } finally {
     clearTimeout(timer);
+    void apagarArquivoOpenAI(fileId);
   }
 }

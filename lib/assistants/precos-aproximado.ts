@@ -107,6 +107,8 @@ export async function buscarPrecoAproximado(input: {
     const model = getOpenAIModel('routing');
     const res = await ai.responses.create(
       {
+        // Sem guardar a resposta na OpenAI (privacidade, sub-projeto 82).
+        store: false,
         model,
         tools: [{ type: 'web_search' } as never],
         input: buildPrompt(input.descricao, input.unidade),

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { apagarArquivoOpenAI } from '@/lib/llm/openai-files';
 import { getOpenAI, getOpenAIModel } from '@/lib/llm/openai';
 import { recordApiUsage, type ApiOperation } from '@/lib/observability/api-usage';
 import { SPEND_CATEGORIES, coerceSpendCategory } from './taxonomy';
@@ -105,6 +106,7 @@ export async function extractInvoiceFromPdf(input: {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
+  let arquivoEnviado: string | null = null;
   try {
     let pdfPart: PdfPart;
     if (input.buf.length < INLINE_LIMIT_BYTES) {
@@ -121,11 +123,14 @@ export async function extractInvoiceFromPdf(input: {
         }),
         purpose: 'user_data',
       });
+      arquivoEnviado = file.id;
       pdfPart = { type: 'input_file', file_id: file.id };
     }
 
     const res = await ai.responses.create(
       {
+        // Sem guardar a resposta na OpenAI (privacidade, sub-projeto 82).
+        store: false,
         model,
         input: [
           {
@@ -192,6 +197,7 @@ export async function extractInvoiceFromPdf(input: {
     throw new SpendExtractError('parse_failed', message);
   } finally {
     clearTimeout(timer);
+    void apagarArquivoOpenAI(arquivoEnviado);
   }
 }
 

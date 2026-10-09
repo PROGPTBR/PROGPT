@@ -165,7 +165,7 @@ async function buscarAngulo(consulta: string, angulo: Angulo): Promise<Resultado
     const ai = getOpenAI();
     const model = getOpenAIModel('routing');
     const res = await ai.responses.create(
-      { model, tools: [{ type: 'web_search', search_context_size: 'high' } as never], input: promptWeb(consulta, angulo) },
+      { model, store: false, tools: [{ type: 'web_search', search_context_size: 'high' } as never], input: promptWeb(consulta, angulo) },
       { signal: controller.signal },
     );
     const out = res as { output_text?: string; usage?: { input_tokens?: number; output_tokens?: number } };

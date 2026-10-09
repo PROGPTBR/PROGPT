@@ -51,6 +51,8 @@ export async function describeImageWithVision({
   try {
     const res = await ai.responses.create(
       {
+        // Sem guardar a resposta na OpenAI (privacidade, sub-projeto 82).
+        store: false,
         model,
         input: [
           {

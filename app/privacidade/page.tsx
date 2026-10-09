@@ -102,7 +102,9 @@ compras públicas, não dados pessoais seus.
 **Uso pela IA**: o conteúdo enviado aos provedores de IA é usado só para
 gerar a resposta pedida. A OpenAI não usa dados recebidos pela API para
 treinar seus modelos e pode guardá-los por até 30 dias para
-monitoramento de abuso, conforme a política dela. Seus documentos e
+monitoramento de abuso, conforme a política dela. Pedimos que as
+respostas não fiquem armazenadas na OpenAI e apagamos de lá os arquivos
+enviados assim que são lidos. Seus documentos e
 conversas não são incorporados à base de conhecimento do ${PRODUCT_NAME}.
 
 **Acesso da nossa equipe**: para prestar suporte, a equipe ${COMPANY_NAME}

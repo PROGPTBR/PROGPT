@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { apagarArquivoOpenAI } from '@/lib/llm/openai-files';
 import {
   getOpenAI,
   getOpenAIModel,
@@ -151,6 +152,7 @@ export async function extractFinancialFromPdf(input: {
     TIMEOUT_MS,
   );
 
+  let arquivoEnviado: string | null = null;
   try {
     let pdfPart: PdfPart;
 
@@ -193,6 +195,7 @@ export async function extractFinancialFromPdf(input: {
             'user_data',
         });
 
+      arquivoEnviado = file.id;
       pdfPart = {
         type: 'input_file',
         file_id: file.id,
@@ -206,6 +209,8 @@ export async function extractFinancialFromPdf(input: {
     const res =
       await ai.responses.create(
         {
+          // Sem guardar a resposta na OpenAI (privacidade, sub-projeto 82).
+          store: false,
           model,
 
           input: [
@@ -398,6 +403,7 @@ export async function extractFinancialFromPdf(input: {
     clearTimeout(
       timer,
     );
+    void apagarArquivoOpenAI(arquivoEnviado);
   }
 }
 
