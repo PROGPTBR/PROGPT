@@ -496,10 +496,10 @@ export function NovaLanding({
             PROGPT · uma plataforma 2BSUPPLY
           </div>
           <h1>
-           IA feita para quem{' '}
-            <span>
-              compra, negocia e decide.
-            </span>
+           A 1ª plataforma de{' '}
+            <span>IA Multiagente </span> de 
+             <span> suprimentos </span> 
+             do Brasil
           </h1>
           <p className='mb-3'>
            Uma IA especializada em Compras e Suprimentos para apoiar análises de propostas, fornecedores, TCO, contratos, riscos, negociação e Strategic Sourcing.
