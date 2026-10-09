@@ -37,9 +37,14 @@ Encarregado de Proteção de Dados (DPO) e canal de contato:
 |---|---|---|
 | **Email** | Cadastro | Login, recuperação de senha, comunicação transacional |
 | **Senha (hash)** | Cadastro | Autenticação. Nunca armazenamos senha em texto puro, apenas hash bcrypt via Supabase Auth |
-| **Nome completo** | Upgrade pra Pro | Emissão de nota fiscal pela Asaas |
-| **CPF** | Upgrade pra Pro | Identificação fiscal exigida pela Asaas. **Não armazenamos seu CPF no nosso banco de dados**, repassamos diretamente pra Asaas, que cuida do tratamento conforme política deles |
+| **Nome completo, telefone e empresa** | Cadastro / contratação | Identificação do cliente e cobrança |
+| **CPF ou CNPJ** | Cadastro / contratação | Identificação fiscal exigida na cobrança. Fica guardado no seu perfil e é repassado à Asaas |
+| **CEP e número do endereço** | Cadastro com cartão | Exigidos pela Asaas para validar o cartão. Repassados à Asaas |
+| **Dados do cartão** | Contratação | Repassados diretamente à Asaas no momento do pagamento. **Não ficam gravados no nosso banco de dados** |
 | **Conteúdo de chats** | Uso do chat | Gerar respostas via IA, manter histórico pra você acessar depois |
+| **Anexos e documentos enviados** | Chat, Equalizador, Análise de Gastos e outros assistentes | Ler o documento para gerar a análise pedida. O texto extraído fica no histórico da conversa ou da análise. **Seus documentos não entram na base de conhecimento** usada para responder outros clientes |
+| **Áudio (modo voz e ditado)** | Quando você usa o microfone | Transcrever e responder por voz. O áudio não é gravado no nosso banco; a transcrição fica no histórico da conversa |
+| **Bases de fornecedores e materiais** | Quando você importa ou cadastra | Organizar e pesquisar seus fornecedores e materiais |
 | **Parâmetros de assistentes** | Uso de assistentes | Gerar RFPs/análises/etc. Mantemos no histórico (\`assistant_runs\`) |
 | **Feedback** (👍/👎 + comentário) | Botões de feedback | Melhorar o produto |
 | **Perfil da Categoria** | Criação manual ou via upload | Personalizar respostas |
@@ -52,6 +57,8 @@ Encarregado de Proteção de Dados (DPO) e canal de contato:
 | **Cookies de sessão** | Login | Manter você autenticado (detalhes na [Política de Cookies](/cookies)) |
 | **Token Cloudflare Turnstile** | Signup / reset | Verificação anti-bot (verifique [docs da Cloudflare](https://www.cloudflare.com/turnstile/)) |
 | **Logs de uso de API** | Cada chamada LLM | Contabilidade interna de custos. Armazenamos *qual operação* e *quanto custou*, sem conteúdo |
+| **Registros técnicos (observabilidade)** | Cada resposta da IA | Medir tempo, custo e qualidade das etapas. Contém identificador pseudonimizado e métricas, **sem o conteúdo das conversas ou dos anexos** |
+| **Registro de acessos administrativos** | Ações da equipe | Auditoria: quem da nossa equipe fez o quê e quando |
 
 ### 2.3 Dados que NÃO coletamos
 
@@ -74,20 +81,40 @@ Compartilhamos dados estritamente com **operadores necessários pra prestação 
 
 | Operador | O que recebe | Finalidade |
 |---|---|---|
-| **Supabase** (Singapura/EUA) | Email, senha hash, conteúdo de chats, histórico de assistentes | Banco de dados + autenticação |
-| **Asaas** (Brasil) | Nome, CPF, email, valor da assinatura | Processamento de pagamento + emissão de NF |
-| **OpenAI** (EUA) | Conteúdo dos chats e prompts dos assistentes | Geração das respostas via gpt-4o-mini |
-| **Voyage AI** (EUA) | Trechos da sua pergunta + base de conhecimento | Embedding pra retrieval (RAG) |
-| **Cohere** (EUA/Canadá) | Trechos da pergunta + candidatos recuperados | Reranking dos resultados |
+| **Supabase** (EUA) | Email, senha hash, perfil, conteúdo de chats, histórico de assistentes, arquivos enviados | Banco de dados, autenticação e armazenamento de arquivos |
+| **Railway** (EUA) | Tráfego da aplicação e logs do servidor | Hospedagem da Plataforma e do serviço de consulta fiscal |
+| **OpenAI** (EUA) | Conteúdo dos chats, anexos, prompts dos assistentes, áudio do modo voz e termos de buscas na internet | Geração das respostas, leitura de documentos, voz e busca na web |
+| **Voyage AI** (EUA) | Texto da sua pergunta | Cálculo de similaridade para buscar na base de conhecimento |
+| **Cohere** (EUA/Canadá) | Texto da pergunta + trechos da base de conhecimento | Ordenar os trechos mais relevantes |
+| **Langfuse** (União Europeia, Irlanda) | Identificador pseudonimizado + métricas técnicas, **sem conteúdo das conversas** | Observabilidade interna |
+| **Asaas** (Brasil) | Nome, CPF/CNPJ, email, telefone, CEP, dados do cartão, valor da assinatura | Processamento de pagamento e emissão de NF |
+| **Titan Email (Hostgator)** | Email, nome e conteúdo dos emails que enviamos a você | Envio de emails transacionais (boas-vindas, cobrança, convites) |
+| **Resend** (EUA) | Emails que você ou seus fornecedores enviam ao endereço de recebimento da Plataforma | Recebimento de cotações por email (só se você usar esse recurso) |
 | **Cloudflare** (global) | IP, headers do navegador | Verificação anti-bot via Turnstile |
-| **Langfuse** (Alemanha) | UUID pseudonimizado + metadados de traces (sem PII) | Observabilidade interna |
-| **Railway** (EUA) | Logs do servidor (sem PII direta) | Hospedagem da Plataforma |
+| **Google** (EUA) | Dados da sua conta Google, se você escolher entrar com Google | Login |
 
-**Transferência internacional**: Operamos com fornecedores em EUA/UE/Ásia.
-A LGPD permite transferência internacional pra prestadores de serviço em
-países que ofereçam grau de proteção adequado ou via cláusulas
-contratuais específicas. Garantimos contratos de proteção de dados (DPAs)
-com cada operador.
+**Consultas a bases públicas**: quando você pesquisa uma empresa ou um
+preço, enviamos o CNPJ ou o termo pesquisado a bases públicas
+(Receita Federal via BrasilAPI e ReceitaWS, Portal da Transparência,
+Compras.gov.br/PNCP e Banco Central). São dados de empresas e de
+compras públicas, não dados pessoais seus.
+
+**Uso pela IA**: o conteúdo enviado aos provedores de IA é usado só para
+gerar a resposta pedida. A OpenAI não usa dados recebidos pela API para
+treinar seus modelos e pode guardá-los por até 30 dias para
+monitoramento de abuso, conforme a política dela. Seus documentos e
+conversas não são incorporados à base de conhecimento do ${PRODUCT_NAME}.
+
+**Acesso da nossa equipe**: para prestar suporte, a equipe ${COMPANY_NAME}
+pode acessar sua conta. Todo acesso administrativo fica registrado em
+log de auditoria.
+
+**Transferência internacional**: operamos com fornecedores nos EUA e na
+União Europeia. A LGPD permite transferência internacional pra
+prestadores de serviço em países que ofereçam grau de proteção adequado
+ou via cláusulas contratuais específicas. A transferência se apoia nos
+termos de proteção de dados e nas cláusulas contratuais oferecidos por
+cada operador.
 
 **Não vendemos seus dados**. Nunca compartilhamos com anunciantes, redes
 sociais ou data brokers.
@@ -101,6 +128,7 @@ sociais ou data brokers.
 | Dados fiscais (Asaas) | 5 anos conforme legislação tributária, gerenciado pela Asaas |
 | Rate-limit events | 2 horas (cleanup automático) |
 | Feedback (👍/👎) | Até você excluir a conta |
+| Conteúdo enviado à OpenAI | Até 30 dias no provedor, para monitoramento de abuso, conforme a política da OpenAI |
 
 ## 6. Seus Direitos (Art. 18 da LGPD)
 
@@ -128,12 +156,14 @@ dados:
 - TLS/SSL em todo tráfego (HTTPS-only)
 - Senhas com hash bcrypt (nunca em texto puro)
 - IP nunca armazenado cru, sempre hash com salt secreto
-- CPF não armazenado no nosso DB, repassado diretamente pra Asaas
+- Dados de cartão não gravados no nosso banco, repassados diretamente à Asaas
+- Criptografia em repouso (AES-256) no banco de dados e no armazenamento de arquivos
 - Cookies httpOnly + secure + sameSite
 - Captcha (Cloudflare Turnstile) em endpoints públicos
 - Rate-limit em chat (10/min, 60/h) e em signup/reset (3/min por IP)
 - Row Level Security (RLS) no Supabase impede vazamento cruzado entre usuários
-- Logs sem PII; UUIDs pseudonimizados na observabilidade (Langfuse)
+- Observabilidade (Langfuse) recebe só métricas e identificador pseudonimizado, nunca o conteúdo das conversas ou anexos
+- Acessos administrativos registrados em log de auditoria
 - Service-role keys nunca expostas no client
 - Captcha + rate-limit em /api/auth/* pra prevenir enumeration
 

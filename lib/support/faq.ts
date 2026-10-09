@@ -263,6 +263,13 @@ export const FAQ_SUPORTE: FaqSecao[] = [
         termos: 'privacidade sigilo confidencial',
       },
       {
+        id: 'treino-ia',
+        pergunta: 'Meus documentos são usados para treinar a IA?',
+        resposta:
+          'Não. Suas conversas e documentos servem só para gerar a resposta que você pediu e não entram na base de conhecimento usada para outros clientes. A OpenAI, que gera as respostas, não usa dados recebidos pela API para treinar os modelos dela.',
+        termos: 'treinamento treino modelo dados confidencial sigilo',
+      },
+      {
         id: 'lgpd',
         pergunta: 'Como meus dados são tratados?',
         resposta:

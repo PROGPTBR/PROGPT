@@ -1,4 +1,8 @@
 import type { Trace, Span } from './types';
+import { mascararConteudo, omitido } from './mascarar';
+
+// Tudo que sai daqui para o Langfuse passa por mascararConteudo: o painel
+// recebe métricas, rótulos e tamanhos, nunca o texto da conversa ou de anexo.
 
 const NOOP_SPAN: Span = { end() {} };
 
@@ -49,9 +53,9 @@ export async function startTrace(opts: {
     name: opts.name,
     userId: opts.userId,
     sessionId: opts.sessionId,
-    input: opts.input,
+    input: mascararConteudo(opts.input),
     tags: opts.tags,
-    metadata: opts.metadata,
+    metadata: mascararConteudo(opts.metadata),
   }) as {
     id: string;
     update: (p: unknown) => void;
@@ -61,18 +65,18 @@ export async function startTrace(opts: {
   return {
     id: lfTrace.id,
     span(name, input) {
-      const lfSpan = lfTrace.span({ name, input });
+      const lfSpan = lfTrace.span({ name, input: mascararConteudo(input) });
       return {
         end(output, level) {
-          lfSpan.end({ output, level });
+          lfSpan.end({ output: mascararConteudo(output), level });
         },
       };
     },
     end(output, level) {
-      lfTrace.update({ output, level });
+      lfTrace.update({ output: mascararConteudo(output), level });
     },
     setMetadata(key, value) {
-      lfTrace.update({ metadata: { [key]: value } });
+      lfTrace.update({ metadata: mascararConteudo({ [key]: value }) });
     },
     setTag(tag) {
       lfTrace.update({ tags: [tag] });
@@ -92,7 +96,8 @@ export async function scoreTrace(opts: {
     traceId: opts.traceId,
     name: opts.name,
     value: opts.value,
-    comment: opts.comment,
+    // Comentário do 👎 é texto livre do cliente: fica só no nosso banco.
+    comment: opts.comment ? omitido(opts.comment) : undefined,
   });
   await client.flushAsync();
 }

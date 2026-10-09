@@ -79,7 +79,7 @@ describe('scoreTrace', () => {
       traceId: 't1',
       name: 'user-feedback',
       value: -1,
-      comment: 'meh',
+      comment: '[texto omitido: 3 caracteres]',
     });
     expect(flushAsync).toHaveBeenCalled();
   });

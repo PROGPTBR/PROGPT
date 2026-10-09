@@ -7,11 +7,11 @@
 //     profiles.terms_version vs CURRENT_LEGAL_VERSION)
 //   - Email transacional notificando mudança (sub-projeto futuro)
 
-export const CURRENT_LEGAL_VERSION = 'v2-2026-05-28';
+export const CURRENT_LEGAL_VERSION = 'v3-2026-10-08';
 
 // Última atualização dos documentos legais. Mostrado no header dos 3
 // docs. Deve bater com a data no CURRENT_LEGAL_VERSION pra rastreamento.
-export const LEGAL_LAST_UPDATED = '28 de maio de 2026';
+export const LEGAL_LAST_UPDATED = '8 de outubro de 2026';
 
 // Nome do produto exibido nas UIs e nos docs legais. Trocado pra PROGPT
 // no sub-projeto 29 (branding oficial 2B Supply).
