@@ -272,6 +272,7 @@ export function DiagnosticoAquisicaoForm({
               <label className="text-xs font-medium block mb-1">Vida útil esperada (anos)</label>
               <Input
                 type="number"
+                step="any"
                 min="0"
                 value={vidaUtilAnos}
                 onChange={(e) => setVidaUtilAnos(e.target.value)}
@@ -326,6 +327,7 @@ export function DiagnosticoAquisicaoForm({
               <label className="text-xs font-medium block mb-1">Orçamento disponível (R$)</label>
               <Input
                 type="number"
+                step="any"
                 min="0"
                 value={orcamentoDisponivelBRL}
                 onChange={(e) => setOrcamentoDisponivelBRL(e.target.value)}

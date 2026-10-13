@@ -179,6 +179,7 @@ export function KraljicItemTable({ items, onChange, onOpenScoringAssistant }: Pr
                   <input
                     type="number"
                     inputMode="decimal"
+                    step="any"
                     value={it.spendMM}
                     onChange={(e) => update(i, { spendMM: e.target.value })}
                     placeholder="0,00"
