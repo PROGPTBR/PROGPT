@@ -112,15 +112,15 @@ function mockBrowser(mock: ReturnType<typeof makeTableMock>) {
 
 describe('useSupplierBase — vendor list import (Batch L)', () => {
   it('previewVendorListImport classifies novos vs atualizados by CNPJ base, without writing', async () => {
-    const mock = makeTableMock([baseRow({ id: 's1', cnpj: '12345678000190', cnpj_basico: '12345678' })]);
+    const mock = makeTableMock([baseRow({ id: 's1', cnpj: '12345678000195', cnpj_basico: '12345678' })]);
     mockBrowser(mock);
     const { useSupplierBase } = await import('@/hooks/useSupplierBase');
     const { result } = renderHook(() => useSupplierBase());
     await waitFor(() => expect(result.current.loading).toBe(false));
 
     const preview = result.current.previewVendorListImport([
-      { razaoSocial: 'Já cadastrado', cnpj: '12345678000190' },
-      { razaoSocial: 'Novo fornecedor', cnpj: '99988877000111' },
+      { razaoSocial: 'Já cadastrado', cnpj: '12345678000195' },
+      { razaoSocial: 'Novo fornecedor', cnpj: '99988877000108' },
       { razaoSocial: 'Sem CNPJ — também novo' },
     ]);
     expect(preview).toEqual({ novos: 2, atualizados: 1 });
@@ -128,7 +128,7 @@ describe('useSupplierBase — vendor list import (Batch L)', () => {
   });
 
   it('applyVendorListImport insere novos em lote e atualiza existentes por id (CNPJ base)', async () => {
-    const mock = makeTableMock([baseRow({ id: 'existing-1', razao_social: 'Antigo', cnpj: '12345678000190', cnpj_basico: '12345678' })]);
+    const mock = makeTableMock([baseRow({ id: 'existing-1', razao_social: 'Antigo', cnpj: '12345678000195', cnpj_basico: '12345678' })]);
     mockBrowser(mock);
     const { useSupplierBase } = await import('@/hooks/useSupplierBase');
     const { result } = renderHook(() => useSupplierBase());
@@ -137,8 +137,8 @@ describe('useSupplierBase — vendor list import (Batch L)', () => {
     let summary!: { inserted: number; updated: number; failed: number };
     await act(async () => {
       summary = await result.current.applyVendorListImport([
-        { razaoSocial: 'Atualizado', cnpj: '12345678000190' },
-        { razaoSocial: 'Fornecedor novo', cnpj: '99988877000111' },
+        { razaoSocial: 'Atualizado', cnpj: '12345678000195' },
+        { razaoSocial: 'Fornecedor novo', cnpj: '99988877000108' },
       ]);
     });
     expect(summary).toEqual({ inserted: 1, updated: 1, failed: 0 });

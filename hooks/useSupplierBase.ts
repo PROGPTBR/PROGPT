@@ -6,6 +6,7 @@ import { classifyUpsert } from '@/lib/import-diff';
 import {
   chaveFornecedor,
   cnpjBasicoOf,
+  mesclarDuplicados,
   type NewSupplierInput,
   type SavedSupplier,
   type SupplierPatch,
@@ -280,7 +281,8 @@ export function useSupplierBase(): UseSupplierBase {
   }
 
   const previewVendorListImport = useCallback<UseSupplierBase['previewVendorListImport']>(
-    (rows) => {
+    (rowsBrutas) => {
+      const rows = mesclarDuplicados(rowsBrutas);
       const { novos, atualizados, semChave } = classifyUpsert(
         new Set(byChave.keys()),
         rows,
@@ -293,7 +295,9 @@ export function useSupplierBase(): UseSupplierBase {
   );
 
   const applyVendorListImport = useCallback<UseSupplierBase['applyVendorListImport']>(
-    async (rows) => {
+    async (rowsBrutas) => {
+      // Mesma empresa repetida na planilha (filiais, linhas duplicadas) vira uma linha só.
+      const rows = mesclarDuplicados(rowsBrutas);
       const { novos, atualizados, semChave } = classifyUpsert(
         new Set(byChave.keys()),
         rows,
@@ -304,19 +308,23 @@ export function useSupplierBase(): UseSupplierBase {
       let updated = 0;
       let failed = 0;
 
-      const toInsert = [...novos, ...semChave];
-      if (toInsert.length > 0) {
-        const { data, error } = await sb
-          .from('suppliers')
-          .insert(toInsert.map(inputToInsertRow))
-          .select(COLS);
-        if (error) {
-          console.warn('[useSupplierBase] applyVendorListImport insert failed:', error.message);
-          failed += toInsert.length;
-        } else {
-          inserted += data?.length ?? 0;
+      // Em lotes (2026-10-15): antes era um insert só com a planilha inteira, e uma
+      // linha recusada pelo banco derrubava todas (7.974 linhas da Costa Feitosa).
+      // Lote que falha é repartido até isolar só as linhas com problema.
+      async function inserir(lote: NewSupplierInput[]): Promise<void> {
+        if (lote.length === 0) return;
+        const { data, error } = await sb.from('suppliers').insert(lote.map(inputToInsertRow)).select('id');
+        if (!error) { inserted += data?.length ?? 0; return; }
+        if (lote.length === 1) {
+          console.warn('[useSupplierBase] applyVendorListImport linha recusada:', error.message, lote[0]?.razaoSocial);
+          failed += 1;
+          return;
         }
+        const passo = Math.ceil(lote.length / 10);
+        for (let i = 0; i < lote.length; i += passo) await inserir(lote.slice(i, i + passo));
       }
+      const toInsert = [...novos, ...semChave];
+      for (let i = 0; i < toInsert.length; i += 500) await inserir(toInsert.slice(i, i + 500));
 
       for (const r of atualizados) {
         const existing = byChave.get(chaveFornecedor(r)!);

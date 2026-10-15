@@ -24,8 +24,8 @@ describe('suppliers/base', () => {
   });
 
   it('cnpjBasicoOf takes first 8 digits, tolerating mask', () => {
-    expect(cnpjBasicoOf('12.345.678/0001-90')).toBe('12345678');
-    expect(cnpjBasicoOf('12345678000190')).toBe('12345678');
+    expect(cnpjBasicoOf('12.345.678/0001-95')).toBe('12345678');
+    expect(cnpjBasicoOf('12345678000195')).toBe('12345678');
     expect(cnpjBasicoOf('123')).toBeNull();
     expect(cnpjBasicoOf(null)).toBeNull();
     expect(cnpjBasicoOf(undefined)).toBeNull();
@@ -35,7 +35,7 @@ describe('suppliers/base', () => {
 describe('chaveFornecedor', () => {
   it('usa o CNPJ base quando existe', async () => {
     const { chaveFornecedor } = await import('@/lib/suppliers/base');
-    expect(chaveFornecedor({ razaoSocial: 'X', cnpj: '12.345.678/0001-90' })).toBe('cnpj:12345678');
+    expect(chaveFornecedor({ razaoSocial: 'X', cnpj: '12.345.678/0001-95' })).toBe('cnpj:12345678');
   });
 
   it('sem CNPJ, reconhece o mesmo fornecedor por nome + e-mail, ignorando acento e caixa', async () => {

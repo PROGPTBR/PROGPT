@@ -13,14 +13,14 @@ describe('parseVendorListXlsx', () => {
   it('parses recognized headers and normalizes CNPJ/UF', async () => {
     const b = await buf([
       ['Razão Social', 'CNPJ', 'UF', 'Município', 'Categoria', 'Telefone', 'Email'],
-      ['Acelor Mittal Ltda', '12.345.678/0001-90', 'sp', 'São Paulo', 'Metais', '(11) 4444-5555', 'contato@acelor.com'],
+      ['Acelor Mittal Ltda', '12.345.678/0001-95', 'sp', 'São Paulo', 'Metais', '(11) 4444-5555', 'contato@acelor.com'],
     ]);
     const { rows, warnings } = await parseVendorListXlsx(b);
     expect(warnings).toEqual([]);
     expect(rows).toHaveLength(1);
     expect(rows[0]).toMatchObject({
       razaoSocial: 'Acelor Mittal Ltda',
-      cnpj: '12345678000190',
+      cnpj: '12345678000195',
       uf: 'SP',
       municipio: 'São Paulo',
       categoria: 'Metais',

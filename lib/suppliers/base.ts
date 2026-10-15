@@ -1,3 +1,4 @@
+import { isValidCnpj } from '@/lib/validators/cnpj';
 // Tipos + rótulos da base de fornecedores (vendor master do comprador).
 // Puro (sem DB/DOM) pra ser usado na UI e testado isolado.
 
@@ -128,10 +129,56 @@ export function chaveFornecedor(f: {
   return `nome:${nome}|${complemento}`;
 }
 
+// Raiz do CNPJ (8 primeiros dígitos) só de CNPJ de verdade (2026-10-15, Costa
+// Feitosa): a planilha "FORNECEDORES LUMINA" trazia CPF de pessoa física e
+// códigos internos com zeros (00000000002453) na coluna de CNPJ. Todos viravam a
+// mesma raiz "00000000", batiam no índice único (user_id, cnpj_basico) e o lote
+// inteiro de 7.974 linhas era recusado.
 export function cnpjBasicoOf(cnpj: string | null | undefined): string | null {
   if (!cnpj) return null;
   const d = cnpj.replace(/\D/g, '');
-  return d.length >= 8 ? d.slice(0, 8) : null;
+  if (d.length === 14) return isValidCnpj(d) ? d.slice(0, 8) : null;
+  if (d.length === 8) return /^0+$/.test(d) ? null : d;
+  return null;
+}
+
+/**
+ * Documento que veio na coluna de CNPJ de uma planilha. Só vira CNPJ se for um
+ * CNPJ válido (completando os zeros à esquerda que o Excel tira de célula
+ * numérica). CPF e códigos internos não se perdem: voltam como texto para as
+ * observações do fornecedor.
+ */
+export function normalizarDocumento(raw: string | null | undefined): { cnpj: string | null; documento: string | null } {
+  const d = (raw ?? '').replace(/\D/g, '');
+  if (!d) return { cnpj: null, documento: null };
+  if (d.length <= 14) {
+    const c = d.padStart(14, '0');
+    if (isValidCnpj(c)) return { cnpj: c, documento: null };
+  }
+  if (d.length <= 11 && !/^0+$/.test(d)) return { cnpj: null, documento: `CPF ${d.padStart(11, '0')}` };
+  return { cnpj: null, documento: `Documento na planilha: ${d}` };
+}
+
+/**
+ * Junta as linhas da mesma planilha que são o mesmo fornecedor (mesma chave:
+ * raiz do CNPJ ou nome + contato). Fica a primeira linha, completada com o que
+ * as repetidas tiverem a mais; as observações se somam. Linhas sem chave
+ * (sem nome reconhecível) passam como estão.
+ */
+export function mesclarDuplicados(rows: NewSupplierInput[]): NewSupplierInput[] {
+  const porChave = new Map<string, NewSupplierInput>();
+  const saida: NewSupplierInput[] = [];
+  for (const r of rows) {
+    const k = chaveFornecedor(r);
+    if (!k) { saida.push(r); continue; }
+    const ja = porChave.get(k);
+    if (!ja) { const copia = { ...r }; porChave.set(k, copia); saida.push(copia); continue; }
+    for (const campo of ['cnpj', 'categoria', 'uf', 'municipio', 'telefone', 'email'] as const) {
+      if (!ja[campo] && r[campo]) ja[campo] = r[campo];
+    }
+    if (r.notas && !(ja.notas ?? '').includes(r.notas)) ja.notas = ja.notas ? `${ja.notas} · ${r.notas}` : r.notas;
+  }
+  return saida;
 }
 
 // ─── Busca na base (2026-10-07) ────────────────────────────────────────────

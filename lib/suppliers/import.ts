@@ -1,5 +1,5 @@
 import ExcelJS from 'exceljs';
-import type { NewSupplierInput } from './base';
+import { normalizarDocumento, type NewSupplierInput } from './base';
 
 // Import de "vendor list" (Batch L do backlog do diretor — Kraljic: "poderia
 // subir o vendor list do cliente [e] ele puxasse da base interna facilitando
@@ -155,11 +155,12 @@ function linhasDaAba(ws: ExcelJS.Worksheet, cab: Cabecalho): NewSupplierInput[] 
 
     const contato = str('contato');
     const obs = str('observacoes');
-    const notas = [contato ? `Contato: ${contato}` : null, obs].filter(Boolean).join(' · ') || null;
+    const doc = normalizarDocumento(str('cnpj'));
+    const notas = [contato ? `Contato: ${contato}` : null, obs, doc.documento].filter(Boolean).join(' · ') || null;
 
     rows.push({
       razaoSocial,
-      cnpj: str('cnpj')?.replace(/\D/g, '') || null,
+      cnpj: doc.cnpj,
       categoria: str('categoria'),
       uf,
       municipio,
