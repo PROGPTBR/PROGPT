@@ -1,5 +1,5 @@
 import ExcelJS from 'exceljs';
-import { normalizarDocumento, type NewSupplierInput } from './base';
+import { normalizarDocumento, type NewSupplierInput, type SupplierStatus } from './base';
 
 // Import de "vendor list" (Batch L do backlog do diretor — Kraljic: "poderia
 // subir o vendor list do cliente [e] ele puxasse da base interna facilitando
@@ -32,7 +32,9 @@ type Field =
   | 'telefone'
   | 'email'
   | 'contato'
-  | 'observacoes';
+  | 'observacoes'
+  | 'status'
+  | 'nomeFantasia';
 
 // A ORDEM importa: o primeiro padrão que casar decide a coluna. "Contato" e
 // "observações" vêm antes do nome do fornecedor porque "nome do contato"
@@ -45,6 +47,10 @@ const HEADER_ALIASES: Array<[Field, RegExp[]]> = [
   ['email', [/\be-?mail\b/i]],
   ['contato', [/\bcontato\b/i, /\brespons[áa]vel\b/i, /\bvendedor\b/i, /\brepresentante\b/i]],
   ['observacoes', [/\bobserva[çc][õo]es\b/i, /\bobs\.?\b/i, /\bnotas?\b/i]],
+  // "Satus" (sic) na planilha da Costa Feitosa de 2026-10-15.
+  ['status', [/^\s*st?atus\b/i]],
+  // Antes do nome: "Nome Fantasia" também casaria com /nome/.
+  ['nomeFantasia', [/\bfantasia\b/i]],
   [
     'categoria',
     [/\bcategoria\b/i, /\bcategory\b/i, /\bsegmento\b/i, /\bgrupo\b/i, /\bmateriais\b/i, /\bfam[íi]lia\b/i],
@@ -90,7 +96,54 @@ function limpo(v: string): string | null {
   return VAZIOS.has(t.toLowerCase()) ? null : t;
 }
 
-type Cabecalho = { linha: number; colunas: Partial<Record<Field, number>> };
+type Cabecalho = {
+  linha: number;
+  colunas: Partial<Record<Field, number>>;
+  /** Colunas a mais que casaram com o mesmo campo (ex.: "Celular" e "Telefone"). */
+  extras: Partial<Record<Field, number[]>>;
+};
+
+// Nome "forte" de fornecedor. Quando a planilha tem "Fornecedor" E "Nome"
+// (2026-10-15, Costa Feitosa: "Nome" era a pessoa de contato), a coluna forte
+// é o fornecedor e a só-"nome" vira contato, na ordem que for.
+const NOME_FORTE = /raz[ãa]o\s*social|\bfornecedor|\bvendor\b|\bsupplier\b|\bempresa\b/i;
+
+function cabecalhoDaLinha(ws: ExcelJS.Worksheet, r: number): Cabecalho {
+  const colunas: Partial<Record<Field, number>> = {};
+  const extras: Partial<Record<Field, number[]>> = {};
+  const nomes: Array<{ col: number; texto: string }> = [];
+  ws.getRow(r).eachCell((cell, colNumber) => {
+    const texto = coerceString(cell.value);
+    const k = matchHeader(texto);
+    if (!k) return;
+    if (k === 'razaoSocial') { nomes.push({ col: colNumber, texto }); return; }
+    if (!(k in colunas)) colunas[k] = colNumber;
+    else (extras[k] ??= []).push(colNumber);
+  });
+  if (nomes.length > 0) {
+    const principal = nomes.find((n) => NOME_FORTE.test(n.texto)) ?? nomes[0]!;
+    colunas.razaoSocial = principal.col;
+    const outras = nomes.filter((n) => n !== principal).map((n) => n.col);
+    if (outras.length > 0) extras.razaoSocial = outras;
+  } else if (colunas.nomeFantasia !== undefined) {
+    // Só nome fantasia: é o nome que existe.
+    colunas.razaoSocial = colunas.nomeFantasia;
+    delete colunas.nomeFantasia;
+  }
+  return { linha: r, colunas, extras };
+}
+
+/** Status da planilha ("Aprovado", "Obsoleto"...) → status da base. Desconhecido fica de fora. */
+export function statusDaPlanilha(texto: string | null): SupplierStatus | undefined {
+  const t = (texto ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+  if (!t) return undefined;
+  if (/(aguardando|pendente|em\s+(analise|homologa))/.test(t)) return 'em_homologacao';
+  if (/(reprovad|bloquead|suspens|vetad)/.test(t)) return 'bloqueado';
+  if (/(obsolet|inativ|descartad|desativad|cancelad)/.test(t)) return 'descartado';
+  if (/(aprovad|homologad|qualificad)/.test(t)) return 'homologado';
+  if (/^ativ[oa]$/.test(t)) return 'ativo';
+  return undefined;
+}
 
 /** Acha a linha de cabeçalho de uma aba: a que tem a coluna do fornecedor e mais colunas reconhecidas. */
 function acharCabecalho(ws: ExcelJS.Worksheet): Cabecalho | null {
@@ -102,18 +155,14 @@ function acharCabecalho(ws: ExcelJS.Worksheet): Cabecalho | null {
   let soNome: Cabecalho | null = null;
   const ate = Math.min(ws.rowCount, LINHAS_PARA_PROCURAR_CABECALHO);
   for (let r = 1; r <= ate; r++) {
-    const colunas: Partial<Record<Field, number>> = {};
-    ws.getRow(r).eachCell((cell, colNumber) => {
-      const k = matchHeader(coerceString(cell.value));
-      if (k && !(k in colunas)) colunas[k] = colNumber;
-    });
-    const qtd = Object.keys(colunas).length;
-    if (colunas.razaoSocial === undefined) continue;
+    const cab = cabecalhoDaLinha(ws, r);
+    const qtd = Object.keys(cab.colunas).length;
+    if (cab.colunas.razaoSocial === undefined) continue;
     if (qtd >= 2 && qtd > melhorQtd) {
-      melhor = { linha: r, colunas };
+      melhor = cab;
       melhorQtd = qtd;
     } else if (qtd === 1 && !soNome) {
-      soNome = { linha: r, colunas };
+      soNome = cab;
     }
   }
   return melhor ?? soNome;
@@ -130,7 +179,7 @@ export function separarCidadeUf(texto: string): { municipio: string | null; uf: 
 }
 
 function linhasDaAba(ws: ExcelJS.Worksheet, cab: Cabecalho): NewSupplierInput[] {
-  const { colunas } = cab;
+  const { colunas, extras } = cab;
   const rows: NewSupplierInput[] = [];
   for (let r = cab.linha + 1; r <= ws.rowCount; r++) {
     const row = ws.getRow(r);
@@ -139,6 +188,9 @@ function linhasDaAba(ws: ExcelJS.Worksheet, cab: Cabecalho): NewSupplierInput[] 
       if (!col) return null;
       return limpo(coerceString(row.getCell(col).value));
     };
+    /** Valores das colunas extras do campo, sem repetir. */
+    const outros = (f: Field): string[] =>
+      (extras[f] ?? []).map((c) => limpo(coerceString(row.getCell(c).value))).filter((v): v is string => !!v);
 
     const razaoSocial = str('razaoSocial');
     if (!razaoSocial) continue;
@@ -153,10 +205,29 @@ function linhasDaAba(ws: ExcelJS.Worksheet, cab: Cabecalho): NewSupplierInput[] 
       uf = sep.uf;
     }
 
-    const contato = str('contato');
+    // Contato: coluna de contato ou, na falta dela, a coluna só-"nome" ao lado do
+    // fornecedor (quando não repete o próprio nome do fornecedor).
+    const mesmoNome = (v: string) => v.toLowerCase() === razaoSocial.toLowerCase();
+    const contato = str('contato') ?? outros('razaoSocial').find((v) => !mesmoNome(v)) ?? null;
     const obs = str('observacoes');
     const doc = normalizarDocumento(str('cnpj'));
-    const notas = [contato ? `Contato: ${contato}` : null, obs, doc.documento].filter(Boolean).join(' · ') || null;
+    const fantasia = str('nomeFantasia');
+    const statusTexto = str('status');
+    const status = statusDaPlanilha(statusTexto);
+    const notas =
+      [
+        fantasia && !mesmoNome(fantasia) ? `Nome fantasia: ${fantasia}` : null,
+        contato ? `Contato: ${contato}` : null,
+        obs,
+        doc.documento,
+        statusTexto && !status ? `Status na planilha: ${statusTexto}` : null,
+      ]
+        .filter(Boolean)
+        .join(' · ') || null;
+    // Várias colunas de telefone ("Celular", "Telefone"): junta as preenchidas.
+    const telefones = [str('telefone'), ...outros('telefone')].filter((v): v is string => !!v);
+    const telefone = [...new Set(telefones)].join(' / ') || null;
+    const email = (str('email') ?? outros('email')[0] ?? null)?.toLowerCase() ?? null;
 
     rows.push({
       razaoSocial,
@@ -164,9 +235,10 @@ function linhasDaAba(ws: ExcelJS.Worksheet, cab: Cabecalho): NewSupplierInput[] 
       categoria: str('categoria'),
       uf,
       municipio,
-      telefone: str('telefone'),
-      email: str('email')?.toLowerCase() ?? null,
+      telefone,
+      email,
       notas,
+      ...(status ? { status } : {}),
     });
   }
   return rows;

@@ -122,4 +122,69 @@ describe('parseVendorListXlsx — vendor list real de cliente', () => {
     const { warnings } = await parseVendorListXlsx(await workbookCliente());
     expect(warnings.some((w) => /sem CNPJ/i.test(w))).toBe(true);
   });
+
+  // 2026-10-15, Costa Feitosa ("Lumina_Lista_Fornecedores_13-Out"): o
+  // importador ficava só com a 1ª coluna de telefone ("Celular", quase sempre
+  // vazia), descartava o contato da coluna "Nome" e ignorava "Satus".
+  it('junta Celular e Telefone, leva "Nome" para contato e lê o status', async () => {
+    const b = await buf([
+      [],
+      [],
+      [null, 'Satus', 'Tipo', 'CNPJ', 'Fornecedor', 'Nome', 'Email', 'Celular', 'Telefone'],
+      [null, 'Aprovado', 'J', '41.368.095/0001-88', ' A TALITA MAT ELETRICOS', 'TALITA', 'a@b.com', '', '(18) 3401-1297'],
+      [null, 'Obsoleto', 'J', '44.463.638/0001-34', 'IBRAC LTDA', 'IBRAC LTDA', '', '(14) 98118-1847', '(14) 3333-4444'],
+      [null, 'Aguardando Aprovação', 'J', '46.321.663/0001-09', 'MARCOS SABINO', '', '', '(35) 99971-1594', '(35) 99971-1594'],
+    ]);
+    const { rows } = await parseVendorListXlsx(b);
+    expect(rows).toHaveLength(3);
+    expect(rows[0]).toMatchObject({
+      razaoSocial: 'A TALITA MAT ELETRICOS',
+      telefone: '(18) 3401-1297',
+      notas: 'Contato: TALITA',
+      status: 'homologado',
+    });
+    // Contato igual ao nome do fornecedor não vira nota.
+    expect(rows[1]).toMatchObject({ telefone: '(14) 98118-1847 / (14) 3333-4444', notas: null, status: 'descartado' });
+    expect(rows[2]).toMatchObject({ telefone: '(35) 99971-1594', status: 'em_homologacao' });
+  });
+
+  it('"Nome" antes de "Fornecedor": o fornecedor continua sendo o nome', async () => {
+    const b = await buf([
+      ['Nome', 'Fornecedor', 'Email'],
+      ['Ana', 'Cimento Forte Ltda', 'vendas@cimento.com'],
+    ]);
+    const { rows } = await parseVendorListXlsx(b);
+    expect(rows[0]).toMatchObject({ razaoSocial: 'Cimento Forte Ltda', notas: 'Contato: Ana' });
+  });
+
+  it('status desconhecido vai para as observações', async () => {
+    const b = await buf([
+      ['Fornecedor', 'Status'],
+      ['Fornecedor X', 'Em negociação'],
+    ]);
+    const { rows } = await parseVendorListXlsx(b);
+    expect(rows[0]!.status).toBeUndefined();
+    expect(rows[0]!.notas).toBe('Status na planilha: Em negociação');
+  });
+
+  it('"Nome Fantasia" antes de "Razão Social": grava a razão social e guarda o fantasia', async () => {
+    const b = await buf([
+      ['CNPJ', 'Nome Fantasia', 'Razão Social', 'Estado'],
+      ['', 'Concreto Bom', 'CB Concretagem Ltda', 'SP'],
+      ['', 'Igual Ltda', 'IGUAL LTDA', 'RJ'],
+    ]);
+    const { rows } = await parseVendorListXlsx(b);
+    expect(rows[0]).toMatchObject({ razaoSocial: 'CB Concretagem Ltda', notas: 'Nome fantasia: Concreto Bom' });
+    expect(rows[1]).toMatchObject({ razaoSocial: 'IGUAL LTDA', notas: null });
+  });
+
+  it('só "Nome Fantasia" vira o nome do fornecedor', async () => {
+    const b = await buf([
+      ['Nome Fantasia', 'Email'],
+      ['Loja do Zé', 'ze@loja.com'],
+    ]);
+    const { rows } = await parseVendorListXlsx(b);
+    expect(rows[0]).toMatchObject({ razaoSocial: 'Loja do Zé', email: 'ze@loja.com' });
+  });
 });
+
