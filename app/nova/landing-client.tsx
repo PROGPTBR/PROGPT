@@ -116,9 +116,8 @@ const useCases = [
       'SOLICITAÇÕES | FORNECEDORES | PEDIDOS | ENTREGAS | INDICADORES',
     image:
       'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200&h=800&q=80&auto=format&fit=crop',
-    href: '/painel',
+    href: '/signup',
     soon: false,
-    cta: 'Marque sua demonstração.',
   },
   {
     tab: 'RFI/RFQ',
@@ -127,7 +126,7 @@ const useCases = [
       'Crie solicitações de cotação, compare fornecedores e organize propostas em poucos minutos.',
     image:
       'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=1200&h=800&q=80&auto=format&fit=crop',
-    href: '/assistants/rfp',
+    href: '/signup',
     soon: false,
   },
   {
@@ -137,7 +136,7 @@ const useCases = [
       'Classifique itens, fornecedores ou categorias por impacto financeiro e foque no que realmente pesa no resultado.',
     image:
       'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200&h=800&q=80&auto=format&fit=crop',
-    href: '/assistants/abc',
+    href: '/signup',
     soon: false,
   },
   {
@@ -147,7 +146,7 @@ const useCases = [
       'Calcule o custo real da compra, incluindo preço, frete, impostos, riscos e condições comerciais.',
     image:
       'https://images.unsplash.com/photo-1554224154-26032ffc0d07?w=1200&h=800&q=80&auto=format&fit=crop',
-    href: '/assistants/spend_analysis',
+    href: '/signup',
     soon: false,
   },
   {
@@ -168,7 +167,7 @@ const useCases = [
       'Receba apoio durante a negociação com argumentos, riscos, concessões e próximos passos.',
     image:
       'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=1200&h=800&q=80&auto=format&fit=crop',
-    href: '/assistants/negotiation',
+    href: '/signup',
     soon: false,
   },
   {
@@ -210,28 +209,28 @@ const certificacoes = [
     numero: 'ISO/IEC 42001:2023',
     titulo: 'Gestão de Inteligência Artificial',
     descricao: 'Diretrizes para o uso responsável e seguro da inteligência artificial.',
-    imagem: 'https://2bsupply.com.br/wp-content/uploads/2026/09/certificacao-iso-42001-2023-2bsupply-01.png',
+    imagem: 'https://2bsupply.com.br/wp-content/uploads/2026/10/certificacao-iso-42001-2023-2bsupply-02.jpg',
     pdf: 'https://taydbrfqmgvjzelvablx.supabase.co/storage/v1/object/public/Certificacoes/iso-42001.pd.pdf',
   },
   {
     numero: 'ISO 27701:2019',
     titulo: 'Gestão da Privacidade da Informação',
     descricao: 'Proteção de dados pessoais e práticas de privacidade.',
-    imagem: 'https://2bsupply.com.br/wp-content/uploads/2026/09/certificacao-iso-27701-2019-2bsupply-01.png',
+    imagem: 'https://2bsupply.com.br/wp-content/uploads/2026/10/certificacao-iso-27701-2019-2bsupply-02.jpg',
     pdf: 'https://taydbrfqmgvjzelvablx.supabase.co/storage/v1/object/public/Certificacoes/iso-27701.pdf',
   },
   {
     numero: 'ISO/IEC 27001:2022',
     titulo: 'Gestão da Segurança da Informação',
     descricao: 'Segurança e proteção das informações.',
-    imagem: 'https://2bsupply.com.br/wp-content/uploads/2026/09/certificacao-iso-27001-2022-2bsupply-01.png',
+    imagem: 'https://2bsupply.com.br/wp-content/uploads/2026/10/certificacao-iso-27001-2022-2bsupply-02.jpg',
     pdf: 'https://taydbrfqmgvjzelvablx.supabase.co/storage/v1/object/public/Certificacoes/iso-27001-2.pdf',
   },
   {
     numero: 'ISO 9001:2015',
     titulo: 'Gestão da Qualidade',
     descricao: 'Melhoria contínua dos processos e serviços.',
-    imagem: 'https://2bsupply.com.br/wp-content/uploads/2026/09/certificacao-iso-9001-2015-2bsupply-01.png',
+    imagem: 'https://2bsupply.com.br/wp-content/uploads/2026/10/certificacao-iso-9001-2015-2bsupply-02.jpg',
     pdf: 'https://taydbrfqmgvjzelvablx.supabase.co/storage/v1/object/public/Certificacoes/iso-9001.pdf',
   },
 ] as const;
@@ -900,7 +899,7 @@ onClick={() => {
             <span>
               {selectedUseCase.label}
             </span>
-            {selectedUseCase.cta ? (
+            {selectedUseCase.tab === 'Dashboard' ? (
               <>
                 <h3
                   className={
@@ -938,8 +937,7 @@ onClick={() => {
                 }
                 className={styles.cta}
               >
-                {selectedUseCase.cta ??
-                  'CONHECER O ASSISTENTE'}
+                CONHECER O ASSISTENTE
                 <ArrowRight size={17} />
               </Link>
             )}
