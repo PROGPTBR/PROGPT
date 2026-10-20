@@ -119,6 +119,12 @@ export function AssistantsHub({
                     </span>
                   )}
 
+                  {!badge && !isAdminPreview && assistant.selo && (
+                    <span className="absolute right-2 top-2 rounded-full bg-brand-gradient px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-black shadow">
+                      {BADGE_LABEL[assistant.selo]}
+                    </span>
+                  )}
+
                   {isAdminPreview && (
                     <span className="absolute right-2 top-2 rounded-full bg-amber-500 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-black shadow">
                       Em teste

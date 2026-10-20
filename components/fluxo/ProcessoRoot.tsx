@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import {
   AlertTriangle,
@@ -8,12 +8,17 @@ import {
   Check,
   CheckCircle2,
   Loader2,
+  MessageCircle,
   Pencil,
   Play,
+  Sparkles,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { FLUXO_STAGES, getStage } from '@/lib/fluxo/stages';
+import { FLUXO_STAGES, getStage, proximaEtapa } from '@/lib/fluxo/stages';
+import { EXEMPLO_ENTRADAS, EXEMPLO_SAIDAS } from '@/lib/fluxo/exemplo';
+import { avisarSobDemanda } from '@/components/vitrine/ui';
+import { solicitarProdutoHref } from '@/lib/vitrine/contato';
 import type { FluxoEtapa, FluxoProcesso } from '@/lib/fluxo/types';
 
 // O tabuleiro do processo: trilha das 8 etapas + o card da etapa atual com o
@@ -23,9 +28,14 @@ import type { FluxoEtapa, FluxoProcesso } from '@/lib/fluxo/types';
 type Props = {
   processoInicial: FluxoProcesso;
   etapasIniciais: FluxoEtapa[];
+  /** Processo de exemplo (vitrine sob demanda): roda no navegador com os
+   *  resultados prontos de lib/fluxo/exemplo.ts, sem IA e sem gravar nada. */
+  exemplo?: boolean;
+  /** Quem tem o Fluxo de verdade não vê o convite para contratar. */
+  liberado?: boolean;
 };
 
-export function ProcessoRoot({ processoInicial, etapasIniciais }: Props) {
+export function ProcessoRoot({ processoInicial, etapasIniciais, exemplo = false, liberado = false }: Props) {
   const [processo, setProcesso] = useState(processoInicial);
   const [etapas, setEtapas] = useState(etapasIniciais);
   const [entrada, setEntrada] = useState('');
@@ -35,6 +45,11 @@ export function ProcessoRoot({ processoInicial, etapasIniciais }: Props) {
 
   const stage = getStage(processo.etapa_atual);
   const concluido = processo.status === 'concluido';
+
+  // No exemplo, o que o comprador digitaria em cada etapa já vem preenchido.
+  useEffect(() => {
+    if (exemplo) setEntrada(EXEMPLO_ENTRADAS[processo.etapa_atual] ?? '');
+  }, [exemplo, processo.etapa_atual]);
 
   const pendente = useMemo(
     () => etapas.find((e) => e.etapa === processo.etapa_atual && e.decisao === 'pendente') ?? null,
@@ -57,6 +72,28 @@ export function ProcessoRoot({ processoInicial, etapasIniciais }: Props) {
   async function rodar() {
     if (busy) return;
     setBusy('run');
+    if (exemplo) {
+      await new Promise((r) => setTimeout(r, 1200));
+      const agora = new Date().toISOString();
+      setEtapas((prev) => [
+        ...prev,
+        {
+          id: `exemplo-${processo.etapa_atual}`,
+          processo_id: processo.id,
+          user_id: processo.user_id,
+          etapa: processo.etapa_atual,
+          rodada: 1,
+          saida: EXEMPLO_SAIDAS[processo.etapa_atual],
+          decisao: 'pendente',
+          observacao: null,
+          decidida_em: null,
+          created_at: agora,
+        },
+      ]);
+      setEntrada('');
+      setBusy(null);
+      return;
+    }
     try {
       const res = await fetch(`/api/fluxo/processos/${processo.id}/run`, {
         method: 'POST',
@@ -79,6 +116,24 @@ export function ProcessoRoot({ processoInicial, etapasIniciais }: Props) {
 
   async function decidir(decisao: 'siga' | 'ajustar') {
     if (busy) return;
+
+    if (exemplo) {
+      if (decisao === 'ajustar') {
+        avisarSobDemanda('fluxo_compras', 'Pedir ajuste à IA');
+        return;
+      }
+      if (!pendente) return;
+      const prox = proximaEtapa(processo.etapa_atual);
+      setEtapas((prev) => prev.map((e) => (e.id === pendente.id ? { ...e, decisao: 'siga', decidida_em: new Date().toISOString() } : e)));
+      setProcesso((p) => ({
+        ...p,
+        contexto: { ...p.contexto, [p.etapa_atual]: pendente.saida },
+        etapa_atual: prox ? prox.id : p.etapa_atual,
+        status: prox ? p.status : 'concluido',
+      }));
+      toast.success(prox ? 'Etapa aprovada. Próxima etapa liberada.' : 'Processo de exemplo concluído.');
+      return;
+    }
 
     if (decisao === 'ajustar' && !ajuste.trim()) {
       toast.error('Diga o que precisa ser corrigido.');
@@ -133,6 +188,31 @@ export function ProcessoRoot({ processoInicial, etapasIniciais }: Props) {
           </span>
         )}
       </div>
+
+      {exemplo && (
+        <div className="flex flex-col gap-3 rounded-2xl border border-brand/30 bg-brand/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-2 text-sm">
+            <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-brand" aria-hidden />
+            <div>
+              <div className="font-medium">Processo de exemplo</div>
+              <div className="text-muted-foreground">
+                Dados fictícios: clique em Executar etapa e em SIGA para ver as 8 etapas. Nada é gravado.
+              </div>
+            </div>
+          </div>
+          {!liberado && (
+            <a
+              href={solicitarProdutoHref('fluxo_compras')}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-primary px-4 h-10 text-sm font-medium text-primary-foreground hover:opacity-90"
+            >
+              <MessageCircle className="h-4 w-4" aria-hidden />
+              Quero na minha empresa
+            </a>
+          )}
+        </div>
+      )}
 
       <h1 className="text-xl font-semibold tracking-tight">{processo.titulo}</h1>
 

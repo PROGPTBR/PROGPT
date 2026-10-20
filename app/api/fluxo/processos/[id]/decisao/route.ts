@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 import { requireUser, NotAuthenticated } from '@/lib/auth';
 import { decidirEtapa } from '@/lib/fluxo/process';
+import { usuarioComFluxo, respostaSobDemanda } from '@/lib/fluxo/acesso-servidor';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -29,6 +30,8 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     if (err instanceof NotAuthenticated) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
     throw err;
   }
+
+  if (!(await usuarioComFluxo(u))) return respostaSobDemanda();
 
   let body: z.infer<typeof Body>;
   try {

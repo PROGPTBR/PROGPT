@@ -5,6 +5,7 @@ import { requireUser, NotAuthenticated } from '@/lib/auth';
 import { getServerSupabase } from '@/lib/db/supabase';
 import { FLUXO_STAGE_IDS, isFluxoStageId } from '@/lib/fluxo/stages';
 import type { SlaPorEtapa } from '@/lib/fluxo/metrics';
+import { usuarioComFluxo, respostaSobDemanda } from '@/lib/fluxo/acesso-servidor';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -59,6 +60,8 @@ export async function PUT(req: Request) {
     }
     throw err;
   }
+
+  if (!(await usuarioComFluxo(user))) return respostaSobDemanda();
 
   let body: z.infer<typeof Body>;
   try {

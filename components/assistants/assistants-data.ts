@@ -41,6 +41,13 @@ export type AssistantDefinition = {
   badge?: 'em_breve' | 'sob_demanda';
 
   /**
+   * Selo só visual, sem travar o card (o card continua abrindo). Usado no
+   * Fluxo de Compras: clientes veem a vitrine com exemplo; quem contratou
+   * usa de verdade (lib/fluxo/acesso.ts).
+   */
+  selo?: 'sob_demanda';
+
+  /**
    * false = aparece no Hub, mas não aparece
    * no painel lateral de Assistentes.
    *
@@ -202,6 +209,7 @@ export const ASSISTANTS: readonly AssistantDefinition[] = [
       'Reaproveita o Equalizador no TCO e a consulta fiscal na seleção de fornecedores',
     ],
     previewKey: 'fluxo_compras',
+    selo: 'sob_demanda',
   },
 
   {

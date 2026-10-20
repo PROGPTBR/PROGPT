@@ -3,14 +3,22 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, BarChart3, Loader2, Plus, Workflow } from 'lucide-react';
+import { ArrowRight, BarChart3, ListChecks, Loader2, MessageCircle, PenLine, Plus, Sparkles, Workflow } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { FLUXO_STAGES, getStage } from '@/lib/fluxo/stages';
 import type { FluxoProcesso } from '@/lib/fluxo/types';
+import { RequisicaoGuiada } from './RequisicaoGuiada';
+import { avisarSobDemanda } from '@/components/vitrine/ui';
+import { solicitarProdutoHref } from '@/lib/vitrine/contato';
 
 // Lista de processos + abertura de um novo. A entrada do fluxo é a
-// requisição em texto livre — é o que a etapa 1 padroniza.
+// requisição em texto, que a etapa 1 padroniza; ela pode ser escrita livre ou
+// montada pelo modo guiado (pergunta a pergunta).
+//
+// Sob demanda (lib/fluxo/acesso.ts): sem `liberado`, a tela é vitrine: mostra
+// o selo, o modo guiado e o processo de exemplo, e abrir um processo de
+// verdade leva ao contato comercial.
 
 function etapaLabel(processo: FluxoProcesso) {
   const stage = getStage(processo.etapa_atual);
@@ -21,7 +29,13 @@ function concluidas(processo: FluxoProcesso) {
   return FLUXO_STAGES.filter((s) => !!processo.contexto?.[s.id]).length;
 }
 
-export function FluxoRoot({ processosIniciais }: { processosIniciais: FluxoProcesso[] }) {
+export function FluxoRoot({
+  processosIniciais,
+  liberado = true,
+}: {
+  processosIniciais: FluxoProcesso[];
+  liberado?: boolean;
+}) {
   const router = useRouter();
 
   const [processos] = useState(processosIniciais);
@@ -29,6 +43,8 @@ export function FluxoRoot({ processosIniciais }: { processosIniciais: FluxoProce
   const [titulo, setTitulo] = useState('');
   const [requisicao, setRequisicao] = useState('');
   const [busy, setBusy] = useState(false);
+  const [modo, setModo] = useState<'guiado' | 'livre'>('guiado');
+  const [guiadoPronto, setGuiadoPronto] = useState(false);
 
   async function criar(e: React.FormEvent) {
     e.preventDefault();
@@ -36,6 +52,11 @@ export function FluxoRoot({ processosIniciais }: { processosIniciais: FluxoProce
 
     if (requisicao.trim().length < 10) {
       toast.error('Descreva a necessidade da compra com um pouco mais de detalhe.');
+      return;
+    }
+
+    if (!liberado) {
+      avisarSobDemanda('fluxo_compras', 'Abrir um processo de verdade');
       return;
     }
 
@@ -72,7 +93,12 @@ export function FluxoRoot({ processosIniciais }: { processosIniciais: FluxoProce
           </span>
         </div>
 
-        <h1 className="text-2xl font-semibold tracking-tight">Da solicitação à chegada do produto</h1>
+        <div className="flex flex-wrap items-center gap-2">
+          <h1 className="text-2xl font-semibold tracking-tight">Da solicitação à chegada do produto</h1>
+          <span className="rounded-full bg-brand-gradient px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-black">
+            Sob demanda
+          </span>
+        </div>
 
         <p className="text-sm text-muted-foreground max-w-2xl">
           Oito etapas encadeadas. A IA executa cada uma e para para você decidir:{' '}
@@ -105,6 +131,24 @@ export function FluxoRoot({ processosIniciais }: { processosIniciais: FluxoProce
       </ol>
 
       <div data-tour="fluxo-acoes" className="flex flex-wrap items-center gap-2">
+        <Link
+          href="/fluxo/exemplo"
+          className="inline-flex items-center gap-2 rounded-full border border-brand/40 bg-brand/5 h-11 px-5 text-sm font-medium hover:bg-brand/10 transition-colors"
+        >
+          <Sparkles className="h-4 w-4 text-brand" aria-hidden />
+          Carregar exemplo
+        </Link>
+        {!liberado && (
+          <a
+            href={solicitarProdutoHref('fluxo_compras')}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-full bg-primary text-primary-foreground h-11 px-5 text-sm font-medium hover:opacity-90"
+          >
+            <MessageCircle className="h-4 w-4" aria-hidden />
+            Quero na minha empresa
+          </a>
+        )}
         {!abrindo && (
           <button
             type="button"
@@ -116,6 +160,7 @@ export function FluxoRoot({ processosIniciais }: { processosIniciais: FluxoProce
           </button>
         )}
 
+        {liberado && (
         <Link
           href="/fluxo/painel"
           className="inline-flex items-center gap-2 rounded-full border border-border h-11 px-5 text-sm font-medium hover:bg-accent transition-colors"
@@ -123,6 +168,7 @@ export function FluxoRoot({ processosIniciais }: { processosIniciais: FluxoProce
           <BarChart3 className="h-4 w-4" aria-hidden />
           Gestão dos processos
         </Link>
+        )}
       </div>
 
       {abrindo && (
@@ -130,7 +176,43 @@ export function FluxoRoot({ processosIniciais }: { processosIniciais: FluxoProce
           onSubmit={criar}
           className="rounded-2xl border border-border bg-card p-5 space-y-4"
         >
-          <h2 className="text-sm font-semibold">Abrir um processo de compra</h2>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-sm font-semibold">Abrir um processo de compra</h2>
+            <div className="inline-flex rounded-full border border-border p-0.5 text-xs" role="tablist" aria-label="Como descrever a compra">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={modo === 'guiado'}
+                onClick={() => setModo('guiado')}
+                className={`inline-flex items-center gap-1.5 rounded-full px-3 h-8 ${modo === 'guiado' ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-foreground'}`}
+              >
+                <ListChecks className="h-3.5 w-3.5" aria-hidden /> Passo a passo
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={modo === 'livre'}
+                onClick={() => setModo('livre')}
+                className={`inline-flex items-center gap-1.5 rounded-full px-3 h-8 ${modo === 'livre' ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-foreground'}`}
+              >
+                <PenLine className="h-3.5 w-3.5" aria-hidden /> Escrever livre
+              </button>
+            </div>
+          </div>
+
+          {modo === 'guiado' && (
+            <RequisicaoGuiada
+              onPronto={(r) => {
+                setTitulo(r.titulo);
+                setRequisicao(r.requisicao);
+                setGuiadoPronto(true);
+              }}
+              onRefazer={() => setGuiadoPronto(false)}
+            />
+          )}
+
+          {(modo === 'livre' || guiadoPronto) && (
+          <>
 
           <div>
             <label className="mb-1.5 block text-xs font-medium text-muted-foreground" htmlFor="titulo">
@@ -159,6 +241,10 @@ export function FluxoRoot({ processosIniciais }: { processosIniciais: FluxoProce
             />
           </div>
 
+          </>
+          )}
+
+          {(modo === 'livre' || guiadoPronto) && (
           <div className="flex gap-2">
             <button
               type="submit"
@@ -179,6 +265,7 @@ export function FluxoRoot({ processosIniciais }: { processosIniciais: FluxoProce
               </button>
             )}
           </div>
+          )}
         </form>
       )}
 

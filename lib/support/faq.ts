@@ -193,7 +193,7 @@ export const FAQ_SUPORTE: FaqSecao[] = [
         id: 'fluxo',
         pergunta: 'Como funciona o Fluxo de Compras?',
         resposta:
-          'Você descreve a necessidade e o processo percorre 8 etapas, da solicitação ao recebimento. Em cada etapa a IA executa e para para você decidir: SIGA avança, AJUSTAR manda refazer com a sua correção.',
+          'Você descreve a necessidade (respondendo as perguntas do passo a passo ou escrevendo livre) e o processo percorre 8 etapas, da solicitação ao recebimento. Em cada etapa a IA executa e para para você decidir: SIGA avança, AJUSTAR manda refazer com a sua correção. O Fluxo é implantado sob demanda: em "Carregar exemplo" você vê um processo completo funcionando e, para ter na sua empresa, fala com o comercial.',
         termos: 'processo etapas siga ajustar aprovação',
       },
       {

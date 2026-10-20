@@ -6,11 +6,12 @@ import { LEGAL_CONTACT_PHONE_TEL } from '@/lib/legal/constants';
 // botão de "quero este produto" — e toda ação que gravaria algo na demo —
 // termina neste link de WhatsApp, com a mensagem já dizendo qual produto é.
 
-export type ProdutoVitrine = 'gestao_obras' | 'gestao_demandas';
+export type ProdutoVitrine = 'gestao_obras' | 'gestao_demandas' | 'fluxo_compras';
 
 export const PRODUTO_VITRINE_LABEL: Record<ProdutoVitrine, string> = {
   gestao_obras: 'Gestão de Obras',
   gestao_demandas: 'Gestão de Demandas',
+  fluxo_compras: 'Fluxo Automatizado de Compras',
 };
 
 /** Número no formato do wa.me: só dígitos, com DDI. */

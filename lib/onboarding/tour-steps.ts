@@ -206,7 +206,7 @@ export const TOUR_STEPS: TourStep[] = [
     secao: 'Fluxo de Compras',
     target: '[data-tour="fluxo-acoes"]',
     title: 'Você decide cada passo',
-    body: 'Descreva a necessidade para abrir um processo. A IA executa cada etapa e para para você decidir: SIGA avança, AJUSTAR manda refazer com a sua correção. Em "Gestão dos processos" você acompanha todos de uma vez.',
+    body: 'Carregue o exemplo para ver as oito etapas funcionando. Para abrir uma compra, responda as perguntas do passo a passo ou escreva livre. A IA executa cada etapa e para para você decidir: SIGA avança, AJUSTAR manda refazer. O Fluxo é implantado sob demanda para a sua empresa.',
   },
 
   // ── Painel ────────────────────────────────────────────────────────────

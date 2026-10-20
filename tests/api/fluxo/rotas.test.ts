@@ -6,7 +6,16 @@ beforeEach(() => {
 
 class NotAuthenticated extends Error {}
 
-function mockAuth(authed: boolean) {
+function mockAuth(authed: boolean, liberado = true) {
+  // Fluxo sob demanda (lib/fluxo/acesso.ts): por padrão o usuário dos testes
+  // tem o Fluxo liberado; liberado=false simula o cliente da vitrine.
+  vi.doMock('@/lib/fluxo/acesso-servidor', async () => {
+    const { NextResponse } = await import('next/server');
+    return {
+      usuarioComFluxo: vi.fn().mockResolvedValue(liberado),
+      respostaSobDemanda: () => NextResponse.json({ error: 'sob_demanda', message: 'sob demanda' }, { status: 403 }),
+    };
+  });
   vi.doMock('@/lib/auth', () => ({
     NotAuthenticated,
     requireUser: vi.fn().mockImplementation(async () => {
@@ -213,5 +222,26 @@ describe('GET /api/fluxo/painel', () => {
 
     expect(body.emAndamento).toBe(1);
     expect(body.etapas.find((e) => e.etapa === 'rfq')!.emAndamento).toBe(1);
+  });
+});
+
+describe('Fluxo sob demanda (vitrine)', () => {
+  it('cliente sem o Fluxo liberado não abre processo nem gasta IA', async () => {
+    mockAuth(true, false);
+    const mod = mockProcess();
+    const { POST } = await import('@/app/api/fluxo/processos/route');
+    const res = await POST(post('http://x', { requisicao: 'preciso de 10 notebooks para o time' }));
+    expect(res.status).toBe(403);
+    expect((await res.json()).error).toBe('sob_demanda');
+    expect(mod.criarProcesso).not.toHaveBeenCalled();
+  });
+
+  it('nem roda etapa de processo antigo', async () => {
+    mockAuth(true, false);
+    const mod = mockProcess();
+    const { POST } = await import('@/app/api/fluxo/processos/[id]/run/route');
+    const res = await POST(post('http://x', { entrada: '' }), { params: { id: 'p1' } });
+    expect(res.status).toBe(403);
+    expect(mod.rodarEtapa).not.toHaveBeenCalled();
   });
 });
