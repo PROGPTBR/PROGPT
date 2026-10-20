@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useModulosDesativados, hrefDesligado } from '@/lib/modulos/useModulos';
 import {
   BarChart3,
   DollarSign,
@@ -46,6 +47,8 @@ type Props = {
 
 export function AssistantLauncher({ variant = 'compact' }: Props) {
   const isHero = variant === 'hero';
+  const desligados = useModulosDesativados();
+  const entries = ENTRIES.filter((e) => !hrefDesligado(e.href, desligados));
 
   return (
     <nav
@@ -57,7 +60,7 @@ export function AssistantLauncher({ variant = 'compact' }: Props) {
       }
     >
       <div className="flex gap-2 overflow-x-auto scrollbar-none -mx-2 px-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {ENTRIES.map(({ href, label, Icon }) => (
+        {entries.map(({ href, label, Icon }) => (
           <Link
             key={href}
             href={href}

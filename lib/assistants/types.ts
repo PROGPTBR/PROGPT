@@ -21,7 +21,8 @@ export type AssistantType =
   | 'homologacao'
   | 'pesquisa_precos'
   | 'spend_analysis'
-  | 'diagnostico_aquisicao';
+  | 'diagnostico_aquisicao'
+  | 'tributario_propostas';
 
 export const ASSISTANT_TYPES = [
   'rfp',
@@ -36,6 +37,7 @@ export const ASSISTANT_TYPES = [
   'pesquisa_precos',
   'spend_analysis',
   'diagnostico_aquisicao',
+  'tributario_propostas',
 ] as const;
 
 export type ThemeStatusRow = 'running' | 'done' | 'error';

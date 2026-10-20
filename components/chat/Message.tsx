@@ -10,6 +10,7 @@ import { SupplierSearchCTA } from './SupplierSearchCTA';
 import { InlineQuickChart } from './InlineQuickChart';
 import { ThinkingDots } from './ThinkingDots';
 import { semTravessao } from '@/lib/texto/sem-travessao';
+import { useModulosDesativados } from '@/lib/modulos/useModulos';
 import {
   AssistantToolCTA,
   detectAssistantToolCTA,
@@ -54,6 +55,7 @@ export function Message({
   webSearchUsed,
   onTryPersonalMode,
 }: Props) {
+  const desligados = useModulosDesativados();
   if (role === 'user') {
     return (
       <li className="flex justify-end">
@@ -68,8 +70,10 @@ export function Message({
   // ephemeral (SSE-only, skipped if finishReason !== 'stop', gone on reload),
   // so deriving from content guarantees the card shows whenever the answer
   // mentions a tool — including reloaded sessions.
-  const cta: AssistantToolType | undefined =
+  const ctaDetectado: AssistantToolType | undefined =
     assistantCTA ?? detectAssistantToolCTA(content) ?? undefined;
+  // Ferramenta desligada para a empresa do usuário: sem card.
+  const cta = ctaDetectado && !desligados.has(ctaDetectado) ? ctaDetectado : undefined;
 
   // Recusa por falta de fonte na base ("Não tenho fonte sobre isso...") — o
   // Assistente Pessoal (sem restrição de domínio + busca na web) resolve boa

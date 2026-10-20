@@ -17,7 +17,8 @@ export type AssistantPreviewKey =
   | 'simulador_logistico'
   | 'grafico_rapido'
   | 'comprador'
-  | 'diagnostico_aquisicao';
+  | 'diagnostico_aquisicao'
+  | 'tributario_propostas';
 
 export type AssistantDefinition = {
   id: string;
@@ -200,6 +201,23 @@ export const ASSISTANTS: readonly AssistantDefinition[] = [
       'Rascunho de Pedido de Compra pronto pra revisão',
     ],
     previewKey: 'comprador',
+  },
+
+  {
+    id: 'tributario_propostas',
+    step: 4,
+    stepCategory: 'Engajamento',
+    href: '/assistants/tributario_propostas',
+    title: 'Análise Tributária de Propostas',
+    short:
+      'Jogue as propostas dos fornecedores e veja qual sai mais barata depois dos impostos: o custo líquido de créditos de ICMS, IPI e PIS/Cofins hoje e ano a ano na reforma tributária (CBS e IBS, até 2033).',
+    sideSubtitle: 'Qual proposta é melhor pelo lado tributário',
+    bullets: [
+      'Lê as propostas (PDF, Word, Excel) e confere o regime do fornecedor na Receita',
+      'Custo líquido hoje, 2027, 2029, 2031 e 2033, com o vencedor de cada ano',
+      'Considera seu regime (Real, Presumido, Simples) e a destinação da compra',
+    ],
+    previewKey: 'tributario_propostas',
   },
 
   {

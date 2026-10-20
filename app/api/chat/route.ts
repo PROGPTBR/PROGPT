@@ -9,6 +9,7 @@ import { startTrace, flushAsync } from '@/lib/observability/langfuse';
 import { recordApiUsage } from '@/lib/observability/api-usage';
 import { withUser } from '@/lib/observability/user-context';
 import { getCurrentUser } from '@/lib/auth';
+import { getModulosDesativados } from '@/lib/modulos/servidor';
 import { checkChatRateLimit } from '@/lib/rate-limit';
 import { summarizeChatTitle } from '@/lib/chat-title';
 import { getServerSupabase } from '@/lib/db/supabase';
@@ -212,6 +213,9 @@ export async function POST(req: Request): Promise<Response> {
     const indicadoresRef = { current: false };
     const diagnosticoRef = { current: false };
     const homologacaoRef = { current: false };
+    // Ferramentas de assistentes desligados para a empresa (console
+    // /plataforma) não entram no turno.
+    const modulosDesligados = new Set(await getModulosDesativados(user.id));
     const chatTools = {
       ...(isOffTopicFallbackEnabled()
         ? { responder_fora_do_escopo: createOffBaseMarkerTool(offBaseRef) }
@@ -225,16 +229,16 @@ export async function POST(req: Request): Promise<Response> {
             }),
           }
         : {}),
-      ...(isPrecoReferenciaToolEnabled()
+      ...(isPrecoReferenciaToolEnabled() && !modulosDesligados.has('pesquisa_precos')
         ? { preco_referencia: createPrecoReferenciaTool({ usedRef: precoRef }) }
         : {}),
-      ...(isIndicadoresToolEnabled()
+      ...(isIndicadoresToolEnabled() && !modulosDesligados.has('indicadores')
         ? { indicadores_economicos: createIndicadoresTool({ usedRef: indicadoresRef }) }
         : {}),
-      ...(isDiagnosticoAquisicaoToolEnabled()
+      ...(isDiagnosticoAquisicaoToolEnabled() && !modulosDesligados.has('diagnostico_aquisicao')
         ? { diagnostico_aquisicao_rapido: createDiagnosticoAquisicaoTool({ usedRef: diagnosticoRef }) }
         : {}),
-      ...(isHomologacaoQuickToolEnabled()
+      ...(isHomologacaoQuickToolEnabled() && !modulosDesligados.has('homologacao')
         ? { homologacao_rapida: createHomologacaoQuickTool({ usedRef: homologacaoRef }) }
         : {}),
     };

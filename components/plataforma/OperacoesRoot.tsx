@@ -12,6 +12,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { ModulosDialog } from './ModulosDialog';
+import { MODULOS, lerDesativados } from '@/lib/modulos/catalogo';
 
 // /plataforma/operacoes — CRUD de orgs (tenants) + atribuição de template.
 // Fase 1 (fundação "Plataforma"): sem RLS org-scoped nas tabelas de domínio
@@ -39,6 +41,7 @@ export function OperacoesRoot() {
   const [slug, setSlug] = useState('');
   const [templateId, setTemplateId] = useState('');
   const [creating, setCreating] = useState(false);
+  const [modulosDe, setModulosDe] = useState<Org | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -135,8 +138,8 @@ export function OperacoesRoot() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Operações</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Orgs (tenants) da plataforma PROGPT. Cada org é isolada por usuário via{' '}
-          <code>profiles.org_id</code>, a Fase 2 estende isso pra dados compartilhados por org.
+          Empresas (orgs) da plataforma PROGPT. Em Módulos você escolhe o que cada empresa pode
+          usar; para personalizar um cliente, crie a empresa aqui e mova os usuários dele em Usuários.
         </p>
       </div>
 
@@ -183,6 +186,7 @@ export function OperacoesRoot() {
               <TableHead>Status</TableHead>
               <TableHead>Usuários</TableHead>
               <TableHead>Template</TableHead>
+              <TableHead>Módulos</TableHead>
               <TableHead />
             </TableRow>
           </TableHeader>
@@ -218,6 +222,14 @@ export function OperacoesRoot() {
                   </select>
                 </TableCell>
                 <TableCell>
+                  <Button variant="outline" size="sm" onClick={() => setModulosDe(org)}>
+                    {(() => {
+                      const off = lerDesativados(org.org_settings).length;
+                      return off === 0 ? 'Todos ligados' : `${MODULOS.length - off} de ${MODULOS.length}`;
+                    })()}
+                  </Button>
+                </TableCell>
+                <TableCell>
                   <Button variant="outline" size="sm" onClick={() => toggleStatus(org)}>
                     {org.status === 'active' ? 'Desativar' : 'Ativar'}
                   </Button>
@@ -226,6 +238,27 @@ export function OperacoesRoot() {
             ))}
           </TableBody>
         </Table>
+      )}
+
+      {modulosDe && (
+        <ModulosDialog
+          org={{
+            id: modulosDe.id,
+            name: modulosDe.name,
+            desativados: lerDesativados(modulosDe.org_settings),
+          }}
+          aberto={modulosDe !== null}
+          onFechar={() => setModulosDe(null)}
+          onSalvo={(lista) =>
+            setOrgs((prev) =>
+              prev.map((o) =>
+                o.id === modulosDe.id
+                  ? { ...o, org_settings: { ...o.org_settings, modulos_desativados: lista } }
+                  : o,
+              ),
+            )
+          }
+        />
       )}
     </div>
   );

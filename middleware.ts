@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
+import { moduloDoCaminho } from '@/lib/modulos/catalogo';
 
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next();
@@ -87,6 +88,25 @@ export async function middleware(req: NextRequest) {
     url.searchParams.set('error', 'profile');
 
     return NextResponse.redirect(url);
+  }
+
+  // ============================================================
+  // MÓDULO DESLIGADO PARA A EMPRESA
+  //
+  // O super admin liga/desliga módulos por empresa em /plataforma
+  // (orgs.org_settings.modulos_desativados). Vale para todos da empresa,
+  // inclusive admins dela. Erro na consulta não bloqueia (fail-open):
+  // é personalização, não controle de segurança.
+  // ============================================================
+
+  const modulo = moduloDoCaminho(req.nextUrl.pathname);
+  if (modulo) {
+    const { data: desligados } = await supabase.rpc('modulos_desativados');
+    if (Array.isArray(desligados) && desligados.includes(modulo)) {
+      const url = new URL('/modulo-indisponivel', req.url);
+      url.searchParams.set('m', modulo);
+      return NextResponse.redirect(url);
+    }
   }
 
   // ============================================================

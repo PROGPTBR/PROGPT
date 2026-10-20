@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useModulosDesativados, hrefDesligado } from '@/lib/modulos/useModulos';
 import Link from 'next/link';
 
 import {
@@ -154,6 +155,10 @@ export function Sidebar({
 
   onStartTour,
 }: Props) {
+  // Itens de módulos desligados para a empresa somem do menu.
+  const desligados = useModulosDesativados();
+  const navItems = NAV_ITEMS.filter((item) => !hrefDesligado(item.href, desligados));
+
   const [
     editingId,
     setEditingId,
@@ -327,7 +332,7 @@ export function Sidebar({
       <Compass className="h-5 w-5" aria-hidden="true" />
     </button>
   )}
-  {NAV_ITEMS.map(
+  {navItems.map(
     ({
       href,
       label,
@@ -539,7 +544,7 @@ export function Sidebar({
             <span className="truncate">Ver o tour da plataforma</span>
           </button>
         )}
-{NAV_ITEMS.map(
+{navItems.map(
   ({
     href,
     label,

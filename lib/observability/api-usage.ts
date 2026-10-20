@@ -106,6 +106,8 @@ export type ApiOperation =
   | 'chat-personal-generate'
   | 'chat-personal-websearch'
   | 'assistant-diagnostico-aquisicao-generate'
+  | 'assistant-tributario-generate'
+  | 'assistant-tributario-extract'
   | 'chat-tool-websearch';
 
 export type RecordUsageInput = {

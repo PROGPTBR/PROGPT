@@ -24,6 +24,7 @@ import { getUserCompany } from '@/lib/db/user-company';
 import type { CompanyData } from '@/lib/db/user-company';
 import type { RetrievedChunk } from '@/lib/rag/types';
 import type { AssistantType, TemplateRow } from '@/lib/assistants/types';
+import { moduloBloqueado } from '@/lib/modulos/servidor';
 
 // Sub-projeto 32 — Generic handler for the /api/assistants/* routes.
 //
@@ -128,6 +129,11 @@ export function buildAssistantHandler<
 
     const user = await getCurrentUser();
     if (!user) return Response.json({ error: 'unauthorized' }, { status: 401 });
+
+    // Módulo desligado para a empresa do usuário (console /plataforma).
+    if (await moduloBloqueado(user.id, config.type)) {
+      return Response.json({ error: 'module_disabled' }, { status: 403 });
+    }
 
     // Acesso liberado a todo usuário logado (decisão 2026-07-07: cartão no
     // cadastro ⇒ sem bloqueio de pagamento in-app; cobrança fica no Asaas).

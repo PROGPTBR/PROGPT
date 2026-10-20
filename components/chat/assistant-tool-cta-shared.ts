@@ -1,6 +1,7 @@
 import {
   BarChart3,
   Briefcase,
+  Calculator,
   Coins,
   FileText,
   GitBranch,
@@ -53,7 +54,8 @@ export type AssistantToolType =
   | 'grafico_rapido'
   | 'comprador'
   | 'simulador_tributario'
-  | 'diagnostico_aquisicao';
+  | 'diagnostico_aquisicao'
+  | 'tributario_propostas';
 
 export type AssistantToolMeta = {
   title: string;
@@ -171,6 +173,12 @@ export const META: Record<AssistantToolType, AssistantToolMeta> = {
       'Classifique a compra como CAPEX ou OPEX e receba os KPIs certos + a estratégia recomendada (SOURCE, CONTRACT ou BUY) antes de partir para RFP ou Kraljic.',
     Icon: GitBranch,
   },
+  tributario_propostas: {
+    title: 'Análise Tributária de Propostas',
+    blurb:
+      'Jogue as propostas dos fornecedores e veja qual sai mais barata depois dos impostos: custo líquido de créditos (ICMS, IPI, PIS/Cofins) hoje e ano a ano na reforma tributária, até 2033.',
+    Icon: Calculator,
+  },
 };
 
 export function pathFor(type: AssistantToolType): string {
@@ -195,6 +203,7 @@ const VALID_TYPES = new Set<AssistantToolType>([
   'comprador',
   'simulador_tributario',
   'diagnostico_aquisicao',
+  'tributario_propostas',
 ]);
 
 // Tipos cuja rota NÃO segue `/assistants/<type>` (ver `path` em META) —
@@ -241,7 +250,7 @@ export function detectAssistantToolCTA(text: string): AssistantToolType | null {
 // Tipos cujo caminho cru removemos do texto exibido (o card assume o CTA).
 // Inclui `suppliers` (caminho válido) pra não deixar o path feio na frase.
 const STRIP_TYPES =
-  'fluxo_compras|rfp|kraljic|porter|abc|financial|scorecard|profile|negotiation|homologacao|pesquisa_precos|spend_analysis|indicadores|grafico_rapido|comprador|suppliers|diagnostico_aquisicao';
+  'fluxo_compras|rfp|kraljic|porter|abc|financial|scorecard|profile|negotiation|homologacao|pesquisa_precos|spend_analysis|indicadores|grafico_rapido|comprador|suppliers|diagnostico_aquisicao|tributario_propostas';
 const ASSISTANTS_OR_CUSTOM = CUSTOM_PATH_ALTERNATION
   ? `/assistants/(?:${STRIP_TYPES})|${CUSTOM_PATH_ALTERNATION}`
   : `/assistants/(?:${STRIP_TYPES})`;

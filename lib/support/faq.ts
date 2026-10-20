@@ -104,7 +104,7 @@ export const FAQ_SUPORTE: FaqSecao[] = [
         id: 'quais',
         pergunta: 'Quais assistentes existem?',
         resposta:
-          'Estão todos na tela Assistentes: RFP, Matriz Kraljic, 5 Forças de Porter, Curva ABC, Scorecard de fornecedor, Análise Financeira, Análise de Gastos, Pesquisa de Preços, Homologação de Fornecedor, Negociação, Equalizador de Propostas, Diagnóstico de Aquisição, Busca de Fornecedores e outros.',
+          'Estão todos na tela Assistentes: RFP, Matriz Kraljic, 5 Forças de Porter, Curva ABC, Scorecard de fornecedor, Análise Financeira, Análise de Gastos, Pesquisa de Preços, Homologação de Fornecedor, Negociação, Equalizador de Propostas, Análise Tributária de Propostas, Diagnóstico de Aquisição, Busca de Fornecedores e outros.',
       },
       {
         id: 'documentos',
@@ -152,8 +152,22 @@ export const FAQ_SUPORTE: FaqSecao[] = [
         id: 'equalizador',
         pergunta: 'Como comparo propostas de fornecedores?',
         resposta:
-          'No Equalizador de Propostas: cole ou importe as propostas (até 10 arquivos de uma vez). Ele compara pelo custo total, aponta desvios e, se você incluir o pedido de cotação, confere item a item o que cada fornecedor cotou.',
+          'No Equalizador de Propostas: cole ou importe as propostas (até 40 arquivos de uma vez). Ele compara pelo custo total, aponta desvios e, se você incluir o pedido de cotação, confere item a item o que cada fornecedor cotou.',
         termos: 'cotação tco comparar proposta',
+      },
+      {
+        id: 'tributario',
+        pergunta: 'Qual proposta é melhor pelo lado dos impostos?',
+        resposta:
+          'Use a Análise Tributária de Propostas: importe as propostas, confira os dados que a IA leu (valor, IPI, ICMS, frete e se o fornecedor é do Simples) e informe o regime da sua empresa e para que serve a compra. Ela mostra o custo líquido de cada proposta, já descontados os créditos de impostos, hoje e ano a ano na reforma tributária até 2033. É uma estimativa: valide com o seu contador antes de fechar contrato longo.',
+        termos: 'tributário imposto icms ipi pis cofins crédito reforma ibs cbs simples nacional',
+      },
+      {
+        id: 'modulo-indisponivel',
+        pergunta: 'Por que não vejo um assistente que outra pessoa usa?',
+        resposta:
+          'Os módulos disponíveis são definidos para cada empresa. Se um assistente não aparece para você, ele não está no plano da sua empresa: fale com o responsável pela conta ou com o comercial para incluir.',
+        termos: 'sumiu não aparece bloqueado indisponível plano módulo',
       },
       {
         id: 'negociacao',

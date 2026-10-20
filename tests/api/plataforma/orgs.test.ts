@@ -129,3 +129,61 @@ describe('POST /api/plataforma/orgs', () => {
     expect(res.status).toBe(409);
   });
 });
+
+describe('PATCH /api/plataforma/orgs/[id] (módulos)', () => {
+  function mockDb(existing: Record<string, unknown> | null) {
+    const update = vi.fn().mockReturnValue({ eq: () => Promise.resolve({ error: null }) });
+    vi.doMock('@/lib/db/supabase', () => ({
+      getServerSupabase: () => ({
+        from: () => ({
+          select: () => ({
+            eq: () => ({
+              maybeSingle: () =>
+                Promise.resolve({ data: existing ? { org_settings: existing } : null, error: null }),
+            }),
+          }),
+          update,
+        }),
+      }),
+    }));
+    return update;
+  }
+
+  it('grava a lista de desligados preservando o resto de org_settings', async () => {
+    mockAuth(true);
+    const update = mockDb({ tema: 'azul', modulos_desativados: ['rfp'] });
+    const { PATCH } = await import('@/app/api/plataforma/orgs/[id]/route');
+    const res = await PATCH(buildReq({ modulosDesativados: ['kraljic', 'kraljic', 'porter'] }, 'PATCH'), {
+      params: { id: 'org-1' },
+    });
+    expect(res.status).toBe(200);
+    expect(update.mock.calls[0]![0].org_settings).toEqual({
+      tema: 'azul',
+      modulos_desativados: ['kraljic', 'porter'],
+    });
+  });
+
+  it('recusa módulo desconhecido', async () => {
+    mockAuth(true);
+    mockDb({});
+    const { PATCH } = await import('@/app/api/plataforma/orgs/[id]/route');
+    const res = await PATCH(buildReq({ modulosDesativados: ['nao-existe'] }, 'PATCH'), { params: { id: 'org-1' } });
+    expect(res.status).toBe(400);
+  });
+
+  it('404 para quem não é super admin', async () => {
+    mockAuth(false);
+    mockDb({});
+    const { PATCH } = await import('@/app/api/plataforma/orgs/[id]/route');
+    const res = await PATCH(buildReq({ modulosDesativados: [] }, 'PATCH'), { params: { id: 'org-1' } });
+    expect(res.status).toBe(404);
+  });
+
+  it('org inexistente dá 404', async () => {
+    mockAuth(true);
+    mockDb(null);
+    const { PATCH } = await import('@/app/api/plataforma/orgs/[id]/route');
+    const res = await PATCH(buildReq({ modulosDesativados: ['rfp'] }, 'PATCH'), { params: { id: 'org-x' } });
+    expect(res.status).toBe(404);
+  });
+});

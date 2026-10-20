@@ -79,6 +79,7 @@ const AUDIT_ACTION_LABEL: Record<string, string> = {
   'feedback.resolve': 'Resolveu feedback',
   'feedback.reopen': 'Reabriu feedback',
   'user.impersonate': 'Entrou como o cliente',
+  'org.set_modulos': 'Alterou os módulos da empresa',
 };
 
 function auditDetail(row: AuditLogRow): string {

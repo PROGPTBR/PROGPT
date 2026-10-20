@@ -29,6 +29,8 @@ import { SimuladorLogisticoPreview } from './previews/SimuladorLogisticoPreview'
 import { GraficoRapidoPreview } from './previews/GraficoRapidoPreview';
 import { CompradorPreview } from './previews/CompradorPreview';
 import { DiagnosticoAquisicaoPreview } from './previews/DiagnosticoAquisicaoPreview';
+import { TributarioPropostasPreview } from './previews/TributarioPropostasPreview';
+import { moduloDoHref } from '@/lib/modulos/catalogo';
 
 /**
  * Relaciona o previewKey definido em assistants-data.ts
@@ -63,13 +65,22 @@ const PREVIEWS: Record<AssistantPreviewKey, ComponentType> = {
   grafico_rapido: GraficoRapidoPreview,
   comprador: CompradorPreview,
   diagnostico_aquisicao: DiagnosticoAquisicaoPreview,
+  tributario_propostas: TributarioPropostasPreview,
 };
 
 export function AssistantsHub({
   isAdmin = false,
+  modulosDesativados = [],
 }: {
   isAdmin?: boolean;
+  /** Módulos desligados para a empresa do usuário (console /plataforma). */
+  modulosDesativados?: readonly string[];
 }) {
+  const desligados = new Set(modulosDesativados);
+  const visiveis = ASSISTANTS.filter((a) => {
+    const m = moduloDoHref(a.href);
+    return !(m && desligados.has(m));
+  });
   return (
     <div className="space-y-12">
       {/* ───── Header ───── */}
@@ -82,7 +93,7 @@ export function AssistantsHub({
       {/* ───── Spotlight cards ───── */}
       <section data-tour="assistentes-grade" aria-label="Assistentes disponíveis">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {ASSISTANTS.map((assistant) => {
+          {visiveis.map((assistant) => {
             const Preview = PREVIEWS[assistant.previewKey];
 
             /**

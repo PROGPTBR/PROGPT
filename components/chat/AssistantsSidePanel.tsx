@@ -18,6 +18,7 @@ import {
 
 import { ASSISTANTS } from '@/components/assistants/assistants-data';
 import { supabaseBrowser } from '@/lib/db/supabase-browser';
+import { useModulosDesativados, hrefDesligado } from '@/lib/modulos/useModulos';
 
 type Props = {
   onClose: () => void;
@@ -62,6 +63,8 @@ const ASSISTANT_ICONS = {
   logistico: Truck,
 
   grafico_rapido: BarChart3,
+
+  tributario_propostas: Calculator,
 } as const;
 
 /* =========================================================
@@ -168,6 +171,11 @@ function getAssistantCategory(assistant: Assistant): CategoryId {
     text.includes('analise financeira')
   ) {
     return 'suppliers';
+  }
+
+  /* Análise tributária de propostas fica em Custos e Tributos, não em Cotação */
+  if (id === 'tributario_propostas') {
+    return 'costs';
   }
 
   /* Cotação e Sourcing */
@@ -369,6 +377,7 @@ function getAssistantOrder(assistant: Assistant) {
 
 export function AssistantsSidePanel({ onClose }: Props) {
   const [isAdmin, setIsAdmin] = useState(false);
+  const desligados = useModulosDesativados();
 
   useEffect(() => {
     const sb = supabaseBrowser();
@@ -404,9 +413,11 @@ export function AssistantsSidePanel({ onClose }: Props) {
 
   const visibleAssistants = useMemo(() => {
     return ASSISTANTS.filter(
-      (assistant) => assistant.showInSidePanel !== false
+      (assistant) =>
+        assistant.showInSidePanel !== false &&
+        !hrefDesligado(assistant.href, desligados)
     );
-  }, []);
+  }, [desligados]);
 
   /* =========================================================
      ORGANIZA POR CATEGORIA + ORDEM

@@ -21,6 +21,7 @@ const TYPE_LABELS: Record<string, string> = {
   negotiation: 'simulação de negociação',
   spend_analysis: 'análise de gastos',
   diagnostico_aquisicao: 'diagnóstico de aquisição',
+  tributario_propostas: 'análise tributária de propostas',
 };
 
 /**
