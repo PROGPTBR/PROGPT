@@ -195,7 +195,7 @@ export async function POST(req: Request): Promise<Response> {
       const lastUserContent =
         messages[messages.length - 1]?.content ?? standalone;
       data.appendMessageAnnotation({
-        supplierSearch: { query: lastUserContent.slice(0, 500) },
+        supplierSearch: { query: lastUserContent.slice(0, 6000) },
       });
     }
 

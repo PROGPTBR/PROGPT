@@ -9,6 +9,7 @@ import {
   Landmark,
   Layers,
   LineChart,
+  MapPinned,
   MessageCircle,
   Receipt,
   Scale,
@@ -55,7 +56,8 @@ export type AssistantToolType =
   | 'comprador'
   | 'simulador_tributario'
   | 'diagnostico_aquisicao'
-  | 'tributario_propostas';
+  | 'tributario_propostas'
+  | 'mapa_fornecedores';
 
 export type AssistantToolMeta = {
   title: string;
@@ -179,6 +181,12 @@ export const META: Record<AssistantToolType, AssistantToolMeta> = {
       'Jogue as propostas dos fornecedores e veja qual sai mais barata depois dos impostos: custo líquido de créditos (ICMS, IPI, PIS/Cofins) hoje e ano a ano na reforma tributária, até 2033.',
     Icon: Calculator,
   },
+  mapa_fornecedores: {
+    title: 'Mapa de Fornecedores da Operação',
+    blurb:
+      'Descreva a empresa e a região: ele monta as categorias de compra (CAPEX e OPEX), encontra até 50 fornecedores reais, mostra todos num mapa e diz quem acionar primeiro e onde pedir mais cotações.',
+    Icon: MapPinned,
+  },
 };
 
 export function pathFor(type: AssistantToolType): string {
@@ -204,6 +212,7 @@ const VALID_TYPES = new Set<AssistantToolType>([
   'simulador_tributario',
   'diagnostico_aquisicao',
   'tributario_propostas',
+  'mapa_fornecedores',
 ]);
 
 // Tipos cuja rota NÃO segue `/assistants/<type>` (ver `path` em META) —
@@ -250,7 +259,7 @@ export function detectAssistantToolCTA(text: string): AssistantToolType | null {
 // Tipos cujo caminho cru removemos do texto exibido (o card assume o CTA).
 // Inclui `suppliers` (caminho válido) pra não deixar o path feio na frase.
 const STRIP_TYPES =
-  'fluxo_compras|rfp|kraljic|porter|abc|financial|scorecard|profile|negotiation|homologacao|pesquisa_precos|spend_analysis|indicadores|grafico_rapido|comprador|suppliers|diagnostico_aquisicao|tributario_propostas';
+  'fluxo_compras|rfp|kraljic|porter|abc|financial|scorecard|profile|negotiation|homologacao|pesquisa_precos|spend_analysis|indicadores|grafico_rapido|comprador|suppliers|diagnostico_aquisicao|tributario_propostas|mapa_fornecedores';
 const ASSISTANTS_OR_CUSTOM = CUSTOM_PATH_ALTERNATION
   ? `/assistants/(?:${STRIP_TYPES})|${CUSTOM_PATH_ALTERNATION}`
   : `/assistants/(?:${STRIP_TYPES})`;

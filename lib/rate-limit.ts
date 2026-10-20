@@ -61,6 +61,29 @@ export async function checkPersonalChatRateLimit(): Promise<RateLimitResult> {
   return { allowed: false, retryAfterSecs: row.retry_after_secs };
 }
 
+// Mapa de Fornecedores da Operação: cada execução faz ~10 buscas na internet
+// (custo de alguns reais), então o limite é bem mais curto que o do chat. O
+// teto diário é contado em assistant_runs pela própria rota.
+export const MAPA_RATE_LIMIT_PER_MIN = 2;
+export const MAPA_RATE_LIMIT_PER_HOUR = 6;
+export const MAPA_LIMITE_DIARIO = 10;
+
+export async function checkMapaFornecedoresRateLimit(): Promise<RateLimitResult> {
+  const sb = supabaseServer();
+  const { data, error } = await sb.rpc('check_rate_limit', {
+    p_endpoint: 'mapa-fornecedores',
+    p_per_min: MAPA_RATE_LIMIT_PER_MIN,
+    p_per_hour: MAPA_RATE_LIMIT_PER_HOUR,
+  });
+  if (error || !Array.isArray(data) || data.length === 0) {
+    if (error) console.warn('[rate-limit] mapa RPC failed, fail-open:', error.message);
+    return { allowed: true };
+  }
+  const row = data[0] as RpcRow;
+  if (row.allowed) return { allowed: true };
+  return { allowed: false, retryAfterSecs: row.retry_after_secs };
+}
+
 /**
  * Rate-limit anônimo por IP (pré-auth). Usado em /api/auth/signup e
  * /api/auth/reset-request. Chamado via service-role pq o cliente não tem

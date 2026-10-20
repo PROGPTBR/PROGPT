@@ -12,6 +12,9 @@ import { PastScorecardView } from '@/components/assistants/PastScorecardView';
 import { PastHomologacaoView } from '@/components/assistants/PastHomologacaoView';
 import { PastPesquisaPrecosView } from '@/components/assistants/PastPesquisaPrecosView';
 import { PastSpendView } from '@/components/assistants/PastSpendView';
+import { PastMapaView } from '@/components/assistants/mapa/PastMapaView';
+import type { ResultadoMapa } from '@/lib/mapa-fornecedores/tipos';
+import type { ParametrosTributarios } from '@/lib/tributario/calculo';
 import type {
   RfpParams,
   KraljicParams,
@@ -166,6 +169,16 @@ export default async function AssistantRunDetailPage({
         titulo={pp.titulo ?? '(pesquisa sem título)'}
       />
     );
+  }
+
+  if (run.assistant_type === 'mapa_fornecedores') {
+    const r = run.params as unknown as ResultadoMapa;
+    if (r?.plano && Array.isArray(r.fornecedores)) return <PastMapaView runId={run.id} resultado={r} />;
+  }
+
+  if (run.assistant_type === 'tributario_propostas') {
+    const tp = run.params as unknown as ParametrosTributarios;
+    return <PastRfpView runId={run.id} initialOutput={run.output_md} scope={tp.descricaoCompra ?? 'Análise tributária'} />;
   }
 
   const scope = (run.params as RfpParams).scope ?? '(sem escopo)';

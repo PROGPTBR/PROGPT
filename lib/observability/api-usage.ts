@@ -108,6 +108,9 @@ export type ApiOperation =
   | 'assistant-diagnostico-aquisicao-generate'
   | 'assistant-tributario-generate'
   | 'assistant-tributario-extract'
+  | 'mapa-fornecedores-plano'
+  | 'mapa-fornecedores-web'
+  | 'mapa-fornecedores-relatorio'
   | 'chat-tool-websearch';
 
 export type RecordUsageInput = {

@@ -18,7 +18,8 @@ export type AssistantPreviewKey =
   | 'grafico_rapido'
   | 'comprador'
   | 'diagnostico_aquisicao'
-  | 'tributario_propostas';
+  | 'tributario_propostas'
+  | 'mapa_fornecedores';
 
 export type AssistantDefinition = {
   id: string;
@@ -133,6 +134,23 @@ export const ASSISTANTS: readonly AssistantDefinition[] = [
       'Export CSV pra Excel BR',
     ],
     previewKey: 'suppliers',
+  },
+
+  {
+    id: 'mapa_fornecedores',
+    step: 2,
+    stepCategory: 'Mercado',
+    href: '/assistants/mapa_fornecedores',
+    title: 'Mapa de Fornecedores da Operação',
+    short:
+      'Descreva a empresa e a região: o PROGPT monta as categorias de compra (CAPEX e OPEX), encontra até 50 fornecedores reais na internet, mostra todos num mapa interativo e diz quem acionar primeiro e onde pedir mais cotações.',
+    sideSubtitle: 'Todos os fornecedores da sua operação num mapa',
+    bullets: [
+      'Categorias de compra do seu setor, com criticidade e concorrência',
+      'Até 50 fornecedores da região, com site, telefone e endereço',
+      'Mapa interativo + relatório de quem acionar primeiro (Word e planilha)',
+    ],
+    previewKey: 'mapa_fornecedores',
   },
 
   {

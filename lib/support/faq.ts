@@ -104,7 +104,7 @@ export const FAQ_SUPORTE: FaqSecao[] = [
         id: 'quais',
         pergunta: 'Quais assistentes existem?',
         resposta:
-          'Estão todos na tela Assistentes: RFP, Matriz Kraljic, 5 Forças de Porter, Curva ABC, Scorecard de fornecedor, Análise Financeira, Análise de Gastos, Pesquisa de Preços, Homologação de Fornecedor, Negociação, Equalizador de Propostas, Análise Tributária de Propostas, Diagnóstico de Aquisição, Busca de Fornecedores e outros.',
+          'Estão todos na tela Assistentes: RFP, Matriz Kraljic, 5 Forças de Porter, Curva ABC, Scorecard de fornecedor, Análise Financeira, Análise de Gastos, Pesquisa de Preços, Homologação de Fornecedor, Negociação, Equalizador de Propostas, Análise Tributária de Propostas, Diagnóstico de Aquisição, Busca de Fornecedores, Mapa de Fornecedores da Operação e outros.',
       },
       {
         id: 'documentos',
@@ -161,6 +161,13 @@ export const FAQ_SUPORTE: FaqSecao[] = [
         resposta:
           'Use a Análise Tributária de Propostas: importe as propostas, confira os dados que a IA leu (valor, IPI, ICMS, frete e se o fornecedor é do Simples) e informe o regime da sua empresa e para que serve a compra. Ela mostra o custo líquido de cada proposta, já descontados os créditos de impostos, hoje e ano a ano na reforma tributária até 2033. É uma estimativa: valide com o seu contador antes de fechar contrato longo.',
         termos: 'tributário imposto icms ipi pis cofins crédito reforma ibs cbs simples nacional',
+      },
+      {
+        id: 'mapa-fornecedores',
+        pergunta: 'Como monto a lista de fornecedores da minha empresa inteira?',
+        resposta:
+          'Use o Mapa de Fornecedores da Operação: descreva a empresa, o setor e a região. Ele monta as categorias de compra (CAPEX e OPEX), procura até 50 fornecedores reais na internet, mostra todos num mapa e diz quem acionar primeiro e onde pedir mais cotações. Leva de 1 a 3 minutos e fica salvo no Histórico. Para um item específico, a Busca de Fornecedores é mais rápida.',
+        termos: 'mapa fornecedores região capex opex lista base cidade',
       },
       {
         id: 'modulo-indisponivel',

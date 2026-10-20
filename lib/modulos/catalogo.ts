@@ -36,6 +36,7 @@ export const MODULOS: readonly Modulo[] = [
   { id: 'spend_analysis', rotulo: 'Análise de Gastos', grupo: 'assistentes', caminhos: ['/assistants/spend_analysis'] },
   { id: 'porter', rotulo: 'Porter', grupo: 'assistentes', caminhos: ['/assistants/porter'] },
   { id: 'suppliers', rotulo: 'Busca de Fornecedores', grupo: 'assistentes', caminhos: ['/assistants/suppliers'] },
+  { id: 'mapa_fornecedores', rotulo: 'Mapa de Fornecedores da Operação', grupo: 'assistentes', caminhos: ['/assistants/mapa_fornecedores'] },
   { id: 'kraljic', rotulo: 'Kraljic', grupo: 'assistentes', caminhos: ['/assistants/kraljic'] },
   { id: 'rfp', rotulo: 'RFP', grupo: 'assistentes', caminhos: ['/assistants/rfp'] },
   { id: 'comprador', rotulo: 'Equalizador de Propostas', grupo: 'assistentes', caminhos: ['/assistants/comprador'] },

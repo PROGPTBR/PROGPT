@@ -30,6 +30,7 @@ import { GraficoRapidoPreview } from './previews/GraficoRapidoPreview';
 import { CompradorPreview } from './previews/CompradorPreview';
 import { DiagnosticoAquisicaoPreview } from './previews/DiagnosticoAquisicaoPreview';
 import { TributarioPropostasPreview } from './previews/TributarioPropostasPreview';
+import { MapaFornecedoresPreview } from './previews/MapaFornecedoresPreview';
 import { moduloDoHref } from '@/lib/modulos/catalogo';
 
 /**
@@ -66,6 +67,7 @@ const PREVIEWS: Record<AssistantPreviewKey, ComponentType> = {
   comprador: CompradorPreview,
   diagnostico_aquisicao: DiagnosticoAquisicaoPreview,
   tributario_propostas: TributarioPropostasPreview,
+  mapa_fornecedores: MapaFornecedoresPreview,
 };
 
 export function AssistantsHub({

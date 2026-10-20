@@ -22,7 +22,8 @@ export type AssistantType =
   | 'pesquisa_precos'
   | 'spend_analysis'
   | 'diagnostico_aquisicao'
-  | 'tributario_propostas';
+  | 'tributario_propostas'
+  | 'mapa_fornecedores';
 
 export const ASSISTANT_TYPES = [
   'rfp',
@@ -38,6 +39,7 @@ export const ASSISTANT_TYPES = [
   'spend_analysis',
   'diagnostico_aquisicao',
   'tributario_propostas',
+  'mapa_fornecedores',
 ] as const;
 
 export type ThemeStatusRow = 'running' | 'done' | 'error';

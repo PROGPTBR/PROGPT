@@ -33,7 +33,9 @@ type AssistantTypeLocal =
   | 'scorecard'
   | 'homologacao'
   | 'pesquisa_precos'
-  | 'spend_analysis';
+  | 'spend_analysis'
+  | 'tributario_propostas'
+  | 'mapa_fornecedores';
 
 type RunSummary = {
   id: string;
@@ -70,6 +72,12 @@ type RunSummary = {
     itens?: Array<{ descricao?: string }>;
     // Spend Analysis (analysisName já declarado acima, no bloco ABC)
     period?: string;
+    // Análise Tributária de Propostas
+    descricaoCompra?: string;
+    propostas?: unknown[];
+    // Mapa de Fornecedores (params = ResultadoMapa)
+    plano?: { empresa?: string; cidade?: string; uf?: string };
+    fornecedores?: unknown[];
   };
   status: 'running' | 'done' | 'error';
   error_message: string | null;
@@ -107,6 +115,8 @@ const TYPE_LABELS: Record<AssistantTypeLocal | 'all', string> = {
   homologacao: 'Homologação',
   pesquisa_precos: 'Pesquisa de Preços',
   spend_analysis: 'Gastos',
+  tributario_propostas: 'Tributário',
+  mapa_fornecedores: 'Mapa de Fornecedores',
 };
 
 const TYPE_ORDER: Array<AssistantTypeLocal | 'all'> = [
@@ -122,6 +132,8 @@ const TYPE_ORDER: Array<AssistantTypeLocal | 'all'> = [
   'homologacao',
   'pesquisa_precos',
   'spend_analysis',
+  'tributario_propostas',
+  'mapa_fornecedores',
 ];
 
 export function RfpHistoryList() {
@@ -265,6 +277,10 @@ export function RfpHistoryList() {
                       ? 'homologacao'
                       : assistantType === 'pesquisa_precos'
                         ? 'pesquisa-precos'
+                        : assistantType === 'tributario_propostas'
+                        ? 'analise-tributaria'
+                        : assistantType === 'mapa_fornecedores'
+                        ? 'mapa-fornecedores'
                         : kind === 'docx'
                           ? 'rfp'
                           : 'cotacao';
@@ -393,7 +409,13 @@ export function RfpHistoryList() {
             const isHomologacao = r.assistant_type === 'homologacao';
             const isPesquisaPrecos = r.assistant_type === 'pesquisa_precos';
             const isSpend = r.assistant_type === 'spend_analysis';
-            const scope = isSpend
+            const isTributario = r.assistant_type === 'tributario_propostas';
+            const isMapa = r.assistant_type === 'mapa_fornecedores';
+            const scope = isTributario
+              ? (r.params.descricaoCompra ?? 'Análise tributária')
+              : isMapa
+              ? (r.params.plano?.empresa ?? 'Mapa de fornecedores')
+              : isSpend
               ? (r.params.analysisName ?? '(análise sem nome)')
               : isKraljic
               ? (r.params.portfolioName ?? '(portfólio sem nome)')
@@ -414,7 +436,11 @@ export function RfpHistoryList() {
                             : isPesquisaPrecos
                               ? (r.params.titulo ?? '(pesquisa sem título)')
                               : (r.params.scope ?? '(sem escopo)');
-            const category = isSpend
+            const category = isTributario
+              ? `${r.params.propostas?.length ?? 0} proposta(s)`
+              : isMapa
+              ? `${r.params.fornecedores?.length ?? 0} fornecedor(es)${r.params.plano?.cidade ? `, ${r.params.plano.cidade}` : ''}`
+              : isSpend
               ? (r.params.period || 'Análise de gastos')
               : isKraljic
               ? `${r.params.items?.length ?? 0} item(ns)`
@@ -444,7 +470,9 @@ export function RfpHistoryList() {
               isNegotiation ||
               isScorecard ||
               isHomologacao ||
-              isPesquisaPrecos
+              isPesquisaPrecos ||
+              isTributario ||
+              isMapa
                 ? ''
                 : (r.params.client ?? '');
             const isDone = r.status === 'done';
@@ -456,7 +484,9 @@ export function RfpHistoryList() {
               !isProfile &&
               !isNegotiation &&
               !isHomologacao &&
-              !isPesquisaPrecos;
+              !isPesquisaPrecos &&
+              !isTributario &&
+              !isMapa;
             return (
               <li
                 key={r.id}

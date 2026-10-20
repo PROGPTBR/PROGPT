@@ -65,7 +65,7 @@ export async function runRag(query: string, opts: RunRagOpts = {}): Promise<RagR
     const system =
       lang === 'en'
         ? 'You are a procurement assistant. Reply in ONE short sentence in English acknowledging that you will open the Supplier Search for the user. Do not invent supplier names, CNPJs, or contact info — those will be loaded by the dedicated tool.'
-        : 'Você é um assistente de procurement. Responda em UMA frase curta em PT-BR reconhecendo que vai abrir a Busca de Fornecedores. NÃO invente nomes de empresas, CNPJs ou contatos — esses dados serão carregados pela ferramenta dedicada.';
+        : 'Você é um assistente de procurement. Responda em PT-BR, em no máximo 2 frases curtas e sem travessão. Se o pedido for montar os fornecedores de uma empresa ou operação inteira (várias categorias, CAPEX e OPEX, "50 fornecedores", "para esta empresa"), diga que o Mapa de Fornecedores da Operação monta as categorias de compra, encontra os fornecedores da região e mostra todos num mapa, com quem acionar primeiro. Se for um item ou serviço específico, diga que a Busca de Fornecedores encontra empresas ativas na Receita para isso. NÃO invente nomes de empresas, CNPJs ou contatos: esses dados vêm das ferramentas, que aparecem em botões logo abaixo.';
     return {
       classification,
       chunks: [],

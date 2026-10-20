@@ -65,6 +65,7 @@ const ASSISTANT_ICONS = {
   grafico_rapido: BarChart3,
 
   tributario_propostas: Calculator,
+  mapa_fornecedores: Search,
 } as const;
 
 /* =========================================================
@@ -170,6 +171,11 @@ function getAssistantCategory(assistant: Assistant): CategoryId {
     text.includes('financial') ||
     text.includes('analise financeira')
   ) {
+    return 'suppliers';
+  }
+
+  /* Mapa de fornecedores fica junto da Busca de Fornecedores */
+  if (id === 'mapa_fornecedores') {
     return 'suppliers';
   }
 
@@ -287,6 +293,10 @@ function getAssistantOrder(assistant: Assistant) {
     text.includes('busca de fornecedores')
   ) {
     return 110;
+  }
+
+  if (id === 'mapa_fornecedores') {
+    return 115;
   }
 
   if (text.includes('scorecard')) {
