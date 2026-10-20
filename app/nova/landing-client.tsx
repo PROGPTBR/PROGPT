@@ -31,6 +31,7 @@ import {
 import { useTheme } from 'next-themes';
 import styles from './nova.module.css';
 import CertificacoesGrid from '@/app/certificacoes/CertificacoesGrid';
+import { DemoRequestModal } from '@/components/marketing/DemoRequestModal';
 /* ============================================================
    FEATURES
 ============================================================ */
@@ -275,6 +276,9 @@ export function NovaLanding({
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [activeSection, setActiveSection] = useState('');
   const [activeUseCase, setActiveUseCase] = useState(0);
+  const [demoOpen, setDemoOpen] = useState(false);
+  const [demoSolution, setDemoSolution] = useState('Demonstração do PROGPT');
+  const [demoTrigger, setDemoTrigger] = useState<HTMLButtonElement | null>(null);
   /* ==========================================================
      REF DO SLIDER
   ========================================================== */
@@ -355,6 +359,11 @@ export function NovaLanding({
       : undefined;
   const selectedUseCase =
     useCases[activeUseCase]!;
+  const openDemo = (solution: string, trigger: HTMLButtonElement) => {
+    setDemoTrigger(trigger);
+    setDemoSolution(solution);
+    setDemoOpen(true);
+  };
   return (
     <main
       className={`${styles.page} ${
@@ -924,26 +933,40 @@ onClick={() => {
                 {selectedUseCase.title}
               </h3>
             )}
-            {selectedUseCase.soon ? (
+            <div className={styles.useCaseActions}>
+            {selectedUseCase.soon && (
               <span
                 className={styles.soonBadge}
               >
                 Em breve
               </span>
-            ) : (
-              <Link
-                href={
-                  selectedUseCase.href
-                }
-                className={styles.cta}
-              >
-                CONHECER O ASSISTENTE
-                <ArrowRight size={17} />
-              </Link>
             )}
+              {!selectedUseCase.soon && (
+                <button
+                  type="button"
+                  className={styles.cta}
+                  onClick={(event) =>
+                    openDemo(
+                      selectedUseCase.tab,
+                      event.currentTarget
+                    )
+                  }
+                  aria-haspopup="dialog"
+                >
+                  AGENDE UMA DEMONSTRAÇÃO
+                  <ArrowRight size={17} />
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </section>
+      <DemoRequestModal
+        open={demoOpen}
+        solution={demoSolution}
+        onOpenChange={setDemoOpen}
+        returnFocusElement={demoTrigger}
+      />
       {/* ======================================================
           PLANOS
       ====================================================== */}
