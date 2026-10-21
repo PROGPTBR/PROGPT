@@ -22,6 +22,8 @@ import { CompradorImportDialog } from '@/components/assistants/CompradorImportDi
 import { CompradorPriceChart } from '@/components/assistants/CompradorPriceChart';
 import { buildComparisonMatrix } from '@/lib/assistants/comprador-comparison';
 import type { CompradorResult, ItemStatus } from '@/lib/assistants/comprador';
+import { gravarPrefillTributario } from '@/lib/tributario/prefill';
+import { useModulosDesativados } from '@/lib/modulos/useModulos';
 
 const brl = (n: number) =>
   Number.isFinite(n) ? n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '-';
@@ -386,6 +388,48 @@ function NewQuote({ onCancel, onCreated }: { onCancel: () => void; onCreated: (i
   );
 }
 
+// ───────────────────────── Impostos da cotação ─────────────────────────
+// Pedido do dono (2026-10-21): o comprador precisa ver os impostos dentro da
+// cotação, com nomes que quem não é da área tributária entenda. O Equalizador
+// compara o preço como o fornecedor informou; a Análise Tributária mostra
+// quanto imposto volta para a empresa e quem fica mais barato na reforma.
+function ImpostosDaCotacao({ quote }: { quote: FullQuote }) {
+  const desligados = useModulosDesativados();
+  if (desligados.has('tributario_propostas') || !quote.propostas?.trim()) return null;
+
+  function abrir() {
+    const ok = gravarPrefillTributario({
+      texto: quote.propostas,
+      descricao: quote.escopo || quote.title,
+    });
+    if (!ok) {
+      toast.error('Não consegui levar as propostas. Copie e cole na Análise Tributária.');
+      return;
+    }
+    window.location.href = '/assistants/tributario_propostas';
+  }
+
+  return (
+    <div className="rounded-2xl border border-brand/30 bg-brand/5 p-5 space-y-3">
+      <h2 className="text-sm font-semibold">Impostos desta cotação</h2>
+      <p className="text-xs leading-relaxed text-muted-foreground">
+        O custo total acima usa os impostos como cada fornecedor informou. Mas parte do imposto pode
+        <strong className="text-foreground"> voltar para a sua empresa</strong> (o chamado crédito), e isso muda qual
+        proposta é mais barata de verdade, principalmente com a reforma tributária a partir de 2027.
+      </p>
+      <ul className="grid gap-1.5 text-xs text-muted-foreground sm:grid-cols-2">
+        <li><strong className="text-foreground">ICMS</strong>: imposto estadual, já vem no preço.</li>
+        <li><strong className="text-foreground">IPI</strong>: imposto de indústria, somado ao preço.</li>
+        <li><strong className="text-foreground">ICMS-ST</strong>: ICMS cobrado antecipado, pesa no custo.</li>
+        <li><strong className="text-foreground">Simples Nacional</strong>: pequena empresa, devolve pouco imposto.</li>
+      </ul>
+      <Button size="sm" onClick={abrir}>
+        Analisar impostos destas propostas
+      </Button>
+    </div>
+  );
+}
+
 // ─────────────────────────────── Detalhe ───────────────────────────────
 function QuoteDetail({ id, onBack }: { id: string; onBack: () => void }) {
   const [quote, setQuote] = useState<FullQuote | null>(null);
@@ -553,7 +597,7 @@ function QuoteDetail({ id, onBack }: { id: string; onBack: () => void }) {
                         </th>
                         <th className="whitespace-nowrap px-3 py-2 font-medium">Preço</th>
                         <th className="whitespace-nowrap px-3 py-2 font-medium">Frete</th>
-                        <th className="whitespace-nowrap px-3 py-2 font-medium">Impostos</th>
+                        <th className="whitespace-nowrap px-3 py-2 font-medium" title="Como o fornecedor informou os impostos (inclusos no preço ou somados à parte). Para saber quanto imposto volta para a sua empresa, use Analisar impostos abaixo.">Impostos (como informado)</th>
                         <th className="whitespace-nowrap px-3 py-2 font-medium">Prazo</th>
                         <th className="whitespace-nowrap px-3 py-2 font-medium">Validade</th>
                         <th className="whitespace-nowrap px-3 py-2 font-medium">Pagamento</th>
@@ -597,6 +641,9 @@ function QuoteDetail({ id, onBack }: { id: string; onBack: () => void }) {
                   </table>
                 </div>
               </div>
+
+              {/* Impostos da cotação em linguagem simples + ponte para a Análise Tributária */}
+              <ImpostosDaCotacao quote={quote} />
 
               {a.alertas?.length ? (
                 <div className="rounded-2xl border border-amber-500/40 bg-card p-5">

@@ -25,7 +25,8 @@ export const TRIBUTARIO_SYSTEM_PROMPT = `Você é um especialista sênior em tri
 4. **Recomendações executáveis**: o que perguntar a cada fornecedor (regime a partir de 2027, se vai destacar IBS/CBS, reajuste de preço "por fora"), cláusula contratual de reequilíbrio tributário, prazo do contrato frente ao calendário da reforma.
 5. **Honestidade**: as alíquotas de IBS/CBS ainda não são definitivas e o cálculo é uma estimativa simplificada. Diga isso uma vez, no fim, e recomende validar com o contador ou o tributário da empresa antes de fechar contrato longo.
 6. **Sem preâmbulo nem despedida.** Comece direto pelo título. Não cite fontes, autores nem IDs. Não use travessão.
-7. **Markdown limpo**: títulos, a tabela de custo líquido, bullets e **negrito** para o vencedor de cada cenário.`;
+7. **Markdown limpo**: títulos, a tabela de custo líquido, bullets e **negrito** para o vencedor de cada cenário.
+8. **Escreva para um comprador que não é da área tributária.** Na primeira vez que usar cada sigla (ICMS, ICMS-ST, IPI, PIS/Cofins, CBS, IBS, DAS, Simples), explique em poucas palavras entre parênteses, por exemplo "ICMS (imposto estadual sobre a mercadoria)". Chame o custo líquido de "custo real da compra" e o crédito de "imposto que volta para a empresa". Frases curtas, sem jargão de contador.`;
 
 function formatChunks(chunks: RetrievedChunk[]): string {
   if (chunks.length === 0) return '(nenhum trecho relevante na base: fundamente em princípios gerais de TCO e tributação de compras)';

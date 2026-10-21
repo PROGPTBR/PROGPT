@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { toast } from 'sonner';
-import { Download, FileUp, Plus, RotateCcw, Sparkles, Trash2 } from 'lucide-react';
+import { BookOpen, Download, FileUp, HelpCircle, Plus, RotateCcw, Sparkles, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CompradorImportDialog } from './CompradorImportDialog';
@@ -12,6 +12,8 @@ import { handlePaywallResponse } from '@/lib/billing/handle-paywall';
 import { readAssistantChunk } from '@/lib/assistants/stream-client';
 import { semTravessao } from '@/lib/texto/sem-travessao';
 import { CONSULTA_OPTANTES_SIMPLES_URL } from '@/lib/assistants/certidoes-links';
+import { GLOSSARIO, termo } from '@/lib/tributario/glossario';
+import { PREFILL_TRIBUTARIO_KEY } from '@/lib/tributario/prefill';
 import {
   CENARIOS,
   DESTINACAO_LABELS,
@@ -75,16 +77,57 @@ function numero(texto: string): number {
   return Number.isFinite(n) && n >= 0 ? n : 0;
 }
 
+/** Botão "?" que abre a explicação do termo em linguagem simples. */
+function Ajuda({ id }: { id: string }) {
+  const [aberto, setAberto] = useState(false);
+  const t = termo(id);
+  return (
+    <span className="relative inline-flex align-middle">
+      <button
+        type="button"
+        aria-label={`O que é ${t.sigla}?`}
+        aria-expanded={aberto}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setAberto((v) => !v);
+        }}
+        className="ml-1 inline-flex h-4 w-4 items-center justify-center rounded-full text-muted-foreground hover:text-primary"
+      >
+        <HelpCircle className="h-3.5 w-3.5" aria-hidden />
+      </button>
+      {aberto && (
+        <span
+          role="note"
+          className="absolute left-0 top-5 z-30 w-72 rounded-xl border bg-popover p-3 text-left text-xs font-normal leading-relaxed text-popover-foreground shadow-lg"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+        >
+          <span className="block font-semibold">{t.nome}</span>
+          <span className="block text-[11px] text-muted-foreground">{t.sigla}</span>
+          <span className="mt-1.5 block">{t.oQueE}</span>
+          {t.ondeAcho && <span className="mt-1.5 block text-muted-foreground">Onde achar: {t.ondeAcho}</span>}
+        </span>
+      )}
+    </span>
+  );
+}
+
 function CampoNumero({
   valor,
   onChange,
   sufixo,
   rotulo,
+  ajuda,
 }: {
   valor: number;
   onChange: (n: number) => void;
   sufixo?: string;
   rotulo: string;
+  /** Id do termo em lib/tributario/glossario.ts. */
+  ajuda?: string;
 }) {
   const [texto, setTexto] = useState(valor ? String(valor).replace('.', ',') : '');
   useEffect(() => {
@@ -93,7 +136,10 @@ function CampoNumero({
   }, [valor]);
   return (
     <label className="block">
-      <span className="mb-1 block text-[11px] font-medium text-muted-foreground">{rotulo}</span>
+      <span className="mb-1 block text-[11px] font-medium text-muted-foreground">
+        {rotulo}
+        {ajuda && <Ajuda id={ajuda} />}
+      </span>
       <div className="relative">
         <Input
           inputMode="decimal"
@@ -145,6 +191,26 @@ export function TributarioAssistant() {
       .catch(() => setTemplates([]));
   }, []);
 
+  // Vindo do Equalizador ("Analisar impostos destas propostas"): as propostas
+  // chegam pelo sessionStorage e a leitura pela IA começa sozinha.
+  useEffect(() => {
+    let dados: { texto?: string; descricao?: string } | null = null;
+    try {
+      const bruto = sessionStorage.getItem(PREFILL_TRIBUTARIO_KEY);
+      if (bruto) {
+        sessionStorage.removeItem(PREFILL_TRIBUTARIO_KEY);
+        dados = JSON.parse(bruto) as { texto?: string; descricao?: string };
+      }
+    } catch {
+      dados = null;
+    }
+    if (!dados?.texto) return;
+    setTexto(dados.texto);
+    if (dados.descricao) setDescricaoCompra(dados.descricao.slice(0, 300));
+    void lerPropostas(dados.texto);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const params: ParametrosTributarios = {
     descricaoCompra: descricaoCompra.trim() || 'Compra em análise',
     regimeComprador,
@@ -167,8 +233,8 @@ export function TributarioAssistant() {
     setPropostas((prev) => prev.map((p, j) => (j === i ? { ...p, ...campo } : p)));
   }
 
-  async function lerPropostas() {
-    if (texto.trim().length < 20) {
+  async function lerPropostas(textoLido: string = texto) {
+    if (textoLido.trim().length < 20) {
       toast.error('Cole ou importe as propostas primeiro.');
       return;
     }
@@ -177,7 +243,7 @@ export function TributarioAssistant() {
       const res = await fetch('/api/assistants/tributario_propostas/extrair', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ texto }),
+        body: JSON.stringify({ texto: textoLido }),
       });
       const data = (await res.json().catch(() => ({}))) as { propostas?: PropostaEdit[]; detail?: string; error?: string };
       if (!res.ok || !data.propostas) {
@@ -288,7 +354,10 @@ export function TributarioAssistant() {
       <table className="w-full min-w-[720px] text-sm">
         <thead>
           <tr className="border-b text-left text-xs text-muted-foreground">
-            <th className="sticky left-0 bg-card px-3 py-2 font-medium">Custo líquido de impostos</th>
+            <th className="sticky left-0 bg-card px-3 py-2 font-medium" title={termo('custo_real').oQueE}>
+              Custo real da compra
+              <div className="text-[10px] font-normal">já descontado o imposto que volta</div>
+            </th>
             {CENARIOS.map((c) => (
               <th key={c.id} className="whitespace-nowrap px-3 py-2 text-right font-medium">
                 {c.rotulo}
@@ -316,7 +385,7 @@ export function TributarioAssistant() {
                   >
                     {brl(r.custoLiquido)}
                     {melhor && <span className="ml-1 text-[10px] uppercase">melhor</span>}
-                    <div className="text-[11px] font-normal text-muted-foreground">créditos {brl(r.creditos)}</div>
+                    <div className="text-[11px] font-normal text-muted-foreground">imposto que volta {brl(r.creditos)}</div>
                   </td>
                 );
               })}
@@ -349,10 +418,31 @@ export function TributarioAssistant() {
         </h1>
         <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
           Qual proposta sai mais barata depois dos impostos? Traga as propostas dos fornecedores: o assistente
-          calcula o custo líquido de cada uma (preço menos os créditos que sua empresa recupera) hoje e ano a ano na
-          reforma tributária, até 2033.
+          calcula o custo real de cada uma (o preço menos o imposto que volta para a sua empresa) hoje e ano a ano na
+          reforma tributária, até 2033. Não precisa entender de impostos: clique no{' '}
+          <HelpCircle className="inline h-3.5 w-3.5 align-text-bottom" aria-label="ponto de interrogação" /> ao lado de
+          cada campo para ver o que ele significa.
         </p>
       </div>
+
+      <details className="rounded-2xl border bg-card px-5 py-3">
+        <summary className="flex cursor-pointer items-center gap-2 text-sm font-medium">
+          <BookOpen className="h-4 w-4 text-brand" aria-hidden /> Guia rápido: os impostos de uma compra em 1 minuto
+        </summary>
+        <dl className="mt-3 grid gap-3 pb-2 sm:grid-cols-2">
+          {GLOSSARIO.map((t) => (
+            <div key={t.id} className="rounded-xl bg-muted/40 p-3">
+              <dt className="text-sm font-medium">
+                {t.nome} <span className="text-xs font-normal text-muted-foreground">({t.sigla})</span>
+              </dt>
+              <dd className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                {t.oQueE}
+                {t.ondeAcho && <span className="mt-1 block">Onde achar: {t.ondeAcho}</span>}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </details>
 
       {phase === 'form' && (
         <>
@@ -376,7 +466,7 @@ export function TributarioAssistant() {
               className="w-full rounded-xl border border-input bg-background p-3 text-sm"
             />
             <div className="flex flex-wrap gap-2">
-              <Button onClick={lerPropostas} disabled={lendo || texto.trim().length < 20}>
+              <Button onClick={() => void lerPropostas()} disabled={lendo || texto.trim().length < 20}>
                 <Sparkles className="mr-1 h-4 w-4" /> {lendo ? 'Lendo as propostas…' : 'Ler propostas com IA'}
               </Button>
               <Button
@@ -416,7 +506,7 @@ export function TributarioAssistant() {
                     {p.observacoes && <p className="text-xs text-muted-foreground">{p.observacoes}</p>}
                     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                       <label className="col-span-2 block sm:col-span-1">
-                        <span className="mb-1 block text-[11px] font-medium text-muted-foreground">Regime do fornecedor</span>
+                        <span className="mb-1 block text-[11px] font-medium text-muted-foreground">Tipo de empresa do fornecedor<Ajuda id="simples" /></span>
                         <select
                           className={SELECT}
                           value={p.regimeFornecedor}
@@ -440,18 +530,19 @@ export function TributarioAssistant() {
                         sufixo="R$" valor={p.valorProdutos} onChange={(n) => editar(i, { valorProdutos: n })} />
                       <CampoNumero rotulo="Frete" sufixo="R$" valor={p.freteValor} onChange={(n) => editar(i, { freteValor: n })} />
                       <CampoNumero
-                        rotulo={ehSimples(p.regimeFornecedor) ? 'Crédito ICMS na nota' : 'ICMS'}
+                        rotulo={ehSimples(p.regimeFornecedor) ? 'Crédito de ICMS na nota' : 'ICMS (imposto estadual)'}
+                        ajuda="icms"
                         sufixo="%"
                         valor={p.icmsPct}
                         onChange={(n) => editar(i, { icmsPct: n })}
                       />
-                      <CampoNumero rotulo="IPI" sufixo="%" valor={p.ipiPct} onChange={(n) => editar(i, { ipiPct: n })} />
-                      <CampoNumero rotulo="ICMS-ST" sufixo="R$" valor={p.stValor} onChange={(n) => editar(i, { stValor: n })} />
+                      <CampoNumero rotulo="IPI (imposto de indústria)" ajuda="ipi" sufixo="%" valor={p.ipiPct} onChange={(n) => editar(i, { ipiPct: n })} />
+                      <CampoNumero rotulo="ICMS antecipado (ST)" ajuda="icms_st" sufixo="R$" valor={p.stValor} onChange={(n) => editar(i, { stValor: n })} />
                       {p.regimeFornecedor === 'regular' && (
-                        <CampoNumero rotulo="PIS/Cofins no preço" sufixo="%" valor={p.pisCofinsPct} onChange={(n) => editar(i, { pisCofinsPct: n })} />
+                        <CampoNumero rotulo="PIS/Cofins dentro do preço" ajuda="pis_cofins" sufixo="%" valor={p.pisCofinsPct} onChange={(n) => editar(i, { pisCofinsPct: n })} />
                       )}
                       <label className="col-span-2 block">
-                        <span className="mb-1 block text-[11px] font-medium text-muted-foreground">Item na reforma (IBS/CBS)</span>
+                        <span className="mb-1 block text-[11px] font-medium text-muted-foreground">Imposto do item na reforma<Ajuda id="aliquota_reduzida" /></span>
                         <select
                           className={SELECT}
                           value={p.reducaoReformaPct}
@@ -502,7 +593,7 @@ export function TributarioAssistant() {
                 />
               </label>
               <label className="block">
-                <span className="mb-1 block text-[11px] font-medium text-muted-foreground">Regime da sua empresa</span>
+                <span className="mb-1 block text-[11px] font-medium text-muted-foreground">Como a sua empresa paga imposto<Ajuda id="regime_comprador" /></span>
                 <select className={SELECT} value={regimeComprador} onChange={(e) => setRegimeComprador(e.target.value as RegimeComprador)}>
                   {REGIMES_COMPRADOR.map((r) => (
                     <option key={r} value={r}>
@@ -512,7 +603,7 @@ export function TributarioAssistant() {
                 </select>
               </label>
               <label className="block">
-                <span className="mb-1 block text-[11px] font-medium text-muted-foreground">Para que serve a compra</span>
+                <span className="mb-1 block text-[11px] font-medium text-muted-foreground">Para que serve a compra<Ajuda id="destinacao" /></span>
                 <select className={SELECT} value={destinacao} onChange={(e) => setDestinacao(e.target.value as Destinacao)}>
                   {DESTINACOES.map((d) => (
                     <option key={d} value={d}>
@@ -525,9 +616,9 @@ export function TributarioAssistant() {
             <details className="rounded-xl border px-4 py-2">
               <summary className="cursor-pointer text-sm font-medium">Premissas da reforma (editáveis)</summary>
               <div className="grid gap-3 py-3 sm:grid-cols-4">
-                <CampoNumero rotulo="CBS (federal)" sufixo="%" valor={cbsPct} onChange={setCbsPct} />
-                <CampoNumero rotulo="IBS (estados e municípios)" sufixo="%" valor={ibsPct} onChange={setIbsPct} />
-                <CampoNumero rotulo="Crédito que o Simples transfere" sufixo="%" valor={simplesCreditoPct} onChange={setSimplesCreditoPct} />
+                <CampoNumero rotulo="CBS (novo imposto federal)" ajuda="cbs" sufixo="%" valor={cbsPct} onChange={setCbsPct} />
+                <CampoNumero rotulo="IBS (novo imposto de estados e municípios)" ajuda="ibs" sufixo="%" valor={ibsPct} onChange={setIbsPct} />
+                <CampoNumero rotulo="Imposto que volta de pequena empresa (Simples puro)" ajuda="simples_puro" sufixo="%" valor={simplesCreditoPct} onChange={setSimplesCreditoPct} />
                 <label className="block">
                   <span className="mb-1 block text-[11px] font-medium text-muted-foreground">Sua UF</span>
                   <Input value={ufComprador} onChange={(e) => setUfComprador(e.target.value)} className="h-9 rounded-xl" maxLength={2} placeholder="SP" />

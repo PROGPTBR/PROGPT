@@ -28,26 +28,26 @@ import { z } from 'zod';
 export const REGIMES_COMPRADOR = ['lucro_real', 'lucro_presumido', 'simples'] as const;
 export type RegimeComprador = (typeof REGIMES_COMPRADOR)[number];
 export const REGIME_COMPRADOR_LABELS: Record<RegimeComprador, string> = {
-  lucro_real: 'Lucro Real',
-  lucro_presumido: 'Lucro Presumido',
-  simples: 'Simples Nacional',
+  lucro_real: 'Lucro Real (empresa maior, recupera mais imposto)',
+  lucro_presumido: 'Lucro Presumido (empresa média)',
+  simples: 'Simples Nacional (pequena empresa)',
 };
 
 export const DESTINACOES = ['revenda', 'insumo', 'uso_consumo', 'ativo_imobilizado'] as const;
 export type Destinacao = (typeof DESTINACOES)[number];
 export const DESTINACAO_LABELS: Record<Destinacao, string> = {
-  revenda: 'Revenda',
-  insumo: 'Insumo (industrialização ou prestação)',
-  uso_consumo: 'Uso e consumo',
-  ativo_imobilizado: 'Ativo imobilizado',
+  revenda: 'Para revender',
+  insumo: 'Vira produto ou serviço (matéria-prima, insumo)',
+  uso_consumo: 'Uso no dia a dia da empresa (uso e consumo)',
+  ativo_imobilizado: 'Máquina, equipamento ou obra (ativo imobilizado)',
 };
 
 export const REGIMES_FORNECEDOR = ['regular', 'simples', 'simples_hibrido'] as const;
 export type RegimeFornecedor = (typeof REGIMES_FORNECEDOR)[number];
 export const REGIME_FORNECEDOR_LABELS: Record<RegimeFornecedor, string> = {
-  regular: 'Regime normal (Real ou Presumido)',
-  simples: 'Simples Nacional puro (IBS/CBS no DAS)',
-  simples_hibrido: 'Simples Nacional híbrido (IBS/CBS no regime regular)',
+  regular: 'Empresa normal (Lucro Real ou Presumido)',
+  simples: 'Pequena empresa: Simples puro (imposto na guia única)',
+  simples_hibrido: 'Pequena empresa: Simples híbrido (cobra IBS/CBS à parte)',
 };
 
 /** Rótulo curto, para tabelas. */
@@ -64,10 +64,10 @@ export function ehSimples(r: RegimeFornecedor): boolean {
 /** Redução de alíquota de IBS/CBS prevista para o item (LC 214/2025). */
 export const REDUCOES = [0, 30, 60, 100] as const;
 export const REDUCAO_LABELS: Record<number, string> = {
-  0: 'Alíquota cheia',
-  30: 'Redução de 30%',
-  60: 'Redução de 60%',
-  100: 'Alíquota zero',
+  0: 'Imposto cheio (padrão, se não souber)',
+  30: 'Imposto 30% menor',
+  60: 'Imposto 60% menor',
+  100: 'Sem imposto (alíquota zero)',
 };
 
 const pct = z.number().min(0).max(100);
