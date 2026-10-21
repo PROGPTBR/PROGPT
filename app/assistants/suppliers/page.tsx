@@ -1,14 +1,14 @@
 import { Suspense } from 'react';
 import { SuppliersAssistant } from '@/components/assistants/SuppliersAssistant';
 import { getCurrentUser } from '@/lib/auth';
-import { equipeDoUsuario } from '@/lib/suppliers/busca-ampliada';
 
 export const dynamic = 'force-dynamic';
 
 export default async function SuppliersAssistantPage() {
   // Busca ampliada (vendor list + internet) só para equipes liberadas.
   const user = await getCurrentUser();
-  const buscaAmpliada = equipeDoUsuario(user?.email) !== null;
+  // Busca ampliada (vendor list + internet) liberada para todos em 2026-10-21.
+  const buscaAmpliada = !!user;
 
   return (
     <Suspense fallback={null}>

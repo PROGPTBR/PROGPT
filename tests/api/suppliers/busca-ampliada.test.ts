@@ -16,7 +16,7 @@ function mockAuth(email: string | null) {
   });
 }
 
-function mockServer() {
+function mockServer(buscasHoje = 0) {
   const carregar = vi.fn().mockResolvedValue([
     {
       razaoSocial: 'GERDAU',
@@ -31,14 +31,17 @@ function mockServer() {
     },
   ]);
   const web = vi.fn().mockResolvedValue({ fornecedores: [{ nome: 'Loja X' }], texto: null, erro: null });
+  const carregarPessoal = vi.fn().mockResolvedValue([]);
   vi.doMock('@/lib/suppliers/busca-ampliada-server', () => ({
     carregarVendorListDaEquipe: carregar,
+    carregarVendorListDoUsuario: carregarPessoal,
+    buscasWebNasUltimas24h: vi.fn().mockResolvedValue(buscasHoje),
     escolherCategorias: vi.fn().mockResolvedValue(['AÇO']),
     buscarFornecedoresNaWeb: web,
   }));
   const rl = vi.fn().mockResolvedValue({ allowed: true });
   vi.doMock('@/lib/rate-limit', () => ({ checkChatRateLimit: rl }));
-  return { carregar, web, rl };
+  return { carregar, carregarPessoal, web, rl };
 }
 
 function post(body: unknown) {
@@ -57,13 +60,25 @@ describe('/api/suppliers/busca-ampliada', () => {
     expect((await POST(post({ consulta: 'vergalhão' }))).status).toBe(401);
   });
 
-  it('404 para quem não está liberado — nem lê a vendor list', async () => {
+  it('liberada para todos: quem não é de equipe busca na própria base e na internet', async () => {
     mockAuth('alguem@outra.com.br');
-    const { carregar, web } = mockServer();
+    const { carregar, carregarPessoal, web } = mockServer();
     const { POST, GET } = await import('@/app/api/suppliers/busca-ampliada/route');
-    expect((await POST(post({ consulta: 'vergalhão' }))).status).toBe(404);
-    expect((await GET()).status).toBe(404);
+    const res = await POST(post({ consulta: 'vergalhão' }));
+    expect(res.status).toBe(200);
     expect(carregar).not.toHaveBeenCalled();
+    expect(carregarPessoal).toHaveBeenCalledWith('u1');
+    expect(web).toHaveBeenCalled();
+    expect(await (await GET()).json()).toEqual({ equipe: null, total: 0, categorias: 0 });
+  });
+
+  it('limite diário da internet: não busca e explica', async () => {
+    mockAuth('alguem@outra.com.br');
+    const { web } = mockServer(30);
+    const { POST } = await import('@/app/api/suppliers/busca-ampliada/route');
+    const res = await POST(post({ consulta: 'vergalhão', parte: 'web' }));
+    expect(res.status).toBe(429);
+    expect((await res.json()).detail).toMatch(/limite de 30 buscas/);
     expect(web).not.toHaveBeenCalled();
   });
 

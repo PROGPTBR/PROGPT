@@ -8,8 +8,9 @@ import { useSupplierBase } from '@/hooks/useSupplierBase';
 import { VendorListImportDialog } from '@/components/suppliers/VendorListImportDialog';
 import type { FornecedorWeb, ResultadoVendorList } from '@/lib/suppliers/busca-ampliada';
 
-// Busca ampliada (sub-projeto 73) — só aparece para as equipes liberadas em
-// lib/suppliers/busca-ampliada.ts. A página decide no servidor se mostra.
+// Busca ampliada (sub-projeto 73): vendor list + internet. Liberada para
+// todos os clientes em 2026-10-21; quem está numa equipe de
+// lib/suppliers/busca-ampliada.ts vê a vendor list da equipe.
 
 export type RespostaBuscaAmpliada = {
   consulta: string;
@@ -54,7 +55,8 @@ export function rodarBuscaAmpliada(
           const valor = json[parte];
           if (valor) { aoChegar(parte, valor as RespostaBuscaAmpliada[typeof parte]); return; }
         } else if (res.status === 429) {
-          erro = 'Muitas buscas seguidas. Tente de novo em instantes.';
+          const json = (await res.json().catch(() => ({}))) as { detail?: string };
+          erro = json.detail ?? 'Muitas buscas seguidas. Tente de novo em instantes.';
         }
       } catch {
         /* cai no erro abaixo */
@@ -67,7 +69,7 @@ export function rodarBuscaAmpliada(
 
 // ─── Cartão da vendor list (tela inicial da busca) ────────────────────────
 
-type Resumo = { equipe: string; total: number; categorias: number };
+type Resumo = { equipe: string | null; total: number; categorias: number };
 
 export function VendorListCartao() {
   const [resumo, setResumo] = useState<Resumo | null>(null);
@@ -92,15 +94,17 @@ export function VendorListCartao() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <div className="text-sm font-medium">
-            Busca ampliada{resumo ? ` · ${resumo.equipe}` : ''}
+            Busca ampliada{resumo?.equipe ? ` · ${resumo.equipe}` : ''}
           </div>
           <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-            Cada busca também procura na <strong>vendor list da sua equipe</strong> e na{' '}
+            Cada busca também procura na <strong>{resumo?.equipe ? 'vendor list da sua equipe' : 'sua base de fornecedores'}</strong> e na{' '}
             <strong>internet</strong>, além da base da Receita Federal.{' '}
             {resumo
               ? resumo.total > 0
                 ? `Sua vendor list tem ${resumo.total.toLocaleString('pt-BR')} fornecedores em ${resumo.categorias} grupos.`
-                : 'Sua equipe ainda não subiu a vendor list.'
+                : resumo.equipe
+                  ? 'Sua equipe ainda não subiu a vendor list.'
+                  : 'Suba a sua lista de fornecedores para a busca procurar nela também.'
               : ''}
           </p>
         </div>
@@ -177,7 +181,7 @@ export function BuscaAmpliadaResultados({ estado }: { estado: EstadoBuscaAmpliad
           <p className="mt-3 text-sm text-muted-foreground">{vendorList.erro}</p>
         ) : vendorList.total === 0 ? (
           <p className="mt-3 text-sm text-muted-foreground">
-            A vendor list da equipe ainda está vazia. Use “Subir vendor list” na tela inicial da busca.
+            Sua vendor list ainda está vazia. Use “Subir vendor list” na tela inicial da busca.
           </p>
         ) : lista.length === 0 ? (
           <p className="mt-3 text-sm text-muted-foreground">

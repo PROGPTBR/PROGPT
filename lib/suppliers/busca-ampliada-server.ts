@@ -33,8 +33,17 @@ export async function carregarVendorListDaEquipe(
     .in('email', [...equipe.emails]);
   if (errPerfis) throw new Error(`perfis da equipe: ${errPerfis.message}`);
   const ids = (perfis ?? []).map((p) => (p as { id: string }).id);
-  if (ids.length === 0) return [];
+  return carregarVendorListDe(ids);
+}
 
+/** Vendor list de uma pessoa só (cliente que não está numa equipe). */
+export function carregarVendorListDoUsuario(userId: string): Promise<FornecedorVendorList[]> {
+  return carregarVendorListDe([userId]);
+}
+
+async function carregarVendorListDe(ids: string[]): Promise<FornecedorVendorList[]> {
+  if (ids.length === 0) return [];
+  const sb = getServerSupabase();
   const { data, error } = await sb
     .from('suppliers')
     .select('razao_social, nome_fantasia, cnpj, categoria, municipio, uf, telefone, email, notas, status')
@@ -186,5 +195,25 @@ async function buscarAngulo(consulta: string, angulo: Angulo): Promise<Resultado
     return { fornecedores: [], texto: null, erro: 'A busca na internet não respondeu agora. Tente de novo em instantes.' };
   } finally {
     clearTimeout(timer);
+  }
+}
+
+/**
+ * Quantas buscas na internet a pessoa fez nas últimas 24 h. Cada busca grava
+ * 2 eventos (ângulos local e amplo); conta só o local. Fail-open: erro na
+ * leitura não bloqueia a busca.
+ */
+export async function buscasWebNasUltimas24h(userId: string): Promise<number> {
+  try {
+    const { count } = await getServerSupabase()
+      .from('api_usage_events')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('operation', 'suppliers-busca-ampliada-web')
+      .eq('metadata->>angulo', 'local')
+      .gte('created_at', new Date(Date.now() - 24 * 3600_000).toISOString());
+    return count ?? 0;
+  } catch {
+    return 0;
   }
 }

@@ -1,8 +1,14 @@
-// Busca ampliada de fornecedores (sub-projeto 73) — liberada só para equipes
-// listadas aqui. Além da base da Receita, a busca procura:
-//   1. na VENDOR LIST da própria equipe (fornecedores que ela já usa, subidos
-//      em /fornecedores ou na própria tela de busca);
+// Busca ampliada de fornecedores (sub-projeto 73). Além da base da Receita,
+// a busca procura:
+//   1. na VENDOR LIST (fornecedores que o cliente já usa, subidos em
+//      /fornecedores ou na própria tela de busca): a da EQUIPE, para quem está
+//      numa equipe listada aqui; a da própria pessoa, para os demais;
 //   2. na internet (quem vende o item, com link).
+//
+// Liberada para TODOS os clientes em 2026-10-21 (decisão do dono após a
+// reunião com o Alexandre), com limite diário de buscas na internet
+// (LIMITE_DIARIO_BUSCA_WEB). A lista abaixo deixou de ser liberação e passou
+// a definir só quem COMPARTILHA a vendor list entre si.
 //
 // Nasceu da Construtora Costa Feitosa (2026-10-05): a vendor list delas tem
 // 809 fornecedores SEM CNPJ, organizados por "grupo de materiais" — a busca
@@ -18,8 +24,8 @@ export type EquipeBuscaAmpliada = {
   emails: readonly string[];
 };
 
-// Liberação POR PESSOA, não por domínio: um colega novo da mesma empresa só
-// entra quando o comercial pedir.
+// Equipe definida POR PESSOA, não por domínio: um colega novo da mesma
+// empresa só passa a ver a vendor list da equipe quando o comercial pedir.
 export const EQUIPES_BUSCA_AMPLIADA: readonly EquipeBuscaAmpliada[] = [
   {
     id: 'costa-feitosa',
@@ -31,6 +37,9 @@ export const EQUIPES_BUSCA_AMPLIADA: readonly EquipeBuscaAmpliada[] = [
     ],
   },
 ];
+
+/** Buscas na internet por pessoa em 24 h (cada busca faz 2 consultas web). */
+export const LIMITE_DIARIO_BUSCA_WEB = 30;
 
 export function equipeDoUsuario(email: string | null | undefined): EquipeBuscaAmpliada | null {
   const e = (email ?? '').trim().toLowerCase();

@@ -105,7 +105,7 @@ type BuscaIa =
   | { status: 'erro'; consulta: string };
 
 /**
- * @param buscaNaInternet equipe liberada para a busca ampliada (vendor list +
+ * @param buscaNaInternet mostra "Buscar na internet" (liberado a todos desde 2026-10-21; vendor list +
  * internet, lib/suppliers/busca-ampliada.ts): ganha o atalho "Buscar na internet".
  */
 export function SupplierBase({ buscaNaInternet = false }: { buscaNaInternet?: boolean } = {}) {

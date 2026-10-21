@@ -163,6 +163,13 @@ export const FAQ_SUPORTE: FaqSecao[] = [
         termos: 'tributário imposto icms ipi pis cofins crédito reforma ibs cbs simples nacional híbrido optante regime regular',
       },
       {
+        id: 'busca-internet',
+        pergunta: 'A Busca de Fornecedores procura na internet?',
+        resposta:
+          'Sim. Além das empresas ativas na Receita, cada busca procura na sua base de fornecedores (a lista que você subiu em Fornecedores) e na internet, com o site de quem vende o item. A busca na internet tem um limite diário por pessoa; quando ele acaba, a Receita e a sua base continuam funcionando.',
+        termos: 'internet google site busca ampliada vendor list limite',
+      },
+      {
         id: 'mapa-fornecedores',
         pergunta: 'Como monto a lista de fornecedores da minha empresa inteira?',
         resposta:
