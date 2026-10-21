@@ -22,7 +22,7 @@ export const ExtracaoTributariaSchema = z.object({
       fornecedor: z.string(),
       cnpj: z.string().nullable(),
       uf: z.string().nullable(),
-      regimeFornecedor: z.enum(['regular', 'simples', 'nao_informado']),
+      regimeFornecedor: z.enum(['regular', 'simples', 'simples_hibrido', 'nao_informado']),
       valorProdutos: z.number().nullable(),
       ipiPct: z.number().nullable(),
       icmsPct: z.number().nullable(),
@@ -41,7 +41,7 @@ Para CADA fornecedor (cada documento ou bloco de proposta), devolva:
 - fornecedor: razão social ou nome como aparece.
 - cnpj: só se aparecer no texto; senão null.
 - uf: sigla do estado do fornecedor (pelo endereço ou CNPJ); senão null.
-- regimeFornecedor: "simples" se o texto disser Simples Nacional, ME/EPP optante, "documento emitido por ME ou EPP optante pelo Simples", "não gera direito a crédito fiscal de IPI"; "regular" se mostrar destaque normal de ICMS/PIS/Cofins ou disser Lucro Real/Presumido; senão "nao_informado".
+- regimeFornecedor: "simples_hibrido" se a empresa é do Simples Nacional mas OPTOU pelo regime regular do IBS e da CBS ("optante pelo regime regular do IBS/CBS", "Simples híbrido", "IBS e CBS apurados fora do DAS"); "simples" se o texto disser Simples Nacional, ME/EPP optante, "documento emitido por ME ou EPP optante pelo Simples", "não gera direito a crédito fiscal de IPI"; "regular" se mostrar destaque normal de ICMS/PIS/Cofins ou disser Lucro Real/Presumido; senão "nao_informado".
 - valorProdutos: valor TOTAL dos produtos ou serviços da proposta, em reais, SEM IPI e SEM ICMS-ST (o ICMS normal já está embutido no preço). Se houver vários itens, some. Se só houver preço unitário e quantidade, multiplique.
 - ipiPct, icmsPct: alíquotas em % (ex.: 18 para 18%). Fornecedor do Simples: o percentual de crédito de ICMS que a nota permite aproveitar ("permite o aproveitamento do crédito de ICMS de X%") vai em icmsPct. Se a proposta disser só "impostos inclusos" sem alíquota, null.
 - pisCofinsPct: só se a proposta informar PIS/Cofins (ex.: 9,25 ou 3,65); fornecedor do Simples sempre null. Nunca coloque aqui o crédito de ICMS.
@@ -61,7 +61,9 @@ export function paraPropostas(ex: ExtracaoTributaria): (PropostaTributaria & { o
     if (p.valorProdutos == null) faltando.push('valor');
     if (p.icmsPct == null) faltando.push('ICMS');
     if (p.regimeFornecedor === 'nao_informado') faltando.push('regime do fornecedor');
-    const regime = p.regimeFornecedor === 'simples' ? 'simples' : 'regular';
+    const regime =
+      p.regimeFornecedor === 'simples' || p.regimeFornecedor === 'simples_hibrido' ? p.regimeFornecedor : 'regular';
+    const simples = regime !== 'regular';
     return {
       fornecedor: p.fornecedor.trim().slice(0, 200) || 'Fornecedor',
       cnpj: (p.cnpj ?? '').replace(/[^\d./-]/g, '').slice(0, 20),
@@ -69,9 +71,9 @@ export function paraPropostas(ex: ExtracaoTributaria): (PropostaTributaria & { o
       regimeFornecedor: regime,
       valorProdutos: n(p.valorProdutos, 0),
       ipiPct: n(p.ipiPct, 0),
-      icmsPct: n(p.icmsPct, regime === 'simples' ? 0 : 18),
+      icmsPct: n(p.icmsPct, simples ? 0 : 18),
       // No Simples o PIS/Cofins está no DAS: não há alíquota embutida a separar.
-      pisCofinsPct: regime === 'simples' ? 0 : n(p.pisCofinsPct, 9.25),
+      pisCofinsPct: simples ? 0 : n(p.pisCofinsPct, 9.25),
       stValor: n(p.stValor, 0),
       freteValor: n(p.freteValor, 0),
       reducaoReformaPct: 0,
@@ -95,7 +97,14 @@ async function confirmarRegimes(props: ReturnType<typeof paraPropostas>): Promis
         ]);
         if (!dados) return;
         if (typeof dados.simples_nacional === 'boolean') {
-          p.regimeFornecedor = dados.simples_nacional ? 'simples' : 'regular';
+          // A Receita diz se é do Simples, mas não se optou pelo regime
+          // regular do IBS/CBS (isso só aparece no Portal do Simples, com
+          // captcha): "híbrido" lido na proposta é mantido.
+          p.regimeFornecedor = dados.simples_nacional
+            ? p.regimeFornecedor === 'simples_hibrido'
+              ? 'simples_hibrido'
+              : 'simples'
+            : 'regular';
           p.faltando = p.faltando.filter((f) => f !== 'regime do fornecedor');
           if (dados.simples_nacional && p.pisCofinsPct === 9.25) p.pisCofinsPct = 0;
         }

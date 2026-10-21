@@ -159,8 +159,8 @@ export const FAQ_SUPORTE: FaqSecao[] = [
         id: 'tributario',
         pergunta: 'Qual proposta é melhor pelo lado dos impostos?',
         resposta:
-          'Use a Análise Tributária de Propostas: importe as propostas, confira os dados que a IA leu (valor, IPI, ICMS, frete e se o fornecedor é do Simples) e informe o regime da sua empresa e para que serve a compra. Ela mostra o custo líquido de cada proposta, já descontados os créditos de impostos, hoje e ano a ano na reforma tributária até 2033. É uma estimativa: valide com o seu contador antes de fechar contrato longo.',
-        termos: 'tributário imposto icms ipi pis cofins crédito reforma ibs cbs simples nacional',
+          'Use a Análise Tributária de Propostas: importe as propostas, confira os dados que a IA leu (valor, IPI, ICMS, frete e se o fornecedor é do Simples) e informe o regime da sua empresa e para que serve a compra. Ela mostra o custo líquido de cada proposta, já descontados os créditos de impostos, hoje e ano a ano na reforma tributária até 2033. Para fornecedor do Simples, diferencia o Simples puro (crédito pequeno) do Simples híbrido, que optou pelo regime regular do IBS/CBS e transfere crédito integral; o link para conferir isso no Portal do Simples aparece em cada proposta. É uma estimativa: valide com o seu contador antes de fechar contrato longo.',
+        termos: 'tributário imposto icms ipi pis cofins crédito reforma ibs cbs simples nacional híbrido optante regime regular',
       },
       {
         id: 'mapa-fornecedores',

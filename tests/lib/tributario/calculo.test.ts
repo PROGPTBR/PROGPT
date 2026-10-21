@@ -115,6 +115,20 @@ describe('analisarPropostas', () => {
     const md = tabelaCustoLiquido(c, analisarPropostas(c));
     expect(md.split('\n')).toHaveLength(4);
     expect(md).toContain('**R$');
-    expect(md).toContain('Simples ME (Simples Nacional)');
+    expect(md).toContain('Simples ME (Simples puro)');
+  });
+
+  it('Simples híbrido: igual ao Simples hoje; na reforma cobra IBS/CBS por fora e transfere crédito integral', () => {
+    const hibrido = { ...simples, fornecedor: 'Híbrido ME', regimeFornecedor: 'simples_hibrido' as const };
+    const a = analisarPropostas(ctx({ propostas: [normal, simples, hibrido] }));
+    const h = a.propostas[2]!;
+    expect(h.cenarios.atual).toEqual(a.propostas[1]!.cenarios.atual);
+    expect(h.cenarios['2027'].detalhe.cbs).toBe(7_480);
+    expect(h.cenarios['2027'].detalhe.creditoIbsCbs).toBe(7_480);
+    expect(h.cenarios['2027'].custoLiquido).toBe(83_875); // 85.000 + 7.480 + 1.000 - ICMS 2.125 - CBS 7.480
+    expect(h.cenarios['2033'].creditos).toBe(22_525);
+    expect(h.cenarios['2033'].custoLiquido).toBe(86_000);
+    expect(a.avisos.join(' ')).toMatch(/Simples híbrido/);
+    expect(a.avisos.join(' ')).toMatch(/Portal do Simples/);
   });
 });

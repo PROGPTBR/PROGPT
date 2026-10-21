@@ -6,6 +6,11 @@
 
 export type CertidaoLink = { label: string; url: string; nota?: string };
 
+// Consulta de optantes do Simples Nacional. Desde 2026 mostra também se a
+// empresa optou pelo regime regular do IBS e da CBS ("Simples híbrido"), o que
+// muda o crédito que ela transfere a partir de 2027. Tem captcha: só link.
+export const CONSULTA_OPTANTES_SIMPLES_URL = 'https://consopt.www8.receita.fazenda.gov.br/consultaoptantes';
+
 // SEFAZ estadual — portal de certidão de débitos por UF (cobertura dos maiores;
 // fallback genérico para os demais).
 const SEFAZ_UF: Record<string, string> = {
@@ -43,6 +48,11 @@ export function certidoesLinks(uf?: string | null): CertidaoLink[] {
       nota: SEFAZ_UF[ufKey]
         ? undefined
         : 'Emitir no portal da SEFAZ do estado da sede.',
+    },
+    {
+      label: 'Simples Nacional: situação e opção pelo regime regular do IBS/CBS (Portal do Simples)',
+      url: CONSULTA_OPTANTES_SIMPLES_URL,
+      nota: 'Para fornecedor do Simples: "optante" no regime regular (Simples híbrido) transfere crédito integral de IBS/CBS a partir de 2027; "não optante" transfere só o que recolhe no DAS.',
     },
     {
       label: 'Certidão municipal (tributos municipais)',

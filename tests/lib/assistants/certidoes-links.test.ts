@@ -29,4 +29,9 @@ describe('certidoesLinks', () => {
     const md = certidoesLinksMarkdown('SP');
     expect(md).toMatch(/- \[.+\]\(https?:\/\//);
   });
+
+  it('traz a consulta do Portal do Simples (opção pelo regime regular do IBS/CBS)', () => {
+    const l = certidoesLinks('PR').find((x) => x.url.includes('consultaoptantes'));
+    expect(l?.label).toMatch(/regime regular do IBS\/CBS/);
+  });
 });

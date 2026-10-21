@@ -11,6 +11,7 @@ import { CompradorImportDialog } from './CompradorImportDialog';
 import { handlePaywallResponse } from '@/lib/billing/handle-paywall';
 import { readAssistantChunk } from '@/lib/assistants/stream-client';
 import { semTravessao } from '@/lib/texto/sem-travessao';
+import { CONSULTA_OPTANTES_SIMPLES_URL } from '@/lib/assistants/certidoes-links';
 import {
   CENARIOS,
   DESTINACAO_LABELS,
@@ -21,10 +22,12 @@ import {
   REGIMES_COMPRADOR,
   REGIME_COMPRADOR_LABELS,
   REGIME_FORNECEDOR_LABELS,
+  REGIME_FORNECEDOR_CURTO,
   REGIMES_FORNECEDOR,
   ParametrosTributariosSchema,
   analisarPropostas,
   brl,
+  ehSimples,
   type Destinacao,
   type ParametrosTributarios,
   type PropostaTributaria,
@@ -60,6 +63,7 @@ const EXEMPLO: PropostaEdit[] = [
   { ...novaProposta(1), fornecedor: 'Metalúrgica Paulista Ltda', uf: 'SP', valorProdutos: 100_000, ipiPct: 5, icmsPct: 12, freteValor: 1_800 },
   { ...novaProposta(2), fornecedor: 'Aços do Vale ME', uf: 'MG', regimeFornecedor: 'simples', valorProdutos: 85_000, icmsPct: 2.5, pisCofinsPct: 0, freteValor: 1_000 },
   { ...novaProposta(3), fornecedor: 'Distribuidora Sul Industrial', uf: 'PR', valorProdutos: 97_500, ipiPct: 5, icmsPct: 12, stValor: 0, freteValor: 0 },
+  { ...novaProposta(4), fornecedor: 'Laminados Paraná EPP', uf: 'PR', regimeFornecedor: 'simples_hibrido', valorProdutos: 74_000, icmsPct: 2.5, pisCofinsPct: 0, freteValor: 800 },
 ];
 
 /** Aceita "1.234,56", "1234.56" e "12%". */
@@ -298,7 +302,7 @@ export function TributarioAssistant() {
               <td className="sticky left-0 bg-card px-3 py-2">
                 <div className="font-medium">{p.fornecedor}</div>
                 <div className="text-xs text-muted-foreground">
-                  {REGIME_FORNECEDOR_LABELS[params.propostas[i]!.regimeFornecedor]}
+                  {REGIME_FORNECEDOR_CURTO[params.propostas[i]!.regimeFornecedor]}
                 </div>
               </td>
               {CENARIOS.map((c) => {
@@ -420,7 +424,7 @@ export function TributarioAssistant() {
                             const regime = e.target.value as PropostaTributaria['regimeFornecedor'];
                             editar(i, {
                               regimeFornecedor: regime,
-                              ...(regime === 'simples' ? { pisCofinsPct: 0 } : p.pisCofinsPct === 0 ? { pisCofinsPct: 9.25 } : {}),
+                              ...(ehSimples(regime) ? { pisCofinsPct: 0 } : p.pisCofinsPct === 0 ? { pisCofinsPct: 9.25 } : {}),
                             });
                           }}
                         >
@@ -431,10 +435,12 @@ export function TributarioAssistant() {
                           ))}
                         </select>
                       </label>
-                      <CampoNumero rotulo="Valor dos produtos" sufixo="R$" valor={p.valorProdutos} onChange={(n) => editar(i, { valorProdutos: n })} />
+                      <CampoNumero
+                        rotulo={p.regimeFornecedor === 'simples_hibrido' ? 'Valor sem IBS/CBS' : 'Valor dos produtos'}
+                        sufixo="R$" valor={p.valorProdutos} onChange={(n) => editar(i, { valorProdutos: n })} />
                       <CampoNumero rotulo="Frete" sufixo="R$" valor={p.freteValor} onChange={(n) => editar(i, { freteValor: n })} />
                       <CampoNumero
-                        rotulo={p.regimeFornecedor === 'simples' ? 'Crédito ICMS na nota' : 'ICMS'}
+                        rotulo={ehSimples(p.regimeFornecedor) ? 'Crédito ICMS na nota' : 'ICMS'}
                         sufixo="%"
                         valor={p.icmsPct}
                         onChange={(n) => editar(i, { icmsPct: n })}
@@ -459,6 +465,24 @@ export function TributarioAssistant() {
                         </select>
                       </label>
                     </div>
+                    {ehSimples(p.regimeFornecedor) && (
+                      <p className="rounded-lg bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+                        {p.regimeFornecedor === 'simples'
+                          ? 'Simples puro transfere pouco crédito de IBS/CBS a partir de 2027. '
+                          : 'Simples híbrido cobra IBS/CBS por fora e transfere crédito integral a partir de 2027. '}
+                        Confira no Portal do Simples se a empresa optou pelo regime regular do IBS/CBS
+                        {p.cnpj ? (
+                          <>
+                            {' '}(CNPJ <span className="select-all font-medium text-foreground">{p.cnpj}</span>)
+                          </>
+                        ) : null}
+                        :{' '}
+                        <a href={CONSULTA_OPTANTES_SIMPLES_URL} target="_blank" rel="noopener noreferrer" className="font-medium text-primary hover:underline">
+                          abrir consulta
+                        </a>
+                        .
+                      </p>
+                    )}
                   </div>
                 ))}
               </div>

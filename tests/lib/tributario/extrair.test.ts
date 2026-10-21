@@ -42,4 +42,11 @@ describe('paraPropostas', () => {
     expect(r).toHaveLength(8);
     expect(r[0]!.freteValor).toBe(0);
   });
+
+  it('Simples híbrido lido na proposta é mantido, sem PIS/Cofins embutido', () => {
+    const [p] = paraPropostas({ propostas: [{ ...base, regimeFornecedor: 'simples_hibrido', pisCofinsPct: 9.25 }] });
+    expect(p!.regimeFornecedor).toBe('simples_hibrido');
+    expect(p!.pisCofinsPct).toBe(0);
+    expect(p!.faltando).not.toContain('regime do fornecedor');
+  });
 });

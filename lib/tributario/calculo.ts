@@ -17,8 +17,11 @@ import { z } from 'zod';
 //   IPI zera (fora a Zona Franca); de 2029 a 2032 o ICMS cai 10% ao ano e o
 //   IBS ocupa o espaço; em 2033 só IBS + CBS. IBS/CBS são "por fora", com
 //   crédito amplo para comprador do regime regular (Lucro Real ou Presumido),
-//   inclusive uso e consumo. Fornecedor do Simples transfere só o crédito que
-//   recolhe no DAS (percentual estimado, editável).
+//   inclusive uso e consumo. Fornecedor do Simples "puro" (não optante pelo
+//   regime regular do IBS/CBS) transfere só o crédito que recolhe no DAS
+//   (percentual estimado, editável). O Simples "híbrido" (optante, informação
+//   que o Portal do Simples passou a mostrar em 2026) continua no Simples mas
+//   apura IBS/CBS fora do DAS: cobra por fora e transfere crédito integral.
 // - Alíquotas de IBS/CBS ainda não são definitivas: os padrões (CBS 8,8% +
 //   IBS 17,7% = 26,5%) são estimativas e ficam editáveis na tela.
 
@@ -39,12 +42,24 @@ export const DESTINACAO_LABELS: Record<Destinacao, string> = {
   ativo_imobilizado: 'Ativo imobilizado',
 };
 
-export const REGIMES_FORNECEDOR = ['regular', 'simples'] as const;
+export const REGIMES_FORNECEDOR = ['regular', 'simples', 'simples_hibrido'] as const;
 export type RegimeFornecedor = (typeof REGIMES_FORNECEDOR)[number];
 export const REGIME_FORNECEDOR_LABELS: Record<RegimeFornecedor, string> = {
   regular: 'Regime normal (Real ou Presumido)',
-  simples: 'Simples Nacional',
+  simples: 'Simples Nacional puro (IBS/CBS no DAS)',
+  simples_hibrido: 'Simples Nacional híbrido (IBS/CBS no regime regular)',
 };
+
+/** Rótulo curto, para tabelas. */
+export const REGIME_FORNECEDOR_CURTO: Record<RegimeFornecedor, string> = {
+  regular: 'Regime normal',
+  simples: 'Simples puro',
+  simples_hibrido: 'Simples híbrido',
+};
+
+export function ehSimples(r: RegimeFornecedor): boolean {
+  return r === 'simples' || r === 'simples_hibrido';
+}
 
 /** Redução de alíquota de IBS/CBS prevista para o item (LC 214/2025). */
 export const REDUCOES = [0, 30, 60, 100] as const;
@@ -186,9 +201,21 @@ function calcularCenario(
 
     if (creditaIcms) d.creditoIcms = d.icms;
     if (compradorCredita) d.creditoIbsCbs = d.cbs + d.ibs;
+  } else if (p.regimeFornecedor === 'simples_hibrido') {
+    // Simples híbrido: segue no Simples (ICMS ainda dentro do DAS na
+    // transição), mas IBS/CBS são cobrados por fora sobre o valor da proposta
+    // e voltam inteiros como crédito para quem é do regime regular.
+    d.icms = icmsHoje * (1 - f);
+    d.cbs = p.valorProdutos * cbsRate;
+    d.ibs = p.valorProdutos * ibsRate * f;
+    d.st = p.stValor * (1 - f);
+    desembolso = p.valorProdutos + d.cbs + d.ibs + d.st + p.freteValor;
+
+    if (creditaIcms) d.creditoIcms = d.icms;
+    if (compradorCredita) d.creditoIbsCbs = d.cbs + d.ibs;
   } else {
-    // Simples: o preço continua o mesmo (o DAS está dentro dele) e o crédito
-    // de IBS/CBS é só o que o fornecedor recolhe no DAS.
+    // Simples puro: o preço continua o mesmo (o DAS está dentro dele) e o
+    // crédito de IBS/CBS é só o que o fornecedor recolhe no DAS.
     d.icms = icmsHoje * (1 - f);
     d.st = p.stValor * (1 - f);
     desembolso = p.valorProdutos + d.st + p.freteValor;
@@ -251,7 +278,12 @@ export function analisarPropostas(ctx: ParametrosTributarios): AnaliseTributaria
   }
   if (ctx.propostas.some((p) => p.regimeFornecedor === 'simples') && ctx.regimeComprador !== 'simples') {
     avisos.push(
-      `Fornecedor do Simples transfere pouco crédito de IBS/CBS (estimado em ${ctx.simplesCreditoPct}% do valor). Vale perguntar se ele vai optar pelo regime regular a partir de 2027.`,
+      `Fornecedor do Simples puro (não optante pelo regime regular do IBS/CBS) transfere pouco crédito (estimado em ${ctx.simplesCreditoPct}% do valor). Confira no Portal do Simples se ele optou pelo regime regular: como Simples híbrido, o crédito passa a ser integral a partir de 2027.`,
+    );
+  }
+  if (ctx.propostas.some((p) => p.regimeFornecedor === 'simples_hibrido')) {
+    avisos.push(
+      'Fornecedor do Simples híbrido: o valor informado é sem IBS/CBS, que serão cobrados por fora a partir de 2027 e voltam como crédito para empresa do regime regular.',
     );
   }
 
@@ -276,7 +308,7 @@ export function tabelaCustoLiquido(ctx: ParametrosTributarios, a: AnaliseTributa
       const v = brl(p.cenarios[c.id].custoLiquido);
       return a.melhorPorCenario[c.id] === i ? `**${v}**` : v;
     });
-    const regime = REGIME_FORNECEDOR_LABELS[ctx.propostas[i]!.regimeFornecedor];
+    const regime = REGIME_FORNECEDOR_CURTO[ctx.propostas[i]!.regimeFornecedor];
     return `| ${p.fornecedor} (${regime}) | ${cels.join(' | ')} |`;
   });
   return [cab, sep, ...linhas].join('\n');
