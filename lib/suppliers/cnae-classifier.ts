@@ -37,8 +37,12 @@ const ExtractSchema = z.object({
   // de canetas" e dava zero (achado 2026-10-05).
   commerceDescription: z.string().nullish(),
   scope: z.enum(SCOPE_VALUES),
-  states: z.array(z.string()).optional(),
-  cities: z.array(z.string()).optional(),
+  // nullish: o modelo às vezes devolve null em vez de omitir. Ex. real
+  // (21/10/2026, Alexandre): "fornecedor material de escritório amazonas"
+  // vinha com cities:null, a validação recusava o JSON inteiro e a busca
+  // respondia "Não consegui interpretar". null vira "sem filtro".
+  states: z.array(z.string()).nullish().transform((v) => v ?? undefined),
+  cities: z.array(z.string()).nullish().transform((v) => v ?? undefined),
 });
 
 const PickSchema = z.object({

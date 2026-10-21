@@ -170,6 +170,29 @@ describe('cnae-classifier', () => {
     const result = await classifyCnae('foo');
     expect(result.states).toEqual(['SP', 'MG', 'RJ']);
   });
+
+  // 21/10/2026 (Alexandre): "fornecedor material de escritório amazonas" vinha
+  // com cities:null e a busca inteira respondia "Não consegui interpretar".
+  it('aceita cities/states null do modelo em vez de recusar o pedido', async () => {
+    mockOpenAI([
+      {
+        text: JSON.stringify({
+          activityDescription: 'comércio atacadista de artigos de escritório',
+          scope: 'state',
+          states: ['AM'],
+          cities: null,
+        }),
+      },
+      {
+        text: JSON.stringify({ cnaeCode: '4647801', confidence: 0.9, rationale: 'ok' }),
+      },
+    ]);
+    mockReceitaSql([{ codigo: '4647801', denominacao: 'Papelaria', score: 0.9 }]);
+    const { classifyCnae } = await import('@/lib/suppliers/cnae-classifier');
+    const result = await classifyCnae('fornecedor material de escritório amazonas');
+    expect(result.cnaeCode).toBe('4647801');
+    expect(result.states).toEqual(['AM']);
+  });
 });
 
 // Feedback de cliente em 24/09/2026: buscou "locação de caçambas de entulho"
