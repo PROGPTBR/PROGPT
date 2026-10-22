@@ -60,6 +60,10 @@ export type FluxoProcesso = {
   etapa_atual: FluxoStageId;
   status: FluxoStatus;
   contexto: FluxoContexto;
+  /** Link público de acompanhamento para quem pediu a compra (sub-projeto 90). */
+  acompanhamento_token?: string | null;
+  solicitante_nome?: string | null;
+  solicitante_email?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -75,5 +79,25 @@ export type FluxoEtapa = {
   decisao: FluxoDecisao;
   observacao: string | null;
   decidida_em: string | null;
+  created_at: string;
+};
+
+export type FluxoAprovacaoStatus = 'pendente' | 'aprovado' | 'reprovado' | 'cancelado';
+
+/** Pedido de aprovação de uma execução de etapa, enviado por e-mail a um
+ *  gestor sem conta (sub-projeto 90). O token nunca vai para o navegador do
+ *  comprador: só para o e-mail do gestor. */
+export type FluxoAprovacao = {
+  id: string;
+  processo_id: string;
+  user_id: string;
+  etapa: FluxoStageId;
+  etapa_execucao_id: string;
+  aprovador_nome: string;
+  aprovador_email: string;
+  status: FluxoAprovacaoStatus;
+  comentario: string | null;
+  expira_em: string;
+  decidido_em: string | null;
   created_at: string;
 };

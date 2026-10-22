@@ -237,3 +237,134 @@ ${p(`Se quiser nos contar por que cancelou, responda este email — feedback aju
     html: shell(content, `Acesso até ${args.accessUntil}. Reative quando quiser.`),
   };
 }
+
+// ─── Fluxo de Compras: acompanhamento e aprovação (sub-projeto 90) ───────
+//
+// Título da compra, nomes e comentários vêm digitados pelo cliente: sempre
+// escapados antes de entrar no HTML.
+
+function esc(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function quadro(linhas: Array<[string, string]>): string {
+  const rows = linhas
+    .map(
+      ([k, v]) =>
+        `<tr><td style="padding:6px 0;font-size:12px;color:${TEXT_MUTED};width:40%;vertical-align:top;">${esc(k)}</td><td style="padding:6px 0;font-size:14px;color:${TEXT_PRIMARY};">${esc(v)}</td></tr>`,
+    )
+    .join('');
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${BG_ACCENT};border-radius:10px;margin:16px 0;padding:8px 16px;">${rows}</table>`;
+}
+
+/** Para o gestor: pedido de aprovação com o link seguro (sem conta). */
+export function buildFluxoAprovacaoEmail(args: {
+  aprovadorNome: string;
+  compradorNome: string;
+  tituloCompra: string;
+  etapaLabel: string;
+  resumo: string;
+  link: string;
+  expiraEm: string;
+}): { subject: string; html: string } {
+  const quem = args.compradorNome.trim() || 'O comprador';
+  const subject = `Aprovação pedida: ${args.tituloCompra}`;
+  const ola = args.aprovadorNome.trim() ? `Olá, ${esc(args.aprovadorNome.trim().split(/\s+/)[0]!)}` : 'Olá';
+  const content = `
+${h(`${ola}, sua aprovação é necessária`)}
+${p(`<strong>${esc(quem)}</strong> pediu a sua aprovação nesta compra, pelo PROGPT.`)}
+${quadro([
+  ['Compra', args.tituloCompra],
+  ['Etapa', args.etapaLabel],
+  ['Resumo', args.resumo],
+])}
+${p('Abra o link para ver os detalhes e aprovar ou reprovar. Você não precisa criar conta.')}
+<div style="text-align:center;margin:24px 0;">
+${button(args.link, 'Ver e decidir')}
+</div>
+${p(`<span style="color:${TEXT_MUTED};font-size:12px;">O link vale até ${esc(args.expiraEm)} e só pode ser usado uma vez. Não encaminhe este e-mail: quem abrir o link pode decidir em seu nome.</span>`)}
+`;
+  return { subject, html: shell(content, esc(`${quem} pediu a sua aprovação: ${args.tituloCompra}.`)) };
+}
+
+/** Para quem pediu a compra: link de acompanhamento ou aviso de etapa. */
+export function buildFluxoAndamentoEmail(args: {
+  solicitanteNome: string;
+  tituloCompra: string;
+  link: string;
+  /** Sem etapa: é o primeiro envio do link. */
+  etapaConcluida?: string | null;
+  proximaEtapa?: string | null;
+  concluido?: boolean;
+}): { subject: string; html: string } {
+  const ola = args.solicitanteNome.trim() ? `Olá, ${esc(args.solicitanteNome.trim().split(/\s+/)[0]!)}` : 'Olá';
+  let subject: string;
+  let titulo: string;
+  let corpo: string;
+
+  if (args.concluido) {
+    subject = `Compra concluída: ${args.tituloCompra}`;
+    titulo = 'Sua compra foi concluída';
+    corpo = 'Todas as etapas foram finalizadas, incluindo o recebimento.';
+  } else if (args.etapaConcluida) {
+    subject = `Sua compra avançou: ${args.tituloCompra}`;
+    titulo = 'Sua compra avançou de etapa';
+    corpo = `A etapa <strong>${esc(args.etapaConcluida)}</strong> foi concluída.${
+      args.proximaEtapa ? ` Agora está em <strong>${esc(args.proximaEtapa)}</strong>.` : ''
+    }`;
+  } else {
+    subject = `Acompanhe sua compra: ${args.tituloCompra}`;
+    titulo = 'Acompanhe o seu pedido de compra';
+    corpo = 'O seu pedido entrou no processo de compras. Pelo link abaixo você vê em que etapa ele está, a qualquer hora, sem precisar perguntar a ninguém.';
+  }
+
+  const content = `
+${h(`${ola}. ${titulo}`)}
+${quadro([['Compra', args.tituloCompra]])}
+${p(corpo)}
+<div style="text-align:center;margin:24px 0;">
+${button(args.link, 'Como está meu pedido?')}
+</div>
+${p(`<span style="color:${TEXT_MUTED};font-size:12px;">Você recebe um aviso a cada etapa concluída. O link mostra só o andamento, sem preços nem propostas.</span>`)}
+`;
+  return { subject, html: shell(content, esc(`${titulo}: ${args.tituloCompra}.`)) };
+}
+
+/** Para o comprador: o gestor decidiu pelo e-mail. */
+export function buildFluxoDecisaoGestorEmail(args: {
+  aprovadorNome: string;
+  aprovadorEmail: string;
+  tituloCompra: string;
+  etapaLabel: string;
+  aprovado: boolean;
+  comentario: string;
+  link: string;
+}): { subject: string; html: string } {
+  const quem = args.aprovadorNome.trim() || args.aprovadorEmail;
+  const subject = `${args.aprovado ? 'Aprovado' : 'Reprovado'} por ${quem}: ${args.tituloCompra}`;
+  const linhas: Array<[string, string]> = [
+    ['Compra', args.tituloCompra],
+    ['Etapa', args.etapaLabel],
+    ['Decisão', args.aprovado ? 'Aprovado' : 'Reprovado'],
+  ];
+  if (args.comentario.trim()) linhas.push(['Comentário', args.comentario.trim()]);
+  const content = `
+${h(args.aprovado ? 'O gestor aprovou' : 'O gestor reprovou')}
+${p(`<strong>${esc(quem)}</strong> ${args.aprovado ? 'aprovou' : 'reprovou'} a etapa pelo link do e-mail.`)}
+${quadro(linhas)}
+${p(
+  args.aprovado
+    ? 'A compra já seguiu para a próxima etapa no PROGPT.'
+    : 'A etapa voltou para ajuste com o motivo acima. Rode a etapa de novo para a IA refazer.',
+)}
+<div style="text-align:center;margin:24px 0;">
+${button(args.link, 'Abrir o processo')}
+</div>
+`;
+  return { subject, html: shell(content, esc(`${quem} ${args.aprovado ? 'aprovou' : 'reprovou'}: ${args.tituloCompra}.`)) };
+}

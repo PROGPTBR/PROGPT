@@ -211,6 +211,13 @@ export const FAQ_SUPORTE: FaqSecao[] = [
         termos: 'processo etapas siga ajustar aprovação',
       },
       {
+        id: 'fluxo-acompanhar-aprovar',
+        pergunta: 'Quem pediu a compra consegue acompanhar? O gestor pode aprovar pelo e-mail?',
+        resposta:
+          'Sim, os dois sem precisar de conta. Ao abrir a compra, informe o nome e o e-mail de quem pediu: essa pessoa recebe o link "Como está meu pedido?" e um aviso a cada etapa concluída. O link mostra só o andamento, sem preços nem propostas. Para a aprovação, depois de executar a etapa clique em "Pedir aprovação do gestor por e-mail": o gestor recebe o resumo e aprova ou reprova com um clique. Aprovar avança a compra; reprovar devolve a etapa com o motivo, e você recebe um e-mail com a decisão.',
+        termos: 'acompanhamento link solicitante requisitante gestor aprovar reprovar email aviso status pedido',
+      },
+      {
         id: 'painel-dashboard',
         pergunta: 'Qual a diferença entre Painel e Dashboard?',
         resposta:

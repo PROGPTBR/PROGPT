@@ -19,7 +19,8 @@ import { FLUXO_STAGES, getStage, proximaEtapa } from '@/lib/fluxo/stages';
 import { EXEMPLO_ENTRADAS, EXEMPLO_SAIDAS } from '@/lib/fluxo/exemplo';
 import { avisarSobDemanda } from '@/components/vitrine/ui';
 import { solicitarProdutoHref } from '@/lib/vitrine/contato';
-import type { FluxoEtapa, FluxoProcesso } from '@/lib/fluxo/types';
+import type { FluxoAprovacao, FluxoEtapa, FluxoProcesso } from '@/lib/fluxo/types';
+import { PainelAcompanhamento, PedirAprovacaoGestor } from './AcompanhamentoAprovacao';
 
 // O tabuleiro do processo: trilha das 8 etapas + o card da etapa atual com o
 // que a IA executou e os dois botões de decisão. É a tela que materializa a
@@ -42,6 +43,7 @@ export function ProcessoRoot({ processoInicial, etapasIniciais, exemplo = false,
   const [ajuste, setAjuste] = useState('');
   const [pedindoAjuste, setPedindoAjuste] = useState(false);
   const [busy, setBusy] = useState<null | 'run' | 'siga' | 'ajustar'>(null);
+  const [aprovacoes, setAprovacoes] = useState<FluxoAprovacao[]>([]);
 
   const stage = getStage(processo.etapa_atual);
   const concluido = processo.status === 'concluido';
@@ -61,12 +63,26 @@ export function ProcessoRoot({ processoInicial, etapasIniciais, exemplo = false,
     [etapas],
   );
 
+  async function carregarAprovacoes() {
+    if (exemplo) return;
+    const res = await fetch(`/api/fluxo/processos/${processo.id}/aprovacao`).catch(() => null);
+    if (!res?.ok) return;
+    const data = (await res.json().catch(() => ({}))) as { aprovacoes?: FluxoAprovacao[] };
+    setAprovacoes(data.aprovacoes ?? []);
+  }
+
+  useEffect(() => {
+    void carregarAprovacoes();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [processo.id, exemplo]);
+
   async function recarregar() {
     const res = await fetch(`/api/fluxo/processos/${processo.id}`);
     if (!res.ok) return;
     const data = (await res.json()) as { processo: FluxoProcesso; etapas: FluxoEtapa[] };
     setProcesso(data.processo);
     setEtapas(data.etapas);
+    void carregarAprovacoes();
   }
 
   async function rodar() {
@@ -349,6 +365,17 @@ export function ProcessoRoot({ processoInicial, etapasIniciais, exemplo = false,
                 <div className="font-medium">{pendente.saida.saida}</div>
               </div>
 
+              {!pedindoAjuste && (
+                <PedirAprovacaoGestor
+                  processoId={processo.id}
+                  pendenteId={pendente.id}
+                  aprovacoes={aprovacoes}
+                  exemplo={exemplo}
+                  disabled={busy !== null}
+                  onMudou={() => void recarregar()}
+                />
+              )}
+
               {pedindoAjuste && (
                 <textarea
                   rows={3}
@@ -407,6 +434,14 @@ export function ProcessoRoot({ processoInicial, etapasIniciais, exemplo = false,
         </section>
       )}
 
+      {!concluido && (
+        <PainelAcompanhamento
+          processo={processo}
+          exemplo={exemplo}
+          onAtualizado={(p) => setProcesso((atual) => ({ ...atual, ...p }))}
+        />
+      )}
+
       {/* Histórico */}
       {historico.length > 0 && (
         <section className="space-y-2">
@@ -437,8 +472,10 @@ export function ProcessoRoot({ processoInicial, etapasIniciais, exemplo = false,
                 <div className="mt-2 space-y-2 text-sm">
                   <p>{e.saida.resumo}</p>
                   {e.observacao && (
-                    <p className="rounded-lg bg-orange-500/10 px-3 py-2 text-xs">
-                      <strong>Correção pedida:</strong> {e.observacao}
+                    <p
+                      className={`rounded-lg px-3 py-2 text-xs ${e.decisao === 'siga' ? 'bg-emerald-500/10' : 'bg-orange-500/10'}`}
+                    >
+                      <strong>{e.decisao === 'siga' ? 'Observação:' : 'Correção pedida:'}</strong> {e.observacao}
                     </p>
                   )}
                 </div>

@@ -42,6 +42,8 @@ export function FluxoRoot({
   const [abrindo, setAbrindo] = useState(processosIniciais.length === 0);
   const [titulo, setTitulo] = useState('');
   const [requisicao, setRequisicao] = useState('');
+  const [solicitanteNome, setSolicitanteNome] = useState('');
+  const [solicitanteEmail, setSolicitanteEmail] = useState('');
   const [busy, setBusy] = useState(false);
   const [modo, setModo] = useState<'guiado' | 'livre'>('guiado');
   const [guiadoPronto, setGuiadoPronto] = useState(false);
@@ -65,7 +67,7 @@ export function FluxoRoot({
       const res = await fetch('/api/fluxo/processos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ titulo, requisicao }),
+        body: JSON.stringify({ titulo, requisicao, solicitanteNome, solicitanteEmail }),
       });
       const data = (await res.json().catch(() => ({}))) as {
         processo?: FluxoProcesso;
@@ -240,6 +242,33 @@ export function FluxoRoot({
               className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
             />
           </div>
+
+          <fieldset className="rounded-xl border border-border bg-muted/20 p-3">
+            <legend className="px-1 text-xs font-medium text-muted-foreground">
+              Quem pediu a compra? (opcional)
+            </legend>
+            <p className="mb-2 text-xs text-muted-foreground">
+              Essa pessoa recebe por e-mail um link para acompanhar o pedido e um aviso a cada etapa
+              concluída, sem precisar de conta no PROGPT.
+            </p>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <input
+                aria-label="Nome de quem pediu"
+                value={solicitanteNome}
+                onChange={(e) => setSolicitanteNome(e.target.value)}
+                placeholder="Nome"
+                className="w-full rounded-lg border border-input bg-background px-3 h-10 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+              />
+              <input
+                aria-label="E-mail de quem pediu"
+                type="email"
+                value={solicitanteEmail}
+                onChange={(e) => setSolicitanteEmail(e.target.value)}
+                placeholder="email@empresa.com.br"
+                className="w-full rounded-lg border border-input bg-background px-3 h-10 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+              />
+            </div>
+          </fieldset>
 
           </>
           )}

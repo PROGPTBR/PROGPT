@@ -2,6 +2,7 @@ import { getServerSupabase } from '@/lib/db/supabase';
 
 import { FLUXO_STAGES, getStage, proximaEtapa, type FluxoStage, type FluxoStageId } from './stages';
 import { executarEtapa } from './executor';
+import { notificarSolicitante, novoTokenFluxo } from './notificacoes';
 import type {
   FluxoContexto,
   FluxoDecisao,
@@ -66,6 +67,8 @@ export async function criarProcesso(args: {
   userId: string;
   titulo: string;
   requisicao: string;
+  solicitanteNome?: string;
+  solicitanteEmail?: string;
 }): Promise<FluxoProcesso | null> {
   const { data, error } = await svc()
     .from('fluxo_processos')
@@ -76,6 +79,10 @@ export async function criarProcesso(args: {
       etapa_atual: FLUXO_STAGES[0]!.id,
       status: 'em_andamento',
       contexto: {},
+      // Todo processo nasce com link de acompanhamento (sub-projeto 90).
+      acompanhamento_token: novoTokenFluxo(),
+      solicitante_nome: args.solicitanteNome?.trim().slice(0, 120) || null,
+      solicitante_email: args.solicitanteEmail?.trim().toLowerCase().slice(0, 200) || null,
     })
     .select('*')
     .maybeSingle();
@@ -255,6 +262,14 @@ export async function decidirEtapa(args: {
     console.error('[fluxo] avançar falhou:', error?.message);
     return { ok: false, reason: 'falhou' };
   }
+
+  // Quem pediu a compra recebe um aviso a cada etapa concluída. Fail-soft.
+  void notificarSolicitante({
+    processo: data as FluxoProcesso,
+    etapaConcluida: stage.label,
+    proximaEtapa: proxima?.label ?? null,
+    concluido: !proxima,
+  });
 
   return { ok: true, processo: data as FluxoProcesso, concluido: !proxima };
 }

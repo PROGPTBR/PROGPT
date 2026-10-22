@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { requireUser, NotAuthenticated } from '@/lib/auth';
 import { criarProcesso, listarProcessos } from '@/lib/fluxo/process';
 import { usuarioComFluxo, respostaSobDemanda } from '@/lib/fluxo/acesso-servidor';
+import { emailValido, notificarSolicitante } from '@/lib/fluxo/notificacoes';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -11,6 +12,10 @@ export const dynamic = 'force-dynamic';
 const Body = z.object({
   titulo: z.string().trim().max(200).optional().default(''),
   requisicao: z.string().trim().min(10).max(20000),
+  // Quem pediu a compra: recebe o link de acompanhamento e um aviso a cada
+  // etapa (sub-projeto 90). Opcional.
+  solicitanteNome: z.string().trim().max(120).optional().default(''),
+  solicitanteEmail: z.string().trim().max(200).optional().default(''),
 });
 
 async function user() {
@@ -50,10 +55,19 @@ export async function POST(req: Request) {
     );
   }
 
+  if (body.solicitanteEmail && !emailValido(body.solicitanteEmail)) {
+    return NextResponse.json(
+      { error: 'email_invalido', message: 'Confira o e-mail de quem pediu a compra.' },
+      { status: 400 },
+    );
+  }
+
   const processo = await criarProcesso({
     userId: u.id,
     titulo: body.titulo || body.requisicao.slice(0, 80),
     requisicao: body.requisicao,
+    solicitanteNome: body.solicitanteNome,
+    solicitanteEmail: body.solicitanteEmail,
   });
 
   if (!processo) {
@@ -62,6 +76,8 @@ export async function POST(req: Request) {
       { status: 500 },
     );
   }
+
+  if (processo.solicitante_email) void notificarSolicitante({ processo });
 
   return NextResponse.json({ processo });
 }

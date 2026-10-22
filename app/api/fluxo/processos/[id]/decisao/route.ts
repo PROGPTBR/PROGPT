@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 import { requireUser, NotAuthenticated } from '@/lib/auth';
 import { decidirEtapa } from '@/lib/fluxo/process';
+import { cancelarAprovacoesPendentes } from '@/lib/fluxo/acompanhamento';
 import { usuarioComFluxo, respostaSobDemanda } from '@/lib/fluxo/acesso-servidor';
 
 export const runtime = 'nodejs';
@@ -62,6 +63,9 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       { status },
     );
   }
+
+  // O comprador decidiu no app: o pedido enviado ao gestor deixa de valer.
+  void cancelarAprovacoesPendentes(u.id, params.id).catch(() => {});
 
   return NextResponse.json({ processo: resultado.processo, concluido: resultado.concluido });
 }
