@@ -131,8 +131,17 @@ export const TOUR_STEPS: TourStep[] = [
 
   // ── Busca de Fornecedores ─────────────────────────────────────────────
   {
+    id: 'busca-tipo',
+    route: '/assistants/suppliers',
+    secao: 'Busca de Fornecedores',
+    target: '[data-tour="busca-tipo"]',
+    title: 'Primeiro, diga o que quer encontrar',
+    body: 'Escolha entre um item ou serviço, todos os fornecedores da sua operação num mapa, ou quem já está na sua base. O campo de busca aparece do jeito certo para cada caso, e você troca de tipo a qualquer momento por esta barra.',
+  },
+  {
     id: 'busca-pedido',
     route: '/assistants/suppliers',
+    aba: 'item',
     secao: 'Busca de Fornecedores',
     target: '[data-tour="busca-pedido"]',
     title: 'Ache fornecedores reais',
@@ -141,6 +150,7 @@ export const TOUR_STEPS: TourStep[] = [
   {
     id: 'busca-exemplos',
     route: '/assistants/suppliers',
+    aba: 'item',
     secao: 'Busca de Fornecedores',
     target: '[data-tour="busca-exemplos"]',
     title: 'Use os exemplos como ponto de partida',

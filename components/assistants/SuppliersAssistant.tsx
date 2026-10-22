@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { termosDaBusca } from '@/lib/suppliers/relevancia';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 
@@ -154,6 +155,10 @@ export function SuppliersAssistant({
     cnae: string,
     ufs: UF[],
     cities: SupplierCity[],
+    // Texto do pedido para a relevância. Explícito quando a chamada acabou de
+    // trocar o pedido (busca salva): o estado só atualiza no próximo render.
+    texto: string = pedido,
+    nomeDoRamo = '',
   ): Promise<SearchResponse | null> {
     try {
       const res = await fetch(
@@ -168,6 +173,12 @@ export function SuppliersAssistant({
 
           body: JSON.stringify({
             cnae,
+
+            termos: termosDaBusca(
+              texto,
+              nomeDoRamo,
+              cities.map((city) => city.name),
+            ),
 
             ufs:
               ufs.length > 0
@@ -407,6 +418,8 @@ export function SuppliersAssistant({
         args.cnae,
         args.ufs,
         args.cities,
+        pedido,
+        args.cnaeName,
       );
 
     // ========================================================
@@ -483,6 +496,8 @@ export function SuppliersAssistant({
         s.cnae,
         s.ufs,
         cities,
+        s.label,
+        cnaeName,
       );
 
     if (!response) {
@@ -583,6 +598,12 @@ export function SuppliersAssistant({
           body: JSON.stringify({
             cnae:
               phase.cnae,
+
+            termos: termosDaBusca(
+              pedido,
+              phase.cnaeName,
+              phase.cities.map((city) => city.name),
+            ),
 
             ufs:
               phase.ufs.length >

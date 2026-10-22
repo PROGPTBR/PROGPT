@@ -127,37 +127,23 @@ export const ASSISTANTS: readonly AssistantDefinition[] = [
   },
 
   {
+    // Busca de Fornecedores e Mapa da Operação na mesma tela (2026-10-22): o
+    // cliente escolhe primeiro o que quer encontrar. O Mapa não tem mais card
+    // próprio; /assistants/mapa_fornecedores redireciona para cá.
     id: 'suppliers',
     step: 2,
     stepCategory: 'Mercado',
     href: '/assistants/suppliers',
     title: 'Busca de Fornecedores',
     short:
-      'Encontre fornecedores reais por CNAE + região. Descreva em linguagem natural; a IA classifica e busca empresas ativas na Receita.',
-    sideSubtitle: 'Encontre fornecedores reais',
+      'Diga o que quer encontrar: quem vende um item ou serviço na sua região, todos os fornecedores da sua operação num mapa (CAPEX e OPEX) ou quem já está na sua base.',
+    sideSubtitle: 'Um item, a operação inteira ou a sua base',
     bullets: [
-      'Classificação automática de CNAE',
-      'Filtro por estado e porte',
-      'Export CSV pra Excel BR',
+      'Um item ou serviço: Receita Federal + internet, por região',
+      'A operação inteira: categorias de compra e fornecedores num mapa',
+      'Relatório em PDF, Excel e Word',
     ],
     previewKey: 'suppliers',
-  },
-
-  {
-    id: 'mapa_fornecedores',
-    step: 2,
-    stepCategory: 'Mercado',
-    href: '/assistants/mapa_fornecedores',
-    title: 'Mapa de Fornecedores da Operação',
-    short:
-      'Descreva a empresa e a região: o PROGPT monta as categorias de compra (CAPEX e OPEX), encontra até 50 fornecedores reais na internet, mostra todos num mapa interativo e diz quem acionar primeiro e onde pedir mais cotações.',
-    sideSubtitle: 'Todos os fornecedores da sua operação num mapa',
-    bullets: [
-      'Categorias de compra do seu setor, com criticidade e concorrência',
-      'Até 50 fornecedores da região, com site, telefone e endereço',
-      'Mapa interativo + relatório de quem acionar primeiro (Word e planilha)',
-    ],
-    previewKey: 'mapa_fornecedores',
   },
 
   {

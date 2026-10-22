@@ -187,6 +187,13 @@ export const SearchRequestSchema =
       .int()
       .min(0)
       .optional(),
+
+    // Radicais do que o comprador pediu (lib/suppliers/relevancia.ts): quem
+    // tem o termo no nome sobe na ordem. Validado de novo no servidor.
+    termos: z
+      .array(z.string().max(12))
+      .max(5)
+      .optional(),
   });
 
 export type SearchRequest =

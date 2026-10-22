@@ -71,6 +71,7 @@ describe('TOUR_STEPS', () => {
     const abasPorTela: Record<string, string[]> = {
       '/gestao-obras': ['cockpit', 'contratos', 'medicoes', 'planejamento'],
       '/gestao-demandas': ['visao', 'setores', 'fluxo', 'relatorios'],
+      '/assistants/suppliers': ['item', 'operacao'],
     };
     for (const step of TOUR_STEPS) {
       if (!step.aba) continue;

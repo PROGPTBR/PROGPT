@@ -104,7 +104,7 @@ export const FAQ_SUPORTE: FaqSecao[] = [
         id: 'quais',
         pergunta: 'Quais assistentes existem?',
         resposta:
-          'Estão todos na tela Assistentes: RFP, Matriz Kraljic, 5 Forças de Porter, Curva ABC, Scorecard de fornecedor, Análise Financeira, Análise de Gastos, Pesquisa de Preços, Homologação de Fornecedor, Negociação, Equalizador de Propostas, Análise Tributária de Propostas, Diagnóstico de Aquisição, Busca de Fornecedores, Mapa de Fornecedores da Operação e outros.',
+          'Estão todos na tela Assistentes: RFP, Matriz Kraljic, 5 Forças de Porter, Curva ABC, Scorecard de fornecedor, Análise Financeira, Análise de Gastos, Pesquisa de Preços, Homologação de Fornecedor, Negociação, Equalizador de Propostas, Análise Tributária de Propostas, Diagnóstico de Aquisição, Busca de Fornecedores (que inclui o Mapa de Fornecedores da Operação) e outros.',
       },
       {
         id: 'documentos',
@@ -170,10 +170,17 @@ export const FAQ_SUPORTE: FaqSecao[] = [
         termos: 'internet google site busca ampliada vendor list limite',
       },
       {
+        id: 'busca-ordem',
+        pergunta: 'Por que uma empresa grande aparece antes de quem vende o item?',
+        resposta:
+          'A busca da Receita mostra primeiro quem tem no nome o que você pediu (por exemplo, "papelaria"), depois quem tem o ramo como atividade principal, tem contato e porte maior. Escreva o item do jeito que o vendedor se chamaria: "papelaria em Manaus" traz papelarias antes de fábricas de papel. Na mesma tela, a parte "Na internet" mostra quem vende o item na região, como numa busca do Google.',
+        termos: 'ordem ranking suzano grande empresa relevante primeiro resultado',
+      },
+      {
         id: 'mapa-fornecedores',
         pergunta: 'Como monto a lista de fornecedores da minha empresa inteira?',
         resposta:
-          'Use o Mapa de Fornecedores da Operação: descreva a empresa, o setor e a região. Ele monta as categorias de compra (CAPEX e OPEX), procura até 50 fornecedores reais na internet, mostra todos num mapa e diz quem acionar primeiro e onde pedir mais cotações. Leva de 1 a 3 minutos e fica salvo no Histórico. Para um item específico, a Busca de Fornecedores é mais rápida.',
+          'Abra a Busca de Fornecedores e escolha "Todos os fornecedores da minha operação". Descreva a empresa, o setor e a região. Ele monta as categorias de compra (CAPEX e OPEX), procura até 50 fornecedores reais na internet, mostra todos num mapa e diz quem acionar primeiro e onde pedir mais cotações. Leva de 1 a 3 minutos e fica salvo no Histórico. Para um item específico, escolha "Um item ou serviço" na mesma tela, que é mais rápido.',
         termos: 'mapa fornecedores região capex opex lista base cidade',
       },
       {

@@ -1,3 +1,4 @@
+import { padraoDeRelevancia } from './relevancia';
 import {
   getReceitaSql,
 } from './receita-db';
@@ -137,7 +138,12 @@ export async function searchSuppliers(
     cities,
     limit = DEFAULT_LIMIT,
     offset = 0,
+    termos,
   } = params;
+
+  // Quem tem no nome o que o comprador pediu ("papelaria") sobe na ordem.
+  // Sem isso, "artigo de papelaria" trazia a Suzano no topo (21/10/2026).
+  const padraoNome = padraoDeRelevancia(termos);
 
   const sql =
     getReceitaSql();
@@ -239,6 +245,7 @@ export async function searchSuppliers(
     // Score:
     //
     // +100 CNAE principal
+    // +150 nome tem o que foi pedido ou o nome do ramo (lib/suppliers/relevancia.ts)
     // +40  possui contato
     // +10/20/30 porte
     //
@@ -288,7 +295,21 @@ export async function searchSuppliers(
             (
               telefone is not null
               or email is not null
-            ) as has_contact
+            ) as has_contact,
+
+            coalesce(
+              ${padraoNome}::text is not null
+              and translate(
+                upper(
+                  coalesce(razao_social, '')
+                  || ' '
+                  || coalesce(nome_fantasia, '')
+                ),
+                'ÁÀÃÂÄÉÈÊËÍÌÎÏÓÒÕÔÖÚÙÛÜÇ',
+                'AAAAAEEEEIIIIOOOOOUUUUC'
+              ) ~ ${padraoNome}::text,
+              false
+            ) as name_match
 
             ${openingSelect}
 
@@ -451,6 +472,21 @@ export async function searchSuppliers(
                 is_primary
               )
               then 100
+              else 0
+            end
+          )
+
+          +
+
+          -- +150 quando o nome tem o que foi pedido: pesa mais que ter o ramo
+          -- como atividade principal. Quem tem "papelaria" no nome vende
+          -- papelaria; a Suzano (principal no ramo, sem o termo) fica abaixo.
+          (
+            case
+              when bool_or(
+                name_match
+              )
+              then 150
               else 0
             end
           )
