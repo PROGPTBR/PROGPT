@@ -249,7 +249,11 @@ export function BuscaAmpliadaResultados({ estado }: { estado: EstadoBuscaAmpliad
         ) : web.erro ? (
           <p className="mt-3 text-sm text-muted-foreground">{web.erro}</p>
         ) : web.fornecedores.length > 0 ? (
-          <ul className="mt-3 divide-y divide-border">
+          <ul
+            className="mt-3 max-h-[25rem] divide-y divide-border overflow-y-auto overscroll-contain pr-2 [scrollbar-gutter:stable]"
+            aria-label="Fornecedores encontrados na internet"
+            tabIndex={web.fornecedores.length > 5 ? 0 : undefined}
+          >
             {web.fornecedores.map((f, i) => (
               <li key={`${f.nome}-${i}`} className="py-2.5">
                 <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">

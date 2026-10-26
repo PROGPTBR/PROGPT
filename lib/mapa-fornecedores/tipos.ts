@@ -161,9 +161,30 @@ export function csvFornecedores(r: Pick<ResultadoMapa, 'fornecedores' | 'plano'>
   return '﻿' + [cab.map(esc).join(';'), ...linhas].join('\r\n');
 }
 
+// Tipos de negócio que ninguém "compra": quem escreve "emissora de TV em
+// Curitiba" está descrevendo a própria operação. Ficam de fora de propósito os
+// termos que também são produto ou categoria de compra (papelaria, fábrica,
+// indústria, banco...): "papelaria em Manaus" é um item, e "fábrica em
+// Joinville" é ambíguo, então cai na Busca.
+const NEGOCIOS =
+  'emissora|televis[aã]o|hospital|cl[ií]nica|laborat[oó]rio|construtora|incorporadora|usina|mineradora|' +
+  'frigor[ií]fico|supermercado|hipermercado|hotel|resort|escola|col[eé]gio|universidade|faculdade|' +
+  'shopping|aeroporto|cooperativa|prefeitura|restaurante|seguradora|' +
+  'rede de (?:lojas|farm[aá]cias|hospitais|hot[eé]is|supermercados)';
+
+// "emissora de TV em Curitiba", "uma construtora em Recife": o pedido começa pelo negócio.
+const COMECA_PELO_NEGOCIO = new RegExp(
+  `^\\s*(?:(?:a|o|uma|um|minha|meu|nossa|nosso)\\s+)?(?:${NEGOCIOS})\\b`,
+);
+// "para a minha emissora", "tenho um hospital": quem fala é o dono da operação.
+const DONO_DO_NEGOCIO = new RegExp(
+  `\\b(?:(?:minha|meu|nossa|nosso)\\s+|(?:tenho|temos|tocamos|administro|gerencio)\\s+(?:uma?\\s+)?)(?:${NEGOCIOS})\\b`,
+);
+
 /** Pedido parece mapear a operação inteira de uma empresa (vs. procurar um item). */
 export function pareceMapaDaOperacao(pedido: string): boolean {
   const t = pedido.toLowerCase();
   if (t.length > 350) return true;
+  if (COMECA_PELO_NEGOCIO.test(t) || DONO_DO_NEGOCIO.test(t)) return true;
   return /\b(\d{2,3})\s+fornecedores\b|opera[cç][aã]o|grupo|capex|opex|todos os fornecedores|para (esta|essa|a) empresa|meu setor/.test(t);
 }

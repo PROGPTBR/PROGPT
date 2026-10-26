@@ -5,6 +5,7 @@ import { buildPrompt, buildLibraryOverviewPrompt } from './prompt-builder';
 import { getLibrarySnapshot } from './library-snapshot';
 import type { ProfileSnapshot, RagResult, RetrievedChunk } from './types';
 import type { Trace } from '@/lib/observability/types';
+import { pareceMapaDaOperacao } from '@/lib/mapa-fornecedores/tipos';
 
 // Quantos trechos chegam ao prompt após o rerank. Subido de 8 → 12 (sub-projeto
 // 32) pra dar mais material da base ao modelo elaborar respostas com a
@@ -59,13 +60,32 @@ export async function runRag(query: string, opts: RunRagOpts = {}): Promise<RagR
   // /assistants/suppliers flow. Here we just acknowledge in 1 line and
   // attach an annotation (in /api/chat) that the frontend reads to
   // render a CTA card that opens the dedicated assistant pré-preenchido.
+  //
+  // O texto NÃO pode prometer ação que os botões não executam (ajuste de
+  // 2026-10-26): o chat não busca nem lista fornecedores, só aponta para o
+  // cartão que abre a ferramenta.
   if (classification.intent === 'supplier_search') {
     trace?.setTag('intent:supplier_search');
     const lang = classification.language;
+    // Mesma regra do cartão (components/chat/SupplierSearchCTA.tsx): o texto e
+    // o cartão não podem discordar. Operação inteira → Mapa; item → Busca.
+    const operacao = pareceMapaDaOperacao(query);
+    const NAO_PROMETER_PT =
+      ' NÃO prometa nem ofereça buscar, listar, trazer ou montar lista de fornecedores, de cotação ou de CNPJs aqui no chat: quem faz isso é a ferramenta, ao abrir o botão. NÃO invente nomes de empresas, CNPJs ou contatos.';
+    const NAO_PROMETER_EN =
+      ' Do NOT offer or promise to search, list, shortlist or fetch suppliers in this chat. Do not invent supplier names, CNPJs, or contact info.';
     const system =
       lang === 'en'
-        ? 'You are a procurement assistant. Reply in ONE short sentence in English acknowledging that you will open the Supplier Search for the user. Do not invent supplier names, CNPJs, or contact info — those will be loaded by the dedicated tool.'
-        : 'Você é um assistente de procurement. Responda em PT-BR, em no máximo 2 frases curtas e sem travessão. Se o pedido for montar os fornecedores de uma empresa ou operação inteira (várias categorias, CAPEX e OPEX, "50 fornecedores", "para esta empresa"), diga que o Mapa de Fornecedores da Operação monta as categorias de compra, encontra os fornecedores da região e mostra todos num mapa, com quem acionar primeiro. Se for um item ou serviço específico, diga que a Busca de Fornecedores encontra empresas ativas na Receita para isso. NÃO invente nomes de empresas, CNPJs ou contatos: esses dados vêm das ferramentas, que aparecem em botões logo abaixo.';
+        ? operacao
+          ? 'You are a procurement assistant. Reply in at most 2 short sentences in English. Say that the Operation Supplier Map builds the purchasing categories, finds suppliers in the region and shows them all on a map, and ask the user to open it with the button below. Do not mention the Supplier Search.' +
+            NAO_PROMETER_EN
+          : 'You are a procurement assistant. Reply in at most 2 short sentences in English. Treat the request as buying an item or service, even if it is short (e.g. "stationery in Manaus" means who sells stationery, not a company that owns a stationery shop). Say that the Supplier Search looks in the user\'s vendor list, on the internet and in active companies at the Brazilian Federal Revenue, and ask the user to open it with the button below. Do not mention the Map.' +
+            NAO_PROMETER_EN
+        : operacao
+          ? 'Você é um assistente de procurement. Responda em PT-BR, em no máximo 2 frases curtas e sem travessão. Diga que o Mapa de Fornecedores da Operação monta as categorias de compra, encontra os fornecedores da região e mostra todos num mapa, com quem acionar primeiro, e peça para abrir o mapa no botão abaixo. Não mencione a Busca de Fornecedores.' +
+            NAO_PROMETER_PT
+          : 'Você é um assistente de procurement. Responda em PT-BR, em no máximo 2 frases curtas e sem travessão. Trate o pedido como compra de um item ou serviço, mesmo que seja curto (ex.: "papelaria em Manaus" é quem vende papelaria, não uma empresa que tem uma papelaria). Diga que a Busca de Fornecedores procura na sua vendor list, na internet e na Receita Federal, e peça para abrir a busca no botão abaixo. Não mencione o Mapa.' +
+            NAO_PROMETER_PT;
     return {
       classification,
       chunks: [],

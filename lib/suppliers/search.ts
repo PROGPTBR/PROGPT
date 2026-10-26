@@ -26,6 +26,12 @@ const DEFAULT_LIMIT = 50;
 
 const COUNT_CAP = 500;
 
+// Capital social a partir do qual a empresa é tratada como grande indústria ou
+// holding, e não como fornecedor de uma compra comum. Achado em 2026-10-26:
+// a Suzano (R$ 19 bi), registrada no CNAE de papelaria, aparecia entre as
+// primeiras num pedido de papelaria em Manaus.
+const CAPITAL_GRANDE = 500_000_000;
+
 // ============================================================
 // COLUNA DE DATA DE ABERTURA
 // ============================================================
@@ -247,7 +253,8 @@ export async function searchSuppliers(
     // +100 CNAE principal
     // +150 nome tem o que foi pedido ou o nome do ramo (lib/suppliers/relevancia.ts)
     // +40  possui contato
-    // +10/20/30 porte
+    // +30/20/0 porte (ME / EPP / médio e grande): fornecedor pequeno sobe
+    // -100 capital social acima de CAPITAL_GRANDE (grande indústria ou holding)
     //
     // Depois:
     // empresa mais antiga
@@ -505,18 +512,31 @@ export async function searchSuppliers(
 
           +
 
+          -- Porte: quem tem a escala de um fornecedor de compra comum sobe.
+          -- Médio e grande (DEMAIS) não ganha bônus.
           (
             max(
               case porte
-                when 'DEMAIS'
+                when 'ME'
                   then 3
                 when 'EPP'
                   then 2
-                when 'ME'
-                  then 1
                 else 0
               end
             ) * 10
+          )
+
+          -
+
+          -- Grande indústria ou holding (ex.: Suzano) desce.
+          (
+            case
+              when max(
+                capital_social::numeric
+              ) > ${CAPITAL_GRANDE}::numeric
+              then 100
+              else 0
+            end
           )
         ) desc,
 

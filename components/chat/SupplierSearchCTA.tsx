@@ -9,17 +9,17 @@ type Props = {
   query: string;
 };
 
-// Pedido de fornecedores no chat: duas saídas. A Busca de Fornecedores
-// (Receita, um CNAE por vez) serve para um item; o Mapa de Fornecedores da
-// Operação serve para a empresa inteira (várias categorias, com mapa). O
-// pedido amplo põe o Mapa em primeiro.
+// Pedido de fornecedores no chat. Item ou serviço: só a Busca de Fornecedores
+// (vendor list, internet e Receita). Operação inteira (várias categorias, com
+// mapa): o Mapa de Fornecedores da Operação em primeiro e a Busca como
+// alternativa.
 export function SupplierSearchCTA({ query }: Props) {
   const desligados = useModulosDesativados();
   const busca = {
     id: 'suppliers',
     href: query ? `/assistants/suppliers?q=${encodeURIComponent(query.slice(0, 1500))}` : '/assistants/suppliers',
     titulo: 'Abrir Busca de Fornecedores',
-    sub: 'Empresas ativas na Receita para um item ou serviço',
+    sub: 'Vendor list, internet e Receita Federal, para um item ou serviço',
     Icon: Factory,
   };
   const mapa = {
@@ -29,7 +29,8 @@ export function SupplierSearchCTA({ query }: Props) {
     sub: 'Categorias de compra, até 50 fornecedores da região num mapa',
     Icon: MapPinned,
   };
-  const opcoes = (pareceMapaDaOperacao(query) ? [mapa, busca] : [busca, mapa]).filter((o) => !desligados.has(o.id));
+  const operacaoInteira = pareceMapaDaOperacao(query);
+  const opcoes = (operacaoInteira ? [mapa, busca] : [busca]).filter((o) => !desligados.has(o.id));
 
   return (
     <div className="mt-4 space-y-2">
