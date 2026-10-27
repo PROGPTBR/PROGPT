@@ -1,0 +1,1 @@
+function o(r){const n=/^(\d{1,2}):(\d{2})/.exec((r??"").trim());return n?Number(n[1])*60+Number(n[2]):null}function a(r){const n=o(r);if(n==null)return null;const t=Math.max(0,n-420);return n<=445?{faixa:"NO_HORARIO",minutos:t,desconto:0}:n<465?{faixa:"ATRASO",minutos:t,desconto:0}:{faixa:"DESCONTO",minutos:t,desconto:t}}export{a};

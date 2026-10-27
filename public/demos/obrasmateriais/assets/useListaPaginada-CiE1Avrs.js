@@ -1,0 +1,1 @@
+import{r as a}from"./index-BuxG1fEY.js";function u(t,s=20){const[r,n]=a.useState(s);a.useEffect(()=>{t.length<=s&&r!==s&&n(s)},[t.length,s,r]);const l=a.useMemo(()=>t.slice(0,r),[t,r]),e=Math.max(0,t.length-r);return{visiveis:l,temMais:e>0,restante:e,total:t.length,verMais:()=>n(o=>o+s),verTodos:()=>n(t.length),reset:()=>n(s),mostrarAte:o=>n(c=>Math.max(c,o))}}export{u};

@@ -1,0 +1,1 @@
+import{j as e,dB as n}from"./index-BuxG1fEY.js";function t({label:r="Carregando",className:a=""}){const d=r.replace(/[.…]+$/u,"");return e.jsx("div",{className:`flex items-center justify-center rounded-xl border border-border bg-card px-4 py-16 ${a}`,children:e.jsx(n,{label:d})})}export{t as L};

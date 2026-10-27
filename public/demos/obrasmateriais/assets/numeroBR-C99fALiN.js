@@ -1,0 +1,1 @@
+function t(e){const r=(e??"").trim();if(r==="")return null;const l=r.replace(/\s/g,"").replace(/\.(?=\d{3}(\D|$))/g,"").replace(",","."),n=Number(l);return Number.isFinite(n)?n:null}function u(e){const r=t((e??"").replace(/R\$/gi,""));return r===null||r<0?null:r}export{t as a,u as p};
