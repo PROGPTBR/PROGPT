@@ -1,47 +1,79 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { moduloDoHref } from './catalogo';
+import { MODULO_IDS, moduloDoHref } from './catalogo';
 
-// Módulos desligados para a empresa do usuário, para esconder menus, cards e
-// atalhos. Uma busca por carregamento de página, compartilhada entre os
-// componentes. Enquanto carrega (ou se falhar) nada é escondido: o bloqueio de
-// verdade é no middleware e nas rotas.
+// Até confirmar a disponibilidade, oculta os módulos cadastrados.
+// Este filtro controla a exibição. As permissões de acesso
+// continuam sendo verificadas no servidor.
 
-let pedido: Promise<string[]> | null = null;
+const TODOS_OS_MODULOS: readonly string[] = [...MODULO_IDS];
 
-function carregar(): Promise<string[]> {
-  if (!pedido) {
-    pedido = fetch('/api/account/modulos', { cache: 'no-store' })
-      .then((r) => (r.ok ? r.json() : { desativados: [] }))
-      .then((d: { desativados?: unknown }) =>
-        Array.isArray(d.desativados) ? d.desativados.filter((x): x is string => typeof x === 'string') : [],
-      )
-      .catch(() => {
-        pedido = null;
-        return [];
-      });
-  }
-  return pedido;
-}
+export function useModulosDesativados(
+  inicial?: readonly string[],
+): ReadonlySet<string> {
+  const [lista, setLista] = useState<readonly string[]>(
+    () => inicial ?? TODOS_OS_MODULOS,
+  );
 
-export function useModulosDesativados(inicial?: readonly string[]): ReadonlySet<string> {
-  const [lista, setLista] = useState<readonly string[]>(inicial ?? []);
   useEffect(() => {
-    let vivo = true;
-    void carregar().then((l) => {
-      if (vivo) setLista(l);
-    });
+    const controller = new AbortController();
+
+    async function carregar() {
+      try {
+        const response = await fetch('/api/account/modulos', {
+          cache: 'no-store',
+          credentials: 'same-origin',
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error('Não foi possível consultar os módulos.');
+        }
+
+        const dados: unknown = await response.json();
+
+        if (
+          typeof dados !== 'object' ||
+          dados === null ||
+          !('desativados' in dados) ||
+          !Array.isArray(dados.desativados) ||
+          !dados.desativados.every(
+            (item: unknown): item is string =>
+              typeof item === 'string',
+          )
+        ) {
+          throw new Error('Resposta de módulos inválida.');
+        }
+
+        if (!controller.signal.aborted) {
+          setLista(
+            dados.desativados.filter((id) => MODULO_IDS.has(id)),
+          );
+        }
+      } catch {
+        if (!controller.signal.aborted) {
+          setLista(TODOS_OS_MODULOS);
+        }
+      }
+    }
+
+    void carregar();
+
     return () => {
-      vivo = false;
+      controller.abort();
     };
   }, []);
+
   return useMemo(() => new Set(lista), [lista]);
 }
 
-/** true quando o href pertence a um módulo desligado. */
-export function hrefDesligado(href: string, desligados: ReadonlySet<string>): boolean {
-  if (desligados.size === 0) return false;
-  const m = moduloDoHref(href);
-  return m !== null && desligados.has(m);
+/** Indica se o endereço pertence a um módulo desativado. */
+export function hrefDesligado(
+  href: string,
+  desligados: ReadonlySet<string>,
+): boolean {
+  const modulo = moduloDoHref(href);
+
+  return modulo !== null && desligados.has(modulo);
 }

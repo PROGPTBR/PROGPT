@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useModulosDesativados, hrefDesligado } from '@/lib/modulos/useModulos';
 import Link from 'next/link';
 
@@ -22,6 +22,7 @@ import {
   X,
   HardHat,
   ClipboardList,
+  FolderKanban,
 } from 'lucide-react';
 
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -94,6 +95,9 @@ const NAV_ITEMS = [
     description: 'Cadastro, avaliação, homologação e histórico.',
     icon: Building2,
   },
+] as const;
+
+const GESTAO_ITEMS = [
   // Vitrines sob demanda (sub-projeto 68): só dados de exemplo; o produto de
   // verdade é implantado por pedido ao comercial da 2B Supply.
   {
@@ -158,6 +162,9 @@ export function Sidebar({
   // Itens de módulos desligados para a empresa somem do menu.
   const desligados = useModulosDesativados();
   const navItems = NAV_ITEMS.filter((item) => !hrefDesligado(item.href, desligados));
+  const gestaoItems = GESTAO_ITEMS.filter((item) => !hrefDesligado(item.href, desligados));
+  const [gestaoOpen, setGestaoOpen] = useState(false);
+  const gestaoPanelId = useId();
 
   const [
     editingId,
@@ -417,6 +424,42 @@ export function Sidebar({
       );
     }
   )}
+  {gestaoItems.length > 0 && (
+    <div className="flex flex-col items-center gap-1">
+      <button
+        type="button"
+        onClick={() => setGestaoOpen((open) => !open)}
+        title="Gestão"
+        aria-label="Gestão"
+        aria-expanded={gestaoOpen}
+        aria-controls={gestaoPanelId}
+        data-tour="nav-gestao"
+        className={`flex h-9 w-9 items-center justify-center rounded-lg transition-colors ${
+          gestaoOpen
+            ? 'bg-brand-gradient-soft text-brand'
+            : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+        }`}
+      >
+        <FolderKanban className="h-5 w-5" aria-hidden="true" />
+      </button>
+      <div id={gestaoPanelId} hidden={!gestaoOpen}>
+        <div className="flex flex-col items-center gap-1 border-l border-border pl-1">
+          {gestaoItems.map(({ href, label, description, icon: Icon }) => (
+            <Link
+              key={href}
+              href={href}
+              title={`${label}: ${description}`}
+              aria-label={label}
+              data-tour={`nav-${href.slice(1)}`}
+              className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            >
+              <Icon className="h-5 w-5" aria-hidden="true" />
+            </Link>
+          ))}
+        </div>
+      </div>
+    </div>
+  )}
 </nav>
         {/* Preenche o meio */}
         <div className="flex-1" />
@@ -532,102 +575,61 @@ export function Sidebar({
           NAVEGAÇÃO
       ========================================================= */}
 
-      <nav data-tour="navegacao" className="space-y-0.5 border-b border-border p-2">
-        {/* Tour no topo do menu, acima de Assistentes (pedido 2026-10-04). */}
-        {onStartTour && (
-          <button
-            type="button"
-            onClick={onStartTour}
-            className="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-brand transition-colors hover:bg-accent"
-          >
-            <Compass className="h-4 w-4 shrink-0" aria-hidden="true" />
-            <span className="truncate">Ver o tour da plataforma</span>
-          </button>
-        )}
-{navItems.map(
-  ({
-    href,
-    label,
-    description,
-    icon: Icon,
-  }) => {
-    const isAssistants =
-      href === '/assistants';
+    <nav
+  data-tour="navegacao"
+  className="space-y-0.5 border-b border-border p-2"
+>
+  {onStartTour && (
+    <button
+      type="button"
+      onClick={onStartTour}
+      className="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-brand transition-colors hover:bg-accent"
+    >
+      <Compass className="h-4 w-4 shrink-0" aria-hidden="true" />
+      <span className="truncate">Ver o tour da plataforma</span>
+    </button>
+  )}
 
-    const isPrompts =
-      href === '/prompts';
+  {navItems.map(({ href, label, description, icon: Icon }) => {
+    const isAssistants = href === '/assistants';
+    const isPrompts = href === '/prompts';
 
-    const isSidePanelItem =
-      isAssistants || isPrompts;
-
-    const panelOpen =
-      isAssistants
-        ? assistantsOpen
-        : promptsOpen;
-
-    const onOpenPanel =
-      isAssistants
+    if (isAssistants || isPrompts) {
+      const panelOpen = isAssistants ? assistantsOpen : promptsOpen;
+      const onOpenPanel = isAssistants
         ? onOpenAssistants
         : onOpenPrompts;
 
-    if (isSidePanelItem) {
       return (
         <button
           key={href}
           type="button"
           data-tour={`nav-${href.slice(1)}`}
           onClick={onOpenPanel}
-          className={`
-            group
-            flex
-            w-full
-            items-center
-            rounded-xl
-            px-3
-            py-2.5
-            text-sm
-            font-medium
-            transition-colors
-            ${
-              panelOpen
-                ? 'bg-brand-gradient-soft text-brand'
-                : 'text-foreground/80 hover:bg-accent hover:text-foreground'
-            }
-          `}
+          title={description || label}
+          className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
+            panelOpen
+              ? 'bg-brand-gradient-soft text-brand'
+              : 'text-foreground/80 hover:bg-accent hover:text-foreground'
+          }`}
         >
-          <div className="flex min-w-0 flex-1 items-center gap-3">
-            <Icon
-              className={`
-                h-4
-                w-4
-                shrink-0
-                transition-colors
-                ${
-                  panelOpen
-                    ? 'text-brand'
-                    : 'text-muted-foreground group-hover:text-foreground'
-                }
-              `}
-              aria-hidden="true"
-            />
+          <Icon
+            className={`h-4 w-4 shrink-0 ${
+              panelOpen
+                ? 'text-brand'
+                : 'text-muted-foreground group-hover:text-foreground'
+            }`}
+            aria-hidden="true"
+          />
 
-            <span className="truncate">
-              {label}
-            </span>
-          </div>
+          <span className="min-w-0 flex-1 truncate text-left">
+            {label}
+          </span>
 
           <ChevronRight
-            className={`
-              h-4
-              w-4
-              shrink-0
-              transition-all
-              ${
-                panelOpen
-                  ? 'text-brand'
-                  : 'text-muted-foreground group-hover:text-foreground'
-              }
-            `}
+            className={`h-4 w-4 shrink-0 ${
+              panelOpen ? 'text-brand' : 'text-muted-foreground'
+            }`}
             aria-hidden="true"
           />
         </button>
@@ -639,51 +641,78 @@ export function Sidebar({
         key={href}
         href={href}
         data-tour={`nav-${href.slice(1)}`}
-        className="
-          group
-          flex
-          items-start
-          gap-3
-          rounded-xl
-          px-3
-          py-2.5
-          text-foreground/80
-          transition-colors
-
-          hover:bg-accent
-          hover:text-foreground
-        "
+        title={description || label}
+        className="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-foreground/80 transition-colors hover:bg-accent hover:text-foreground"
       >
         <Icon
-          className="
-            mt-0.5
-            h-4
-            w-4
-            shrink-0
-            text-muted-foreground
-            transition-colors
-
-            group-hover:text-foreground
-          "
+          className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-foreground"
           aria-hidden="true"
         />
 
-        <div className="min-w-0 flex-1">
-          <div className="truncate text-sm font-medium">
-            {label}
-          </div>
-
-          {description && (
-            <div className="mt-0.5 text-[11px] font-normal leading-4 text-[#8fb3d9]">
-              {description}
-            </div>
-          )}
-        </div>
+        <span className="min-w-0 flex-1 truncate">
+          {label}
+        </span>
       </Link>
     );
-  }
-)}
-      </nav>
+  })}
+
+  {gestaoItems.length > 0 && (
+    <div>
+      <button
+        type="button"
+        onClick={() => setGestaoOpen((open) => !open)}
+        aria-expanded={gestaoOpen}
+        aria-controls={gestaoPanelId}
+        data-tour="nav-gestao"
+        title="Acesse os módulos de gestão."
+        className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
+          gestaoOpen
+            ? 'bg-brand-gradient-soft text-brand'
+            : 'text-foreground/80 hover:bg-accent hover:text-foreground'
+        }`}
+      >
+        <FolderKanban
+          className="h-4 w-4 shrink-0"
+          aria-hidden="true"
+        />
+
+        <span className="min-w-0 flex-1 truncate text-left">
+          Gestão
+        </span>
+
+        <ChevronRight
+          className={`h-4 w-4 shrink-0 transition-transform ${
+            gestaoOpen ? 'rotate-90' : ''
+          }`}
+          aria-hidden="true"
+        />
+      </button>
+
+      <div id={gestaoPanelId} hidden={!gestaoOpen}>
+        <div className="ml-5 mt-1 space-y-0.5 border-l border-border pl-2">
+          {gestaoItems.map(({ href, label, description, icon: Icon }) => (
+            <Link
+              key={href}
+              href={href}
+              data-tour={`nav-${href.slice(1)}`}
+              title={description}
+              className="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-foreground/80 transition-colors hover:bg-accent hover:text-foreground"
+            >
+              <Icon
+                className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-foreground"
+                aria-hidden="true"
+              />
+
+              <span className="min-w-0 flex-1 truncate">
+                {label}
+              </span>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </div>
+  )}
+</nav>
 
   {/* ========================================================
     CONVERSAS
