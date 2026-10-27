@@ -240,6 +240,14 @@ export const SupplierResultSchema =
     email:
       z.string().nullable(),
 
+    // Endereço da Receita, para abrir o fornecedor no mapa.
+    // Opcional: a vendor list e a busca na internet não têm.
+    endereco:
+      z.string().nullable().optional(),
+
+    cep:
+      z.string().nullable().optional(),
+
     ultima_atualizacao_rf:
       z.string().nullable(),
   });

@@ -39,6 +39,11 @@ import {
   yearsInMarket,
 } from '@/lib/suppliers/ranking';
 
+import {
+  enderecoCompleto,
+  googleMapsHref,
+} from '@/lib/suppliers/mapa-link';
+
 // ============================================================
 // PROPS
 // ============================================================
@@ -555,6 +560,31 @@ export function SuppliersResultCard({
       matriz.uf,
     );
 
+  const mapaHref =
+    googleMapsHref(matriz);
+
+  const enderecoMatriz =
+    enderecoCompleto(matriz);
+
+  const localLabel =
+    isMultiUnit
+      ? `${group.units.length} unidades · ${ufs.join(
+          ', ',
+        )} · matriz em ${
+          matriz.municipio ??
+          matriz.uf ??
+          ''
+        }`
+      : `${
+          matriz.municipio ??
+          ''
+        }${
+          matriz.municipio &&
+          matriz.uf
+            ? ' · '
+            : ''
+        }${matriz.uf ?? ''}`;
+
   return (
     <div className="group flex flex-col rounded-2xl border border-border bg-card hover:border-brand/30 transition-all duration-300 p-5 space-y-3">
       {/* =====================================================
@@ -724,35 +754,50 @@ export function SuppliersResultCard({
       ===================================================== */}
 
       <div className="space-y-1.5 text-xs">
-        {/* LOCALIZAÇÃO */}
+        {/* LOCALIZAÇÃO (clique abre o endereço da matriz no Google Maps) */}
 
-        {ufs.length > 0 && (
-          <div className="flex items-center gap-1.5 text-muted-foreground">
-            <MapPin
-              className="h-3 w-3 flex-shrink-0"
-              aria-hidden="true"
-            />
+        {ufs.length > 0 &&
+          (mapaHref ? (
+            <a
+              href={mapaHref}
+              target="_blank"
+              rel="noreferrer noopener"
+              title={`Ver no mapa: ${enderecoMatriz}`}
+              className="flex items-start gap-1.5 text-muted-foreground hover:text-brand transition-colors"
+            >
+              <MapPin
+                className="h-3 w-3 flex-shrink-0 mt-0.5"
+                aria-hidden="true"
+              />
 
-            <span>
-              {isMultiUnit
-                ? `${group.units.length} unidades · ${ufs.join(
-                    ', ',
-                  )}`
-                : `${
-                    matriz.municipio ??
-                    ''
-                  }${
-                    matriz.municipio &&
-                    matriz.uf
-                      ? ' · '
-                      : ''
-                  }${
-                    matriz.uf ??
-                    ''
-                  }`}
-            </span>
-          </div>
-        )}
+              <span className="min-w-0">
+                <span>{localLabel}</span>
+
+                {matriz.endereco && (
+                  <span className="block text-[11px] line-clamp-1">
+                    {enderecoMatriz}
+                  </span>
+                )}
+
+                <span className="inline-flex items-center gap-1 text-[11px] font-medium text-brand">
+                  Ver no mapa
+                  <ExternalLink
+                    className="h-2.5 w-2.5"
+                    aria-hidden="true"
+                  />
+                </span>
+              </span>
+            </a>
+          ) : (
+            <div className="flex items-center gap-1.5 text-muted-foreground">
+              <MapPin
+                className="h-3 w-3 flex-shrink-0"
+                aria-hidden="true"
+              />
+
+              <span>{localLabel}</span>
+            </div>
+          ))}
 
         {/* FUNCIONÁRIOS */}
 
@@ -1088,6 +1133,17 @@ function UnitRow({
       12,
     ) === '0001';
 
+  const unitMapa =
+    googleMapsHref(unit);
+
+  const unitLocal = `${
+    unit.municipio ?? ''
+  }${
+    unit.municipio && unit.uf
+      ? ' · '
+      : ''
+  }${unit.uf ?? ''}`;
+
   return (
     <div className="rounded-lg border border-border bg-background/40 p-2.5 space-y-1">
       {/* CNPJ */}
@@ -1109,17 +1165,38 @@ function UnitRow({
       {/* LOCALIZAÇÃO + CNAE */}
 
       <div className="flex items-center gap-2 text-[11px] text-muted-foreground flex-wrap">
-        <span>
-          {unit.municipio ??
-            ''}
+        {unitMapa ? (
+          <a
+            href={unitMapa}
+            target="_blank"
+            rel="noreferrer noopener"
+            title={`Ver no mapa: ${enderecoCompleto(unit)}`}
+            className="inline-flex items-center gap-1 hover:text-brand transition-colors"
+          >
+            <MapPin
+              className="h-2.5 w-2.5"
+              aria-hidden="true"
+            />
 
-          {unit.municipio &&
-          unit.uf
-            ? ' · '
-            : ''}
+            {unitLocal}
 
-          {unit.uf ?? ''}
-        </span>
+            <ExternalLink
+              className="h-2.5 w-2.5"
+              aria-hidden="true"
+            />
+          </a>
+        ) : (
+          <span>{unitLocal}</span>
+        )}
+
+        {unit.endereco && (
+          <span className="basis-full line-clamp-1">
+            {enderecoCompleto({
+              endereco: unit.endereco,
+              cep: unit.cep,
+            })}
+          </span>
+        )}
 
         {unit.cnae_primario && (
           <span className="font-mono text-foreground/70">

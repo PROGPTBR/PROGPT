@@ -292,6 +292,8 @@ export async function searchSuppliers(
             municipio,
             telefone,
             email,
+            endereco,
+            cep,
             ultima_atualizacao_rf,
 
             (
@@ -454,6 +456,12 @@ export async function searchSuppliers(
 
               'email',
               email,
+
+              'endereco',
+              endereco,
+
+              'cep',
+              cep,
 
               'ultima_atualizacao_rf',
               ultima_atualizacao_rf
@@ -775,6 +783,12 @@ type RawEmpresaRow = {
   email:
     string | null;
 
+  endereco?:
+    string | null;
+
+  cep?:
+    string | null;
+
   ultima_atualizacao_rf:
     | Date
     | string
@@ -837,6 +851,12 @@ function normalizeRow(
 
     email:
       r.email,
+
+    endereco:
+      r.endereco ?? null,
+
+    cep:
+      r.cep ?? null,
 
     ultima_atualizacao_rf:
       r.ultima_atualizacao_rf instanceof
