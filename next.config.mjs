@@ -59,6 +59,7 @@ const nextConfig = {
         { source: '/demos/centraldeobras/:path*', destination: '/demos/centraldeobras/index.html' },
         { source: '/demos/conecta/:path*', destination: '/demos/conecta/index.html' },
         { source: '/demos/obrasmateriais/:path*', destination: '/demos/obrasmateriais/index.html' },
+        { source: "/proposta-engetal", destination: "/proposta-engetal/index.html",},
       ],
     };
   },
