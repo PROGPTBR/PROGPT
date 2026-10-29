@@ -30,6 +30,7 @@ export const MODULOS: readonly Modulo[] = [
   { id: 'prompts', rotulo: 'Biblioteca de Prompts', grupo: 'plataforma', caminhos: ['/prompts'] },
   { id: 'proc2pay', rotulo: 'Proc2Pay', grupo: 'plataforma', caminhos: ['/proc2pay'] },
   { id: 'gestao_obras', rotulo: 'Gestão de Obras', grupo: 'plataforma', caminhos: ['/gestao-obras'] },
+  { id: 'obras_materiais', rotulo: 'Obras & Materiais', grupo: 'plataforma', caminhos: ['/obras-materiais'] },
   { id: 'gestao_demandas', rotulo: 'Gestão de Demandas', grupo: 'plataforma', caminhos: ['/gestao-demandas'] },
   // Assistentes
   { id: 'abc', rotulo: 'Análise ABC', grupo: 'assistentes', caminhos: ['/assistants/abc'] },

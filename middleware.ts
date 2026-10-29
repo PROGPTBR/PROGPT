@@ -261,6 +261,7 @@ export const config = {
     '/painel/:path*',
     '/plataforma/:path*',
     '/gestao-obras/:path*',
+    '/obras-materiais/:path*',
     '/gestao-demandas/:path*',
   ],
 };

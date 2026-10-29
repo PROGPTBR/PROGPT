@@ -24,6 +24,7 @@ import {
   HardHat,
   ClipboardList,
   FolderKanban,
+  Warehouse,
 } from 'lucide-react';
 
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -110,6 +111,12 @@ const GESTAO_ITEMS = [
     label: 'Gestão de Obras',
     description: 'Contratos, medições e planejamento de obras.',
     icon: HardHat,
+  },
+  {
+    href: '/obras-materiais',
+    label: 'Obras & Materiais',
+    description: 'Obra ao vivo, pedidos de material, estoque e qualidade.',
+    icon: Warehouse,
   },
   {
     href: '/gestao-demandas',
