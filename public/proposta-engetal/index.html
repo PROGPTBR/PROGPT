@@ -14,7 +14,10 @@
 	<div class="offer">CONDIÇÕES ESPECIAIS <span>Fechamento até 30/10/2026 · mensalidade reduzida nos 3 primeiros meses</span><a href="#investimento">Ver condições ↗</a></div>
 	<header>
 		<a href="#inicio" aria-label="PROGPT início"><img src="/proposta-engetal/assets/progpt.webp" alt="PROGPT"></a>
-		<nav><a href="#solucao">A solução</a><a href="#investimento">Investimento</a><a href="#retorno">Seu retorno</a></nav>
+		<nav>
+			<a href="#investimento">Investimento</a>
+			<a href="#retorno">Retorno do investimento</a>
+		</nav>
 		<button class="outline" onclick="window.print()">Salvar em PDF ↓</button>
 	</header>
 	<main>
@@ -92,7 +95,7 @@
 			</div>
 		</section>
         /-->
-		<section class="tint connection-bg">
+		<section class="tint connection-bg" style="background: #060e1b;">
             <svg
   class="connection-network"
   viewBox="0 0 1600 800"
@@ -164,6 +167,8 @@
 				</div>
 			</div>
 		</section>
+
+        <!--
 		<section id="solucao">
 			<div class="wrap">
 				<h2>Sua nova assistente.<br><em>Seu time no controle.</em></h2>
@@ -185,31 +190,10 @@
 				</div>
 			</div>
 		</section>
-		<section class="tint connection-bg" id="comparacao">
-              <!-- Pontos da rede -->
-  <g fill="currentColor">
-    <circle cx="100" cy="100" r="4"/>
-    <circle cx="240" cy="210" r="5"/>
-    <circle cx="120" cy="360" r="4"/>
-    <circle cx="290" cy="430" r="5"/>
-    <circle cx="180" cy="600" r="4"/>
-    <circle cx="320" cy="740" r="3"/>
-    <circle cx="380" cy="80" r="3"/>
-    <circle cx="440" cy="320" r="3"/>
-    <circle cx="50" cy="700" r="3"/>
+-->
 
-    <circle cx="1470" cy="80" r="4"/>
-    <circle cx="1340" cy="220" r="5"/>
-    <circle cx="1510" cy="350" r="4"/>
-    <circle cx="1310" cy="450" r="5"/>
-    <circle cx="1430" cy="610" r="4"/>
-    <circle cx="1270" cy="750" r="3"/>
-    <circle cx="1200" cy="100" r="3"/>
-    <circle cx="1150" cy="340" r="3"/>
-    <circle cx="1560" cy="720" r="3"/>
-  </g>
-</svg>
-			<div class="wrap">
+		<section class="tint connection-bg" id="comparacao">
+	<div class="wrap">
 				<h2>Quanto custa fazer<br><em>esse trabalho com pessoas?</em></h2>
 				<p class="intro">Ajuste as premissas da operação. A comparação considera 160 horas de trabalho por mês e o pacote selecionado abaixo.</p>
 				<div class="inputs">
@@ -226,7 +210,7 @@
 						<input id="suppliers" type="number" min="1" value="6">
 					</label>
 				</div>
-				<div class="comparison">
+				<div class="comparison valores">
 					<div><span>CUSTO MENSAL POR PESSOA</span><strong id="personCost"></strong>
 						<p>Salário + encargos e benefícios</p><span>POR NEGOCIAÇÃO</span>
 						<h3 id="humanUnit"></h3></div>
@@ -243,10 +227,9 @@
 				<h2>Uma operação mais leve.<br><em>Uma escolha para cada momento.</em></h2>
 				<p class="intro">Escolha uma opção para atualizar a simulação. Contrato anual, saldo compartilhado entre as assistentes e condições especiais até 30/10/2026.</p>
 				<div class="plans" id="plans"></div>
-				<p class="note">Nas condições especiais, os valores promocionais valem em novembro/2026, dezembro/2026 e janeiro/2027. A mensalidade regular começa em fevereiro/2027. A segunda assistente é gratuita nesses 3 meses e custa R$ 680/mês depois, caso mantida. Ela separa os atendimentos, sem aumentar o saldo de negociações.</p>
 				<div class="setup panel">
 					<div><span class="eyebrow">IMPLANTAÇÃO · PAGAMENTO ÚNICO</span>
-						<h3>A Engetal começa operando.</h3><strong>R$ 3.825</strong>
+						<h3>A Engetal <em>começa operando.</em></h3><strong>R$ 3.825</strong>
 						<p>Mesmo valor em qualquer plano. Inclui setup e treinamento de até 4 pessoas.</p>
 					</div>
 					<ul class="check">
@@ -320,7 +303,6 @@
 						<p>Benefício bruto por real investido</p>
 					</article>
 				</div>
-				<p id="coverageNote" class="note"></p>
 				<div class="two">
 					<div class="panel">
 						<h3>O que volta por mês</h3>
@@ -336,7 +318,7 @@
 						<div class="line">Total econômico do primeiro mês <b id="firstMonth"></b></div>
 					</div>
 				</div>
-				<p class="note">Treinamento: premissa de 5 horas por pessoa, valorizadas pelo custo/hora informado. Esse custo representa o tempo da equipe e não uma cobrança adicional da PROGPT. A simulação não soma o valor das horas a uma redução garantida de folha.</p>
+				
 				<div class="table-scroll">
 					<table>
 						<thead>
@@ -353,6 +335,7 @@
 				<div class="callout" id="annual"></div>
 			</div>
 		</section>
+        <!--
 		<section class="tint">
 			<div class="wrap">
 				<div class="eyebrow">08 / PRÓXIMOS PASSOS</div>
@@ -382,10 +365,11 @@
 				<p class="note">Para o kick-off: aprovação do responsável, contato da Polivil para checar a API do Siecon, agenda do time e base de fornecedores para importação. A integração depende da disponibilidade e da compatibilidade da API.</p>
 			</div>
 		</section>
+-->
 		<section class="closing">
 			<div class="wrap">
-				<div class="eyebrow">PROGPT + ENGETAL</div>
-				<h2>O próximo capítulo<br>da sua operação<br><em>começa com uma escolha.</em></h2>
+				<div class="eyebrow"><img src="/proposta-engetal/assets/logos-progpt-mais-engetal.png" alt="PROGPT"></div>
+				<h2>O próximo capítulo da sua operação<br><em>começa com uma escolha.</em></h2>
 				<p>Proposta válida até 30/10/2026.
 					<br>Da escolha do plano às primeiras cotações, a PROGPT acompanha a Engetal.</p>
 				<button class="button" id="summaryButton">Revisar plano escolhido ↗</button>
