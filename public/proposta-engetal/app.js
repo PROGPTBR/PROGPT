@@ -7,37 +7,23 @@ const $ = id => document.getElementById(id),
 		maximumFractionDigits: 1
 	});
 const plans = [{
-	name: 'Essencial · Inicial',
-	volume: 250,
-	price: 2975,
-	regular: 2975,
-	assistants: 1,
-	tag: 'PARA COMEÇAR',
-	special: false
+ name: 'Essencial · Inicial',
+ volume: 300,
+ price: 2700,
+ regular: 2700,
+ assistants: 20,
+ management: false,
+ tag: 'PARA COMEÇAR',
+ special: false
 }, {
-	name: 'Essencial · Recomendado',
-	volume: 400,
-	price: 3400,
-	regular: 3400,
-	assistants: 1,
-	tag: 'ACOMPANHA O CRESCIMENTO',
-	special: false
-}, {
-	name: 'Inicial · Condição especial',
-	volume: 250,
-	price: 2550,
-	regular: 2975,
-	assistants: 1,
-	tag: 'ATÉ 30/10 · 3 MESES REDUZIDOS',
-	special: true
-}, {
-	name: 'Recomendado · Condição especial',
-	volume: 400,
-	price: 2975,
-	regular: 3400,
-	assistants: 2,
-	tag: 'ATÉ 30/10 · 2ª ASSISTENTE INCLUÍDA POR 3 MESES',
-	special: true
+ name: 'Essencial · Recomendado',
+ volume: 400,
+ price: 3800,
+ regular: 3800,
+ assistants: 25,
+ management: true,
+ tag: 'ACOMPANHA O CRESCIMENTO',
+ special: false
 }];
 let chosen = 1,
 	summary = '';
@@ -52,7 +38,7 @@ const features = [
 ];
 const featuresEl = $('features');
 if (featuresEl) featuresEl.innerHTML = features.map(([t, p]) => `<article class="feature"><span>↗</span><div><h3>${t}</h3><p>${p}</p></div></article>`).join('');
-$('plans').innerHTML = plans.map((p, i) => `<button class="plan" data-plan="${i}" aria-pressed="${i===chosen}"><span class="tag">${p.tag}</span><h3>${p.name}</h3><p>${p.assistants} assistente${p.assistants>1?'s':''} · ${p.assistants} número${p.assistants>1?'s':''} de WhatsApp</p><b class="volume">${p.volume} negociações/mês</b><small>${(p.volume*12).toLocaleString('pt-BR')} no contrato anual · saldo compartilhado</small><strong>${money(p.price)}</strong><small>/mês${p.special?' em nov, dez e jan':''}</small><p>${p.special?`${money(p.regular)}/mês a partir de fevereiro${i===3?' + R$ 680/mês se mantida a 2ª assistente':''}`:`${money(p.price/p.volume)} por negociação`}</p><span class="select">${i===chosen?'✓ Plano selecionado':'Selecionar este plano →'}</span></button>`).join('');
+$('plans').innerHTML = plans.map((p, i) => `<button class="plan" data-plan="${i}" aria-pressed="${i===chosen}"><span class="tag">${p.tag}</span><h3>${p.name}</h3><p>${p.assistants} Assistentes</p><b class="volume">${p.volume} negociações/mês</b>${p.management?'<p>+ Assistentes de Gestão de Obras</p>':''}<strong>${money(p.price)}</strong><small>Plano mensal</small><p>${money(p.price/p.volume)} por negociação</p><span class="select">${i===chosen?'✓ Plano selecionado':'Selecionar este plano →'}</span></button>`).join('');
 
 function val(id, min = 0) {
 	const v = Number($(id).value);
@@ -104,7 +90,7 @@ function update() {
 		['Projetado', 8]
 	].map(([n, s]) => `<tr><td>${n}</td><td>${s}%</td><td>${money(hourValue+vol*coverage*s/100)}</td><td>${num((hourValue+vol*coverage*s/100)/p.price)}×</td></tr>`).join('');
 	set('annual', `Em 12 meses: benefício estimado de ${money(benefit*12)} e saldo econômico de ${money(benefit*12-annualFee-second-3825-training)}, descontando mensalidades, implantação e tempo de treinamento.${chosen===3?' Considera a manutenção da segunda assistente a R$ 680/mês a partir de fevereiro.':''}`);
-	summary = `PROGPT — Proposta para Engetal\n${p.name}\n${p.volume} negociações/mês · ${p.volume*12} no contrato anual\n${p.assistants} assistente(s)\nMensalidade: ${money(p.price)}${p.special?' em novembro/2026, dezembro/2026 e janeiro/2027':''}\n${p.special?'A partir de fevereiro/2027: '+money(p.regular)+'/mês\n':''}${chosen===3?'2ª assistente: gratuita nos 3 primeiros meses; depois R$ 680/mês, caso mantida.\n':''}Implantação (única): R$ 3.825,00\nTreinamento de até 4 pessoas incluído.\nContrato anual. Proposta válida até 30/10/2026.\nKick-off em até 2 dias úteis após a assinatura.\nIntegração com Siecon sujeita à validação técnica da API.`;
+	summary = `PROGPT — Proposta para Engetal\n${p.name}\n${p.volume} negociações/mês\n${p.assistants} assistentes${p.management?" + Assistentes de Gestão de Obras":""}\nMensalidade: ${money(p.price)}${p.special?' em novembro/2026, dezembro/2026 e janeiro/2027':''}\n${p.special?'A partir de fevereiro/2027: '+money(p.regular)+'/mês\n':''}${chosen===3?'2ª assistente: gratuita nos 3 primeiros meses; depois R$ 680/mês, caso mantida.\n':''}Implantação (única): R$ 3.825,00\nTreinamento de até 4 pessoas incluído.\nPlano mensal. Proposta válida até 30/10/2026.\nKick-off em até 2 dias úteis após a assinatura.\nIntegração com Siecon sujeita à validação técnica da API.`;
 	$('summaryText').textContent = summary;
 }
 document.querySelectorAll('.plan').forEach(b => b.addEventListener('click', () => {

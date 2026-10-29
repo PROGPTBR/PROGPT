@@ -22,12 +22,18 @@
     button.setAttribute('aria-pressed', 'true');
   });
   function initialize() {
-    section.querySelectorAll('.setup strong, #plans .plan > strong, #personCost, #humanUnit, #aiUnit, #costSaving, #savedHours, #returnValue, #returnRatio, #retorno .line > b, #scenarios td:not(:first-child), #annual b, #annual strong').forEach(price => {
+    // Descobre também valores monetários isolados adicionados em outras seções.
+    section.querySelectorAll('strong, b, span, small, h3, p').forEach(element => {
+      if (element.childElementCount === 0 && /^R\$\s*\d[\d.,]*(?:\s*\/mês)?$/.test(element.textContent.trim())) {
+        element.setAttribute('data-scratch-price', '');
+      }
+    });
+    section.querySelectorAll('.setup strong, #plans .plan strong, [data-scratch-price], #personCost, #humanUnit, #aiUnit, #costSaving, #savedHours, #returnValue, #returnRatio, #retorno .line > b, #scenarios td:not(:first-child), #annual b, #annual strong').forEach(price => {
       if (price.closest('.scratch-price') || price.querySelector('.scratch-price')) return;
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d', {willReadFrequently: true});
       if (!ctx) return;
-      const wrap = document.createElement(price.tagName === 'TD' ? 'span' : 'div');
+      const wrap = document.createElement('span');
       wrap.className = 'scratch-price';
       if (price.tagName === 'TD') {
         const value = document.createElement('span');

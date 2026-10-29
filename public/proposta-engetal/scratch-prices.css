@@ -18,3 +18,28 @@
 #retorno .line .scratch-price{display:inline-block;flex-shrink:0;min-width:175px;max-width:100%;vertical-align:middle}
 #retorno td .scratch-price{min-width:150px}
 @media print{#comparacao .scratch-price,#retorno .scratch-price{min-height:0;margin:0}#comparacao .scratch-price>:not(canvas),#retorno .scratch-price>:not(canvas){padding:0}}
+
+/* Planos horizontais: a cobertura acompanha a largura da coluna do preço. */
+#investimento .investment-price .scratch-price {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 78px;
+  margin: 10px 0;
+  border-radius: 12px;
+}
+#investimento .investment-price .scratch-price > strong {
+  display: block;
+  margin: 0;
+  padding: 17px 8px;
+  text-align: center;
+  font-size: clamp(23px, 2.3vw, 34px);
+  white-space: nowrap;
+}
+@media (max-width: 750px) {
+  #investimento .investment-price .scratch-price { max-width: 100%; }
+}
+@media print {
+  #investimento .investment-price .scratch-price { min-height: 0; margin: 0; }
+  #investimento .investment-price .scratch-price > strong { padding: 0; text-align: left; }
+}
