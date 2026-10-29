@@ -430,3 +430,10 @@ h3{font-size:22px;line-height:.75;margin:0 0 12px}p{font-size:14px;color:var(--m
     padding-right: 0;
   }
 }
+/* Vídeo de apresentação da proposta */
+.video-proposta h2 em{color:var(--cyan);font-style:normal}
+.video-frame{margin-top:34px;border-radius:22px;overflow:hidden;border:1px solid var(--line);background:#02070f;box-shadow:0 30px 90px rgba(0,0,0,.45),0 0 60px rgba(20,157,228,.15)}
+.video-frame video{display:block;width:100%;height:auto;aspect-ratio:16/9;background:#02070f}
+.video-nota{margin:14px 0 0;font-size:14px;color:var(--muted)}
+@media(max-width:750px){.video-frame{border-radius:14px;margin-top:24px}}
+@media print{.video-proposta{display:none}}
