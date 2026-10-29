@@ -86,7 +86,7 @@
         ctx.textAlign = 'center';
         ctx.fillStyle = '#183247';
         ctx.font = '600 14px system-ui, sans-serif';
-        ctx.fillText('Raspe para revelar', width / 2, height / 2 + 5);
+        ctx.fillText('Revelar valores', width / 2, height / 2 + 5);
         strokes.forEach(([a,b]) => erase(a,b));
       }
       const observer = new ResizeObserver(draw);
