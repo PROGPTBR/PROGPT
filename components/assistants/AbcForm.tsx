@@ -182,7 +182,7 @@ export function AbcForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-6 rounded-md border border-border bg-card p-6 max-w-5xl"
+      className="space-y-6 rounded-md border border-border bg-card p-6"
     >
       <div className="flex justify-end">
         <Button type="button" variant="outline" size="sm" onClick={loadExample}>

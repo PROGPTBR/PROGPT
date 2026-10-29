@@ -143,7 +143,7 @@ export function PesquisaPrecosForm({
     <>
       <form
         onSubmit={handleSubmit}
-        className="space-y-5 rounded-md border border-border bg-card p-6 max-w-3xl"
+        className="space-y-5 rounded-md border border-border bg-card p-6"
       >
       <div className="flex justify-end">
         <Button type="button" variant="outline" size="sm" onClick={loadExample}>

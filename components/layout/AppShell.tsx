@@ -9,16 +9,18 @@ import { SupportWidget } from '@/components/support/SupportWidget';
 // larguras de max-w-3xl a max-w-7xl, pt-20 vs pt-24, px-4 vs px-6, uma página
 // com dois brilhos e outra com um só. Tudo isso passa a sair daqui.
 //
-// Largura: 'default' é o padrão de quase tudo; 'narrow' só para telas de
-// formulário (perfil); 'wide' para as que são essencialmente uma tela cheia
-// de ferramenta (simulador).
+// Largura: as telas ocupam a largura da janela (com margem lateral), até
+// 1800 px. Antes o padrão era 1152 px e, num monitor de 1920 px, sobravam
+// 380 px vazios de cada lado (diretor, 2026-10-28: "páginas curtas, não
+// preenchem a tela toda"). 'default' e 'wide' hoje dão no mesmo; 'narrow'
+// fica para telas de aviso curto (perfil, módulo indisponível).
 
 export type AppShellWidth = 'narrow' | 'default' | 'wide';
 
 const WIDTH: Record<AppShellWidth, string> = {
-  narrow: 'max-w-3xl',
-  default: 'max-w-6xl',
-  wide: 'max-w-[1600px]',
+  narrow: 'max-w-5xl',
+  default: 'max-w-[1800px]',
+  wide: 'max-w-[1800px]',
 };
 
 export function AppShell({
@@ -59,7 +61,7 @@ export function AppShell({
 
         <main
           className={
-            'relative z-10 mx-auto w-full px-4 pt-20 sm:px-6 sm:pt-24 ' +
+            'relative z-10 mx-auto w-full px-4 pt-20 sm:px-6 sm:pt-24 lg:px-10 ' +
             WIDTH[width] +
             (fill ? ' flex h-full min-h-0 flex-col gap-3 pb-3' : ' pb-12')
           }

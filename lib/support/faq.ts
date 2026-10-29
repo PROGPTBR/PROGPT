@@ -94,6 +94,13 @@ export const FAQ_SUPORTE: FaqSecao[] = [
           'Sim, na barra lateral, com busca. Passe o mouse sobre uma conversa para ver os botões de renomear e apagar. As conversas ficam na sua conta, então aparecem em qualquer computador em que você entrar.',
         termos: 'histórico apagar renomear buscar',
       },
+      {
+        id: 'barra-lateral',
+        pergunta: 'A barra lateral some sozinha. Como deixar aberta?',
+        resposta:
+          'No computador, a barra lateral do chat fica recolhida para dar mais espaço à conversa: ela abre ao passar o mouse e recolhe quando o mouse sai. Para deixar aberta o tempo todo, passe o mouse sobre ela e clique no ícone de alfinete, no topo. Para voltar ao modo automático, clique no ícone de recolher no mesmo lugar.',
+        termos: 'menu lateral recolher fixar alfinete esconder',
+      },
     ],
   },
   {

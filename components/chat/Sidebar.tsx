@@ -16,6 +16,7 @@ import {
   BarChart3,
   PanelLeftClose,
   PanelLeftOpen,
+  Pin,
   ChevronRight,
   Compass,
   Search,
@@ -42,8 +43,12 @@ type Props = {
   /** Sidebar recolhida. */
   collapsed?: boolean;
 
-  /** Alterna sidebar aberta/recolhida. */
+  /** Alterna sidebar fixada aberta / recolhida (abre ao passar o mouse). */
   onToggleCollapse?: () => void;
+
+  /** Modo automático: abre ao passar o mouse e recolhe sozinha. O botão
+      do topo passa a "fixar aberta". */
+  autoHide?: boolean;
 
   onOpenAssistants?: () => void;
   assistantsOpen?: boolean;
@@ -151,6 +156,7 @@ export function Sidebar({
   onRename,
   collapsed = false,
   onToggleCollapse,
+  autoHide = false,
   onOpenAssistants,
   assistantsOpen = false,
 
@@ -276,8 +282,8 @@ export function Sidebar({
             onClick={
               onToggleCollapse
             }
-            aria-label="Expandir barra lateral"
-            title="Expandir"
+            aria-label="Fixar barra lateral aberta"
+            title="Fixar aberta"
             className="
               flex
               h-9
@@ -546,8 +552,16 @@ export function Sidebar({
               onClick={
                 onToggleCollapse
               }
-              aria-label="Recolher barra lateral"
-              title="Recolher"
+              aria-label={
+                autoHide
+                  ? 'Fixar barra lateral aberta'
+                  : 'Recolher barra lateral (abre ao passar o mouse)'
+              }
+              title={
+                autoHide
+                  ? 'Fixar aberta'
+                  : 'Recolher (abre ao passar o mouse)'
+              }
               className="
                 inline-flex
                 h-8
@@ -562,10 +576,17 @@ export function Sidebar({
                 hover:text-foreground
               "
             >
-              <PanelLeftClose
-                className="h-4 w-4"
-                aria-hidden="true"
-              />
+              {autoHide ? (
+                <Pin
+                  className="h-4 w-4"
+                  aria-hidden="true"
+                />
+              ) : (
+                <PanelLeftClose
+                  className="h-4 w-4"
+                  aria-hidden="true"
+                />
+              )}
             </button>
           )}
         </div>

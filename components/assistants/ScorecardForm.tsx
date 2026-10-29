@@ -393,7 +393,7 @@ export function ScorecardForm({ onSubmit }: { onSubmit: (v: ScorecardFormValues)
   }
 
   return (
-    <form className="space-y-6 max-w-5xl" onSubmit={handleSubmit}>
+    <form className="space-y-6" onSubmit={handleSubmit}>
       {/* ── Header fields ────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* Template auto-selecionado (único) — dropdown removido; só avisa se faltar. */}

@@ -78,7 +78,7 @@ export function IngestRoot() {
   };
 
   return (
-    <div className="space-y-4 max-w-3xl">
+    <div className="space-y-4">
       <div>
         <h2 className="text-lg font-semibold">Ingestão</h2>
         <p className="text-xs text-muted-foreground">

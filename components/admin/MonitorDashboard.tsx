@@ -184,7 +184,7 @@ export function MonitorDashboard() {
   );
 
   return (
-    <div className="space-y-6 max-w-6xl">
+    <div className="space-y-6">
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <div className="flex items-center gap-2 text-brand">

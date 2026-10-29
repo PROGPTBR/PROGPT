@@ -88,7 +88,7 @@ export function KraljicForm({ onSubmit }: { onSubmit: (v: KraljicFormValues) => 
   return (
     <form
       data-tour="kraljic-form"
-      className="space-y-5 max-w-5xl"
+      className="space-y-5"
       onSubmit={(e) => {
         e.preventDefault();
         if (valid) onSubmit({ ...values, items: validItems });

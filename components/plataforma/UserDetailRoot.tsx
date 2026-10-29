@@ -104,7 +104,7 @@ export function UserDetailRoot({ userId }: { userId: string }) {
   const { profile, org, subscription, usage } = data;
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6">
       <div>
         <Link href="/plataforma/usuarios" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground mb-2">
           <ArrowLeft className="h-3.5 w-3.5" /> Voltar pra Usuários

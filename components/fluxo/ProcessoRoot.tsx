@@ -187,7 +187,7 @@ export function ProcessoRoot({ processoInicial, etapasIniciais, exemplo = false,
   }
 
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-6">
+    <div className="w-full space-y-6">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <Link
           href="/fluxo"

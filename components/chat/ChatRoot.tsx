@@ -30,8 +30,18 @@ import { startTour, tourJaIniciado } from '@/lib/onboarding/tour-state';
 
 import { CHAT_PREFILL_KEY } from '@/lib/prompts/chat-prefill';
 
-const SIDEBAR_COLLAPSED_KEY =
-  'progpt_sidebar_collapsed';
+/* Barra lateral do desktop: por padrão fica recolhida e abre ao passar o
+   mouse (fecha quando o mouse sai). "Fixar" deixa aberta de vez e fica
+   lembrado neste navegador. Chave nova de propósito: a antiga
+   (progpt_sidebar_collapsed) guardava "aberta" como padrão e manteria todo
+   mundo sem o comportamento novo (diretor, 2026-10-28). */
+const SIDEBAR_PINNED_KEY =
+  'progpt_sidebar_fixada_v1';
+
+/* Atraso para abrir (passar o mouse de raspão não abre) e para fechar
+   (sair por um instante, a caminho de um item, não fecha). */
+const HOVER_OPEN_MS = 90;
+const HOVER_CLOSE_MS = 280;
 
 /* ============================================================
    CHAT ROOT
@@ -106,9 +116,17 @@ function ChatRootMounted({
   ] = useState(false);
 
   const [
-    collapsed,
-    setCollapsed,
+    pinned,
+    setPinned,
   ] = useState(false);
+
+  const [
+    hoverOpen,
+    setHoverOpen,
+  ] = useState(false);
+
+  const hoverTimer =
+    useRef<number | null>(null);
 
   /* ==========================================================
      ASSISTENTES
@@ -156,9 +174,9 @@ function ChatRootMounted({
 
   useEffect(() => {
     try {
-      setCollapsed(
+      setPinned(
         window.localStorage.getItem(
-          SIDEBAR_COLLAPSED_KEY
+          SIDEBAR_PINNED_KEY
         ) === '1'
       );
     } catch {
@@ -166,21 +184,63 @@ function ChatRootMounted({
     }
   }, []);
 
-  useEffect(() => {
-    /* Os passos da navegação apontam para itens da barra lateral; recolhida,
-       eles não existem na tela. Abrir aqui não persiste a preferência. */
-    if (tourOpen) setCollapsed(false);
-  }, [tourOpen]);
+  useEffect(
+    () => () => {
+      if (hoverTimer.current !== null) {
+        window.clearTimeout(hoverTimer.current);
+      }
+    },
+    []
+  );
 
-  function toggleCollapse() {
-    setCollapsed(
+  /* Os passos da navegação do tour apontam para itens da barra lateral;
+     recolhida, eles não existem na tela. Durante o tour ela fica aberta
+     (sem gravar a preferência). */
+  const sidebarAuto =
+    !pinned && !tourOpen;
+
+  const sidebarExpanded =
+    !sidebarAuto || hoverOpen;
+
+  function scheduleHover(open: boolean) {
+    if (hoverTimer.current !== null) {
+      window.clearTimeout(hoverTimer.current);
+    }
+    hoverTimer.current = window.setTimeout(
+      () => {
+        hoverTimer.current = null;
+        setHoverOpen(open);
+      },
+      open ? HOVER_OPEN_MS : HOVER_CLOSE_MS
+    );
+  }
+
+  function handleSidebarLeave(
+    e: React.MouseEvent<HTMLDivElement>
+  ) {
+    if (!sidebarAuto) return;
+    /* Digitando (renomear conversa, busca): não fecha no meio. Fecha
+       quando o campo perder o foco. */
+    const active = document.activeElement;
+    if (
+      active instanceof HTMLElement &&
+      e.currentTarget.contains(active) &&
+      (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')
+    ) {
+      return;
+    }
+    scheduleHover(false);
+  }
+
+  function togglePin() {
+    setPinned(
       (current) => {
         const next =
           !current;
 
         try {
           window.localStorage.setItem(
-            SIDEBAR_COLLAPSED_KEY,
+            SIDEBAR_PINNED_KEY,
             next ? '1' : '0'
           );
         } catch {
@@ -190,6 +250,12 @@ function ChatRootMounted({
         return next;
       }
     );
+    /* Ao soltar, recolhe já; volta a abrir quando o mouse entrar de novo. */
+    if (hoverTimer.current !== null) {
+      window.clearTimeout(hoverTimer.current);
+      hoverTimer.current = null;
+    }
+    setHoverOpen(false);
   }
 
   /* ==========================================================
@@ -366,7 +432,39 @@ function ChatRootMounted({
           SIDEBAR DESKTOP
       ======================================================= */}
 
-      <div className="hidden md:flex">
+      <div
+        className={
+          'relative hidden md:flex ' +
+          /* Recolhida ocupa w-16 + margem (md:m-2) = 5rem. Aberta por cima
+             do conteúdo, sem empurrar o chat. */
+          (sidebarAuto ? 'w-20 shrink-0' : '')
+        }
+        onMouseEnter={() => {
+          if (sidebarAuto) scheduleHover(true);
+        }}
+        onMouseLeave={handleSidebarLeave}
+        onFocus={() => {
+          /* Teclado (Tab) também abre. */
+          if (sidebarAuto && !hoverOpen) scheduleHover(true);
+        }}
+        onBlur={(e) => {
+          if (
+            sidebarAuto &&
+            !e.currentTarget.contains(e.relatedTarget as Node | null) &&
+            !e.currentTarget.matches(':hover')
+          ) {
+            scheduleHover(false);
+          }
+        }}
+      >
+        <div
+          className={
+            sidebarAuto
+              ? 'absolute inset-y-0 left-0 z-40 flex' +
+                (hoverOpen ? ' drop-shadow-2xl' : '')
+              : 'flex'
+          }
+        >
         <Sidebar
           sessions={
             sessionsApi.sessions
@@ -387,10 +485,13 @@ function ChatRootMounted({
             sessionsApi.renameSession
           }
           collapsed={
-            collapsed
+            !sidebarExpanded
+          }
+          autoHide={
+            sidebarAuto
           }
           onToggleCollapse={
-            toggleCollapse
+            togglePin
           }
 
           /* ================================================
@@ -435,6 +536,7 @@ function ChatRootMounted({
 
           onStartTour={startTour}
         />
+        </div>
       </div>
 
       {/* ======================================================

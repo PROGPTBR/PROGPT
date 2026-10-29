@@ -41,7 +41,7 @@ export function NegotiationScoreView({
   onNewNegotiation,
 }: Props) {
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <div className="space-y-6">
       {/* Score overall */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand to-brand/80 dark:from-brand/90 dark:to-brand/60 p-7 md:p-9 text-black text-center">
         <div

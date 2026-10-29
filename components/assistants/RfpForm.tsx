@@ -163,7 +163,7 @@ export function RfpForm({ onSubmit }: { onSubmit: (v: RfpFormValues) => void }) 
 
   return (
     <form
-      className="space-y-5 max-w-3xl"
+      className="space-y-5"
       onSubmit={(e) => {
         e.preventDefault();
         if (valid) onSubmit(values);

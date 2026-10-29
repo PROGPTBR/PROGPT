@@ -864,7 +864,7 @@ function SettingsPanel({ onBack }: { onBack: () => void }) {
   ];
 
   return (
-    <div className="rounded-2xl border border-border bg-card p-6 space-y-5 max-w-2xl">
+    <div className="rounded-2xl border border-border bg-card p-6 space-y-5">
       <button onClick={onBack} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="h-4 w-4" /> Voltar
       </button>

@@ -86,7 +86,7 @@ export function FluxoRoot({
   }
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-8">
+    <div className="w-full space-y-8">
       <header className="space-y-2">
         <div className="flex items-center gap-2 text-brand">
           <Workflow className="h-5 w-5" aria-hidden />

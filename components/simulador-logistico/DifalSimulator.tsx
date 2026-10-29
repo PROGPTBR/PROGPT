@@ -103,7 +103,7 @@ export function DifalSimulator() {
   }, [ufDestino, valorNum, importado, finalidade, aliquotaDestinoNum, fcpNum, JSON.stringify(cenariosValidos)]);
 
   return (
-    <div className="max-w-4xl">
+    <div>
       <div className="flex items-center gap-3 mb-1">
         <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-gradient-soft text-brand">
           <Truck className="h-5 w-5" aria-hidden="true" />

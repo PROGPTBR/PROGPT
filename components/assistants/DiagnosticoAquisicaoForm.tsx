@@ -160,7 +160,7 @@ export function DiagnosticoAquisicaoForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-6 rounded-md border border-border bg-card p-6 max-w-3xl"
+      className="space-y-6 rounded-md border border-border bg-card p-6"
     >
       {!loadingTemplates && templates.length === 0 && (
         <p className="text-[11px] text-destructive">

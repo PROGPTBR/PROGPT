@@ -100,7 +100,7 @@ export function BillingAdmin({
   const LABEL = 'block text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5';
 
   return (
-    <div className="max-w-4xl space-y-10">
+    <div className="space-y-10">
       <header>
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">
           Faturamento <span className="text-brand">.</span>

@@ -235,7 +235,7 @@ export function ProfileForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-6 rounded-md border border-border bg-card p-6 max-w-5xl"
+      className="space-y-6 rounded-md border border-border bg-card p-6"
     >
       {/* Template auto-selecionado (único) — dropdown removido; só avisa se faltar. */}
       {!loadingTemplates && templates.length === 0 && (
