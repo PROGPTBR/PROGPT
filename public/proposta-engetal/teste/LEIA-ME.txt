@@ -1,0 +1,15 @@
+INSTALAÇÃO
+Copie index.html, scratch-prices.css e scratch-prices.js para public/proposta-engetal/.
+Substitua somente index.html. Mantenha style.css, app.js e a pasta assets existentes.
+Atualize a página com Ctrl+Shift+R.
+
+O efeito cobre o preço principal dos planos e o valor de implantação (R$ 3.825).
+Raspe com mouse ou dedo; após raspar 38%, o valor é revelado por inteiro.
+O botão “Revelar todos os valores” oferece uma alternativa por clique ou teclado.
+Os valores ficam visíveis na impressão/PDF e para leitores de tela.
+Ao recarregar a página, a raspadinha é reiniciada.
+As condições, os preços secundários e os cálculos permanecem visíveis.
+É um efeito visual, não uma proteção de dados nem alteração de desconto.
+
+Inclui também o reparo do SVG de conexões na seção de comparação.
+O HTML usa os caminhos /proposta-engetal/ do seu projeto atual.

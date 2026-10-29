@@ -1,0 +1,20 @@
+/* Complemento: mantenha seu style.css atual. */
+.connection-bg{position:relative;isolation:isolate;overflow:hidden;background:#0a1423}
+.connection-network{position:absolute;inset:0;width:100%;height:100%;z-index:0;color:#19c6d7;opacity:.22;pointer-events:none;mask-image:linear-gradient(to right,#000,transparent 42%,transparent 58%,#000);-webkit-mask-image:linear-gradient(to right,#000,transparent 42%,transparent 58%,#000)}
+.connection-bg>.wrap{position:relative;z-index:1}
+.scratch-price{position:relative;display:block;min-height:86px;min-width:180px;margin-top:20px;border-radius:14px;overflow:hidden}
+.scratch-price>:not(canvas){margin:0;padding:15px 12px;display:block;text-align:center;white-space:nowrap}
+.scratch-price canvas{position:absolute;inset:0;width:100%;height:100%;cursor:crosshair;touch-action:none;border-radius:14px}
+.scratch-price.is-revealed canvas{display:none}
+.scratch-help{font-size:13px;color:#aebed0;margin:8px 0 20px}
+.scratch-reveal-all{background:transparent;color:#67e8e0;border:1px solid #33546b;border-radius:8px;padding:9px 14px;font:inherit;font-size:13px;cursor:pointer;margin:0 0 24px}
+.scratch-reveal-all:focus-visible{outline:2px solid #67e8e0;outline-offset:4px}
+@media(max-width:750px){.connection-network{opacity:.12}}
+@media print{.connection-network,.scratch-price canvas,.scratch-help,.scratch-reveal-all{display:none!important}.scratch-price{min-height:0;min-width:0;margin-top:0}.scratch-price>:not(canvas){padding:0}}
+
+/* Valores calculados: mantém os IDs no elemento original. */
+#comparacao .scratch-price,#retorno .scratch-price{position:relative;display:block;min-width:0;min-height:60px;margin:10px 0;border-radius:14px;overflow:hidden}
+#comparacao .scratch-price>:not(canvas),#retorno .scratch-price>:not(canvas){margin:0;padding:12px;display:block;white-space:normal;text-align:left}
+#retorno .line .scratch-price{display:inline-block;flex-shrink:0;min-width:175px;max-width:100%;vertical-align:middle}
+#retorno td .scratch-price{min-width:150px}
+@media print{#comparacao .scratch-price,#retorno .scratch-price{min-height:0;margin:0}#comparacao .scratch-price>:not(canvas),#retorno .scratch-price>:not(canvas){padding:0}}
