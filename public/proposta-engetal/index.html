@@ -266,7 +266,6 @@ Uma estrutura preparada para acompanhar a expansão das obras, conduzindo cotaç
 							<li>Follow-ups, dúvidas e negociação de preço, frete e prazo nessa conversa: incluídos.</li>
 							<li>Buscar fornecedores, montar o mapa e salvar a cotação: incluídos.</li>
 						</ol>
-						<p class="callout">Uma cotação com 6 fornecedores consome 6 negociações. O plano selecionado equivale a aproximadamente <b id="quotesCoverage"></b> cotações/mês nesse formato.</p>
 						<p>O saldo mensal é compartilhado entre os assistentes e pode ser usado conforme a demanda. Blocos adicionais de 50 negociações são cobrados pelo preço por negociação do plano. Reabrir a mesma negociação depois de 24 horas não conta como nova. O saldo não utilizado expira no fim do mês.</p>
 					</div>
 					<ul class="check included">
@@ -472,6 +471,7 @@ let chosen = 1,
 	summary = '';
 const features = [
   ['Painel', 'Dashboard moderna que reúne TODOS os seus dados num só lugar: conversas, execuções, gasto por categoria, top fornecedores e evolução mensal, atualizado em tempo real, sem planilha nem Power BI.'],
+  ['Assistente de Gestão de Obras Construção Civil', 'Automação completa da Solicitação de compras Ate o envio do Produto Final.'],
   ['Análise ABC', 'Classifica spend pela curva de Pareto (80/95%), gera plano de ação por classe A/B/C e curva visual.'],
   ['Análise de Gastos', 'Da nota fiscal à estratégia: sobe um lote de invoices (PDF ou planilha), extrai cada nota, classifica e gera KPIs + plano de strategic sourcing.'],
   ['Porter', 'Análise das 5 Forças de Porter (1979) para uma categoria, com classificação de intensidade e recomendações.'],
@@ -490,8 +490,7 @@ const features = [
   ['Simulador Tributário', 'Compare o Simples Nacional com o novo modelo da Reforma Tributária (IBS/CBS) e enxergue o impacto no status contábil antes de decidir.'],
   ['Simulador Logístico (DIFAL)', 'Simule o custo logístico de uma operação interestadual com a análise do DIFAL (diferencial de alíquota do ICMS) para decidir a melhor origem de compra.'],
   ['Gráfico Rápido', 'Cole uma tabela de dados (ou suba uma planilha CSV/XLSX) e receba um gráfico pronto para baixar e inserir em qualquer documento ou apresentação.'],
-  ['Diagnóstico de Aquisição', 'Classifique a compra como CAPEX ou OPEX e receba os KPIs certos + a estratégia recomendada (SOURCE, CONTRACT ou BUY) antes de partir para RFP ou Kraljic.'],
-  ['Assistente de Gestão de Obras Construção Civil', 'Automação completa da Solicitação de compras Ate o envio do Produto Final.']
+  ['Diagnóstico de Aquisição', 'Classifique a compra como CAPEX ou OPEX e receba os KPIs certos + a estratégia recomendada (SOURCE, CONTRACT ou BUY) antes de partir para RFP ou Kraljic.']
 ];
 const featuresEl = $('features');
 if (featuresEl) featuresEl.innerHTML = features.map(([t, p]) => `<article class="feature"><span>↗</span><div><h3>${t}</h3><p>${p}</p></div></article>`).join('');
