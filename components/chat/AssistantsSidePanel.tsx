@@ -69,20 +69,6 @@ const ASSISTANT_ICONS = {
 } as const;
 
 /* =========================================================
-   JORNADA DE COMPRAS
-========================================================= */
-
-const JOURNEY = [
-  'Analisar',
-  'Planejar',
-  'Buscar',
-  'Cotar',
-  'Comparar',
-  'Negociar',
-  'Decidir',
-];
-
-/* =========================================================
    CATEGORIAS
 ========================================================= */
 
@@ -205,10 +191,7 @@ function getAssistantCategory(assistant: Assistant): CategoryId {
   }
 
   /* Negociação */
-  if (
-    text.includes('negotiation') ||
-    text.includes('negociacao')
-  ) {
+  if (text.includes('negotiation') || text.includes('negociacao')) {
     return 'negotiation';
   }
 
@@ -247,17 +230,11 @@ function getAssistantOrder(assistant: Assistant) {
      6. Pesquisa de Preços
   --------------------------------------------------------- */
 
-  if (
-    text.includes('spend_analysis') ||
-    text.includes('analise de gastos')
-  ) {
+  if (text.includes('spend_analysis') || text.includes('analise de gastos')) {
     return 10;
   }
 
-  if (
-    id === 'abc' ||
-    text.includes('analise abc')
-  ) {
+  if (id === 'abc' || text.includes('analise abc')) {
     return 20;
   }
 
@@ -273,10 +250,7 @@ function getAssistantOrder(assistant: Assistant) {
     return 50;
   }
 
-  if (
-    text.includes('pesquisa_precos') ||
-    text.includes('pesquisa de precos')
-  ) {
+  if (text.includes('pesquisa_precos') || text.includes('pesquisa de precos')) {
     return 60;
   }
 
@@ -288,10 +262,7 @@ function getAssistantOrder(assistant: Assistant) {
      3. Análise Financeira
   --------------------------------------------------------- */
 
-  if (
-    id === 'suppliers' ||
-    text.includes('busca de fornecedores')
-  ) {
+  if (id === 'suppliers' || text.includes('busca de fornecedores')) {
     return 110;
   }
 
@@ -303,10 +274,7 @@ function getAssistantOrder(assistant: Assistant) {
     return 120;
   }
 
-  if (
-    id === 'financial' ||
-    text.includes('analise financeira')
-  ) {
+  if (id === 'financial' || text.includes('analise financeira')) {
     return 130;
   }
 
@@ -317,18 +285,11 @@ function getAssistantOrder(assistant: Assistant) {
      2. Equalizador de Propostas
   --------------------------------------------------------- */
 
-  if (
-    id === 'rfp' ||
-    text.includes(' rfp') ||
-    text.startsWith('rfp')
-  ) {
+  if (id === 'rfp' || text.includes(' rfp') || text.startsWith('rfp')) {
     return 210;
   }
 
-  if (
-    text.includes('equalizador') ||
-    text.includes('equalizer')
-  ) {
+  if (text.includes('equalizador') || text.includes('equalizer')) {
     return 220;
   }
 
@@ -343,10 +304,7 @@ function getAssistantOrder(assistant: Assistant) {
     return 310;
   }
 
-  if (
-    text.includes('logistic') ||
-    text.includes('frete')
-  ) {
+  if (text.includes('logistic') || text.includes('frete')) {
     return 320;
   }
 
@@ -356,10 +314,7 @@ function getAssistantOrder(assistant: Assistant) {
      1. Simulador de Negociação
   --------------------------------------------------------- */
 
-  if (
-    text.includes('negotiation') ||
-    text.includes('negociacao')
-  ) {
+  if (text.includes('negotiation') || text.includes('negociacao')) {
     return 410;
   }
 
@@ -387,6 +342,7 @@ function getAssistantOrder(assistant: Assistant) {
 
 export function AssistantsSidePanel({ onClose }: Props) {
   const [isAdmin, setIsAdmin] = useState(false);
+  const [search, setSearch] = useState('');
   const desligados = useModulosDesativados();
 
   useEffect(() => {
@@ -403,8 +359,7 @@ export function AssistantsSidePanel({ onClose }: Props) {
         .eq('id', user.id)
         .maybeSingle();
 
-      const role =
-        (profile as { role?: string } | null)?.role ?? 'user';
+      const role = (profile as { role?: string } | null)?.role ?? 'user';
 
       setIsAdmin(role === 'admin');
     });
@@ -414,8 +369,7 @@ export function AssistantsSidePanel({ onClose }: Props) {
      ADMIN PODE TESTAR ASSISTENTES "EM BREVE"
   ========================================================= */
 
-  const isUnlockedForAdmin = (assistant: Assistant) =>
-    assistant.badge === 'em_breve' && isAdmin;
+  const isUnlockedForAdmin = (assistant: Assistant) => assistant.badge === 'em_breve' && isAdmin;
 
   /* =========================================================
      ASSISTENTES VISÍVEIS
@@ -424,10 +378,21 @@ export function AssistantsSidePanel({ onClose }: Props) {
   const visibleAssistants = useMemo(() => {
     return ASSISTANTS.filter(
       (assistant) =>
-        assistant.showInSidePanel !== false &&
-        !hrefDesligado(assistant.href, desligados)
+        assistant.showInSidePanel !== false && !hrefDesligado(assistant.href, desligados),
     );
   }, [desligados]);
+
+  const filteredAssistants = useMemo(() => {
+    const normalizedSearch = normalizeText(search);
+
+    if (!normalizedSearch) return visibleAssistants;
+
+    return visibleAssistants.filter((assistant) =>
+      normalizeText(
+        [assistant.title, assistant.sideSubtitle, assistant.short].filter(Boolean).join(' '),
+      ).includes(normalizedSearch),
+    );
+  }, [search, visibleAssistants]);
 
   /* =========================================================
      ORGANIZA POR CATEGORIA + ORDEM
@@ -437,47 +402,30 @@ export function AssistantsSidePanel({ onClose }: Props) {
     return CATEGORY_CONFIG.map((category) => ({
       ...category,
 
-      assistants: visibleAssistants
-        .filter(
-          (assistant) =>
-            getAssistantCategory(assistant) === category.id
-        )
-        .sort(
-          (a, b) =>
-            getAssistantOrder(a) - getAssistantOrder(b)
-        ),
+      assistants: filteredAssistants
+        .filter((assistant) => getAssistantCategory(assistant) === category.id)
+        .sort((a, b) => getAssistantOrder(a) - getAssistantOrder(b)),
     })).filter((category) => category.assistants.length > 0);
-  }, [visibleAssistants]);
+  }, [filteredAssistants]);
 
   /* =========================================================
      NÃO MAPEADOS
   ========================================================= */
 
   const otherAssistants = useMemo(() => {
-    return visibleAssistants
-      .filter(
-        (assistant) =>
-          getAssistantCategory(assistant) === 'others'
-      )
-      .sort(
-        (a, b) =>
-          getAssistantOrder(a) - getAssistantOrder(b)
-      );
-  }, [visibleAssistants]);
+    return filteredAssistants
+      .filter((assistant) => getAssistantCategory(assistant) === 'others')
+      .sort((a, b) => getAssistantOrder(a) - getAssistantOrder(b));
+  }, [filteredAssistants]);
 
   /* =========================================================
      CARD DO ASSISTENTE
   ========================================================= */
 
   const renderAssistant = (assistant: Assistant) => {
-    const Icon =
-      ASSISTANT_ICONS[
-        assistant.id as keyof typeof ASSISTANT_ICONS
-      ] ?? Sparkles;
+    const Icon = ASSISTANT_ICONS[assistant.id as keyof typeof ASSISTANT_ICONS] ?? Sparkles;
 
-    const locked =
-      Boolean(assistant.badge) &&
-      !isUnlockedForAdmin(assistant);
+    const locked = Boolean(assistant.badge) && !isUnlockedForAdmin(assistant);
 
     const content = (
       <>
@@ -502,11 +450,7 @@ export function AssistantsSidePanel({ onClose }: Props) {
             className={`
               h-[18px]
               w-[18px]
-              ${
-                locked
-                  ? 'text-muted-foreground'
-                  : 'text-brand'
-              }
+              ${locked ? 'text-muted-foreground' : 'text-brand'}
             `}
           />
 
@@ -523,11 +467,7 @@ export function AssistantsSidePanel({ onClose }: Props) {
                 truncate
                 text-[13px]
                 font-semibold
-                ${
-                  locked
-                    ? 'text-muted-foreground'
-                    : 'text-foreground'
-                }
+                ${locked ? 'text-muted-foreground' : 'text-foreground'}
               `}
             >
               {assistant.title}
@@ -550,9 +490,7 @@ export function AssistantsSidePanel({ onClose }: Props) {
                   text-muted-foreground
                 "
               >
-                {assistant.badge === 'sob_demanda'
-                  ? 'Sob demanda'
-                  : 'Em breve'}
+                {assistant.badge === 'sob_demanda' ? 'Sob demanda' : 'Em breve'}
               </span>
             )}
           </div>
@@ -659,9 +597,7 @@ export function AssistantsSidePanel({ onClose }: Props) {
 
       <div className="flex items-center justify-between border-b border-border px-5 py-4">
         <div>
-          <h2 className="text-lg font-semibold tracking-tight">
-            Assistentes
-          </h2>
+          <h2 className="text-lg font-semibold tracking-tight">Assistentes</h2>
 
           <p className="mt-0.5 text-[10px] font-medium uppercase tracking-[0.14em] text-brand">
             Jornada de Compras
@@ -690,153 +626,147 @@ export function AssistantsSidePanel({ onClose }: Props) {
         </button>
       </div>
 
-     {/* =====================================================
-    CONTEÚDO COM SCROLL
-====================================================== */}
-
-<div className="flex-1 overflow-y-auto px-4 pb-5">
-
-  {/* =====================================================
-      INTRODUÇÃO
+      {/* =====================================================
+      INTRODUÇÃO + BUSCA
   ====================================================== */}
 
-  <div className="px-1 pb-3 pt-4">
-    <h3 className="text-sm font-semibold leading-snug text-foreground">
-      Escolha em qual etapa de Compras você precisa de apoio.
-    </h3>
+      <div className="shrink-0 px-4 pb-3 pt-4">
+        <h3 className="text-sm font-semibold leading-snug text-foreground">
+          Escolha em qual etapa de Compras você precisa de apoio.
+        </h3>
 
-    <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
-      Encontre o especialista certo para cada etapa do seu processo.
-    </p>
-  </div>
+        <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
+          Encontre o especialista certo para cada etapa do seu processo.
+        </p>
 
-  {/* =====================================================
-      JORNADA
+        <div className="relative mt-3">
+          <Search
+            className="
+          pointer-events-none
+          absolute
+          left-3
+          top-1/2
+          h-4
+          w-4
+          -translate-y-1/2
+          text-muted-foreground
+        "
+            aria-hidden="true"
+          />
+
+          <input
+            type="search"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Buscar assistente..."
+            aria-label="Buscar assistentes"
+            className="
+          h-10
+          w-full
+          rounded-xl
+          border
+          border-border
+          bg-background/40
+          pl-9
+          pr-3
+          text-sm
+          text-foreground
+          outline-none
+          transition-colors
+          placeholder:text-muted-foreground
+          focus:border-brand/50
+        "
+          />
+        </div>
+      </div>
+
+      {/* =====================================================
+      CONTEÚDO COM SCROLL
   ====================================================== */}
 
-  <div className="pb-5">
-    <div
-      className="
-        rounded-xl
-        border
-        border-brand/20
-        bg-brand/5
-        px-3
-        py-3
-      "
-    >
-      <div className="mb-2 flex items-center gap-1.5">
-        <Sparkles className="h-3.5 w-3.5 text-brand" />
-
-        <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-brand">
-          Sua jornada
-        </span>
-      </div>
-
-      <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1.5">
-        {JOURNEY.map((step, index) => (
-          <div
-            key={step}
-            className="flex items-center gap-1.5"
-          >
-            <span
-              className="
-                whitespace-nowrap
-                rounded-md
-                bg-background/40
-                px-1.5
-                py-1
-                text-[10px]
-                font-medium
-                text-foreground/90
-              "
-            >
-              {step}
-            </span>
-
-            {index < JOURNEY.length - 1 && (
-              <span className="text-[10px] text-brand/70">
-                →
-              </span>
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
-  </div>
-
-  {/* =====================================================
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-5">
+        {/* =====================================================
       LISTA POR CATEGORIA
   ====================================================== */}
 
-  <div className="space-y-6">
-    {categories.map((category) => (
-      <section key={category.id}>
+        {categories.length === 0 && otherAssistants.length === 0 ? (
+          <div
+            className="
+        rounded-xl
+        border
+        border-border
+        bg-muted/20
+        p-4
+        text-sm
+        text-muted-foreground
+      "
+          >
+            Nenhum assistente encontrado.
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {categories.map((category) => (
+              <section key={category.id}>
+                {/* Categoria */}
 
-        {/* Categoria */}
+                <div className="mb-2.5 px-1">
+                  <div className="flex items-center gap-2">
+                    <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-brand" />
 
-        <div className="mb-2.5 px-1">
-          <div className="flex items-center gap-2">
-            <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-brand" />
-
-            <h4
-              className="
+                    <h4
+                      className="
                 text-[11px]
                 font-bold
                 uppercase
                 tracking-[0.08em]
                 text-foreground
               "
-            >
-              {category.title}
-            </h4>
-          </div>
+                    >
+                      {category.title}
+                    </h4>
+                  </div>
 
-          <p className="ml-3.5 mt-0.5 text-[10px] leading-4 text-muted-foreground">
-            {category.description}
-          </p>
-        </div>
+                  <p className="ml-3.5 mt-0.5 text-[10px] leading-4 text-muted-foreground">
+                    {category.description}
+                  </p>
+                </div>
 
-        {/* Assistentes */}
+                {/* Assistentes */}
 
-        <div className="space-y-2">
-          {category.assistants.map(renderAssistant)}
-        </div>
+                <div className="space-y-2">{category.assistants.map(renderAssistant)}</div>
+              </section>
+            ))}
 
-      </section>
-    ))}
-
-    {/* =================================================
+            {/* =================================================
         OUTROS ASSISTENTES
     ================================================== */}
 
-    {otherAssistants.length > 0 && (
-      <section>
-        <div className="mb-2.5 px-1">
-          <div className="flex items-center gap-2">
-            <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-muted-foreground" />
+            {otherAssistants.length > 0 && (
+              <section>
+                <div className="mb-2.5 px-1">
+                  <div className="flex items-center gap-2">
+                    <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-muted-foreground" />
 
-            <h4
-              className="
+                    <h4
+                      className="
                 text-[11px]
                 font-bold
                 uppercase
                 tracking-[0.08em]
                 text-foreground
               "
-            >
-              Outros especialistas
-            </h4>
-          </div>
-        </div>
+                    >
+                      Outros especialistas
+                    </h4>
+                  </div>
+                </div>
 
-        <div className="space-y-2">
-          {otherAssistants.map(renderAssistant)}
-        </div>
-      </section>
-    )}
-  </div>
-</div>
+                <div className="space-y-2">{otherAssistants.map(renderAssistant)}</div>
+              </section>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* =====================================================
           RODAPÉ
