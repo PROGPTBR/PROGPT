@@ -1,0 +1,55 @@
+{
+  "service": "Microsoft Edge Read Aloud via msedge-tts",
+  "voice": "pt-BR-AntonioNeural",
+  "rate": "+4%",
+  "note": "A voz do vídeo institucional usa edge-tts, mas seu identificador não estava disponível. AntonioNeural é a alternativa masculina brasileira escolhida no mesmo serviço.",
+  "generatedAt": "2026-10-30T15:08:51.173Z",
+  "lines": [
+    {
+      "id": "scene-1",
+      "writtenText": "Ficou mais fácil encontrar o assistente que você precisa no PROGPT.",
+      "submittedText": "Ficou mais fácil encontrar o assistente que você precisa no Pró GPT.",
+      "file": "audio/scene-1.mp3",
+      "durationSeconds": 4.632,
+      "wordBoundaries": "audio/scene-1-boundaries.json"
+    },
+    {
+      "id": "scene-2",
+      "writtenText": "Na área de chat, abra Assistentes, no menu lateral.",
+      "submittedText": "Na área de chat, abra Assistentes, no menu lateral.",
+      "file": "audio/scene-2.mp3",
+      "durationSeconds": 4.224,
+      "wordBoundaries": "audio/scene-2-boundaries.json"
+    },
+    {
+      "id": "scene-3",
+      "writtenText": "Digite o nome no campo de busca e encontre rapidamente o assistente desejado.",
+      "submittedText": "Digite o nome no campo de busca e encontre rapidamente o assistente desejado.",
+      "file": "audio/scene-3.mp3",
+      "durationSeconds": 5.04,
+      "wordBoundaries": "audio/scene-3-boundaries.json"
+    },
+    {
+      "id": "scene-4",
+      "writtenText": "Selecione o resultado e pronto: você já pode começar sua análise.",
+      "submittedText": "Selecione o resultado e pronto: você já pode começar sua análise.",
+      "file": "audio/scene-4.mp3",
+      "durationSeconds": 4.872,
+      "wordBoundaries": "audio/scene-4-boundaries.json"
+    },
+    {
+      "id": "scene-5",
+      "writtenText": "PROGPT. Mais agilidade para o seu dia a dia.",
+      "submittedText": "Pró GPT. Mais agilidade para o seu dia a dia.",
+      "file": "audio/scene-5.mp3",
+      "durationSeconds": 4.56,
+      "wordBoundaries": "audio/scene-5-boundaries.json"
+    }
+  ],
+  "music": {
+    "source": "source-audio/progpt-apresentacao-instrumental.wav",
+    "provenance": "Instrumental separado do MP4 institucional com UVR-MDX-NET-Inst_HQ_4",
+    "remotionVolume": 0.55,
+    "fadeOutSeconds": 1.5
+  }
+}

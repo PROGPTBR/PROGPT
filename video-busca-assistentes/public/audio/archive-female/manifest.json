@@ -1,0 +1,49 @@
+{
+  "service": "Microsoft Edge Read Aloud via msedge-tts",
+  "voice": "pt-BR-FranciscaNeural",
+  "rate": "+4%",
+  "note": "A voz original usava edge-tts, mas seu identificador não estava disponível. FranciscaNeural é a alternativa documentada do tour PROGPT.",
+  "generatedAt": "2026-10-30T14:59:37.351Z",
+  "lines": [
+    {
+      "id": "scene-1",
+      "writtenText": "Ficou mais fácil encontrar o assistente que você precisa no PROGPT.",
+      "submittedText": "Ficou mais fácil encontrar o assistente que você precisa no Pró GPT.",
+      "file": "audio/scene-1.mp3",
+      "durationSeconds": 4.776,
+      "wordBoundaries": "audio/scene-1-boundaries.json"
+    },
+    {
+      "id": "scene-2",
+      "writtenText": "Na área de chat, abra Assistentes, no menu lateral.",
+      "submittedText": "Na área de chat, abra Assistentes, no menu lateral.",
+      "file": "audio/scene-2.mp3",
+      "durationSeconds": 3.912,
+      "wordBoundaries": "audio/scene-2-boundaries.json"
+    },
+    {
+      "id": "scene-3",
+      "writtenText": "Digite o nome no campo de busca e encontre rapidamente o assistente desejado.",
+      "submittedText": "Digite o nome no campo de busca e encontre rapidamente o assistente desejado.",
+      "file": "audio/scene-3.mp3",
+      "durationSeconds": 5.28,
+      "wordBoundaries": "audio/scene-3-boundaries.json"
+    },
+    {
+      "id": "scene-4",
+      "writtenText": "Selecione o resultado e pronto: você já pode começar sua análise.",
+      "submittedText": "Selecione o resultado e pronto: você já pode começar sua análise.",
+      "file": "audio/scene-4.mp3",
+      "durationSeconds": 4.776,
+      "wordBoundaries": "audio/scene-4-boundaries.json"
+    },
+    {
+      "id": "scene-5",
+      "writtenText": "PROGPT. Mais agilidade para o seu dia a dia.",
+      "submittedText": "Pró GPT. Mais agilidade para o seu dia a dia.",
+      "file": "audio/scene-5.mp3",
+      "durationSeconds": 4.056,
+      "wordBoundaries": "audio/scene-5-boundaries.json"
+    }
+  ]
+}

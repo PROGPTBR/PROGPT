@@ -1,0 +1,172 @@
+{
+  "Metadata": [
+    {
+      "Type": "WordBoundary",
+      "Data": {
+        "Offset": 980830,
+        "Duration": 4206660,
+        "text": {
+          "Text": "Digite",
+          "Length": 6,
+          "BoundaryType": "WordBoundary"
+        }
+      }
+    },
+    {
+      "Type": "WordBoundary",
+      "Data": {
+        "Offset": 5307500,
+        "Duration": 240410,
+        "text": {
+          "Text": "o",
+          "Length": 1,
+          "BoundaryType": "WordBoundary"
+        }
+      }
+    },
+    {
+      "Type": "WordBoundary",
+      "Data": {
+        "Offset": 5668330,
+        "Duration": 3125000,
+        "text": {
+          "Text": "nome",
+          "Length": 4,
+          "BoundaryType": "WordBoundary"
+        }
+      }
+    },
+    {
+      "Type": "WordBoundary",
+      "Data": {
+        "Offset": 8913330,
+        "Duration": 1202080,
+        "text": {
+          "Text": "no",
+          "Length": 2,
+          "BoundaryType": "WordBoundary"
+        }
+      }
+    },
+    {
+      "Type": "WordBoundary",
+      "Data": {
+        "Offset": 10235410,
+        "Duration": 3005000,
+        "text": {
+          "Text": "campo",
+          "Length": 5,
+          "BoundaryType": "WordBoundary"
+        }
+      }
+    },
+    {
+      "Type": "WordBoundary",
+      "Data": {
+        "Offset": 13360410,
+        "Duration": 961660,
+        "text": {
+          "Text": "de",
+          "Length": 2,
+          "BoundaryType": "WordBoundary"
+        }
+      }
+    },
+    {
+      "Type": "WordBoundary",
+      "Data": {
+        "Offset": 14442500,
+        "Duration": 4567500,
+        "text": {
+          "Text": "busca",
+          "Length": 5,
+          "BoundaryType": "WordBoundary"
+        }
+      }
+    },
+    {
+      "Type": "WordBoundary",
+      "Data": {
+        "Offset": 19130000,
+        "Duration": 600830,
+        "text": {
+          "Text": "e",
+          "Length": 1,
+          "BoundaryType": "WordBoundary"
+        }
+      }
+    },
+    {
+      "Type": "WordBoundary",
+      "Data": {
+        "Offset": 19850830,
+        "Duration": 4687500,
+        "text": {
+          "Text": "encontre",
+          "Length": 8,
+          "BoundaryType": "WordBoundary"
+        }
+      }
+    },
+    {
+      "Type": "WordBoundary",
+      "Data": {
+        "Offset": 24658750,
+        "Duration": 7452080,
+        "text": {
+          "Text": "rapidamente",
+          "Length": 11,
+          "BoundaryType": "WordBoundary"
+        }
+      }
+    },
+    {
+      "Type": "WordBoundary",
+      "Data": {
+        "Offset": 32230830,
+        "Duration": 360409,
+        "text": {
+          "Text": "o",
+          "Length": 1,
+          "BoundaryType": "WordBoundary"
+        }
+      }
+    },
+    {
+      "Type": "SentenceBoundary",
+      "Data": {
+        "Offset": 1000000,
+        "Duration": 51783655,
+        "text": {
+          "Text": "Digite o nome no campo de busca e encontre rapidamente o assistente desejado.",
+          "Length": 77,
+          "BoundaryType": "SentenceBoundary"
+        }
+      }
+    },
+    {
+      "Type": "WordBoundary",
+      "Data": {
+        "Offset": 32711660,
+        "Duration": 4927910,
+        "text": {
+          "Text": "assistente",
+          "Length": 10,
+          "BoundaryType": "WordBoundary"
+        }
+      }
+    },
+    {
+      "Type": "WordBoundary",
+      "Data": {
+        "Offset": 37759580,
+        "Duration": 6730830,
+        "text": {
+          "Text": "desejado",
+          "Length": 8,
+          "BoundaryType": "WordBoundary"
+        }
+      }
+    }
+  ]
+}

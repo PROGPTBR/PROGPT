@@ -1,0 +1,19 @@
+1
+00:00:00,167 --> 00:00:04,800
+Ficou mais fácil encontrar o assistente que você precisa no PROGPT.
+
+2
+00:00:05,267 --> 00:00:09,500
+Na área de chat, abra Assistentes, no menu lateral.
+
+3
+00:00:10,400 --> 00:00:15,433
+Digite o nome no campo de busca e encontre rapidamente o assistente desejado.
+
+4
+00:00:17,367 --> 00:00:22,267
+Selecione o resultado e pronto: você já pode começar sua análise.
+
+5
+00:00:23,700 --> 00:00:28,267
+PROGPT. Mais agilidade para o seu dia a dia.

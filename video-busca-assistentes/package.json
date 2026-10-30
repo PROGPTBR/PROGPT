@@ -1,0 +1,22 @@
+{
+  "name": "progpt-busca-assistentes-video",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "audio": "node scripts/generate-audio.mjs",
+    "preview": "remotion render src/index.tsx BuscaAssistentes out/progpt-busca-assistentes-preview.mp4 --props=./preview-props.json --codec=h264 --crf=25 --scale=0.5",
+    "render": "remotion render src/index.tsx BuscaAssistentes out/progpt-busca-assistentes-final.mp4 --codec=h264 --crf=17",
+    "studio": "remotion studio src/index.tsx"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.376",
+    "msedge-tts": "^2.0.4",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "remotion": "^4.0.376"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.0",
+    "typescript": "^5.5.0"
+  }
+}

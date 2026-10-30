@@ -1,0 +1,124 @@
+{
+  "Metadata": [
+    {
+      "Type": "WordBoundary",
+      "Data": {
+        "Offset": 980830,
+        "Duration": 1562500,
+        "text": {
+          "Text": "Na",
+          "Length": 2,
+          "BoundaryType": "WordBoundary"
+        }
+      }
+    },
+    {
+      "Type": "WordBoundary",
+      "Data": {
+        "Offset": 2663330,
+        "Duration": 2644160,
+        "text": {
+          "Text": "área",
+          "Length": 4,
+          "BoundaryType": "WordBoundary"
+        }
+      }
+    },
+    {
+      "Type": "WordBoundary",
+      "Data": {
+        "Offset": 5427910,
+        "Duration": 961660,
+        "text": {
+          "Text": "de",
+          "Length": 2,
+          "BoundaryType": "WordBoundary"
+        }
+      }
+    },
+    {
+      "Type": "WordBoundary",
+      "Data": {
+        "Offset": 6509580,
+        "Duration": 5288330,
+        "text": {
+          "Text": "chat",
+          "Length": 4,
+          "BoundaryType": "WordBoundary"
+        }
+      }
+    },
+    {
+      "Type": "WordBoundary",
+      "Data": {
+        "Offset": 12519160,
+        "Duration": 2163330,
+        "text": {
+          "Text": "abra",
+          "Length": 4,
+          "BoundaryType": "WordBoundary"
+        }
+      }
+    },
+    {
+      "Type": "WordBoundary",
+      "Data": {
+        "Offset": 14802910,
+        "Duration": 6730830,
+        "text": {
+          "Text": "Assistentes",
+          "Length": 11,
+          "BoundaryType": "WordBoundary"
+        }
+      }
+    },
+    {
+      "Type": "WordBoundary",
+      "Data": {
+        "Offset": 22014580,
+        "Duration": 961660,
+        "text": {
+          "Text": "no",
+          "Length": 2,
+          "BoundaryType": "WordBoundary"
+        }
+      }
+    },
+    {
+      "Type": "SentenceBoundary",
+      "Data": {
+        "Offset": 1000000,
+        "Duration": 37961539,
+        "text": {
+          "Text": "Na área de chat, abra Assistentes, no menu lateral.",
+          "Length": 51,
+          "BoundaryType": "SentenceBoundary"
+        }
+      }
+    },
+    {
+      "Type": "WordBoundary",
+      "Data": {
+        "Offset": 23096250,
+        "Duration": 2403750,
+        "text": {
+          "Text": "menu",
+          "Length": 4,
+          "BoundaryType": "WordBoundary"
+        }
+      }
+    },
+    {
+      "Type": "WordBoundary",
+      "Data": {
+        "Offset": 25620000,
+        "Duration": 5047910,
+        "text": {
+          "Text": "lateral",
+          "Length": 7,
+          "BoundaryType": "WordBoundary"
+        }
+      }
+    }
+  ]
+}

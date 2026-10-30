@@ -1,0 +1,6 @@
+node_modules/
+.audio-temp/
+.audio-models/
+.audio-separated/
+.audio-separator-venv*/
+out/qa-*.png

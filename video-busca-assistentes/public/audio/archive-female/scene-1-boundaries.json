@@ -1,0 +1,160 @@
+{
+  "Metadata": [
+    {
+      "Type": "WordBoundary",
+      "Data": {
+        "Offset": 980830,
+        "Duration": 3245000,
+        "text": {
+          "Text": "Ficou",
+          "Length": 5,
+          "BoundaryType": "WordBoundary"
+        }
+      }
+    },
+    {
+      "Type": "WordBoundary",
+      "Data": {
+        "Offset": 4346250,
+        "Duration": 2403750,
+        "text": {
+          "Text": "mais",
+          "Length": 4,
+          "BoundaryType": "WordBoundary"
+        }
+      }
+    },
+    {
+      "Type": "WordBoundary",
+      "Data": {
+        "Offset": 6870000,
+        "Duration": 3605830,
+        "text": {
+          "Text": "fácil",
+          "Length": 5,
+          "BoundaryType": "WordBoundary"
+        }
+      }
+    },
+    {
+      "Type": "WordBoundary",
+      "Data": {
+        "Offset": 10596250,
+        "Duration": 4927910,
+        "text": {
+          "Text": "encontrar",
+          "Length": 9,
+          "BoundaryType": "WordBoundary"
+        }
+      }
+    },
+    {
+      "Type": "WordBoundary",
+      "Data": {
+        "Offset": 15644160,
+        "Duration": 600830,
+        "text": {
+          "Text": "o",
+          "Length": 1,
+          "BoundaryType": "WordBoundary"
+        }
+      }
+    },
+    {
+      "Type": "WordBoundary",
+      "Data": {
+        "Offset": 16365410,
+        "Duration": 5528750,
+        "text": {
+          "Text": "assistente",
+          "Length": 10,
+          "BoundaryType": "WordBoundary"
+        }
+      }
+    },
+    {
+      "Type": "WordBoundary",
+      "Data": {
+        "Offset": 22014580,
+        "Duration": 841250,
+        "text": {
+          "Text": "que",
+          "Length": 3,
+          "BoundaryType": "WordBoundary"
+        }
+      }
+    },
+    {
+      "Type": "WordBoundary",
+      "Data": {
+        "Offset": 22975830,
+        "Duration": 2524160,
+        "text": {
+          "Text": "você",
+          "Length": 4,
+          "BoundaryType": "WordBoundary"
+        }
+      }
+    },
+    {
+      "Type": "WordBoundary",
+      "Data": {
+        "Offset": 25620000,
+        "Duration": 4807500,
+        "text": {
+          "Text": "precisa",
+          "Length": 7,
+          "BoundaryType": "WordBoundary"
+        }
+      }
+    },
+    {
+      "Type": "WordBoundary",
+      "Data": {
+        "Offset": 30547910,
+        "Duration": 1081660,
+        "text": {
+          "Text": "no",
+          "Length": 2,
+          "BoundaryType": "WordBoundary"
+        }
+      }
+    },
+    {
+      "Type": "SentenceBoundary",
+      "Data": {
+        "Offset": 1000000,
+        "Duration": 46615386,
+        "text": {
+          "Text": "Ficou mais fácil encontrar o assistente que você precisa no Pró GPT.",
+          "Length": 68,
+          "BoundaryType": "SentenceBoundary"
+        }
+      }
+    },
+    {
+      "Type": "WordBoundary",
+      "Data": {
+        "Offset": 31750000,
+        "Duration": 1802910,
+        "text": {
+          "Text": "Pró",
+          "Length": 3,
+          "BoundaryType": "WordBoundary"
+        }
+      }
+    },
+    {
+      "Type": "WordBoundary",
+      "Data": {
+        "Offset": 33672910,
+        "Duration": 5649160,
+        "text": {
+          "Text": "GPT",
+          "Length": 3,
+          "BoundaryType": "WordBoundary"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,148 @@
+{
+  "Metadata": [
+    {
+      "Type": "WordBoundary",
+      "Data": {
+        "Offset": 980830,
+        "Duration": 6370000,
+        "text": {
+          "Text": "Selecione",
+          "Length": 9,
+          "BoundaryType": "WordBoundary"
+        }
+      }
+    },
+    {
+      "Type": "WordBoundary",
+      "Data": {
+        "Offset": 7471250,
+        "Duration": 360409,
+        "text": {
+          "Text": "o",
+          "Length": 1,
+          "BoundaryType": "WordBoundary"
+        }
+      }
+    },
+    {
+      "Type": "WordBoundary",
+      "Data": {
+        "Offset": 7952080,
+        "Duration": 5649160,
+        "text": {
+          "Text": "resultado",
+          "Length": 9,
+          "BoundaryType": "WordBoundary"
+        }
+      }
+    },
+    {
+      "Type": "WordBoundary",
+      "Data": {
+        "Offset": 13721250,
+        "Duration": 480830,
+        "text": {
+          "Text": "e",
+          "Length": 1,
+          "BoundaryType": "WordBoundary"
+        }
+      }
+    },
+    {
+      "Type": "WordBoundary",
+      "Data": {
+        "Offset": 14322080,
+        "Duration": 4206660,
+        "text": {
+          "Text": "pronto",
+          "Length": 6,
+          "BoundaryType": "WordBoundary"
+        }
+      }
+    },
+    {
+      "Type": "WordBoundary",
+      "Data": {
+        "Offset": 21172910,
+        "Duration": 2043330,
+        "text": {
+          "Text": "você",
+          "Length": 4,
+          "BoundaryType": "WordBoundary"
+        }
+      }
+    },
+    {
+      "Type": "WordBoundary",
+      "Data": {
+        "Offset": 23336660,
+        "Duration": 1202080,
+        "text": {
+          "Text": "já",
+          "Length": 2,
+          "BoundaryType": "WordBoundary"
+        }
+      }
+    },
+    {
+      "Type": "WordBoundary",
+      "Data": {
+        "Offset": 24658750,
+        "Duration": 3005000,
+        "text": {
+          "Text": "pode",
+          "Length": 4,
+          "BoundaryType": "WordBoundary"
+        }
+      }
+    },
+    {
+      "Type": "WordBoundary",
+      "Data": {
+        "Offset": 27783750,
+        "Duration": 4447080,
+        "text": {
+          "Text": "começar",
+          "Length": 7,
+          "BoundaryType": "WordBoundary"
+        }
+      }
+    },
+    {
+      "Type": "SentenceBoundary",
+      "Data": {
+        "Offset": 1000000,
+        "Duration": 46735578,
+        "text": {
+          "Text": "Selecione o resultado e pronto: você já pode começar sua análise.",
+          "Length": 65,
+          "BoundaryType": "SentenceBoundary"
+        }
+      }
+    },
+    {
+      "Type": "WordBoundary",
+      "Data": {
+        "Offset": 32350830,
+        "Duration": 1802910,
+        "text": {
+          "Text": "sua",
+          "Length": 3,
+          "BoundaryType": "WordBoundary"
+        }
+      }
+    },
+    {
+      "Type": "WordBoundary",
+      "Data": {
+        "Offset": 34274160,
+        "Duration": 5168330,
+        "text": {
+          "Text": "análise",
+          "Length": 7,
+          "BoundaryType": "WordBoundary"
+        }
+      }
+    }
+  ]
+}

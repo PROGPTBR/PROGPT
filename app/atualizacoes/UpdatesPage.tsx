@@ -1,21 +1,18 @@
 'use client';
 
-import { useEffect, useState, type SVGProps } from 'react';
+import { useState, type SVGProps } from 'react';
 import styles from './atualizacoes.module.css';
 
-type IconName = 'book' | 'check' | 'close' | 'external' | 'grid' | 'search';
+type IconName = 'check' | 'close' | 'search';
 
 const iconPaths: Record<IconName, string> = {
   search: 'M21 21l-5-5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0',
-  book: 'M12 5v15M3 4l9 1 9-1v15l-9 1-9-1z',
-  grid: 'M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z',
   close: 'm6 6 12 12M18 6 6 18',
   check: 'm5 12 4 4L19 6',
-  external: 'M14 3h7v7M21 3l-11 11M10 3H3v18h18v-7',
 };
 
 function Icon({
-  name = 'grid',
+  name = 'search',
   size = 18,
   ...props
 }: SVGProps<SVGSVGElement> & { name?: IconName; size?: number }) {
@@ -37,12 +34,6 @@ function Icon({
   );
 }
 
-const sampleImage =
-  'data:image/svg+xml;charset=utf-8,' +
-  encodeURIComponent(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="380" viewBox="0 0 1100 380"><rect width="1100" height="380" fill="#0c1422"/><rect x="125" y="45" width="850" height="290" rx="12" fill="#121c2b" stroke="#29374b"/><text x="160" y="88" fill="#e8eef6" font-family="Arial" font-size="20">Meus assistentes</text><text x="160" y="116" fill="#94a3b8" font-family="Arial" font-size="13">Seus favoritos, reunidos em um só lugar.</text><rect x="160" y="145" width="370" height="144" rx="8" fill="#0d1726" stroke="#29374b"/><rect x="550" y="145" width="390" height="144" rx="8" fill="#0d1726" stroke="#29374b"/><text x="183" y="183" fill="#12b7d4" font-family="Arial" font-size="20">✧</text><text x="183" y="219" fill="#e8eef6" font-family="Arial" font-size="17">Análise de propostas</text><text x="183" y="248" fill="#94a3b8" font-family="Arial" font-size="13">Compare condições e apoie sua decisão.</text><text x="575" y="183" fill="#12b7d4" font-family="Arial" font-size="20">✧</text><text x="575" y="219" fill="#e8eef6" font-family="Arial" font-size="17">Negociação com fornecedores</text><text x="575" y="248" fill="#94a3b8" font-family="Arial" font-size="13">Prepare sua próxima negociação.</text><text x="493" y="182" fill="#12b7d4" font-family="Arial" font-size="23">♡</text><text x="900" y="182" fill="#12b7d4" font-family="Arial" font-size="23">♡</text></svg>`,
-  );
-
 type UpdateType = 'Novo recurso' | 'Melhoria' | 'Correção';
 
 type Update = {
@@ -54,13 +45,12 @@ type Update = {
   title: string;
   text: string;
   bullets: string[];
-  image?: string;
-  alt?: string;
+  video?: string;
+  poster?: string;
   caption?: string;
 };
 
 const updates: Update[] = [
-
   {
     id: 'favoritos',
     date: '30 OUT 2026',
@@ -69,14 +59,13 @@ const updates: Update[] = [
     type: 'Novo recurso',
     title: 'Encontre seus assistentes com mais facilidade',
     text: 'Agora você pode buscar assistentes diretamente no menu lateral da área de chat. Abra Assistentes e digite o nome do assistente que deseja encontrar para acessá-lo mais rapidamente.',
-    bullets: [
-      'Salve um assistente pelo ícone de coração.',
-      'Volte aos seus favoritos sempre que precisar.',
-    ],
-    image: sampleImage,
-    alt: 'Exemplo ilustrativo da lista de assistentes favoritos',
-    caption: 'Assistentes favoritos • exemplo ilustrativo',
-  }
+    bullets: ['Confira no vídeo abaixo, a nova atualização'],
+    // Coloque o arquivo em: public/atualizacoes/busca-assistentes.mp4
+    video: '/atualizacoes/busca-assistentes.mp4',
+    // Opcional: imagem de capa exibida antes do play (public/atualizacoes/busca-assistentes.jpg)
+    // poster: '/atualizacoes/busca-assistentes.jpg',
+    caption: 'Busca de assistentes • demonstração em vídeo',
+  },
 ];
 
 const filters: Array<'Todas' | UpdateType> = [
@@ -96,26 +85,7 @@ const filterLabels = {
 export default function UpdatesPage() {
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<(typeof filters)[number]>('Todas');
-  const [image, setImage] = useState<Update | null>(null);
   const month = '10';
-
-  useEffect(() => {
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setImage(null);
-    };
-
-    window.addEventListener('keydown', closeOnEscape);
-    return () => window.removeEventListener('keydown', closeOnEscape);
-  }, []);
-
-  useEffect(() => {
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = image ? 'hidden' : previousOverflow;
-
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [image]);
 
   const normalizedQuery = query.toLocaleLowerCase('pt-BR');
   const items = updates.filter(
@@ -232,19 +202,19 @@ export default function UpdatesPage() {
                       <li key={bullet}>{bullet}</li>
                     ))}
                   </ul>
-                  {update.image && (
+                  {update.video && (
                     <figure>
-                      <button
-                        className={styles.imageButton}
-                        onClick={() => setImage(update)}
-                        aria-label={`Ampliar imagem: ${update.title}`}
-                        type="button"
+                      <video
+                        className={styles.video}
+                        controls
+                        playsInline
+                        preload="metadata"
+                        poster={update.poster}
+                        aria-label={update.title}
                       >
-                        <img src={update.image} alt={update.alt ?? ''} />
-                        <span className={styles.expand}>
-                          <Icon name="external" size={14} /> Ampliar imagem
-                        </span>
-                      </button>
+                        <source src={update.video} type="video/mp4" />
+                        Seu navegador não suporta a reprodução de vídeo.
+                      </video>
                       <figcaption>{update.caption}</figcaption>
                     </figure>
                   )}
@@ -276,31 +246,6 @@ export default function UpdatesPage() {
           </footer>
         </main>
       </div>
-
-      {image && (
-        <div
-          className={styles.modal}
-          role="dialog"
-          aria-modal="true"
-          aria-label={image.title}
-          onClick={() => setImage(null)}
-        >
-          <button
-            autoFocus
-            className={`${styles.modalClose} ${styles.iconButton}`}
-            aria-label="Fechar imagem"
-            onClick={() => setImage(null)}
-            type="button"
-          >
-            <Icon name="close" size={24} />
-          </button>
-          <div onClick={(event) => event.stopPropagation()}>
-            <img src={image.image} alt={image.alt ?? ''} />
-            <p>{image.caption}</p>
-            <small>Pressione Esc ou clique fora da imagem para fechar.</small>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

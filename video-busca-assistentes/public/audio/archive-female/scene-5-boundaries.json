@@ -1,0 +1,148 @@
+{
+  "Metadata": [
+    {
+      "Type": "SentenceBoundary",
+      "Data": {
+        "Offset": 1000000,
+        "Duration": 10798077,
+        "text": {
+          "Text": "Pró GPT.",
+          "Length": 8,
+          "BoundaryType": "SentenceBoundary"
+        }
+      }
+    },
+    {
+      "Type": "WordBoundary",
+      "Data": {
+        "Offset": 980830,
+        "Duration": 2043330,
+        "text": {
+          "Text": "Pró",
+          "Length": 3,
+          "BoundaryType": "WordBoundary"
+        }
+      }
+    },
+    {
+      "Type": "WordBoundary",
+      "Data": {
+        "Offset": 3144160,
+        "Duration": 6130000,
+        "text": {
+          "Text": "GPT",
+          "Length": 3,
+          "BoundaryType": "WordBoundary"
+        }
+      }
+    },
+    {
+      "Type": "WordBoundary",
+      "Data": {
+        "Offset": 11778750,
+        "Duration": 2163330,
+        "text": {
+          "Text": "Mais",
+          "Length": 4,
+          "BoundaryType": "WordBoundary"
+        }
+      }
+    },
+    {
+      "Type": "WordBoundary",
+      "Data": {
+        "Offset": 14062500,
+        "Duration": 7091250,
+        "text": {
+          "Text": "agilidade",
+          "Length": 9,
+          "BoundaryType": "WordBoundary"
+        }
+      }
+    },
+    {
+      "Type": "WordBoundary",
+      "Data": {
+        "Offset": 21274160,
+        "Duration": 1442500,
+        "text": {
+          "Text": "para",
+          "Length": 4,
+          "BoundaryType": "WordBoundary"
+        }
+      }
+    },
+    {
+      "Type": "WordBoundary",
+      "Data": {
+        "Offset": 22836660,
+        "Duration": 240410,
+        "text": {
+          "Text": "o",
+          "Length": 1,
+          "BoundaryType": "WordBoundary"
+        }
+      }
+    },
+    {
+      "Type": "WordBoundary",
+      "Data": {
+        "Offset": 23197080,
+        "Duration": 2163330,
+        "text": {
+          "Text": "seu",
+          "Length": 3,
+          "BoundaryType": "WordBoundary"
+        }
+      }
+    },
+    {
+      "Type": "WordBoundary",
+      "Data": {
+        "Offset": 25480830,
+        "Duration": 2163330,
+        "text": {
+          "Text": "dia",
+          "Length": 3,
+          "BoundaryType": "WordBoundary"
+        }
+      }
+    },
+    {
+      "Type": "SentenceBoundary",
+      "Data": {
+        "Offset": 11298077,
+        "Duration": 28725962,
+        "text": {
+          "Text": "Mais agilidade para o seu dia a dia.",
+          "Length": 36,
+          "BoundaryType": "SentenceBoundary"
+        }
+      }
+    },
+    {
+      "Type": "WordBoundary",
+      "Data": {
+        "Offset": 27764580,
+        "Duration": 480830,
+        "text": {
+          "Text": "a",
+          "Length": 1,
+          "BoundaryType": "WordBoundary"
+        }
+      }
+    },
+    {
+      "Type": "WordBoundary",
+      "Data": {
+        "Offset": 28365410,
+        "Duration": 3846250,
+        "text": {
+          "Text": "dia",
+          "Length": 3,
+          "BoundaryType": "WordBoundary"
+        }
+      }
+    }
+  ]
+}
