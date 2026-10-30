@@ -77,7 +77,11 @@ const STATUS_LABEL: Record<string, string> = {
 
 const ITEM_STATUS_BADGE: Record<ItemStatus, { label: string; cls: string }> = {
   correto: { label: 'Correto', cls: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-300' },
+  // Mesmo item com outro nome não é problema: verde como o "correto", só com
+  // rótulo próprio pra o comprador saber que houve uma correspondência.
+  equivalente: { label: 'Equivalente', cls: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-300' },
   ausente: { label: 'Ausente', cls: 'border-red-500/40 bg-red-500/10 text-red-600 dark:text-red-300' },
+  verificar: { label: 'Conferir', cls: 'border-sky-500/40 bg-sky-500/10 text-sky-600 dark:text-sky-300' },
   quantidade_divergente: { label: 'Qtd. divergente', cls: 'border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-300' },
   especificacao_alterada: { label: 'Especificação alterada', cls: 'border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-300' },
   marca_diferente: { label: 'Marca diferente', cls: 'border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-300' },
@@ -553,6 +557,11 @@ function QuoteDetail({ id, onBack }: { id: string; onBack: () => void }) {
                                       <span className={`inline-flex items-center whitespace-nowrap rounded-full border px-2 py-0.5 text-[11px] font-medium ${badge.cls}`}>
                                         {badge.label}
                                       </span>
+                                      {cell.descricao_fornecedor && cell.descricao_fornecedor !== '—' ? (
+                                        <div className="mt-1 text-foreground/80">
+                                          {cell.descricao_fornecedor}
+                                        </div>
+                                      ) : null}
                                       {cell.detalhe ? (
                                         <div className="mt-1 text-muted-foreground">{cell.detalhe}</div>
                                       ) : null}

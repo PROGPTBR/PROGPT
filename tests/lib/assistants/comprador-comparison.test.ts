@@ -16,8 +16,8 @@ describe('buildComparisonMatrix', () => {
         quantidade_solicitada: '200un',
         especificacao_solicitada: 'madeira de pinus',
         fornecedores: [
-          { fornecedor: 'A', status: 'correto', detalhe: 'conforme solicitado' },
-          { fornecedor: 'B', status: 'marca_diferente', detalhe: 'madeira de eucalipto' },
+          { fornecedor: 'A', status: 'correto', descricao_fornecedor: '—', detalhe: 'conforme solicitado' },
+          { fornecedor: 'B', status: 'marca_diferente', descricao_fornecedor: '—', detalhe: 'madeira de eucalipto' },
         ],
       },
       {
@@ -25,8 +25,8 @@ describe('buildComparisonMatrix', () => {
         quantidade_solicitada: '400un',
         especificacao_solicitada: 'papelão',
         fornecedores: [
-          { fornecedor: 'B', status: 'condicao_diferente', detalhe: 'plástico em vez de papelão' },
-          { fornecedor: 'C', status: 'correto', detalhe: 'conforme solicitado' },
+          { fornecedor: 'B', status: 'condicao_diferente', descricao_fornecedor: '—', detalhe: 'plástico em vez de papelão' },
+          { fornecedor: 'C', status: 'correto', descricao_fornecedor: '—', detalhe: 'conforme solicitado' },
         ],
       },
     ];
@@ -49,13 +49,14 @@ describe('buildComparisonMatrix', () => {
         item: 'Palete PBR',
         quantidade_solicitada: '200un',
         especificacao_solicitada: 'madeira de pinus',
-        fornecedores: [{ fornecedor: 'A', status: 'ausente', detalhe: 'não cotou esse item' }],
+        fornecedores: [{ fornecedor: 'A', status: 'ausente', descricao_fornecedor: '—', detalhe: 'não cotou esse item' }],
       },
     ];
     const matrix = buildComparisonMatrix(itens);
     expect(matrix.rows[0]!.porFornecedor['A']).toEqual({
       fornecedor: 'A',
       status: 'ausente',
+      descricao_fornecedor: '—',
       detalhe: 'não cotou esse item',
     });
     // "B" never appeared in the data at all — not a key vs. undefined distinction
