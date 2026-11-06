@@ -25,6 +25,7 @@ import {
   ClipboardList,
   FolderKanban,
   Warehouse,
+  PackageCheck,
 } from 'lucide-react';
 
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -123,6 +124,14 @@ const GESTAO_ITEMS = [
     label: 'Gestão de Demandas',
     description: 'Solicitações entre setores, com prazo e validação.',
     icon: ClipboardList,
+  },
+  // Recebimento de NF (sub-projeto 95): produto real, separado da Gestão de
+  // Obras para servir também a quem já tem sistema de obras.
+  {
+    href: '/recebimento',
+    label: 'Recebimento de NF',
+    description: 'Nota do fornecedor conferida contra o pedido, almoxarifado e liberação do pagamento.',
+    icon: PackageCheck,
   },
 ] as const;
 

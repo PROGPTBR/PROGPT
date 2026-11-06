@@ -32,6 +32,7 @@ export const MODULOS: readonly Modulo[] = [
   { id: 'gestao_obras', rotulo: 'Gestão de Obras', grupo: 'plataforma', caminhos: ['/gestao-obras'] },
   { id: 'obras_materiais', rotulo: 'Obras & Materiais', grupo: 'plataforma', caminhos: ['/obras-materiais'] },
   { id: 'gestao_demandas', rotulo: 'Gestão de Demandas', grupo: 'plataforma', caminhos: ['/gestao-demandas'] },
+  { id: 'recebimento', rotulo: 'Recebimento de NF', grupo: 'plataforma', caminhos: ['/recebimento'] },
   // Assistentes
   { id: 'abc', rotulo: 'Análise ABC', grupo: 'assistentes', caminhos: ['/assistants/abc'] },
   { id: 'spend_analysis', rotulo: 'Análise de Gastos', grupo: 'assistentes', caminhos: ['/assistants/spend_analysis'] },

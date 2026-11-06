@@ -225,6 +225,13 @@ export const FAQ_SUPORTE: FaqSecao[] = [
         termos: 'acompanhamento link solicitante requisitante gestor aprovar reprovar email aviso status pedido',
       },
       {
+        id: 'recebimento-nf',
+        pergunta: 'Como funciona o Recebimento de NF?',
+        resposta:
+          'Fica no menu Gestão, em "Recebimento de NF". Cadastre o pedido de compra (ou importe o PDF, Word ou Excel do pedido) com NCM e alíquotas de ICMS e IPI de cada item. O sistema gera três links, que podem ir por e-mail e não exigem conta: o fornecedor anexa a nota (de preferência o XML); o almoxarifado confere o material sem ver nenhum valor, registra entrega parcial (o que faltou fica pendente) e, com tudo entregue, dá o OK que libera o pagamento; o financeiro vê a nota financeira conferida contra o pedido e o aviso de pagamento liberado. Quando a venda tem nota de entrega e nota de faturamento separadas, o sistema identifica cada uma pelo CFOP e manda cada nota para quem deve receber.',
+        termos: 'nota fiscal nf xml danfe recebimento almoxarifado financeiro pedido po conferencia ncm imposto icms ipi entrega parcial pendencia pagamento remessa faturamento',
+      },
+      {
         id: 'painel-dashboard',
         pergunta: 'Qual a diferença entre Painel e Dashboard?',
         resposta:

@@ -368,3 +368,71 @@ ${button(args.link, 'Abrir o processo')}
 `;
   return { subject, html: shell(content, esc(`${quem} ${args.aprovado ? 'aprovou' : 'reprovou'}: ${args.tituloCompra}.`)) };
 }
+
+// ─── Recebimento de NF (sub-projeto 95) ──────────────────────────────────
+//
+// Nomes, pedido e fornecedor vêm digitados pelo cliente: sempre escapados.
+
+const RECEBIMENTO_PAPEL: Record<'fornecedor' | 'almoxarifado' | 'financeiro', { titulo: string; texto: string; botao: string }> = {
+  fornecedor: {
+    titulo: 'Anexe a nota fiscal deste pedido',
+    texto: 'Quando emitir a nota de saída do material, anexe o XML (ou o PDF) pelo link abaixo. Se houver nota de entrega e nota de faturamento separadas, anexe as duas. Você não precisa criar conta.',
+    botao: 'Anexar a nota',
+  },
+  almoxarifado: {
+    titulo: 'Confira o recebimento deste pedido',
+    texto: 'Quando o material chegar, abra o link, informe a quantidade recebida de cada item e registre qualquer ressalva. Com tudo entregue, é você quem dá o OK para o pagamento. Você não precisa criar conta.',
+    botao: 'Conferir o recebimento',
+  },
+  financeiro: {
+    titulo: 'Acompanhe a nota financeira deste pedido',
+    texto: 'Pelo link você vê a nota financeira, a conferência dela contra o pedido (preço, impostos e NCM) e se o almoxarifado já liberou o pagamento. Você não precisa criar conta.',
+    botao: 'Ver a nota financeira',
+  },
+};
+
+export function buildRecebimentoLinkEmail(args: {
+  papel: 'fornecedor' | 'almoxarifado' | 'financeiro';
+  nome: string;
+  compradorNome: string;
+  pedido: string;
+  fornecedor: string;
+  link: string;
+}): { subject: string; html: string } {
+  const t = RECEBIMENTO_PAPEL[args.papel];
+  const ola = args.nome.trim() ? `Olá, ${esc(args.nome.trim().split(/\s+/)[0]!)}` : 'Olá';
+  const linhas: Array<[string, string]> = [
+    ['Pedido', args.pedido],
+    ['Fornecedor', args.fornecedor],
+  ];
+  if (args.compradorNome.trim()) linhas.push(['Comprador', args.compradorNome.trim()]);
+  const content = `
+${h(`${ola}. ${esc(t.titulo)}`)}
+${quadro(linhas)}
+${p(esc(t.texto))}
+<div style="text-align:center;margin:24px 0;">
+${button(args.link, t.botao)}
+</div>
+${p(`<span style="color:${TEXT_MUTED};font-size:12px;">Não encaminhe este e-mail: quem tiver o link pode agir neste pedido.</span>`)}
+`;
+  return { subject: `${t.titulo}: ${args.pedido}`, html: shell(content, esc(`${t.titulo}: ${args.pedido}.`)) };
+}
+
+export function buildRecebimentoAvisoEmail(args: {
+  nome: string;
+  assunto: string;
+  titulo: string;
+  texto: string;
+  link: string;
+  botao: string;
+}): { subject: string; html: string } {
+  const ola = args.nome.trim() ? `Olá, ${esc(args.nome.trim().split(/\s+/)[0]!)}` : 'Olá';
+  const content = `
+${h(`${ola}. ${esc(args.titulo)}`)}
+${p(esc(args.texto))}
+<div style="text-align:center;margin:24px 0;">
+${button(args.link, args.botao)}
+</div>
+`;
+  return { subject: args.assunto, html: shell(content, esc(args.titulo)) };
+}

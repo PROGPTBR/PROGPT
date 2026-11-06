@@ -263,5 +263,6 @@ export const config = {
     '/gestao-obras/:path*',
     '/obras-materiais/:path*',
     '/gestao-demandas/:path*',
+    '/recebimento/:path*',
   ],
 };

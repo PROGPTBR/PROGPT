@@ -111,7 +111,9 @@ export type ApiOperation =
   | 'mapa-fornecedores-plano'
   | 'mapa-fornecedores-web'
   | 'mapa-fornecedores-relatorio'
-  | 'chat-tool-websearch';
+  | 'chat-tool-websearch'
+  | 'recebimento-ler-nota'
+  | 'recebimento-importar-pedido';
 
 export type RecordUsageInput = {
   provider: ApiProvider;
