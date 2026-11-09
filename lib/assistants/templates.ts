@@ -1,5 +1,10 @@
 import { getServerSupabase } from '@/lib/db/supabase';
 import type { AssistantType, TemplateRow } from './types';
+import {
+  DIAGNOSTICO_TEMPLATE_PADRAO_BODY,
+  DIAGNOSTICO_TEMPLATE_PADRAO_DESCRICAO,
+  DIAGNOSTICO_TEMPLATE_PADRAO_NOME,
+} from './diagnostico-template-padrao';
 
 // Service-role helpers for templates. All admin write paths and the assistant
 // runtime go through here so the cookie-aware-no-UPDATE-policy bug from
@@ -14,7 +19,19 @@ export async function listTemplates(type?: AssistantType): Promise<TemplateRow[]
     console.warn('[assistants/templates] listTemplates failed:', error.message);
     return [];
   }
-  return (data ?? []) as TemplateRow[];
+  const rows = (data ?? []) as TemplateRow[];
+  // O form trava sem ≥1 template. A migration 0052 só abriu o CHECK; o seed
+  // ficou num script one-shot que não rodou em produção. Recria o padrão.
+  if (type === 'diagnostico_aquisicao' && rows.length === 0) {
+    const created = await createTemplate({
+      assistant_type: 'diagnostico_aquisicao',
+      name: DIAGNOSTICO_TEMPLATE_PADRAO_NOME,
+      description: DIAGNOSTICO_TEMPLATE_PADRAO_DESCRICAO,
+      body_md: DIAGNOSTICO_TEMPLATE_PADRAO_BODY,
+    });
+    if (created) return [created];
+  }
+  return rows;
 }
 
 export async function getTemplate(id: string): Promise<TemplateRow | null> {

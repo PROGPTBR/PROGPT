@@ -120,12 +120,27 @@ export function TabelaSaldo({ saldo }: { saldo: SaldoItem[] }) {
   );
 }
 
+const ACEITA_NOTA =
+  /\.(xml|pdf|png|jpe?g)$/i;
+const MIME_NOTA = new Set([
+  'text/xml',
+  'application/xml',
+  'application/pdf',
+  'image/png',
+  'image/jpeg',
+]);
+
+function arquivoDeNota(file: File): boolean {
+  return ACEITA_NOTA.test(file.name) || MIME_NOTA.has(file.type);
+}
+
 /** Envio do arquivo da nota (XML, PDF ou foto). Usado pelo comprador e pelo
- *  fornecedor; cada um passa a sua rota. */
+ *  fornecedor; cada um passa a sua rota. Arrastar o arquivo vale tanto quanto
+ *  abrir o seletor — o fornecedor não precisa procurar a nota na pasta. */
 export function EnvioNota({
   endpoint,
   onEnviada,
-  textoBotao = 'Anexar nota',
+  textoBotao = 'Escolher arquivo',
 }: {
   endpoint: string;
   onEnviada: (r: { numero?: string; finalidade?: FinalidadeNota }) => void;
@@ -133,6 +148,7 @@ export function EnvioNota({
 }) {
   const [finalidade, setFinalidade] = useState<FinalidadeNota | 'auto'>('auto');
   const [enviando, setEnviando] = useState(false);
+  const [arrastando, setArrastando] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   async function enviar(file: File) {
@@ -156,6 +172,15 @@ export function EnvioNota({
     }
   }
 
+  function receber(file: File | undefined) {
+    if (!file || enviando) return;
+    if (!arquivoDeNota(file)) {
+      toast.error('Envie o XML da nota, o PDF do DANFE ou uma foto (PNG ou JPG).');
+      return;
+    }
+    void enviar(file);
+  }
+
   return (
     <div className="space-y-3">
       <label className="block space-y-1">
@@ -173,19 +198,54 @@ export function EnvioNota({
         accept=".xml,.pdf,.png,.jpg,.jpeg,text/xml,application/xml,application/pdf,image/png,image/jpeg"
         className="hidden"
         onChange={(e) => {
-          const f = e.target.files?.[0];
-          if (f) void enviar(f);
+          receber(e.target.files?.[0]);
         }}
       />
-      <button
-        type="button"
-        disabled={enviando}
-        onClick={() => inputRef.current?.click()}
-        className="inline-flex items-center gap-2 rounded-full bg-brand-gradient text-black h-11 px-5 text-sm font-semibold disabled:opacity-60"
+      <div
+        data-testid="envio-nota-dropzone"
+        onDragEnter={(e) => {
+          if (!e.dataTransfer?.types?.includes('Files')) return;
+          e.preventDefault();
+          setArrastando(true);
+        }}
+        onDragOver={(e) => {
+          if (!e.dataTransfer?.types?.includes('Files')) return;
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'copy';
+        }}
+        onDragLeave={(e) => {
+          if (!e.currentTarget.contains(e.relatedTarget as Node)) setArrastando(false);
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          setArrastando(false);
+          if (e.dataTransfer.files.length > 1) {
+            toast.info('Envie uma nota por vez. Usamos o primeiro arquivo.');
+          }
+          receber(e.dataTransfer.files[0]);
+        }}
+        className={`flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed px-4 py-6 text-center transition-colors ${
+          arrastando ? 'border-brand bg-brand/10' : 'border-border bg-background'
+        } ${enviando ? 'pointer-events-none opacity-70' : ''}`}
       >
-        {enviando ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <FileUp className="h-4 w-4" aria-hidden />}
-        {enviando ? 'Lendo a nota…' : textoBotao}
-      </button>
+        {enviando ? (
+          <Loader2 className="h-7 w-7 animate-spin text-brand" aria-hidden />
+        ) : (
+          <FileUp className="h-7 w-7 text-muted-foreground" aria-hidden />
+        )}
+        <p className="text-sm font-medium">
+          {enviando ? 'Lendo a nota…' : arrastando ? 'Solte a nota aqui' : 'Arraste a nota aqui'}
+        </p>
+        <p className="text-xs text-muted-foreground">XML da NF-e, PDF do DANFE ou foto — sem abrir a pasta</p>
+        <button
+          type="button"
+          disabled={enviando}
+          onClick={() => inputRef.current?.click()}
+          className="mt-1 inline-flex items-center gap-2 rounded-full bg-brand-gradient text-black h-10 px-4 text-sm font-semibold disabled:opacity-60"
+        >
+          {textoBotao}
+        </button>
+      </div>
       <p className="text-xs text-muted-foreground">
         Prefira o XML da NF-e: é lido na hora e sem erro. PDF do DANFE ou foto também funcionam, lidos pela IA.
       </p>
