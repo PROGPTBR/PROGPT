@@ -17,6 +17,7 @@ import {
   Activity,
   ArrowLeft,
   Building2,
+  Newspaper,
 } from 'lucide-react';
 
 import { BrandLogo } from '@/components/brand/BrandLogo';
@@ -60,6 +61,12 @@ const ITEMS: SidebarItem[] = [
     href: '/admin/articles',
     label: 'Artigos',
     Icon: FileText,
+  },
+  {
+    href: '/admin/updates',
+    label: 'Atualizações',
+    Icon: Newspaper,
+    adminOnly: true,
   },
   {
     href: '/admin/prompts',

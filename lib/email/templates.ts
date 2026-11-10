@@ -5,6 +5,7 @@ import {
   LEGAL_CONTACT_EMAIL,
   LEGAL_CONTACT_PHONE,
 } from '@/lib/legal/constants';
+import { UPDATE_CATEGORY_LABELS, type UpdateCategory } from '@/lib/updates/types';
 import { getAppUrl } from './client';
 
 // Sub-projeto 30 — templates HTML inline pra emails transacionais.
@@ -13,11 +14,15 @@ import { getAppUrl } from './client';
 // deps novas (React Email seria 200KB+), (c) PT-BR plain.
 // Estilos minimalistas: emails legíveis em dark e light mode.
 
-const BRAND_COLOR = '#0ed1e0';
-const TEXT_PRIMARY = '#0d0d0d';
-const TEXT_MUTED = '#6b7280';
-const BG = '#ffffff';
-const BG_ACCENT = '#f3f4f6';
+const BRAND_COLOR = '#19c5f5';
+const TEXT_PRIMARY = '#ffffff';
+const TEXT_MUTED = '#b8c2d3';
+const BG = '#08101f';
+const BG_ACCENT = '#050b18';
+const BG_PANEL = '#0d1829';
+const BORDER_COLOR = '#14304d';
+const LOGO_URL =
+  'https://yxpxibmqdazyhpyohwqa.supabase.co/storage/v1/object/public/user-logos/progpt-logo-neon.png';
 
 function shell(content: string, preheader: string): string {
   // `preheader` aparece na lista de inbox antes do user abrir.
@@ -27,24 +32,38 @@ function shell(content: string, preheader: string): string {
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>${PRODUCT_NAME}</title>
+<style>
+@media only screen and (max-width: 620px) {
+  .email-outer { padding: 16px 10px !important; }
+  .email-card { width: 100% !important; border-radius: 12px !important; }
+  .email-header { padding: 30px 22px 16px !important; }
+  .email-logo { width: 190px !important; max-width: 80% !important; }
+  .email-content { padding: 22px !important; }
+  .email-footer { padding: 22px !important; }
+  .email-button { display: block !important; padding: 15px 20px !important; text-align: center !important; }
+}
+</style>
 </head>
-<body style="margin:0;padding:0;background:${BG_ACCENT};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:${TEXT_PRIMARY};">
-<span style="display:none;visibility:hidden;opacity:0;height:0;width:0;font-size:0;">
+<body style="margin:0;padding:0;background:${BG_ACCENT};font-family:Arial,Helvetica,sans-serif;color:${TEXT_PRIMARY};">
+<span style="display:none!important;visibility:hidden;opacity:0;height:0;width:0;overflow:hidden;font-size:1px;line-height:1px;color:${BG_ACCENT};">
 ${preheader}
 </span>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${BG_ACCENT};padding:24px 0;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${BG_ACCENT};">
 <tr><td align="center">
-<table role="presentation" width="560" cellpadding="0" cellspacing="0" border="0" style="background:${BG};border-radius:12px;overflow:hidden;max-width:560px;width:100%;">
-<tr><td style="padding:32px 32px 24px;border-bottom:1px solid #e5e7eb;">
-<div style="font-size:24px;font-weight:600;color:${TEXT_PRIMARY};">PROGPT<span style="color:${BRAND_COLOR};">.</span></div>
-<div style="font-size:12px;color:${TEXT_MUTED};margin-top:4px;">uma plataforma 2BSUPPLY</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="email-outer" style="background:${BG_ACCENT};padding:40px 20px;">
+<tr><td align="center">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" class="email-card" style="background:${BG};border:1px solid ${BORDER_COLOR};border-radius:16px;overflow:hidden;max-width:600px;width:100%;">
+<tr><td align="center" class="email-header" style="padding:40px 30px 20px;">
+<img src="${LOGO_URL}" alt="PROGPT" width="220" class="email-logo" style="display:block;border:0;max-width:100%;height:auto;" />
 </td></tr>
-<tr><td style="padding:32px;">
+<tr><td class="email-content" style="padding:24px 40px 40px;">
 ${content}
 </td></tr>
-<tr><td style="padding:24px 32px;background:${BG_ACCENT};border-top:1px solid #e5e7eb;font-size:11px;color:${TEXT_MUTED};line-height:1.6;">
-${COMPANY_NAME} · CNPJ ${COMPANY_CNPJ}<br/>
-Dúvidas? <a href="mailto:${LEGAL_CONTACT_EMAIL}" style="color:${BRAND_COLOR};text-decoration:none;">${LEGAL_CONTACT_EMAIL}</a> · ${LEGAL_CONTACT_PHONE}
+<tr><td align="center" class="email-footer" style="padding:25px 40px;border-top:1px solid ${BORDER_COLOR};font-size:12px;color:#7d8aa1;line-height:1.8;">
+<div>${COMPANY_NAME} · CNPJ ${COMPANY_CNPJ}</div>
+<div>Dúvidas? <a href="mailto:${LEGAL_CONTACT_EMAIL}" style="color:${BRAND_COLOR};text-decoration:none;">${LEGAL_CONTACT_EMAIL}</a> · ${LEGAL_CONTACT_PHONE}</div>
+</td></tr>
+</table>
 </td></tr>
 </table>
 </td></tr>
@@ -54,15 +73,15 @@ Dúvidas? <a href="mailto:${LEGAL_CONTACT_EMAIL}" style="color:${BRAND_COLOR};te
 }
 
 function button(href: string, label: string): string {
-  return `<a href="${href}" style="display:inline-block;background:${BRAND_COLOR};color:${TEXT_PRIMARY};font-weight:600;text-decoration:none;padding:12px 24px;border-radius:9999px;font-size:14px;">${label}</a>`;
+  return `<a href="${href}" class="email-button" style="display:inline-block;background:${BRAND_COLOR};color:#04111f;font-weight:700;text-decoration:none;padding:15px 32px;border-radius:999px;font-size:15px;line-height:20px;">${label}</a>`;
 }
 
 function p(text: string): string {
-  return `<p style="font-size:14px;line-height:1.6;color:${TEXT_PRIMARY};margin:0 0 16px 0;">${text}</p>`;
+  return `<p style="font-size:16px;line-height:1.625;color:${TEXT_MUTED};margin:0 0 18px 0;">${text}</p>`;
 }
 
 function h(text: string): string {
-  return `<h1 style="font-size:20px;font-weight:600;color:${TEXT_PRIMARY};margin:0 0 16px 0;">${text}</h1>`;
+  return `<h1 style="font-size:28px;line-height:1.25;font-weight:700;color:${TEXT_PRIMARY};margin:0 0 20px 0;text-align:center;">${text}</h1>`;
 }
 
 const MONO_FONT = "'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace";
@@ -71,12 +90,39 @@ const MONO_FONT = "'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace";
 // (e-mail) de forma explícita, num visual mais "tech"/dashboard do que uma
 // frase solta em prosa.
 function accountCard(email: string): string {
-  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#0b0f19;border-radius:10px;margin:20px 0;">
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${BG_PANEL};border:1px solid ${BORDER_COLOR};border-radius:10px;margin:20px 0;">
 <tr><td style="padding:16px 20px;">
 <div style="color:#34d399;font-size:11px;font-family:${MONO_FONT};letter-spacing:0.08em;text-transform:uppercase;">● conta ativa</div>
 <div style="color:#e5e7eb;font-size:13px;font-family:${MONO_FONT};margin-top:6px;word-break:break-all;">usuário: <span style="color:${BRAND_COLOR};">${email}</span></div>
 </td></tr>
 </table>`;
+}
+
+// ─── Aviso de nova atualização (somente prévia nesta etapa) ──────────────
+
+export function buildUpdateAnnouncementEmail(args: {
+  title: string;
+  summary: string;
+  slug: string;
+  category: UpdateCategory;
+}): { subject: string; html: string } {
+  const title = args.title.trim().replace(/[\r\n]+/g, ' ');
+  const summary = args.summary.trim();
+  const categoryLabel = UPDATE_CATEGORY_LABELS[args.category].toLocaleUpperCase('pt-BR');
+  const href = `${getAppUrl()}/atualizacoes#${encodeURIComponent(args.slug)}`;
+  const content = `
+<div style="margin:0 0 16px;text-align:center;color:${BRAND_COLOR};font-size:12px;line-height:18px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;white-space:normal;overflow-wrap:anywhere;">ATUALIZAÇÃO DO SISTEMA — ${categoryLabel}</div>
+${h(esc(title))}
+${p(esc(summary).replace(/\r?\n/g, '<br/>'))}
+<div style="text-align:center;margin:24px 0 8px;">
+${button(href, 'Ver atualização')}
+</div>
+`;
+
+  return {
+    subject: `Novidade no PROGPT: ${title}`,
+    html: shell(content, esc(summary)),
+  };
 }
 
 // ─── 1. Welcome (pós primeira entrada confirmada) ────────────────────────
@@ -169,7 +215,7 @@ export function buildPaymentConfirmedEmail(args: {
   const content = `
 ${h('Pagamento recebido com sucesso ✅')}
 ${p(`Obrigado! Confirmamos o recebimento de <strong>R$ ${amount}</strong> referente à sua assinatura Pro do PROGPT.`)}
-<div style="background:${BG_ACCENT};border-radius:8px;padding:16px;margin:16px 0;font-size:13px;color:${TEXT_PRIMARY};">
+<div style="background:${BG_PANEL};border:1px solid ${BORDER_COLOR};border-radius:10px;padding:16px;margin:18px 0;font-size:14px;line-height:1.6;color:${TEXT_PRIMARY};">
 <div><strong>Plano:</strong> Pro · R$ ${amount}/mês</div>
 <div style="margin-top:4px;"><strong>Próxima cobrança:</strong> ${args.nextDueDate}</div>
 </div>
@@ -194,7 +240,7 @@ export function buildPaymentOverdueEmail(args: {
   const content = `
 ${h('Não conseguimos cobrar sua assinatura ⚠️')}
 ${p('Tentamos processar a cobrança mensal da sua assinatura Pro mas não foi possível — pode ser cartão recusado, limite excedido ou problema com Pix.')}
-<div style="background:#fef3c7;border-left:4px solid #f59e0b;border-radius:4px;padding:12px 16px;margin:16px 0;font-size:13px;color:${TEXT_PRIMARY};">
+<div style="background:#241b0b;border:1px solid #6b4c12;border-left:4px solid #f59e0b;border-radius:8px;padding:14px 16px;margin:18px 0;font-size:14px;line-height:1.6;color:#f8e8bd;">
 Você mantém acesso Pro até <strong>${args.accessUntil}</strong>. Após essa data, sua conta volta pro plano Free se o pagamento não for resolvido.
 </div>
 ${p('Pra resolver: acesse sua assinatura e atualize o método de pagamento. Se foi falha do cartão, geralmente uma nova tentativa em 24-48h resolve.')}
@@ -222,7 +268,7 @@ export function buildSubscriptionCancelledEmail(args: {
   const content = `
 ${h('Cancelamento confirmado')}
 ${p('Confirmamos o cancelamento da sua assinatura Pro do PROGPT. Pena perder você 😢')}
-<div style="background:${BG_ACCENT};border-radius:8px;padding:16px;margin:16px 0;font-size:13px;color:${TEXT_PRIMARY};">
+<div style="background:${BG_PANEL};border:1px solid ${BORDER_COLOR};border-radius:10px;padding:16px;margin:18px 0;font-size:14px;line-height:1.6;color:${TEXT_PRIMARY};">
 <strong>Acesso Pro até:</strong> ${args.accessUntil}<br/>
 <span style="color:${TEXT_MUTED};font-size:12px;">Depois dessa data, sua conta volta pro plano Free (chat ilimitado, mas sem assistentes adicionais).</span>
 </div>
@@ -259,7 +305,7 @@ function quadro(linhas: Array<[string, string]>): string {
         `<tr><td style="padding:6px 0;font-size:12px;color:${TEXT_MUTED};width:40%;vertical-align:top;">${esc(k)}</td><td style="padding:6px 0;font-size:14px;color:${TEXT_PRIMARY};">${esc(v)}</td></tr>`,
     )
     .join('');
-  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${BG_ACCENT};border-radius:10px;margin:16px 0;padding:8px 16px;">${rows}</table>`;
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${BG_PANEL};border:1px solid ${BORDER_COLOR};border-radius:10px;margin:18px 0;padding:10px 16px;">${rows}</table>`;
 }
 
 /** Para o gestor: pedido de aprovação com o link seguro (sem conta). */

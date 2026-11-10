@@ -1,6 +1,11 @@
 'use client';
 
 import { useState, type SVGProps } from 'react';
+import Image from 'next/image';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import type { ProductUpdate, UpdateCategory } from '@/lib/updates/types';
+import { UPDATE_CATEGORY_LABELS } from '@/lib/updates/types';
 import styles from './atualizacoes.module.css';
 
 type IconName = 'check' | 'close' | 'search';
@@ -11,111 +16,78 @@ const iconPaths: Record<IconName, string> = {
   check: 'm5 12 4 4L19 6',
 };
 
-function Icon({
-  name = 'search',
-  size = 18,
-  ...props
-}: SVGProps<SVGSVGElement> & { name?: IconName; size?: number }) {
+function Icon({ name = 'search', size = 18, ...props }: SVGProps<SVGSVGElement> & { name?: IconName; size?: number }) {
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      {...props}
-    >
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>
       <path d={iconPaths[name]} />
     </svg>
   );
 }
 
-type UpdateType = 'Novo recurso' | 'Melhoria' | 'Correção';
-
-type Update = {
-  id: string;
-  date: string;
-  week: string;
-  month: string;
-  type: UpdateType;
-  title: string;
-  text: string;
-  bullets: string[];
-  video?: string;
-  poster?: string;
-  caption?: string;
+type Filter = 'all' | UpdateCategory;
+const filters: Filter[] = ['all', 'new_feature', 'improvement', 'fix'];
+const filterLabels: Record<Filter, string> = {
+  all: 'Todas',
+  new_feature: 'Novos recursos',
+  improvement: 'Melhorias',
+  fix: 'Correções',
 };
 
-const updates: Update[] = [
-  {
-    id: 'favoritos',
-    date: '30 OUT 2026',
-    week: '26 a 30 de outubro',
-    month: '10',
-    type: 'Novo recurso',
-    title: 'Encontre seus assistentes com mais facilidade',
-    text: 'Agora você pode buscar assistentes diretamente no menu lateral da área de chat. Abra Assistentes e digite o nome do assistente que deseja encontrar para acessá-lo mais rapidamente.',
-    bullets: ['Confira no vídeo abaixo, a nova atualização'],
-    // Coloque o arquivo em: public/atualizacoes/busca-assistentes.mp4
-    video: '/atualizacoes/busca-assistentes.mp4',
-    // Opcional: imagem de capa exibida antes do play (public/atualizacoes/busca-assistentes.jpg)
-    // poster: '/atualizacoes/busca-assistentes.jpg',
-    caption: 'Busca de assistentes • demonstração em vídeo',
-  },
-];
+const dateFormatter = new Intl.DateTimeFormat('pt-BR', {
+  day: '2-digit',
+  month: 'short',
+  year: 'numeric',
+  timeZone: 'America/Sao_Paulo',
+});
+const monthFormatter = new Intl.DateTimeFormat('pt-BR', {
+  month: 'long',
+  year: 'numeric',
+  timeZone: 'America/Sao_Paulo',
+});
+const weekFormatter = new Intl.DateTimeFormat('pt-BR', {
+  day: 'numeric',
+  month: 'long',
+  timeZone: 'America/Sao_Paulo',
+});
 
-const filters: Array<'Todas' | UpdateType> = [
-  'Todas',
-  'Novo recurso',
-  'Melhoria',
-  'Correção',
-];
+function publicationDate(iso: string) {
+  return dateFormatter.format(new Date(iso)).replace('.', '').toLocaleUpperCase('pt-BR');
+}
 
-const filterLabels = {
-  Todas: 'Todas',
-  'Novo recurso': 'Novos recursos',
-  Melhoria: 'Melhorias',
-  Correção: 'Correções',
-};
+function publicationWeek(iso: string) {
+  const date = new Date(iso);
+  const local = new Date(date.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+  const weekday = local.getDay();
+  const monday = new Date(local);
+  monday.setDate(monday.getDate() + (weekday === 0 ? -6 : 1 - weekday));
+  const friday = new Date(monday);
+  friday.setDate(friday.getDate() + 4);
+  const start = new Intl.DateTimeFormat('pt-BR', { day: 'numeric', timeZone: 'America/Sao_Paulo' }).format(monday);
+  return `${start} a ${weekFormatter.format(friday)}`;
+}
 
-export default function UpdatesPage() {
+export default function UpdatesPage({ updates, loadError = false }: { updates: ProductUpdate[]; loadError?: boolean }) {
   const [query, setQuery] = useState('');
-  const [filter, setFilter] = useState<(typeof filters)[number]>('Todas');
-  const month = '10';
-
-  const normalizedQuery = query.toLocaleLowerCase('pt-BR');
-  const items = updates.filter(
-    (update) =>
-      (filter === 'Todas' || update.type === filter) &&
-      update.month === month &&
-      `${update.title} ${update.text} ${update.type}`
-        .toLocaleLowerCase('pt-BR')
-        .includes(normalizedQuery),
+  const [filter, setFilter] = useState<Filter>('all');
+  const normalizedQuery = query.trim().toLocaleLowerCase('pt-BR');
+  const items = updates.filter((update) =>
+    (filter === 'all' || update.category === filter) &&
+    `${update.title} ${update.summary} ${update.content_md} ${UPDATE_CATEGORY_LABELS[update.category]}`
+      .toLocaleLowerCase('pt-BR')
+      .includes(normalizedQuery),
   );
+  const periodLabel = updates[0]
+    ? monthFormatter.format(new Date(updates[0].published_at)).replace(/^./, (letter) => letter.toLocaleUpperCase('pt-BR'))
+    : 'Publicações';
 
   return (
     <div className={styles.app}>
       <div className={styles.mainShell}>
         <header className={styles.topbar}>
-          <a
-            className={styles.headerLogo}
-            href="#atualizacoes"
-            aria-label="PROGPT — Atualizações"
-          >
-            <img
-              src="/atualizacoes/progpt-logo.png"
-              alt="PROGPT"
-              width="241"
-              height="57"
-            />
+          <a className={styles.headerLogo} href="#atualizacoes" aria-label="PROGPT — Atualizações">
+            <Image src="/atualizacoes/progpt-logo.png" alt="PROGPT" width={241} height={57} priority />
           </a>
-          <span className={styles.topInfo}>
-            <span className={styles.smallDot} /> Novidades do sistema
-          </span>
+          <span className={styles.topInfo}><span className={styles.smallDot} /> Novidades do sistema</span>
         </header>
 
         <main id="atualizacoes" className={styles.content}>
@@ -130,92 +102,53 @@ export default function UpdatesPage() {
           <section className={styles.toolbar} aria-label="Filtrar atualizações">
             <label className={styles.search}>
               <Icon name="search" size={17} />
-              <input
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Buscar atualização"
-                aria-label="Buscar atualização"
-              />
-              {query && (
-                <button
-                  className={styles.iconButton}
-                  aria-label="Limpar busca"
-                  onClick={() => setQuery('')}
-                  type="button"
-                >
-                  <Icon name="close" size={15} />
-                </button>
-              )}
+              <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar atualização" aria-label="Buscar atualização" />
+              {query && <button className={styles.iconButton} aria-label="Limpar busca" onClick={() => setQuery('')} type="button"><Icon name="close" size={15} /></button>}
             </label>
-            <span className={styles.monthLabel}>Outubro de 2026</span>
+            <span className={styles.monthLabel}>{periodLabel}</span>
           </section>
 
           <div className={styles.filters} aria-label="Tipo de atualização">
             {filters.map((item) => (
-              <button
-                key={item}
-                aria-pressed={filter === item}
-                className={filter === item ? styles.active : undefined}
-                onClick={() => setFilter(item)}
-                type="button"
-              >
+              <button key={item} aria-pressed={filter === item} className={filter === item ? styles.active : undefined} onClick={() => setFilter(item)} type="button">
                 {filterLabels[item]}
               </button>
             ))}
-            <span className={styles.resultCount} aria-live="polite">
-              {items.length} {items.length === 1 ? 'publicação' : 'publicações'}
-            </span>
+            <span className={styles.resultCount} aria-live="polite">{items.length} {items.length === 1 ? 'publicação' : 'publicações'}</span>
           </div>
 
           <div className={styles.updates}>
             {items.map((update, index) => (
-              <article className={styles.update} key={update.id}>
+              <article className={styles.update} key={update.id} id={update.slug}>
                 <div className={styles.dateColumn}>
                   <div className={styles.timelineDot} />
-                  <time>{update.date}</time>
-                  <span>
-                    Semana de
-                    <br />
-                    {update.week}
-                  </span>
-                  {index === 0 && filter === 'Todas' && !query && (
-                    <span className={styles.latest}>Mais recente</span>
-                  )}
+                  <time dateTime={update.published_at}>{publicationDate(update.published_at)}</time>
+                  <span>Semana de<br />{publicationWeek(update.published_at)}</span>
+                  {index === 0 && filter === 'all' && !query && <span className={styles.latest}>Mais recente</span>}
                 </div>
                 <div className={styles.updateContent}>
-                  <span
-                    className={`${styles.badge} ${
-                      update.type === 'Novo recurso'
-                        ? styles.new
-                        : update.type === 'Melhoria'
-                          ? styles.improvement
-                          : styles.fix
-                    }`}
-                  >
-                    {update.type === 'Correção' && <Icon name="check" size={12} />}{' '}
-                    {update.type}
+                  <span className={`${styles.badge} ${update.category === 'new_feature' ? styles.new : update.category === 'improvement' ? styles.improvement : styles.fix}`}>
+                    {update.category === 'fix' && <Icon name="check" size={12} />} {UPDATE_CATEGORY_LABELS[update.category]}
                   </span>
                   <h2>{update.title}</h2>
-                  <p>{update.text}</p>
-                  <ul>
-                    {update.bullets.map((bullet) => (
-                      <li key={bullet}>{bullet}</li>
-                    ))}
-                  </ul>
-                  {update.video && (
+                  <p className={styles.summary}>{update.summary}</p>
+                  {update.content_md && <div className={styles.markdown}><ReactMarkdown remarkPlugins={[remarkGfm]}>{update.content_md}</ReactMarkdown></div>}
+                  {update.image_url && !update.video_url && (
                     <figure>
-                      <video
-                        className={styles.video}
-                        controls
-                        playsInline
-                        preload="metadata"
-                        poster={update.poster}
-                        aria-label={update.title}
-                      >
-                        <source src={update.video} type="video/mp4" />
+                      {/* URL administrável: <img> aceita qualquer origem https sem
+                          exigir uma allowlist de hosts no build do Next.js. */}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img className={styles.mediaImage} src={update.image_url} alt={update.media_caption || update.title} />
+                      {update.media_caption && <figcaption>{update.media_caption}</figcaption>}
+                    </figure>
+                  )}
+                  {update.video_url && (
+                    <figure>
+                      <video className={styles.video} controls playsInline preload="metadata" poster={update.image_url ?? undefined} aria-label={update.title}>
+                        <source src={update.video_url} />
                         Seu navegador não suporta a reprodução de vídeo.
                       </video>
-                      <figcaption>{update.caption}</figcaption>
+                      {update.media_caption && <figcaption>{update.media_caption}</figcaption>}
                     </figure>
                   )}
                 </div>
@@ -223,20 +156,16 @@ export default function UpdatesPage() {
             ))}
           </div>
 
-          {!items.length && (
-            <div className={styles.empty}>
+          {(loadError || !items.length) && (
+            <div className={styles.empty} role={loadError ? 'alert' : undefined}>
               <Icon name="search" size={25} />
-              <h2>Nenhuma atualização encontrada</h2>
-              <p>Tente outro termo ou selecione um período diferente.</p>
-              <button
-                onClick={() => {
-                  setQuery('');
-                  setFilter('Todas');
-                }}
-                type="button"
-              >
-                Limpar filtros
-              </button>
+              <h2>{loadError ? 'Não foi possível carregar as atualizações' : 'Nenhuma atualização encontrada'}</h2>
+              <p>{loadError ? 'Tente recarregar a página em alguns instantes.' : 'Tente outro termo ou selecione um filtro diferente.'}</p>
+              {loadError ? (
+                <button onClick={() => window.location.reload()} type="button">Tentar novamente</button>
+              ) : updates.length > 0 ? (
+                <button onClick={() => { setQuery(''); setFilter('all'); }} type="button">Limpar filtros</button>
+              ) : null}
             </div>
           )}
 

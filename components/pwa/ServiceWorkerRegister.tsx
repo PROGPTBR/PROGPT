@@ -9,11 +9,39 @@ export function ServiceWorkerRegister() {
     if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) {
       return;
     }
-    const onLoad = () => {
-      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    let controllerChangeHandler: (() => void) | null = null;
+
+    const register = () => {
+      const hadController = navigator.serviceWorker.controller !== null;
+
+      if (hadController) {
+        controllerChangeHandler = () => {
+          const reloadKey = 'progpt_sw_v2_reloaded';
+          if (window.sessionStorage.getItem(reloadKey)) return;
+          window.sessionStorage.setItem(reloadKey, '1');
+          window.location.reload();
+        };
+        navigator.serviceWorker.addEventListener('controllerchange', controllerChangeHandler);
+      }
+
+      navigator.serviceWorker
+        .register('/sw.js', { updateViaCache: 'none' })
+        .then((registration) => registration.update())
+        .catch(() => {});
     };
-    window.addEventListener('load', onLoad);
-    return () => window.removeEventListener('load', onLoad);
+
+    if (document.readyState === 'complete') {
+      register();
+    } else {
+      window.addEventListener('load', register, { once: true });
+    }
+
+    return () => {
+      window.removeEventListener('load', register);
+      if (controllerChangeHandler) {
+        navigator.serviceWorker.removeEventListener('controllerchange', controllerChangeHandler);
+      }
+    };
   }, []);
   return null;
 }

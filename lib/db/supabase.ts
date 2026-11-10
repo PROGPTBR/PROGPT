@@ -4,6 +4,7 @@ import { requireEnv } from "@/lib/env";
 let serverInstance: SupabaseClient | null = null;
 let browserInstance: SupabaseClient | null = null;
 let signupInstance: SupabaseClient | null = null;
+let publicInstance: SupabaseClient | null = null;
 
 /**
  * Cliente administrativo.
@@ -66,4 +67,26 @@ export function getSignupSupabase(): SupabaseClient {
   });
 
   return signupInstance;
+}
+
+/**
+ * Cliente anônimo para leituras públicas server-side protegidas por RLS.
+ * Não carrega cookies nem persiste sessão, portanto nunca herda a
+ * identidade de um visitante durante renderização/cache compartilhado.
+ */
+export function getPublicSupabase(): SupabaseClient {
+  if (publicInstance) return publicInstance;
+
+  const url = requireEnv("NEXT_PUBLIC_SUPABASE_URL");
+  const anonKey = requireEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY");
+
+  publicInstance = createClient(url, anonKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+    },
+  });
+
+  return publicInstance;
 }
