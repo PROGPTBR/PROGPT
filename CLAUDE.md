@@ -337,6 +337,7 @@ Roadmap completo em `docs/product/beta-readiness.md`. Roadmap B2B (Milestone 3+)
   00000000000061_tributario_e_modulos.sql (CHECK +tributario_propostas + RPC modulos_desativados() — sub-projeto 84)
   00000000000062_fluxo_acompanhamento_aprovacao.sql (fluxo_processos.acompanhamento_token/solicitante_* + fluxo_aprovacoes — sub-projeto 90)
   00000000000063_recebimento_nf.sql (recebimento_pedidos/notas/entradas + bucket privado recebimento-notas — sub-projeto 95)
+  00000000000064_diagnostico_aquisicao_template.sql (seed do template padrão do Diagnóstico de Aquisição; sem ele o botão "Gerar diagnóstico" ficava morto. `lib/assistants/templates.ts` também cai no padrão em código se a tabela estiver vazia)
 /.github/workflows
   ci.yml                                (typecheck + vitest + pytest + rag:eval em PR + push main; artifact + PR comment)
 /docs/superpowers
