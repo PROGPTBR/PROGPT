@@ -168,7 +168,7 @@ export function ReformaCalculadora() {
         toast.error(d.message ?? 'Não foi possível ler o XML.');
         return;
       }
-      type ItemXml = { descricao: string; ncm: string; valor: number; quantidade: number | null; unidade: string; ibscbs: { cClassTrib: string; vCBS: number | null; vIBS: number | null } | null };
+      type ItemXml = { descricao: string; ncm: string; valor: number; origemValor: 'liquido_da_nota' | 'sem_embutidos' | 'valor_do_produto'; quantidade: number | null; unidade: string; ibscbs: { cClassTrib: string; vCBS: number | null; vIBS: number | null } | null };
       const nota = d.nota as { numero: string; emitente: string; data: string; itens: ItemXml[] };
       const novas: Linha[] = nota.itens.map((it) => ({
         descricao: it.descricao,
@@ -183,10 +183,16 @@ export function ReformaCalculadora() {
       setResultado(null);
       setOrigemNota(`NF ${nota.numero || ''} de ${nota.emitente || 'fornecedor'}${nota.data ? `, emitida em ${dataBr(nota.data)}` : ''}`);
       const comGrupo = nota.itens.filter((i) => i.ibscbs).length;
+      const comLiquido = nota.itens.filter((i) => i.origemValor === 'liquido_da_nota').length;
       toast.success(
-        comGrupo
-          ? `${novas.length} item(ns) lidos. ${comGrupo} já trazem a classificação e o destaque de CBS/IBS da nota.`
-          : `${novas.length} item(ns) lidos. A nota não traz o grupo de CBS/IBS: confira a classificação de cada item.`,
+        [
+          `${novas.length} item(ns) lidos, com o valor sem impostos`,
+          comLiquido ? ` (${comLiquido} com o valor líquido informado na própria nota)` : ' (valor do produto menos ICMS, PIS e Cofins)',
+          '. ',
+          comGrupo
+            ? `${comGrupo} já trazem a classificação e o destaque de CBS/IBS.`
+            : 'A nota não traz o grupo de CBS/IBS: confira a classificação de cada item.',
+        ].join(''),
       );
       if (comGrupo < novas.length) void sugerir(novas);
     } finally {
@@ -342,7 +348,7 @@ export function ReformaCalculadora() {
                       />
                     </label>
                     <label className="space-y-1">
-                      <span className="text-[11px] text-muted-foreground">Valor sem CBS/IBS</span>
+                      <span className="text-[11px] text-muted-foreground">Valor sem impostos</span>
                       <input className={CAMPO} inputMode="decimal" placeholder="R$" value={l.valor} onChange={(e) => setLinha(i, { valor: e.target.value })} />
                     </label>
                     <label className="space-y-1 min-w-0">
@@ -640,7 +646,8 @@ export function ReformaCalculadora() {
           <p className="text-xs text-muted-foreground">
             Cálculo feito pela Calculadora de Tributos oficial da Receita Federal
             {versao ? ` (aplicativo ${versao.versaoApp.split('-')[0]}, regras de ${dataBr(versao.dataVersaoDb)})` : ''}. De 2027 em
-            diante as alíquotas são de referência e mudam quando forem fixadas oficialmente. Fornecedor do Simples Nacional que
+            diante as alíquotas são de referência e mudam quando forem fixadas oficialmente. O custo real considera só a CBS e o
+            IBS: o ICMS e o ISS, que vão diminuindo até sumir em 2033, não entram nesta conta. Fornecedor do Simples Nacional que
             não optou pelo regime regular do IBS e da CBS transfere crédito menor do que o mostrado aqui.
           </p>
         </section>

@@ -61,6 +61,14 @@ export function lerNfeXml(texto: string): NotaLida {
     const icms = bloco(det, 'ICMS');
     const ipi = bloco(det, 'IPI');
     const ibscbs = bloco(det, 'IBSCBS');
+    const liqUnit = num(tag(prod, 'vUnComLiq'));
+    const liqTotal = num(tag(prod, 'vProdLiq'));
+    const embutidos = {
+      icms: num(tag(icms, 'vICMS')),
+      fcp: num(tag(icms, 'vFCP')),
+      pis: num(tag(bloco(det, 'PIS'), 'vPIS')),
+      cofins: num(tag(bloco(det, 'COFINS'), 'vCOFINS')),
+    };
     itens.push({
       codigo: tag(prod, 'cProd'),
       descricao: tag(prod, 'xProd'),
@@ -81,6 +89,9 @@ export function lerNfeXml(texto: string): NotaLida {
             vIBS: num(tag(ibscbs, 'vIBS')),
           }
         : null,
+      liquido: liqUnit != null || liqTotal != null ? { unitario: liqUnit, total: liqTotal } : null,
+      embutidos: Object.values(embutidos).some((v) => v != null) ? embutidos : null,
+      icms_previsto: num(tag(det, 'vICMSPrevisto')),
     });
   }
 
@@ -93,6 +104,7 @@ export function lerNfeXml(texto: string): NotaLida {
     data_emissao: (tag(ide, 'dhEmi') || tag(ide, 'dEmi')).slice(0, 10),
     natureza: tag(ide, 'natOp'),
     valor_total: num(tag(total, 'vNF')),
+    valor_liquido_total: num(tag(bloco(xml, 'total'), 'vProdLiqTot')),
     itens,
   };
 }
@@ -117,4 +129,20 @@ export function finalidadeDaNota(nota: Pick<NotaLida, 'itens' | 'natureza'>): Fi
   if (/simples faturamento|faturamento antecipado/.test(nat)) return 'financeira';
   if (/remessa.*(entrega futura|venda)/.test(nat)) return 'entrega';
   return 'unica';
+}
+
+/** Valor do item sem tributos: o líquido que a nota informa (NT 2026.008)
+ *  ou, na falta dele, o vProd menos os tributos que ficam "por dentro"
+ *  (ICMS, FCP, PIS e Cofins). É a base que a reforma usa para CBS e IBS. */
+export function valorSemTributos(
+  item: Pick<NotaItem, 'valor_total' | 'quantidade' | 'valor_unitario' | 'liquido' | 'embutidos'>,
+): { valor: number; origem: 'liquido_da_nota' | 'sem_embutidos' | 'valor_do_produto' } {
+  if (item.liquido?.total != null) return { valor: item.liquido.total, origem: 'liquido_da_nota' };
+  const bruto = item.valor_total ?? (item.quantidade ?? 0) * (item.valor_unitario ?? 0);
+  const e = item.embutidos;
+  if (e) {
+    const soma = (e.icms ?? 0) + (e.fcp ?? 0) + (e.pis ?? 0) + (e.cofins ?? 0);
+    return { valor: Math.round((bruto - soma) * 100) / 100, origem: 'sem_embutidos' };
+  }
+  return { valor: bruto, origem: 'valor_do_produto' };
 }

@@ -1,13 +1,15 @@
 import { NextResponse } from 'next/server';
 
 import { getCurrentUser } from '@/lib/auth';
-import { lerNfeXml, pareceNfe } from '@/lib/recebimento/nfe-xml';
+import { lerNfeXml, pareceNfe, valorSemTributos } from '@/lib/recebimento/nfe-xml';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 // Lê o XML de uma NF-e para a Calculadora da Reforma: itens com NCM, valor e,
-// quando a nota já traz, o CST, o cClassTrib e a CBS/IBS destacados.
+// quando a nota já traz, o CST, o cClassTrib e a CBS/IBS destacados. O valor
+// devolvido é sem tributos (líquido da NT 2026.008 ou vProd menos ICMS, PIS e
+// Cofins), que é a base da CBS e do IBS.
 export async function POST(req: Request) {
   if (!(await getCurrentUser())) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   let file: File | null = null;
@@ -34,7 +36,12 @@ export async function POST(req: Request) {
         itens: nota.itens.map((i) => ({
           descricao: i.descricao,
           ncm: i.ncm,
-          valor: i.valor_total ?? (i.quantidade ?? 0) * (i.valor_unitario ?? 0),
+          // Base da CBS/IBS: o líquido da nota (NT 2026.008) ou o vProd menos
+          // os tributos embutidos. Mandar o vProd cheio inflaria o imposto.
+          ...(() => {
+            const v = valorSemTributos(i);
+            return { valor: v.valor, origemValor: v.origem };
+          })(),
           quantidade: i.quantidade,
           unidade: i.unidade,
           ibscbs: i.ibscbs ?? null,

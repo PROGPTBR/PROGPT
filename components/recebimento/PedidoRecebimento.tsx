@@ -234,6 +234,7 @@ export function PedidoRecebimento({
                           <th className="px-3 py-2 font-medium">CFOP</th>
                           <th className="px-3 py-2 font-medium text-right">Qtd.</th>
                           <th className="px-3 py-2 font-medium text-right">Unit.</th>
+                          <th className="px-3 py-2 font-medium text-right whitespace-nowrap">Líquido</th>
                           <th className="px-3 py-2 font-medium text-right">ICMS</th>
                           <th className="px-3 py-2 font-medium text-right">IPI</th>
                           <th className="px-3 py-2 font-medium">No pedido</th>
@@ -251,6 +252,7 @@ export function PedidoRecebimento({
                                 {qtd(it.quantidade)} {it.unidade}
                               </td>
                               <td className="px-3 py-1.5 text-right whitespace-nowrap">{brl(it.valor_unitario)}</td>
+                              <td className="px-3 py-1.5 text-right whitespace-nowrap">{it.liquido?.total != null ? brl(it.liquido.total) : '-'}</td>
                               <td className="px-3 py-1.5 text-right">{it.icms_pct ?? '-'}</td>
                               <td className="px-3 py-1.5 text-right">{it.ipi_pct ?? '-'}</td>
                               <td className="px-3 py-1.5 min-w-[10rem]">

@@ -57,6 +57,15 @@ export type NotaItem = {
   /** Grupo de CBS/IBS da nota (layout da reforma, obrigatório desde 2026).
    *  Ausente em nota antiga ou lida de PDF. */
   ibscbs?: { cst: string; cClassTrib: string; vCBS: number | null; vIBS: number | null } | null;
+  /** NT 2026.008 (em produção desde 16/11/2026): valor do item sem nenhum
+   *  tributo (vUnComLiq e vProdLiq). Opcional no leiaute por ora: nulo
+   *  quando a nota não traz. */
+  liquido?: { unitario: number | null; total: number | null } | null;
+  /** Tributos que ficam "por dentro" do vProd, para conferir o líquido. */
+  embutidos?: { icms: number | null; fcp: number | null; pis: number | null; cofins: number | null } | null;
+  /** NT 2026.008: ICMS que incidirá no fornecimento futuro (nota de
+   *  pagamento antecipado). */
+  icms_previsto?: number | null;
 };
 
 export type NotaLida = {
@@ -68,6 +77,8 @@ export type NotaLida = {
   data_emissao: string;
   natureza: string;
   valor_total: number | null;
+  /** NT 2026.008: soma dos valores líquidos (vProdLiqTot). */
+  valor_liquido_total?: number | null;
   itens: NotaItem[];
 };
 
@@ -88,7 +99,8 @@ export type Apontamento = {
     | 'imposto_nao_informado'
     | 'valor_acima_do_pedido'
     | 'emitente_diferente'
-    | 'nota_repetida';
+    | 'nota_repetida'
+    | 'liquido_divergente';
   severidade: Severidade;
   /** Índice do item no pedido (null quando o item não casou com nenhum). */
   item: number | null;

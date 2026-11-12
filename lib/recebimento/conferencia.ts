@@ -7,6 +7,7 @@ import type {
   PedidoItem,
   StatusPedido,
 } from './types';
+import { valorSemTributos } from './nfe-xml';
 
 // Conferência da nota contra o pedido (sub-projeto 95). Pura: recebe o
 // pedido, a nota nova e o que já chegou antes, e devolve os apontamentos.
@@ -251,6 +252,24 @@ export function conferirNota(args: {
             mensagem: `Descrição diferente: o pedido diz "${pi.descricao}" e a nota diz "${ni.descricao}". Confirme se é o mesmo produto.`,
           });
         }
+      }
+    }
+
+    // NT 2026.008: a SEFAZ confere só que líquido = unitário x quantidade,
+    // não que o líquido bate com o vProd menos os tributos embutidos. Preço
+    // formado multiplicando por (1 + alíquota) em vez de dividir por
+    // (1 - alíquota) passa autorizado; aqui vira aviso para o financeiro.
+    if (financeiro && ni.liquido?.total != null && ni.valor_total != null && ni.embutidos) {
+      const esperado = valorSemTributos({ ...ni, liquido: null }).valor;
+      const dif = Math.abs(ni.liquido.total - esperado);
+      if (dif > Math.max(0.1, esperado * 0.005)) {
+        add({
+          tipo: 'liquido_divergente',
+          severidade: 'info',
+          item: idx,
+          financeiro: true,
+          mensagem: `"${pi.descricao}": a nota informa valor líquido (sem impostos) de ${fmtBrl(ni.liquido.total)}, mas o valor do produto menos os impostos embutidos (ICMS, PIS e Cofins) dá ${fmtBrl(esperado)}. A SEFAZ não confere isso: confirme o preço com o fornecedor.`,
+        });
       }
     }
 
