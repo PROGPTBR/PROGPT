@@ -43,6 +43,7 @@ export const MODULOS: readonly Modulo[] = [
   { id: 'rfp', rotulo: 'RFP', grupo: 'assistentes', caminhos: ['/assistants/rfp'] },
   { id: 'comprador', rotulo: 'Equalizador de Propostas', grupo: 'assistentes', caminhos: ['/assistants/comprador'] },
   { id: 'tributario_propostas', rotulo: 'Análise Tributária de Propostas', grupo: 'assistentes', caminhos: ['/assistants/tributario_propostas'] },
+  { id: 'reforma_tributaria', rotulo: 'Calculadora da Reforma Tributária', grupo: 'assistentes', caminhos: ['/assistants/reforma_tributaria'] },
   { id: 'negotiation', rotulo: 'Negociação', grupo: 'assistentes', caminhos: ['/assistants/negotiation'] },
   { id: 'financial', rotulo: 'Análise Financeira', grupo: 'assistentes', caminhos: ['/assistants/financial'] },
   { id: 'scorecard', rotulo: 'Scorecard de Fornecedores', grupo: 'assistentes', caminhos: ['/assistants/scorecard'] },

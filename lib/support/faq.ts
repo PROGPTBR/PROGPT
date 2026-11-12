@@ -170,6 +170,13 @@ export const FAQ_SUPORTE: FaqSecao[] = [
         termos: 'tributário imposto icms ipi pis cofins crédito reforma ibs cbs simples nacional híbrido optante regime regular',
       },
       {
+        id: 'reforma-calculadora',
+        pergunta: 'Como sei quanto de CBS e IBS incide num item que eu compro?',
+        resposta:
+          'Use a Calculadora da Reforma Tributária (Assistentes, em Custos e Tributos). Informe o município da operação, o regime da sua empresa e os itens com NCM e valor, ou importe o XML da nota. O botão "Verificar reduções pelo NCM" consulta se o item está numa lista de redução da lei (cesta básica, saúde, higiene e limpeza e outras). O cálculo é feito pela calculadora oficial da Receita Federal e mostra, item a item e ano a ano até 2033, o imposto, quanto volta como crédito e o custo real, com a base legal. Se a nota já destaca CBS e IBS, ela confere se o valor bate. Em 2026 as alíquotas são as oficiais do ano de teste; de 2027 em diante são de referência, porque ainda não foram fixadas.',
+        termos: 'cbs ibs reforma tributária calculadora oficial receita cclasstrib cst ncm redução alíquota crédito xml nota 2027 2033',
+      },
+      {
         id: 'busca-internet',
         pergunta: 'A Busca de Fornecedores procura na internet?',
         resposta:

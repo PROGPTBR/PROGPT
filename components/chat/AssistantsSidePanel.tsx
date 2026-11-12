@@ -65,6 +65,7 @@ const ASSISTANT_ICONS = {
   grafico_rapido: BarChart3,
 
   tributario_propostas: Calculator,
+  reforma_tributaria: Calculator,
   mapa_fornecedores: Search,
 } as const;
 
@@ -166,7 +167,7 @@ function getAssistantCategory(assistant: Assistant): CategoryId {
   }
 
   /* Análise tributária de propostas fica em Custos e Tributos, não em Cotação */
-  if (id === 'tributario_propostas') {
+  if (id === 'tributario_propostas' || id === 'reforma_tributaria') {
     return 'costs';
   }
 

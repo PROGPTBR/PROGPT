@@ -19,6 +19,7 @@ export type AssistantPreviewKey =
   | 'comprador'
   | 'diagnostico_aquisicao'
   | 'tributario_propostas'
+  | 'reforma_tributaria'
   | 'mapa_fornecedores';
 
 export type AssistantDefinition = {
@@ -230,6 +231,23 @@ export const ASSISTANTS: readonly AssistantDefinition[] = [
       'Considera seu regime (Real, Presumido, Simples) e a destinação da compra',
     ],
     previewKey: 'tributario_propostas',
+  },
+
+  {
+    id: 'reforma_tributaria',
+    step: 4,
+    stepCategory: 'Engajamento',
+    href: '/assistants/reforma_tributaria',
+    title: 'Calculadora da Reforma Tributária',
+    short:
+      'CBS e IBS de cada item da compra pelo motor oficial da Receita Federal: redução prevista na lei, crédito para a sua empresa e custo real de 2026 a 2033. Importa o XML da nota e confere o destaque.',
+    sideSubtitle: 'CBS e IBS pelo motor oficial da Receita',
+    bullets: [
+      'Cálculo pela calculadora oficial da Receita, com base legal',
+      'Verifica pelo NCM se o item tem redução (cesta básica, saúde, limpeza...)',
+      'Importa o XML da NF-e e confere a CBS/IBS destacada',
+    ],
+    previewKey: 'reforma_tributaria',
   },
 
   {

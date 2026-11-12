@@ -57,6 +57,7 @@ export type AssistantToolType =
   | 'simulador_tributario'
   | 'diagnostico_aquisicao'
   | 'tributario_propostas'
+  | 'reforma_tributaria'
   | 'mapa_fornecedores';
 
 export type AssistantToolMeta = {
@@ -181,6 +182,12 @@ export const META: Record<AssistantToolType, AssistantToolMeta> = {
       'Jogue as propostas dos fornecedores e veja qual sai mais barata depois dos impostos: custo líquido de créditos (ICMS, IPI, PIS/Cofins) hoje e ano a ano na reforma tributária, até 2033.',
     Icon: Calculator,
   },
+  reforma_tributaria: {
+    title: 'Calculadora da Reforma Tributária',
+    blurb:
+      'CBS e IBS de cada item da compra pelo motor oficial da Receita Federal: redução prevista na lei, crédito para a sua empresa e custo real de 2026 a 2033. Importa o XML da nota.',
+    Icon: Calculator,
+  },
   mapa_fornecedores: {
     title: 'Mapa de Fornecedores da Operação',
     blurb:
@@ -212,6 +219,7 @@ const VALID_TYPES = new Set<AssistantToolType>([
   'simulador_tributario',
   'diagnostico_aquisicao',
   'tributario_propostas',
+  'reforma_tributaria',
   'mapa_fornecedores',
 ]);
 
@@ -259,7 +267,7 @@ export function detectAssistantToolCTA(text: string): AssistantToolType | null {
 // Tipos cujo caminho cru removemos do texto exibido (o card assume o CTA).
 // Inclui `suppliers` (caminho válido) pra não deixar o path feio na frase.
 const STRIP_TYPES =
-  'fluxo_compras|rfp|kraljic|porter|abc|financial|scorecard|profile|negotiation|homologacao|pesquisa_precos|spend_analysis|indicadores|grafico_rapido|comprador|suppliers|diagnostico_aquisicao|tributario_propostas|mapa_fornecedores';
+  'fluxo_compras|rfp|kraljic|porter|abc|financial|scorecard|profile|negotiation|homologacao|pesquisa_precos|spend_analysis|indicadores|grafico_rapido|comprador|suppliers|diagnostico_aquisicao|tributario_propostas|reforma_tributaria|mapa_fornecedores';
 const ASSISTANTS_OR_CUSTOM = CUSTOM_PATH_ALTERNATION
   ? `/assistants/(?:${STRIP_TYPES})|${CUSTOM_PATH_ALTERNATION}`
   : `/assistants/(?:${STRIP_TYPES})`;

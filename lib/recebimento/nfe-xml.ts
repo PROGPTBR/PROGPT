@@ -60,6 +60,7 @@ export function lerNfeXml(texto: string): NotaLida {
     const prod = bloco(det, 'prod');
     const icms = bloco(det, 'ICMS');
     const ipi = bloco(det, 'IPI');
+    const ibscbs = bloco(det, 'IBSCBS');
     itens.push({
       codigo: tag(prod, 'cProd'),
       descricao: tag(prod, 'xProd'),
@@ -72,6 +73,14 @@ export function lerNfeXml(texto: string): NotaLida {
       // Simples Nacional destaca pCredSN em vez de pICMS: fica nulo.
       icms_pct: num(tag(icms, 'pICMS')),
       ipi_pct: num(tag(ipi, 'pIPI')),
+      ibscbs: ibscbs
+        ? {
+            cst: tag(ibscbs, 'CST'),
+            cClassTrib: tag(ibscbs, 'cClassTrib'),
+            vCBS: num(tag(bloco(ibscbs, 'gCBS'), 'vCBS')),
+            vIBS: num(tag(ibscbs, 'vIBS')),
+          }
+        : null,
     });
   }
 

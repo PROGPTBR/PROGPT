@@ -54,6 +54,9 @@ export type NotaItem = {
   valor_total: number | null;
   icms_pct: number | null;
   ipi_pct: number | null;
+  /** Grupo de CBS/IBS da nota (layout da reforma, obrigatório desde 2026).
+   *  Ausente em nota antiga ou lida de PDF. */
+  ibscbs?: { cst: string; cClassTrib: string; vCBS: number | null; vIBS: number | null } | null;
 };
 
 export type NotaLida = {
