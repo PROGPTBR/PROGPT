@@ -412,7 +412,7 @@ const isDark = !mounted || resolvedTheme !== 'light';
                 className="w-1.5 h-1.5 rounded-full bg-brand"
               />
               <span className="text-sm text-gray-400 font-medium">
-                PROGPT · uma plataforma 2B Supply
+                Uma plataforma 2B Supply
               </span>
             </div>
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight max-w-3xl text-left leading-[1.15]">
@@ -871,7 +871,7 @@ const isDark = !mounted || resolvedTheme !== 'light';
           </div>
 
           <div className="pt-6 border-t border-white/5 flex flex-wrap items-center justify-between gap-4 text-xs text-gray-600">
-            <div>© 2026 2B Supply · Todos os direitos reservados</div>
+            <div>© 2026 2BSUPPLY · Todos os direitos reservados</div>
             <div className="flex flex-wrap gap-x-4 gap-y-1">
               <Link href="/termos" className="hover:text-white transition-colors">
                 Termos de Uso

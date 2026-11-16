@@ -196,7 +196,7 @@ export default function BillingConfirmandoPage() {
           </div>
 
           <span className="mb-3 inline-block text-xs font-semibold uppercase tracking-[0.18em] text-sky-400">
-            Assinatura PROGPT
+            Assinatura 2BSUPPLY.IA
           </span>
 
           <h1 className="text-2xl font-bold tracking-tight md:text-3xl">

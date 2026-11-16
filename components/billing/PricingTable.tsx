@@ -331,7 +331,7 @@ export function PricingTable({
               aria-hidden="true"
             />
 
-            Planos PROGPT
+            Planos 2BSUPPLY.IA
           </div>
 
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight max-w-3xl mx-auto leading-[1.15]">
@@ -456,7 +456,7 @@ export function PricingTable({
                   </p>
 
                   <p className="text-sm text-muted-foreground pt-2">
-                    A PROGPT se adapta
+                    A 2BSUPPLY.IA se adapta
                     aos seus sistemas,
                     processos e
                     políticas. Sua

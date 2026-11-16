@@ -291,8 +291,8 @@ export function Header() {
           <Image
             src={
               isDark
-                ? '/progpt-logo-white.png'
-                : '/progpt-logo-dark.png'
+                ? '/2bsupplyia-logo-white.png'
+                : '/2bsupplyia-logo-dark.png'
             }
             alt="2B Supply"
             width={168}

@@ -46,7 +46,7 @@ export function HeroVideo() {
         loop
         playsInline
         preload="auto"
-        aria-label="Apresentação do PROGPT: chat, assistentes, fluxo de compras, gestão de obras e integrações"
+        aria-label="Apresentação do 2BSUPPLY.IA: chat, assistentes, fluxo de compras, gestão de obras e integrações"
       />
       <button type="button" onClick={alternarSom} className={styles.videoSom} aria-pressed={som}>
         {som ? <VolumeX aria-hidden="true" /> : <Volume2 aria-hidden="true" />}

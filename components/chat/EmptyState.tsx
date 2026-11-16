@@ -93,7 +93,7 @@ export function EmptyState({
 
         {/* Aviso */}
         <p className="max-w-xl text-center text-sm text-muted-foreground/40">
-          O ProGPT pode cometer erros. Verifique informações importantes.
+          A 2BSUPPLY.IA pode cometer erros. Verifique informações importantes.
         </p>
 
         {/* Onboarding quick-win */}

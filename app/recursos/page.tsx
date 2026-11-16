@@ -218,7 +218,7 @@ const activeCase = USE_CASES.find((u) => u.id === activeTab) ?? USE_CASES[0]!;
                 className="w-1.5 h-1.5 rounded-full bg-brand"
               />
               <span className="text-sm text-muted-foreground font-medium">
-                PROGPT · uma plataforma 2BSUPPLY
+                Uma plataforma 2BSUPPLY
               </span>
             </div>
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-medium tracking-tight max-w-4xl">

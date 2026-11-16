@@ -59,7 +59,7 @@ que gera o link antigo (com `#`, frágil).
     <p style="margin:18px 0 0;font-size:12px;color:#94a3b8">Se você não pediu isso, ignore este e-mail — sua senha continua a mesma.</p>
   </div>
   <div style="padding:16px 28px;border-top:1px solid #e6ebf1;font-size:11px;color:#94a3b8;text-align:center">
-    PROGPT · uma plataforma 2B Supply · CNPJ 36.335.299/0001-82
+   Uma plataforma 2B Supply · CNPJ 36.335.299/0001-82
   </div>
 </div>
 ```
@@ -89,7 +89,7 @@ que gera o link antigo (com `#`, frágil).
     </p>
   </div>
   <div style="padding:16px 28px;border-top:1px solid #e6ebf1;font-size:11px;color:#94a3b8;text-align:center">
-    PROGPT · uma plataforma 2B Supply · CNPJ 36.335.299/0001-82
+    Uma plataforma 2B Supply · CNPJ 36.335.299/0001-82
   </div>
 </div>
 ```
@@ -124,7 +124,7 @@ que gera o link antigo (com `#`, frágil).
     <p style="margin:18px 0 0;font-size:12px;color:#94a3b8">Se você não criou esta conta, ignore este e-mail.</p>
   </div>
   <div style="padding:16px 28px;border-top:1px solid #e6ebf1;font-size:11px;color:#94a3b8;text-align:center">
-    PROGPT · uma plataforma 2B Supply · CNPJ 36.335.299/0001-82
+    Uma plataforma 2B Supply · CNPJ 36.335.299/0001-82
   </div>
 </div>
 ```
@@ -159,7 +159,7 @@ que gera o link antigo (com `#`, frágil).
     <p style="margin:18px 0 0;font-size:12px;color:#94a3b8">Se você não pediu esta alteração, ignore este e-mail — nada muda.</p>
   </div>
   <div style="padding:16px 28px;border-top:1px solid #e6ebf1;font-size:11px;color:#94a3b8;text-align:center">
-    PROGPT · uma plataforma 2B Supply · CNPJ 36.335.299/0001-82
+    Uma plataforma 2B Supply · CNPJ 36.335.299/0001-82
   </div>
 </div>
 ```

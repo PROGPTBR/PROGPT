@@ -113,7 +113,7 @@ export function DemoRequestModal({
         </button>
 
         <aside className={styles.side}>
-          <span className={styles.pill}>PROGPT · uma plataforma 2BSUPPLY</span>
+          <span className={styles.pill}>Uma plataforma 2BSUPPLY</span>
             <DialogTitle className={styles.title}>{solution}</DialogTitle>
           <DialogDescription className={styles.support}>
             Preencha seus dados. Nossa equipe entrará em contato para combinar o melhor horário da

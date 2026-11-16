@@ -52,7 +52,7 @@ const features = [
     icon: Eye,
     title: 'Propostas analisadas em segundos mostrando o custo real',
     text:
-      'Compare preços, analise tributos, fretes e DIFAL, Monitore prazos e faça analise de riscos. A PROGPT ajuda você com base em um TCO completo a escolher a melhor proposta não apenas a mais barata.',
+      'Compare preços, analise tributos, fretes e DIFAL, Monitore prazos e faça analise de riscos. A 2BSUPPLY.IA ajuda você com base em um TCO completo a escolher a melhor proposta não apenas a mais barata.',
   },
   {
     icon: Database,
@@ -78,16 +78,16 @@ const features = [
 ============================================================ */
 const faqs = [
   [
-    'O que é o PROGPT?',
+    'O que é O 2BSUPPLY.IA?',
     'Uma plataforma de inteligência artificial especializada em Suprimentos, criada para apoiar análises, cotações, contratos, negociação e estratégia.',
   ],
   [
     'Qual a diferença para uma IA genérica?',
-    'O PROGPT reúne contexto, fluxos e assistentes desenhados para a rotina de Compras, com entregáveis práticos e linguagem da área.',
+    'O 2BSUPPLY.IA reúne contexto, fluxos e assistentes desenhados para a rotina de Compras, com entregáveis práticos e linguagem da área.',
   ],
   [
-    'Como a tecnologia da PROGPT torna as respostas mais rápidas e precisas ?',
-    'A PROGPT utiliza uma arquitetura desenvolvida para oferecer mais qualidade, velocidade e continuidade nas análises:\n- Retrieval híbrido: combina pesquisa semântica e busca por palavras-chave para localizar as informações mais relevantes antes de elaborar a resposta.\n- PDF multimodal: interpreta textos, tabelas, imagens e estruturas presentes em documentos, propostas e contratos em PDF.\n- Histórico persistente: mantém o contexto das conversas e análises anteriores, permitindo retomar processos sem precisar começar tudo novamente.\n- Streaming nativo: apresenta a resposta à medida que ela é processada, reduzindo o tempo de espera durante a utilização.\nNa prática, esses recursos permitem análises mais ágeis, contextualizadas e adequadas às atividades de Compras e Suprimentos',
+    'Como a tecnologia da 2BSUPPLY.IA torna as respostas mais rápidas e precisas ?',
+    'A 2BSUPPLY.IA utiliza uma arquitetura desenvolvida para oferecer mais qualidade, velocidade e continuidade nas análises:\n- Retrieval híbrido: combina pesquisa semântica e busca por palavras-chave para localizar as informações mais relevantes antes de elaborar a resposta.\n- PDF multimodal: interpreta textos, tabelas, imagens e estruturas presentes em documentos, propostas e contratos em PDF.\n- Histórico persistente: mantém o contexto das conversas e análises anteriores, permitindo retomar processos sem precisar começar tudo novamente.\n- Streaming nativo: apresenta a resposta à medida que ela é processada, reduzindo o tempo de espera durante a utilização.\nNa prática, esses recursos permitem análises mais ágeis, contextualizadas e adequadas às atividades de Compras e Suprimentos',
   ],
   [
     'Posso usar no celular?',
@@ -249,7 +249,7 @@ type Plan = {
    BUTTON
 ============================================================ */
 const Button = ({
-  children = 'QUERO CONHECER O PROGPT',
+  children = 'QUERO CONHECER A 2BSUPPLY.IA',
   className = '',
 }: {
   children?: React.ReactNode;
@@ -385,8 +385,8 @@ export function NovaLanding({
     <Image
       src={
         isDark
-          ? '/progpt-logo-white.png'
-          : '/progpt-logo-dark.png'
+          ? '/2bsupplyia-logo-white.png'
+          : '/2bsupplyia-logo-dark.png'
       }
       alt="2B Supply"
       width={168}
@@ -501,7 +501,7 @@ export function NovaLanding({
         <div className={styles.heroCopy}>
           <div className={styles.eyebrow}>
             <Sparkles size={15} />
-            PROGPT · uma plataforma 2BSUPPLY
+            Uma plataforma 2BSUPPLY
           </div>
           <h1>
            A 1ª plataforma de{' '}
@@ -691,7 +691,7 @@ Menos trabalho manual. Mais velocidade para transformar dados em decisão.
               <span>CONFIANÇA</span>
               <h3>Respostas com mais segurança</h3>
               <p>
-                O ProGpt pode consultar fontes selecionadas, cruzar informações e indicar as referências utilizadas na análise.
+                A 2BSUPPLY.IA pode consultar fontes selecionadas, cruzar informações e indicar as referências utilizadas na análise.
 <br />
                 <br />
 Quando não encontra base suficiente para responder, sinaliza a limitação em vez de simplesmente inventar uma resposta.
@@ -711,7 +711,7 @@ Mais confiança para usar IA em decisões reais de Compras.
            <em> Certificações</em> ISO
           </h2>
           <p className="progpt-certifications-intro">
-         O PROGPT, solução de Inteligência Artificial da 2BSUPPLY, agora opera respaldado pelas certificações ISO do grupo, reforçando sua capacidade de atuar em processos críticos de Suprimentos com segurança, governança, qualidade e confiabilidade.
+         A 2BSUPPLY.IA, solução de Inteligência Artificial da 2BSUPPLY, agora opera respaldado pelas certificações ISO do grupo, reforçando sua capacidade de atuar em processos críticos de Suprimentos com segurança, governança, qualidade e confiabilidade.
           </p>
           <CertificacoesGrid certificacoes={certificacoes} />
         </div>
@@ -760,7 +760,7 @@ Mais confiança para usar IA em decisões reais de Compras.
         >
           <span>Recursos</span>
           <h2>
-            Por que a PROGPT é{' '}
+            Por que a 2BSUPPLY.IA é{' '}
             <em>diferente</em>
           </h2>
           <p>
@@ -979,7 +979,7 @@ onClick={() => {
         >
           <span>
             <Sparkles size={14} />
-            Planos PROGPT
+            Planos 2BSUPPLY.IA
           </span>
           <h2>
             <em>Menos burocracia</em> para o
@@ -1107,8 +1107,8 @@ onClick={() => {
             <Image
               src={
                 isDark
-                  ? '/progpt-logo-white.png'
-                  : '/progpt-logo-dark.png'
+                  ? '/2bsupplyia-logo-white.png'
+                  : '/2bsupplyia-logo-dark.png'
               }
               alt="2B Supply"
               width={168}
@@ -1220,8 +1220,7 @@ onClick={() => {
   </span>
 </div>
         <small>
-          © 2026 PROGPT. Todos os direitos
-          reservados.
+          © 2026 2BSUPPLY · Todos os direitos reservados.
         </small>
       </footer>
     </main>
