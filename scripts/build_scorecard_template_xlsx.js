@@ -32,7 +32,7 @@ const EXAMPLE_ROWS = [
 
 async function main() {
   const wb = new ExcelJS.Workbook();
-  wb.creator = 'PROGPT';
+  wb.creator = '2BSUPPLY.IA';
   wb.created = new Date();
 
   const ws = wb.addWorksheet('Scorecard');

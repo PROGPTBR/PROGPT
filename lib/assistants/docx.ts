@@ -516,7 +516,7 @@ export async function mdToDocxBuffer(
   const coverPage = buildCoverPage(cover, opts.logo);
 
   const doc = new Document({
-    creator: 'PROGPT',
+    creator: '2BSUPPLY.IA',
     title,
     sections: [
       {

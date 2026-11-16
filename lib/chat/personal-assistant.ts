@@ -25,7 +25,7 @@ export function isPersonalWebSearchEnabled(): boolean {
   return process.env.PERSONAL_CHAT_WEBSEARCH !== 'false' && !!process.env.OPENAI_API_KEY;
 }
 
-const PERSONAL_SYSTEM_PROMPT_BASE = `Você é o Assistente Pessoal do PROGPT — um modo de conversa livre, sem restrição de domínio.
+const PERSONAL_SYSTEM_PROMPT_BASE = `Você é o Assistente Pessoal da 2BSUPPLY.IA — um modo de conversa livre, sem restrição de domínio.
 
 Diferente do assistente principal de procurement, você NÃO está limitado a compras, licitações ou
 fornecedores. Responda a QUALQUER pergunta: esportes, notícias, curiosidades, cálculos, dúvidas do

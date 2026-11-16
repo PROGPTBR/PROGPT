@@ -17,7 +17,7 @@ function setup(admin = true) {
   });
   vi.doMock('@/lib/email/preview', () => ({
     buildEmailPreview: vi.fn().mockReturnValue({
-      subject: 'Novidade no PROGPT: Título',
+      subject: 'Novidade na 2BSUPPLY.IA: Título',
       html: '<html>preview</html>',
     }),
   }));
@@ -56,7 +56,7 @@ describe('POST /api/admin/updates/email-preview', () => {
     expect(response.status).toBe(200);
     expect(response.headers.get('cache-control')).toBe('private, no-store');
     expect(await response.json()).toEqual({
-      subject: 'Novidade no PROGPT: Título',
+      subject: 'Novidade na 2BSUPPLY.IA: Título',
       html: '<html>preview</html>',
     });
     expect(preview.buildEmailPreview).toHaveBeenCalledWith('update', {

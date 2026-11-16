@@ -1,7 +1,7 @@
 """Sub-projeto 32 — carrega scripts/data/prompts-seed.json na tabela `prompts`.
 
 Lê o JSON limpo (gerado por `npm run prompts:import`) e faz upsert idempotente
-por `prompt_number` no Supabase do PROGPT. Rode DEPOIS de aplicar a migration
+por `prompt_number` no Supabase da 2BSUPPLY.IA. Rode DEPOIS de aplicar a migration
 0034. Requer OK explícito (escreve dados em prod).
 
     python scripts/seed_prompts.py

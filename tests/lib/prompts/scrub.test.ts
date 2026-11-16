@@ -2,28 +2,28 @@ import { describe, expect, it } from 'vitest';
 import { scrubBranding } from '@/lib/prompts/scrub';
 
 describe('scrubBranding', () => {
-  it('replaces "PRO AI CIRCLE" (spaced, any case) with PROGPT', () => {
+  it('replaces "PRO AI CIRCLE" (spaced, any case) with 2BSUPPLY.IA', () => {
     const r = scrubBranding('Bem-vindo à PRO AI CIRCLE, sua comunidade.');
-    expect(r.text).toContain('PROGPT');
+    expect(r.text).toContain('2BSUPPLY.IA');
     expect(r.text.toLowerCase()).not.toContain('pro ai circle');
     expect(r.changed).toBe(true);
   });
 
   it('replaces the concatenated "ProAICircle"', () => {
     const r = scrubBranding('Equipe ProAICircle');
-    expect(r.text).toBe('Equipe PROGPT');
+    expect(r.text).toBe('Equipe 2BSUPPLY.IA');
     expect(r.changed).toBe(true);
   });
 
   it('replaces the slug "pro-ai-circle"', () => {
     const r = scrubBranding('repo pro-ai-circle aqui');
-    expect(r.text).toBe('repo PROGPT aqui');
+    expect(r.text).toBe('repo 2BSUPPLY.IA aqui');
   });
 
-  it('replaces IAgentics / iAgentics / iagentics (case-insensitive) with PROGPT', () => {
-    expect(scrubBranding('pela IAgentics').text).toBe('pela PROGPT');
-    expect(scrubBranding('pela iAgentics').text).toBe('pela PROGPT');
-    expect(scrubBranding('pela iagentics').text).toBe('pela PROGPT');
+  it('replaces IAgentics / iAgentics / iagentics (case-insensitive) with 2BSUPPLY.IA', () => {
+    expect(scrubBranding('pela IAgentics').text).toBe('pela 2BSUPPLY.IA');
+    expect(scrubBranding('pela iAgentics').text).toBe('pela 2BSUPPLY.IA');
+    expect(scrubBranding('pela iagentics').text).toBe('pela 2BSUPPLY.IA');
   });
 
   it('removes DealSim references without breaking the sentence', () => {

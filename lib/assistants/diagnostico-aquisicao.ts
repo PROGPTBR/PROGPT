@@ -29,7 +29,7 @@ import type { CompanyData } from '@/lib/db/user-company';
 // determinístico/narrativo já usada em Kraljic/ABC/Scorecard.
 
 // Regra do doc-fonte, verbatim: "Essa classificação será utilizada como
-// premissa do diagnóstico e não será alterada pelo ProGpt." — o assistente
+// premissa do diagnóstico e não será alterada pela 2BSUPPLY.IA." — o assistente
 // NUNCA reclassifica CAPEX↔OPEX; classifyAquisicao só deriva KPIs + leaning.
 
 const CAPEX_KPIS = [

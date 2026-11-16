@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 
 // GET /api/plataforma/monitoramento — pulso em tempo real da plataforma.
 // Adapta o painel "Monitoramento" do sistema de referência (que tem
-// conceitos que o PROGPT não tem — linhas de WhatsApp, buffer, tickets de
+// conceitos que a 2BSUPPLY.IA não tem — linhas de WhatsApp, buffer, tickets de
 // suporte próprios) pros dados reais que já existem aqui: login recente,
 // sessões de chat ativas, custo/chamadas de IA, feedback não resolvido
 // (proxy de "ticket aberto") e saúde do serviço fiscal (proxy de "serviço

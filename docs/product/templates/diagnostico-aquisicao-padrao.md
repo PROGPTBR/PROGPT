@@ -64,4 +64,4 @@ Este diagnóstico combina duas decisões complementares de compras:
 
 Este diagnóstico contém informações sobre planos de aquisição da {{cliente}}. Tratar como confidencial; não divulgar a fornecedores nem terceiros sem autorização do Departamento de Compras.
 
-*Documento gerado automaticamente pelo Assistente de Diagnóstico de Aquisição do PROGPT.*
+*Documento gerado automaticamente pelo Assistente de Diagnóstico de Aquisição da 2BSUPPLY.IA.*

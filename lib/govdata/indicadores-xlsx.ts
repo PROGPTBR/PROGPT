@@ -3,7 +3,7 @@ import type { PontoSerie } from './indicadores';
 
 // Export .xlsx de uma série histórica de indicador (sub-projeto 37 — dashboard).
 // Workbook simples: cabeçalho com o indicador + tabela Data/Valor. `creator`
-// 'PROGPT' como nos demais exports.
+// '2BSUPPLY.IA' como nos demais exports.
 //
 // Batch K (backlog do diretor 21/08) — banner ganha metodologia + data da
 // consulta, além da fonte (o doc pede fonte/data/período/metodologia
@@ -21,7 +21,7 @@ export async function serieXlsxBuffer(
   meta: SerieXlsxMeta = {},
 ): Promise<Buffer> {
   const wb = new ExcelJS.Workbook();
-  wb.creator = 'PROGPT';
+  wb.creator = '2BSUPPLY.IA';
   wb.created = new Date(0); // determinístico (evita Date.now no build/test)
 
   const bannerRows = 2 + (meta.metodologia ? 1 : 0) + (meta.consultadoEm ? 1 : 0);

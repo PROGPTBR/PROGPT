@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic';
 // do middleware: quem pediu a compra não tem conta. Mostra só o andamento,
 // sem preço, proposta nem fornecedor.
 export const metadata: Metadata = {
-  title: 'Como está meu pedido? | PROGPT',
+  title: 'Como está meu pedido? | 2BSUPPLY.IA',
   robots: { index: false, follow: false },
 };
 

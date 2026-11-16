@@ -277,7 +277,7 @@ export function NovaLanding({
   const [activeSection, setActiveSection] = useState('');
   const [activeUseCase, setActiveUseCase] = useState(0);
   const [demoOpen, setDemoOpen] = useState(false);
-  const [demoSolution, setDemoSolution] = useState('Demonstração do PROGPT');
+  const [demoSolution, setDemoSolution] = useState('Demonstração da 2BSUPPLY.IA');
   const [demoTrigger, setDemoTrigger] = useState<HTMLButtonElement | null>(null);
   /* ==========================================================
      REF DO SLIDER
@@ -845,7 +845,7 @@ Mais confiança para usar IA em decisões reais de Compras.
             ref={useCaseTabsRef}
             className={styles.useCaseTabs}
             role="tablist"
-            aria-label="Casos de uso do PROGPT"
+            aria-label="Casos de uso da 2BSUPPLY.IA"
           >
             {useCases.map(
               (item, index) => (

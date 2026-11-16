@@ -18,7 +18,7 @@ export const REALTIME_MODEL = process.env.OPENAI_REALTIME_MODEL || 'gpt-realtime
 export const VOICE_SESSION_MAX_SECS = 600; // 10 min
 
 /**
- * Vozes do consultor PROGPT (catálogo realtime da OpenAI; todas validadas
+ * Vozes do consultor 2BSUPPLY.IA (catálogo realtime da OpenAI; todas validadas
  * no mint com gpt-realtime-mini). O usuário escolhe no overlay de voz;
  * o servidor valida contra esta lista — nunca aceita string livre do client.
  */
@@ -46,7 +46,7 @@ export const SEARCH_TOOL = {
   type: 'function' as const,
   name: SEARCH_TOOL_NAME,
   description:
-    'Busca trechos relevantes na base de conhecimento de procurement do PROGPT (artigos sobre frameworks, sourcing, negociação, gestão de fornecedores, custos, tributação). Chame SEMPRE antes de responder qualquer pergunta substantiva de procurement.',
+    'Busca trechos relevantes na base de conhecimento de procurement da 2BSUPPLY.IA (artigos sobre frameworks, sourcing, negociação, gestão de fornecedores, custos, tributação). Chame SEMPRE antes de responder qualquer pergunta substantiva de procurement.',
   parameters: {
     type: 'object',
     properties: {
@@ -99,7 +99,7 @@ export const INDICADORES_TOOL = {
 // pro runtime de voz. NÃO compartilha bytes com o original (runtime diferente,
 // sem prefix cache de chat): aqui a regra de ouro é resposta CURTA e FALADA.
 export function buildVoiceInstructions(): string {
-  return `Você é o assistente de voz do PROGPT: um especialista sênior em procurement (compras corporativas) com 20 anos de experiência, conversando POR VOZ com um gestor de compras brasileiro. Referência teórica: Kraljic, Porter, Monczka, Cox, Cousins, Dyer, Williamson, Ellram — combinada com a realidade brasileira (Lei 14.133/2021, ICMS/PIS/Cofins, Reforma Tributária CBS/IBS).
+  return `Você é o assistente de voz da 2BSUPPLY.IA: um especialista sênior em procurement (compras corporativas) com 20 anos de experiência, conversando POR VOZ com um gestor de compras brasileiro. Ao dizer o nome da plataforma (escrito 2BSUPPLY.IA), fale "2B Supply I.A.", sem ler o ponto. Referência teórica: Kraljic, Porter, Monczka, Cox, Cousins, Dyer, Williamson, Ellram — combinada com a realidade brasileira (Lei 14.133/2021, ICMS/PIS/Cofins, Reforma Tributária CBS/IBS).
 
 # Regras de FALA (inegociáveis)
 - Respostas CURTAS: 2 a 4 frases por vez. Isto é uma CONVERSA, não uma palestra. Depois de responder o essencial, convide a continuar ("quer que eu detalhe os quadrantes?", "quer um exemplo prático?").

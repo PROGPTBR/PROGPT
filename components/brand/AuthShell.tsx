@@ -54,7 +54,7 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
             <div className="overflow-hidden rounded-xl border border-border shadow-2xl shadow-black/30 dark:shadow-black/50">
               <Image
                 src="/imagens/imagem-de-fundo-entrada-chatsupply-01.png"
-                alt="Painel do PROGPT em uso"
+                alt="Painel da 2BSUPPLY.IA em uso"
                 width={684}
                 height={407}
                 priority

@@ -232,7 +232,7 @@ export default function BillingConfirmandoPage() {
           {confirmed && (
             <div className="mt-8 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 px-5 py-4">
               <p className="text-sm font-medium text-emerald-400">
-                Seu acesso ao PROGPT está liberado.
+                Seu acesso à 2BSUPPLY.IA está liberado.
               </p>
 
               <p className="mt-1 text-xs text-slate-400">
@@ -271,7 +271,7 @@ export default function BillingConfirmandoPage() {
               onClick={() => router.replace('/chat')}
               className="mt-7 rounded-xl bg-gradient-to-r from-cyan-400 to-sky-500 px-7 py-3 text-sm font-bold text-black transition hover:opacity-90"
             >
-              ACESSAR O PROGPT
+              ACESSAR A 2BSUPPLY.IA
             </button>
           )}
 

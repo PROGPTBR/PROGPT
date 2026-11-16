@@ -84,8 +84,8 @@ export default function UpdatesPage({ updates, loadError = false }: { updates: P
     <div className={styles.app}>
       <div className={styles.mainShell}>
         <header className={styles.topbar}>
-          <a className={styles.headerLogo} href="#atualizacoes" aria-label="PROGPT — Atualizações">
-            <Image src="/atualizacoes/progpt-logo.png" alt="PROGPT" width={241} height={57} priority />
+          <a className={styles.headerLogo} href="#atualizacoes" aria-label="2BSUPPLY.IA — Atualizações">
+            <Image src="/2bsupplyia-logo-white.png" alt="2BSUPPLY.IA" width={241} height={57} priority />
           </a>
           <span className={styles.topInfo}><span className={styles.smallDot} /> Novidades do sistema</span>
         </header>
@@ -93,7 +93,7 @@ export default function UpdatesPage({ updates, loadError = false }: { updates: P
         <main id="atualizacoes" className={styles.content}>
           <div className={styles.pageHeading}>
             <div>
-              <div className={styles.eyebrow}>PROGPT EM EVOLUÇÃO</div>
+              <div className={styles.eyebrow}>2BSUPPLY.IA EM EVOLUÇÃO</div>
               <h1>Atualizações do sistema</h1>
             </div>
             <span className={styles.weekly}>Atualizações semanais</span>
@@ -171,7 +171,7 @@ export default function UpdatesPage({ updates, loadError = false }: { updates: P
 
           <footer className={styles.footer}>
             <span>Você está em dia com as atualizações deste período.</span>
-            <span>PROGPT · Feito para simplificar.</span>
+            <span>2BSUPPLY.IA · Feito para simplificar.</span>
           </footer>
         </main>
       </div>

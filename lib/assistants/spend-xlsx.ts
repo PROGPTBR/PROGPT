@@ -28,7 +28,7 @@ export async function buildSpendXlsxBuffer(
   opts: SpendXlsxOpts = {},
 ): Promise<Buffer> {
   const wb = new ExcelJS.Workbook();
-  wb.creator = 'PROGPT';
+  wb.creator = '2BSUPPLY.IA';
   wb.created = new Date();
   const ref = cube.referenceCurrency;
 

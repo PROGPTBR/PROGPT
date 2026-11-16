@@ -281,7 +281,7 @@ export function AccountPricingTable({
                   </div>
                 ) : plan.slug === 'pj-consulte' ? (
                   <a
-                    href="mailto:comercial@2bsupply.com.br?subject=Solicita%C3%A7%C3%A3o%20de%20proposta%20%E2%80%94%20Plano%20Empresas%20PROGPT&body=Ol%C3%A1%2C%20gostaria%20de%20solicitar%20uma%20proposta%20do%20Plano%20Empresas%20do%20PROGPT."
+                    href="mailto:comercial@2bsupply.com.br?subject=Solicita%C3%A7%C3%A3o%20de%20proposta%20%E2%80%94%20Plano%20Empresas%202BSUPPLY.IA&body=Ol%C3%A1%2C%20gostaria%20de%20solicitar%20uma%20proposta%20do%20Plano%20Empresas%20da%202BSUPPLY.IA."
                     className="inline-flex w-full items-center justify-center gap-2 bg-muted border border-border text-foreground py-2.5 rounded-full text-sm font-medium hover:bg-brand hover:text-black hover:border-brand active:scale-95 transition-all duration-300"
                   >
                     Solicitar proposta

@@ -8,7 +8,7 @@ import { DemoRequestModal } from '@/components/marketing/DemoRequestModal';
 
 function Harness() {
   const [open, setOpen] = useState(false);
-  const [solution, setSolution] = useState('Demonstração do PROGPT');
+  const [solution, setSolution] = useState('Demonstração da 2BSUPPLY.IA');
   const [trigger, setTrigger] = useState<HTMLButtonElement | null>(null);
 
   function show(nextSolution: string, element: HTMLButtonElement) {

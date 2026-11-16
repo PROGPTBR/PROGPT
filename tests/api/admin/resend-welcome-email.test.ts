@@ -100,7 +100,7 @@ describe('POST /api/admin/users/[id]/resend-welcome-email', () => {
     process.env.SMTP_HOST = 'smtp.titan.email';
     process.env.SMTP_USER = 'comercial@2bsupply.com.br';
     process.env.SMTP_PASSWORD = 'secret';
-    process.env.EMAIL_FROM = 'PROGPT <outra-caixa@2bsupply.com.br>';
+    process.env.EMAIL_FROM = '2BSUPPLY.IA <outra-caixa@2bsupply.com.br>';
     try {
       mockAdmin(true);
       mockLookup({ email: 'kelly@empresa.com' });

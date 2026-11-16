@@ -33,7 +33,7 @@ export const TOUR_STEPS: TourStep[] = [
   {
     id: 'boas-vindas',
     route: '/chat',
-    title: 'Bem-vindo ao PROGPT',
+    title: 'Bem-vindo à 2BSUPPLY.IA',
     body: 'Vamos passar por cada tela da plataforma, uma por uma, e mostrar o que cada uma faz. Pode sair quando quiser, e rever o tour depois pelo botão "Ver o tour da plataforma", no topo da barra lateral.',
   },
   {
@@ -42,7 +42,7 @@ export const TOUR_STEPS: TourStep[] = [
     secao: 'Chat',
     target: '[data-tour="composer"]',
     title: 'Comece perguntando',
-    body: 'Escreva aqui qualquer dúvida de compras. As respostas são fundamentadas na base de conhecimento de Strategic Sourcing, e, quando não há fonte, o PROGPT diz isso em vez de inventar. Dá para anexar contrato ou proposta pelo clipe.',
+    body: 'Escreva aqui qualquer dúvida de compras. As respostas são fundamentadas na base de conhecimento de Strategic Sourcing, e, quando não há fonte, a 2BSUPPLY.IA diz isso em vez de inventar. Dá para anexar contrato ou proposta pelo clipe.',
   },
   {
     id: 'anexo',
@@ -50,7 +50,7 @@ export const TOUR_STEPS: TourStep[] = [
     secao: 'Chat',
     target: '[data-tour="anexo"]',
     title: 'Anexe o documento da compra',
-    body: 'Pelo botão de mais, você anexa contrato, proposta, planilha ou foto (PDF, Word, Excel, PNG, JPG). O PROGPT lê o arquivo e responde em cima dele: resume cláusulas, compara propostas, aponta riscos.',
+    body: 'Pelo botão de mais, você anexa contrato, proposta, planilha ou foto (PDF, Word, Excel, PNG, JPG). A 2BSUPPLY.IA lê o arquivo e responde em cima dele: resume cláusulas, compara propostas, aponta riscos.',
   },
   {
     id: 'atalhos',
@@ -66,7 +66,7 @@ export const TOUR_STEPS: TourStep[] = [
     secao: 'Chat',
     target: '[data-tour="voz"]',
     title: 'Converse por voz',
-    body: 'Fale com o PROGPT em tempo real, com a mesma base por trás. Útil para ensaiar uma negociação ou tirar dúvidas com as mãos ocupadas.',
+    body: 'Fale com a 2BSUPPLY.IA em tempo real, com a mesma base por trás. Útil para ensaiar uma negociação ou tirar dúvidas com as mãos ocupadas.',
   },
   {
     id: 'modo-livre',
@@ -118,7 +118,7 @@ export const TOUR_STEPS: TourStep[] = [
     secao: 'Equalizador',
     target: '[data-tour="equalizador-topo"]',
     title: 'Equalizador de Propostas',
-    body: 'A sua caixa de cotações. Cole ou importe as propostas dos fornecedores e o PROGPT compara pelo custo total (TCO), confere item a item contra o pedido de cotação e aponta desvios da sua política.',
+    body: 'A sua caixa de cotações. Cole ou importe as propostas dos fornecedores e a 2BSUPPLY.IA compara pelo custo total (TCO), confere item a item contra o pedido de cotação e aponta desvios da sua política.',
   },
   {
     id: 'equalizador-nova',
@@ -164,7 +164,7 @@ export const TOUR_STEPS: TourStep[] = [
     secao: 'Matriz de Kraljic',
     target: '[data-tour="kraljic-form"]',
     title: 'Classifique o seu portfólio',
-    body: 'Liste os itens ou categorias com o gasto e as notas de risco e impacto. O PROGPT posiciona cada um nos quatro quadrantes (estratégico, alavancagem, gargalo e não crítico) e devolve o plano de ação de cada quadrante, com gráfico.',
+    body: 'Liste os itens ou categorias com o gasto e as notas de risco e impacto. A 2BSUPPLY.IA posiciona cada um nos quatro quadrantes (estratégico, alavancagem, gargalo e não crítico) e devolve o plano de ação de cada quadrante, com gráfico.',
   },
   {
     id: 'kraljic-exemplo',
@@ -244,7 +244,7 @@ export const TOUR_STEPS: TourStep[] = [
     secao: 'Dashboard',
     target: '[data-tour="dashboard-upload"]',
     title: 'Sua planilha vira dashboard',
-    body: 'Arraste aqui uma planilha .xlsx ou .csv e o PROGPT monta os painéis sozinho, com rankings e cruzamentos, sem precisar desenhar gráfico à mão.',
+    body: 'Arraste aqui uma planilha .xlsx ou .csv e a 2BSUPPLY.IA monta os painéis sozinha, com rankings e cruzamentos, sem precisar desenhar gráfico à mão.',
   },
   {
     id: 'dashboard-exemplos',
@@ -456,7 +456,7 @@ export const TOUR_STEPS: TourStep[] = [
     secao: 'Meu perfil',
     target: '[data-tour="perfil-topo"]',
     title: 'Seu perfil, em dois passos',
-    body: 'Aqui você preenche uma vez os dados da sua empresa. Depois disso, eles entram sozinhos em todo documento e planilha que o PROGPT gerar, não precisa digitar de novo.',
+    body: 'Aqui você preenche uma vez os dados da sua empresa. Depois disso, eles entram sozinhos em todo documento e planilha que a 2BSUPPLY.IA gerar, não precisa digitar de novo.',
   },
   {
     id: 'perfil-logo',

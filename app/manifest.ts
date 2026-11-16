@@ -1,12 +1,12 @@
 import type { MetadataRoute } from 'next';
 
-// PWA manifest — served at /manifest.webmanifest by Next.js. Makes PROGPT
+// PWA manifest — served at /manifest.webmanifest by Next.js. Makes 2BSUPPLY.IA
 // installable as an app on Android (install prompt) and iOS (Add to Home
 // Screen), launching standalone (no browser chrome).
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'PROGPT, IA de Procurement',
-    short_name: 'PROGPT',
+    name: '2BSUPPLY.IA, IA de Procurement',
+    short_name: '2BSUPPLY.IA',
     description:
       'Chat especialista + assistentes de Strategic Sourcing da 2BSUPPLY.',
     start_url: '/chat',

@@ -201,7 +201,7 @@ const SceneOne: React.FC = () => {
             marginBottom: 9,
           }}
         >
-          NOVO NO PROGPT
+          NOVO NA 2BSUPPLY.IA
         </div>
         <div
           style={{
@@ -510,7 +510,7 @@ const ClosingCard: React.FC = () => {
             CONHEÇA A PLATAFORMA
           </div>
           <div style={{ fontSize: 43, fontWeight: 900, letterSpacing: -1.5 }}>
-            progpt.com.br
+            2bsupply.com.br
           </div>
         </div>
 
@@ -557,7 +557,7 @@ const captions = [
   {
     start: 5,
     end: 144,
-    text: 'Ficou mais fácil encontrar o assistente que você precisa no PROGPT.',
+    text: 'Ficou mais fácil encontrar o assistente que você precisa na 2BSUPPLY.IA.',
   },
   {
     start: 158,
@@ -577,7 +577,7 @@ const captions = [
   {
     start: 711,
     end: 848,
-    text: 'PROGPT. Mais agilidade para o seu dia a dia.',
+    text: '2BSUPPLY.IA. Mais agilidade para o seu dia a dia.',
   },
 ];
 

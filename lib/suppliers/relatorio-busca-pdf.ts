@@ -12,7 +12,7 @@ export async function gerarRelatorioPdf(rel: RelatorioBusca) {
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(18);
   doc.setTextColor(11, 20, 36);
-  doc.text('PROGPT', 40, 46);
+  doc.text('2BSUPPLY.IA', 40, 46);
   doc.setFontSize(13);
   doc.text(rel.titulo, 40, 68);
 
@@ -48,7 +48,7 @@ export async function gerarRelatorioPdf(rel: RelatorioBusca) {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
     doc.setTextColor(120, 130, 150);
-    doc.text(`PROGPT · 2B Supply · gerado em ${rel.geradoEm}`, 40, doc.internal.pageSize.getHeight() - 20);
+    doc.text(`2BSUPPLY.IA · 2B Supply · gerado em ${rel.geradoEm}`, 40, doc.internal.pageSize.getHeight() - 20);
     doc.text(`Página ${i} de ${paginas}`, largura - 40, doc.internal.pageSize.getHeight() - 20, { align: 'right' });
   }
   return doc;

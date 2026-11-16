@@ -138,7 +138,7 @@ export function OperacoesRoot() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Operações</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Empresas (orgs) da plataforma PROGPT. Em Módulos você escolhe o que cada empresa pode
+          Empresas (orgs) da plataforma 2BSUPPLY.IA. Em Módulos você escolhe o que cada empresa pode
           usar; para personalizar um cliente, crie a empresa aqui e mova os usuários dele em Usuários.
         </p>
       </div>

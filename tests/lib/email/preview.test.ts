@@ -13,7 +13,7 @@ describe('buildEmailPreview', () => {
 
     expect(preview.subject.length).toBeGreaterThan(0);
     expect(preview.html).toContain('<!DOCTYPE html>');
-    expect(preview.html).toContain('progpt-logo-neon.png');
+    expect(preview.html).toContain('2bsupplyia-logo-email.png');
     expect(preview.html).toContain('background:#050b18');
     expect(preview.html).not.toContain('{{ .ConfirmationURL }}');
   });

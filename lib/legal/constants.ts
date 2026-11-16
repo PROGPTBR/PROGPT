@@ -13,9 +13,9 @@ export const CURRENT_LEGAL_VERSION = 'v3-2026-10-08';
 // docs. Deve bater com a data no CURRENT_LEGAL_VERSION pra rastreamento.
 export const LEGAL_LAST_UPDATED = '8 de outubro de 2026';
 
-// Nome do produto exibido nas UIs e nos docs legais. Trocado pra PROGPT
+// Nome do produto exibido nas UIs e nos docs legais. Trocado pra 2BSUPPLY.IA
 // no sub-projeto 29 (branding oficial 2B Supply).
-export const PRODUCT_NAME = 'PROGPT';
+export const PRODUCT_NAME = '2BSUPPLY.IA';
 
 // Empresa responsável legal pelo produto.
 export const COMPANY_NAME = '2BSUPPLY';

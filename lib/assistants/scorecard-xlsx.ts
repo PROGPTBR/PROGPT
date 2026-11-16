@@ -47,7 +47,7 @@ export async function buildScorecardXlsxBuffer(
   opts: { logo?: XlsxLogo; chartPng?: Buffer } = {},
 ): Promise<Buffer> {
   const wb = new ExcelJS.Workbook();
-  wb.creator = 'PROGPT';
+  wb.creator = '2BSUPPLY.IA';
   wb.created = new Date();
 
   // ─── Sheet 1 — Scorecard ─────────────────────────────────────────────────

@@ -86,7 +86,7 @@ export function UpdateEditor({ open, initial, onCancel, onSave }: Props) {
             {initial ? 'Editar atualização' : 'Nova atualização'}
           </h3>
           <p className="mt-1 text-xs text-muted-foreground">
-            O conteúdo usa Markdown, o mesmo formato dos templates e resultados do PROGPT.
+            O conteúdo usa Markdown, o mesmo formato dos templates e resultados da 2BSUPPLY.IA.
           </p>
         </div>
 

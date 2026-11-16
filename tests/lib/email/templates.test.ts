@@ -8,15 +8,15 @@ import {
 } from '@/lib/email/templates';
 
 describe('buildWelcomeEmail', () => {
-  it('includes PROGPT, the account email in the status card, and links to /chat, /login and /forgot-password', () => {
+  it('includes 2BSUPPLY.IA, the account email in the status card, and links to /chat, /login and /forgot-password', () => {
     const { subject, html } = buildWelcomeEmail({ email: 'maria@empresa.com' });
-    expect(subject).toMatch(/PROGPT/);
+    expect(subject).toMatch(/2BSUPPLY\.IA/);
     expect(html).toContain('maria');
     expect(html).toContain('maria@empresa.com');
     expect(html).toContain('/chat');
     expect(html).toContain('/login');
     expect(html).toContain('/forgot-password');
-    expect(html).toContain('PROGPT');
+    expect(html).toContain('2BSUPPLY.IA');
     expect(html).not.toContain('ATUALIZAÇÃO DO SISTEMA');
   });
 
@@ -41,7 +41,7 @@ describe('buildUpdateAnnouncementEmail', () => {
       category: 'new_feature',
     });
 
-    expect(subject).toBe('Novidade no PROGPT: Busca mais rápida');
+    expect(subject).toBe('Novidade na 2BSUPPLY.IA: Busca mais rápida');
     expect(html).toContain('Busca mais rápida');
     expect(html).toContain('Agora ficou mais simples encontrar assistentes.');
     expect(html).toContain('Ver atualização');
@@ -49,7 +49,7 @@ describe('buildUpdateAnnouncementEmail', () => {
     expect(html).toContain('font-size:12px');
     expect(html).toContain('letter-spacing:0.08em');
     expect(html).toContain('/atualizacoes#busca-mais-rapida');
-    expect(html).toContain('progpt-logo-neon.png');
+    expect(html).toContain('2bsupplyia-logo-email.png');
     expect(html).toContain('background:#050b18');
     expect(html).not.toContain('{{ .ConfirmationURL }}');
   });
@@ -105,7 +105,7 @@ describe('buildPaymentOverdueEmail', () => {
       email: 'x@y.com',
       accessUntil: '15/07/2026',
     });
-    expect(subject).toMatch(/PROGPT/);
+    expect(subject).toMatch(/2BSUPPLY\.IA/);
     expect(html).toContain('15/07/2026');
     expect(html).toContain('/account/billing');
   });

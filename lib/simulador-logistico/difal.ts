@@ -10,7 +10,7 @@ export { UF_LIST, type UF };
 // Base legal: EC 87/2015 (consumidor final não-contribuinte) + Art. 155 §2º
 // VII/VIII CF (contribuinte comprando pra uso/consumo ou ativo imobilizado —
 // o cenário mais relevante pro comprador corporativo B2B, público do
-// PROGPT) + LC 190/2022 + Convênio ICMS 236/2021 (CONFAZ, unificou a base de
+// 2BSUPPLY.IA) + LC 190/2022 + Convênio ICMS 236/2021 (CONFAZ, unificou a base de
 // cálculo "por dentro"/base dupla). Desde 2019, 100% do DIFAL vai pro estado
 // de destino (fim da partilha transitória da EC 87/2015).
 //

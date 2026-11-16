@@ -5,7 +5,7 @@ import{c$ as Fe,r,j as e,U as we,cX as Ee,dj as Ne,aH as ae,a0 as Q,z as Ie,S as
       th{background:#f2f2f2} .linha{margin-top:28px;border-top:1px solid #333;padding-top:4px;font-size:11px;width:60%}
     </style></head><body>
       <h1>Recibo de entrega — EPI</h1>
-      <p class="sub">Obras & Materiais PROGPT</p>
+      <p class="sub">Obras & Materiais 2BSUPPLY.IA</p>
       <p><strong>Nome:</strong> ${s.lote??"—"}</p>
       <p><strong>CPF:</strong> ${Ct(d?.cpf)}</p>
       <p><strong>Data:</strong> ____/____/______</p>

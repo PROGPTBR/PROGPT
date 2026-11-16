@@ -724,7 +724,7 @@ return;
 
             <p className="mt-3 text-base text-muted-foreground">
               Continue usando todos os
-              recursos do PROGPT sem
+              recursos da 2BSUPPLY.IA sem
               interrupções.
             </p>
           </div>
@@ -1205,7 +1205,7 @@ return;
                     para processar esta
                     assinatura e não
                     são armazenados
-                    pelo PROGPT.
+                    pela 2BSUPPLY.IA.
                   </p>
                 </div>
               </section>
@@ -1285,7 +1285,7 @@ return;
                 <p className="mt-2 text-sm text-muted-foreground">
                   Continue usando
                   todos os recursos
-                  do PROGPT.
+                  da 2BSUPPLY.IA.
                 </p>
 
                 {/* USUÁRIOS */}

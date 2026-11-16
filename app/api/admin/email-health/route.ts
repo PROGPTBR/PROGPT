@@ -54,7 +54,7 @@ export async function POST(req: Request) {
 
   const result = await sendEmail({
     to: parsed.data.to,
-    subject: 'PROGPT, teste de entrega (admin)',
+    subject: '2BSUPPLY.IA, teste de entrega (admin)',
     html: '<p>Se você recebeu isso, o envio via SMTP está funcionando ponta a ponta.</p>',
   });
 

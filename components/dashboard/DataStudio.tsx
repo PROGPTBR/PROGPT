@@ -326,7 +326,7 @@ function Builder({
     <div className="space-y-5">
       {/* Capa de impressão */}
       <div className="print-cover hidden mb-6 border-b border-border pb-4">
-        <div className="text-xs font-medium uppercase tracking-wider text-brand">PROGPT · Painel</div>
+        <div className="text-xs font-medium uppercase tracking-wider text-brand">2BSUPPLY.IA · Painel</div>
         <div className="mt-1 text-2xl font-bold">{loaded.name}</div>
         <div className="mt-0.5 text-sm text-muted-foreground">{rows.length.toLocaleString('pt-BR')} linhas</div>
       </div>

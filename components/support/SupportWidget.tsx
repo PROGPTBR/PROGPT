@@ -12,7 +12,7 @@ import { buscarFaq } from '@/lib/support/faq';
 // logada: abre o FAQ de uso (com busca) e o WhatsApp da 2B Supply.
 
 const WHATSAPP_SUPORTE = `https://wa.me/${LEGAL_CONTACT_PHONE_TEL.replace(/\D/g, '')}?text=${encodeURIComponent(
-  'Olá! Preciso de ajuda com o PROGPT.',
+  'Olá! Preciso de ajuda com a 2BSUPPLY.IA.',
 )}`;
 
 export function SupportWidget({
@@ -68,7 +68,7 @@ export function SupportWidget({
           <div className="flex items-center justify-between gap-2 border-b border-border px-4 py-3">
             <div>
               <h2 className="text-sm font-semibold">Suporte</h2>
-              <p className="text-xs text-muted-foreground">Perguntas frequentes sobre o PROGPT</p>
+              <p className="text-xs text-muted-foreground">Perguntas frequentes sobre a 2BSUPPLY.IA</p>
             </div>
             <button
               type="button"
@@ -133,7 +133,7 @@ export function SupportWidget({
               Falar no WhatsApp
             </a>
             <a
-              href={`mailto:${LEGAL_CONTACT_EMAIL}?subject=${encodeURIComponent('Suporte PROGPT')}`}
+              href={`mailto:${LEGAL_CONTACT_EMAIL}?subject=${encodeURIComponent('Suporte 2BSUPPLY.IA')}`}
               className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
             >
               <Mail className="h-3.5 w-3.5" aria-hidden="true" />

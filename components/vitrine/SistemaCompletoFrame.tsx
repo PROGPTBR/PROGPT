@@ -6,7 +6,7 @@ import { ExternalLink, Maximize2, Minimize2, RotateCw } from 'lucide-react';
 import { SISTEMAS_COMPLETOS, type SistemaCompleto } from '@/lib/vitrine/sistema-completo';
 
 // Moldura do sistema completo de demonstração (sub-projeto 74) — mesmo
-// desenho do SimuladorFrame: barra do PROGPT em cima, sistema embutido via
+// desenho do SimuladorFrame: barra da 2BSUPPLY.IA em cima, sistema embutido via
 // <iframe> ocupando o resto, tela cheia real e abrir em nova aba.
 export function SistemaCompletoFrame({ sistema }: { sistema: SistemaCompleto }) {
   const { titulo, subtitulo, src } = SISTEMAS_COMPLETOS[sistema];

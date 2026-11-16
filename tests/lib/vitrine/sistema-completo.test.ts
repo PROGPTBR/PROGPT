@@ -19,7 +19,7 @@ describe('sistema completo de demonstração', () => {
 
   it('a aba Gestão de Obras oferece os dois sistemas de obras', () => {
     expect(SISTEMAS_DE_OBRAS).toEqual(['obras', 'obrasmateriais']);
-    expect(SISTEMAS_COMPLETOS.obrasmateriais.titulo).toBe('Obras & Materiais PROGPT');
+    expect(SISTEMAS_COMPLETOS.obrasmateriais.titulo).toBe('Obras & Materiais 2BSUPPLY.IA');
   });
 
   it('a demonstração do Obras & Materiais não leva nome, e-mail nem endereço reais', async () => {

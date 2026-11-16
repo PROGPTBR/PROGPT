@@ -15,14 +15,14 @@ import { configuredAppUrl } from '@/lib/app-url';
 //   SMTP_PORT      — ex.: 587 (STARTTLS) ou 465 (TLS implícito). Default 587.
 //   SMTP_USER      — caixa autenticada, ex.: comercial@2bsupply.com.br
 //   SMTP_PASSWORD  — senha da caixa
-//   EMAIL_FROM     — sender exibido. Default: 'PROGPT <SMTP_USER>' — a
+//   EMAIL_FROM     — sender exibido. Default: '2BSUPPLY.IA <SMTP_USER>' — a
 //                    maioria dos provedores SMTP (Titan incluso) rejeita ou
 //                    marca spam quando o From não bate com a caixa
 //                    autenticada, então o default usa a própria caixa.
 //   APP_URL        — usado pra construir links em templates. O domínio
 //                    desativado é rejeitado e cai no domínio canônico.
 
-const FALLBACK_FROM = 'PROGPT <comercial@2bsupply.com.br>';
+const FALLBACK_FROM = '2BSUPPLY.IA <comercial@2bsupply.com.br>';
 let _transporter: nodemailer.Transporter | null = null;
 
 function smtpUser(): string | undefined {
@@ -31,7 +31,7 @@ function smtpUser(): string | undefined {
 
 function defaultFrom(): string {
   const user = smtpUser();
-  return user ? `PROGPT <${user}>` : FALLBACK_FROM;
+  return user ? `2BSUPPLY.IA <${user}>` : FALLBACK_FROM;
 }
 
 // Diagnóstico da config estática (sem abrir conexão SMTP) — usado por

@@ -6,7 +6,7 @@ import { SistemaCompletoFrame } from '@/components/vitrine/SistemaCompletoFrame'
 
 export const dynamic = 'force-dynamic';
 
-// Obras & Materiais PROGPT (sub-projeto 91) no menu Gestão, para todos os
+// Obras & Materiais 2BSUPPLY.IA (sub-projeto 91) no menu Gestão, para todos os
 // clientes logados: sistema completo de demonstração, só dados fictícios no
 // navegador (public/demos/obrasmateriais), sem banco e sem gravação real.
 export default async function ObrasMateriaisPage() {

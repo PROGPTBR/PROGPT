@@ -3,7 +3,7 @@ import UpdatesPage from './UpdatesPage';
 import { listPublicUpdates } from '@/lib/updates/queries';
 
 export const metadata: Metadata = {
-  title: 'Atualizações do sistema | PROGPT',
+  title: 'Atualizações do sistema | 2BSUPPLY.IA',
 };
 
 export const revalidate = 60;

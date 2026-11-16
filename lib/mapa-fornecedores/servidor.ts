@@ -191,7 +191,7 @@ export async function emParalelo<T, R>(
 // do Railway é long-lived.
 
 const cache = new Map<string, { lat: number; lng: number } | null>();
-const UA = 'PROGPT/1.0 (comercial@2bsupply.com.br)';
+const UA = '2BSUPPLY.IA/1.0 (comercial@2bsupply.com.br)';
 
 async function getJson(url: string, ms: number): Promise<unknown> {
   const res = await fetch(url, { headers: { Accept: 'application/json', 'User-Agent': UA }, signal: AbortSignal.timeout(ms) });

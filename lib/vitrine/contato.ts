@@ -20,7 +20,7 @@ export const WHATSAPP_COMERCIAL = LEGAL_CONTACT_PHONE_TEL.replace(/\D/g, '');
 export function solicitarProdutoHref(produto: ProdutoVitrine): string {
   const nome = PRODUTO_VITRINE_LABEL[produto];
   const texto =
-    `Olá! Conheci a demonstração de ${nome} no PROGPT e tenho interesse ` +
+    `Olá! Conheci a demonstração de ${nome} na 2BSUPPLY.IA e tenho interesse ` +
     `em implantar na minha empresa. Podemos conversar?`;
   return `https://wa.me/${WHATSAPP_COMERCIAL}?text=${encodeURIComponent(texto)}`;
 }

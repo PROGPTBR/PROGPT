@@ -16,7 +16,7 @@ export default async function GestaoObrasPage() {
   if (!user) redirect('/login?next=/gestao-obras');
 
   // Quem apresenta o produto vê os sistemas completos de demonstração
-  // (CentraldeObras PROGPT, sub-projeto 74; Obras & Materiais PROGPT,
+  // (CentraldeObras 2BSUPPLY.IA, sub-projeto 74; Obras & Materiais 2BSUPPLY.IA,
   // sub-projeto 91), com um seletor; os demais seguem com a vitrine.
   if (podeVerSistemaCompleto(user.email)) {
     return (

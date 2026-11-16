@@ -106,7 +106,7 @@ export async function POST(req: Request) {
       value: settings.planPrice,
       cycle: 'MONTHLY',
       billingType: 'CREDIT_CARD',
-      description: `PROGPT Pro · ${priceLabel}/mês (${settings.trialDays} dias grátis)`,
+      description: `2BSUPPLY.IA Pro · ${priceLabel}/mês (${settings.trialDays} dias grátis)`,
       nextDueDate: charge.date,
       callback: {
         successUrl: `${callbackBaseUrl(req)}/assinar/concluido?token=${token}`,

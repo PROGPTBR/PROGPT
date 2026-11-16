@@ -22,7 +22,7 @@ export function Header({ onOpenSidebar }: Props) {
           <Menu className="h-4 w-4" aria-hidden="true" />
         </button>
       ) : null}
-      <span className="text-sm font-semibold text-foreground">PROGPT</span>
+      <span className="text-sm font-semibold text-foreground">2BSUPPLY.IA</span>
     </header>
   );
 }

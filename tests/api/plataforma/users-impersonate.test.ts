@@ -91,7 +91,7 @@ describe('POST /api/plataforma/users/[id]/impersonate', () => {
     expect((await call('u9')).status).toBe(404);
   });
 
-  it('gera link de uso único pelo /auth/confirm do PROGPT e registra na auditoria', async () => {
+  it('gera link de uso único pelo /auth/confirm da 2BSUPPLY.IA e registra na auditoria', async () => {
     mockAuth(true);
     const { generateLink } = mockDb(cliente);
     const res = await call('u2');

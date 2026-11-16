@@ -276,7 +276,7 @@ export function ProductTour({
             className={`h-8 w-8 shrink-0 ${falando ? 'animate-spin [animation-duration:6s]' : ''}`}
           />
           <div className="min-w-0 flex-1">
-            <div className="text-xs font-semibold text-foreground">Assistente PROGPT</div>
+            <div className="text-xs font-semibold text-foreground">Assistente 2BSUPPLY.IA</div>
             <div className="truncate text-[11px] text-muted-foreground">
               {!vozLigada
                 ? 'Voz desligada'

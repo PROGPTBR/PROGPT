@@ -5,7 +5,7 @@ import { listarPedidos } from '@/lib/recebimento/service';
 import { RecebimentoRoot } from '@/components/recebimento/RecebimentoRoot';
 
 export const dynamic = 'force-dynamic';
-export const metadata: Metadata = { title: 'Recebimento de NF | PROGPT' };
+export const metadata: Metadata = { title: 'Recebimento de NF | 2BSUPPLY.IA' };
 
 export default async function RecebimentoPage() {
   const u = await requireUser();

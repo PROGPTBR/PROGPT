@@ -1,5 +1,5 @@
 """Gera docs/product/assistants-ranking.xlsx — ranking esforço×impacto do
-pipeline de assistentes/funcionalidades do PROGPT.
+pipeline de assistentes/funcionalidades da 2BSUPPLY.IA.
 
 Fonte dos dados: a avaliação em
 C:/Users/.../.claude/plans/avalie-este-pipeline-*.md (lente: lançar rápido /

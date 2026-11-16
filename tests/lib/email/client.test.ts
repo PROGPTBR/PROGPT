@@ -78,13 +78,13 @@ describe('sendEmail', () => {
 
   it('uses EMAIL_FROM env override', async () => {
     setSmtpEnv();
-    process.env.EMAIL_FROM = 'PROGPT <hello@2bsupply.com.br>';
+    process.env.EMAIL_FROM = '2BSUPPLY.IA <hello@2bsupply.com.br>';
     const sendMail = vi.fn().mockResolvedValue({ messageId: 'x' });
     mockTransport(sendMail);
     const { sendEmail } = await import('@/lib/email/client');
     await sendEmail({ to: 'x@y.com', subject: 's', html: '<p>x</p>' });
     expect(sendMail).toHaveBeenCalledWith(
-      expect.objectContaining({ from: 'PROGPT <hello@2bsupply.com.br>' }),
+      expect.objectContaining({ from: '2BSUPPLY.IA <hello@2bsupply.com.br>' }),
     );
   });
 
@@ -95,7 +95,7 @@ describe('sendEmail', () => {
     const { sendEmail } = await import('@/lib/email/client');
     await sendEmail({ to: 'x@y.com', subject: 's', html: '<p>x</p>' });
     expect(sendMail).toHaveBeenCalledWith(
-      expect.objectContaining({ from: 'PROGPT <comercial@2bsupply.com.br>' }),
+      expect.objectContaining({ from: '2BSUPPLY.IA <comercial@2bsupply.com.br>' }),
     );
   });
 });
@@ -113,12 +113,12 @@ describe('getEmailConfigStatus', () => {
     const status = getEmailConfigStatus();
     expect(status.hasKey).toBe(true);
     expect(status.isSandboxFrom).toBe(false);
-    expect(status.from).toBe('PROGPT <comercial@2bsupply.com.br>');
+    expect(status.from).toBe('2BSUPPLY.IA <comercial@2bsupply.com.br>');
   });
 
   it('flags a From that does not match SMTP_USER', async () => {
     setSmtpEnv();
-    process.env.EMAIL_FROM = 'PROGPT <outra-caixa@2bsupply.com.br>';
+    process.env.EMAIL_FROM = '2BSUPPLY.IA <outra-caixa@2bsupply.com.br>';
     const { getEmailConfigStatus } = await import('@/lib/email/client');
     const status = getEmailConfigStatus();
     expect(status.isSandboxFrom).toBe(true);

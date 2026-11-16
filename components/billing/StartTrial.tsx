@@ -131,14 +131,14 @@ export function StartTrial({ priceLabel, trialDays, initial }: Props) {
         </div>
         <h1 className="text-3xl md:text-4xl font-semibold tracking-tight leading-[1.15]">
           <span className="text-foreground">Finalize e </span>
-          <span className="text-brand-gradient">libere o PROGPT.</span>
+          <span className="text-brand-gradient">libere a 2BSUPPLY.IA.</span>
         </h1>
 
         {/* Card de resumo do pedido — estilo checkout de grandes plataformas */}
         <div className="rounded-2xl border border-border bg-card/60 p-5 space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-sm font-semibold text-foreground">PROGPT Pro</div>
+              <div className="text-sm font-semibold text-foreground">2BSUPPLY.IA Pro</div>
               <div className="text-xs text-muted-foreground">Assinatura mensal · cancele quando quiser</div>
             </div>
             <div className="text-right">
@@ -190,7 +190,7 @@ export function StartTrial({ priceLabel, trialDays, initial }: Props) {
         </div>
         <p className="text-xs text-muted-foreground mb-5">
           O cartão é cadastrado no ambiente seguro do Asaas. O CPF não fica
-          salvo no PROGPT.
+          salvo na 2BSUPPLY.IA.
         </p>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

@@ -42,7 +42,7 @@ describe('TourHost', () => {
   it('mostra o passo quando já está na tela dele', async () => {
     render(<TourHost />);
     act(() => startTour());
-    expect(await screen.findByText('Bem-vindo ao PROGPT')).toBeTruthy();
+    expect(await screen.findByText('Bem-vindo à 2BSUPPLY.IA')).toBeTruthy();
     expect(nav.push).not.toHaveBeenCalled();
   });
 

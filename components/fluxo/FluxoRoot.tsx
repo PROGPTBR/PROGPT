@@ -249,7 +249,7 @@ export function FluxoRoot({
             </legend>
             <p className="mb-2 text-xs text-muted-foreground">
               Essa pessoa recebe por e-mail um link para acompanhar o pedido e um aviso a cada etapa
-              concluída, sem precisar de conta no PROGPT.
+              concluída, sem precisar de conta na 2BSUPPLY.IA.
             </p>
             <div className="grid gap-2 sm:grid-cols-2">
               <input

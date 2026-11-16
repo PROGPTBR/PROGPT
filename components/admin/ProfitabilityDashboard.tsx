@@ -2635,7 +2635,7 @@ export function ProfitabilityDashboard() {
                           Adicione os
                           custos fixos
                           da operação
-                          do PROGPT.
+                          da 2BSUPPLY.IA.
                         </div>
 
                         <Button
@@ -2827,7 +2827,7 @@ export function ProfitabilityDashboard() {
                       }),
                     )
                   }
-                  placeholder="Ex: Servidor principal do PROGPT"
+                  placeholder="Ex: Servidor principal da 2BSUPPLY.IA"
                   rows={
                     3
                   }

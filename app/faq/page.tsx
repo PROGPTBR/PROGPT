@@ -12,16 +12,16 @@ export const dynamic = 'force-dynamic';
 // "pode colocar estes textos, depois melhoramos".
 const FAQS: { q: string; a: string }[] = [
   {
-    q: 'O que é o PROGPT?',
-    a: 'O PROGPT é uma IA especializada em Suprimentos, criada para apoiar compradores, gestores e empresas em análises, cotações, contratos, negociação, estratégia de categorias e tomada de decisão.',
+    q: 'O que é a 2BSUPPLY.IA?',
+    a: 'A 2BSUPPLY.IA é uma IA especializada em Suprimentos, criada para apoiar compradores, gestores e empresas em análises, cotações, contratos, negociação, estratégia de categorias e tomada de decisão.',
   },
   {
     q: 'Quanto custa? Tem plano gratuito?',
-    a: 'Sim. O PROGPT possui plano gratuito para uso inicial e planos pagos com mais recursos, mais mensagens, upload de arquivos, histórico, acesso aos assistentes e funcionalidades avançadas.',
+    a: 'Sim. A 2BSUPPLY.IA possui plano gratuito para uso inicial e planos pagos com mais recursos, mais mensagens, upload de arquivos, histórico, acesso aos assistentes e funcionalidades avançadas.',
   },
   {
     q: 'Qual a diferença em relação ao ChatGPT genérico?',
-    a: 'O ChatGPT genérico responde sobre vários assuntos. O PROGPT foi criado para Suprimentos. Ele entende compras, fornecedores, contratos, RFI, RFQ, Kraljic, TCO, Curva ABC, negociação e rotinas reais da área.',
+    a: 'O ChatGPT genérico responde sobre vários assuntos. A 2BSUPPLY.IA foi criada para Suprimentos. Ela entende compras, fornecedores, contratos, RFI, RFQ, Kraljic, TCO, Curva ABC, negociação e rotinas reais da área.',
   },
   {
     q: 'Como funcionam os assistentes?',
@@ -29,11 +29,11 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: 'A base de conhecimento é da minha empresa ou compartilhada?',
-    a: 'Depende do plano contratado. No plano individual, o usuário acessa a base padrão do PROGPT. No plano empresa, a IA pode trabalhar com documentos, políticas, processos e informações internas da própria contratante, conforme os requisitos de TI e compliance.',
+    a: 'Depende do plano contratado. No plano individual, o usuário acessa a base padrão da 2BSUPPLY.IA. No plano empresa, a IA pode trabalhar com documentos, políticas, processos e informações internas da própria contratante, conforme os requisitos de TI e compliance.',
   },
   {
     q: 'Posso baixar os artefatos em Word ou Excel?',
-    a: 'Sim. O PROGPT pode gerar materiais prontos para uso, como análises, relatórios, comparativos, planos de ação, modelos de RFI/RFQ e planilhas, que podem ser baixados em Word ou Excel, conforme a funcionalidade disponível.',
+    a: 'Sim. A 2BSUPPLY.IA pode gerar materiais prontos para uso, como análises, relatórios, comparativos, planos de ação, modelos de RFI/RFQ e planilhas, que podem ser baixados em Word ou Excel, conforme a funcionalidade disponível.',
   },
   {
     q: 'Como cancelo a assinatura?',

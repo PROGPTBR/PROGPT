@@ -106,7 +106,7 @@ describe('ProductTour — assistente de voz', () => {
     const play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined);
     vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {});
     renderTour();
-    expect(screen.getByText('Assistente PROGPT')).toBeTruthy();
+    expect(screen.getByText('Assistente 2BSUPPLY.IA')).toBeTruthy();
     await Promise.resolve();
     expect(play).toHaveBeenCalled();
     const audio = play.mock.instances[0] as unknown as HTMLAudioElement;

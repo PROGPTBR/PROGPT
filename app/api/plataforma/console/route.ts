@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 // GET /api/plataforma/console — home do console Super Admin. Agrega o que
 // hoje está espalhado por /admin/monitor + audit_log numa visão de topo:
 // KPIs, alertas ("precisa de atenção") e atividade recente. Cada cliente
-// pagante do PROGPT é 1 USUÁRIO (não uma org com equipe, diferente do
+// pagante da 2BSUPPLY.IA é 1 USUÁRIO (não uma org com equipe, diferente do
 // padrão de referência copiado em sub-projeto 57b) — os alertas refletem
 // isso: assinatura vencida, sem cartão vinculado, etc.
 const PAYING_STATUSES = new Set(['active', 'trialing', 'past_due']);

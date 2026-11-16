@@ -264,7 +264,7 @@ export function DemoRequestModal({
                   {submitting ? 'Enviando…' : 'Solicitar demonstração'}
                 </button>
                 <p className={styles.legal}>
-                  Ao enviar, você concorda com o contato da equipe PROGPT sobre a demonstração.
+                  Ao enviar, você concorda com o contato da equipe 2BSUPPLY.IA sobre a demonstração.
                 </p>
               </form>
             </>

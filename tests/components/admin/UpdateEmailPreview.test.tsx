@@ -13,7 +13,7 @@ describe('UpdateEmailPreview', () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({
-        subject: 'Novidade no PROGPT: Busca',
+        subject: 'Novidade na 2BSUPPLY.IA: Busca',
         html: '<html><body>Prévia</body></html>',
       }),
     });
@@ -29,7 +29,7 @@ describe('UpdateEmailPreview', () => {
     );
 
     expect(screen.getByRole('button', { name: /desktop/i }).getAttribute('aria-pressed')).toBe('true');
-    await waitFor(() => expect(screen.getByText('Novidade no PROGPT: Busca')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('Novidade na 2BSUPPLY.IA: Busca')).toBeTruthy());
     expect(screen.getByTitle('Prévia do e-mail em desktop')).toBeTruthy();
     expect(screen.getByLabelText('Template')).toBeTruthy();
 

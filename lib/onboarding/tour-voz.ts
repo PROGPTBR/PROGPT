@@ -10,7 +10,7 @@ import type { TourStep } from './tour-steps';
 /** O que o assistente fala no passo, com a pronúncia ajustada para a voz. */
 export function textoFalado(step: Pick<TourStep, 'title' | 'body'>): string {
   return `${step.title}. ${step.body}`
-    .replace(/PROGPT/g, 'Pró GPT')
+    .replace(/2BSUPPLY\.IA/g, '2B Supply I.A.')
     .replace(/\.docx\b/gi, 'Word')
     .replace(/\.xlsx\b/gi, 'Excel')
     .replace(/["“”]/g, '')

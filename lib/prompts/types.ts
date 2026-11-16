@@ -23,7 +23,7 @@ export type PublicPrompt = Pick<
 
 /**
  * Forma gravada em `scripts/data/prompts-seed.json` pela importação. Sem
- * campos gerados pelo DB (id/created_at/…) — esses nascem no seed do PROGPT.
+ * campos gerados pelo DB (id/created_at/…) — esses nascem no seed da 2BSUPPLY.IA.
  */
 export type SeedPrompt = {
   prompt_number: number | null;

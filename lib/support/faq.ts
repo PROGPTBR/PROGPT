@@ -18,7 +18,7 @@ export const FAQ_SUPORTE: FaqSecao[] = [
     itens: [
       {
         id: 'o-que-e',
-        pergunta: 'O que é o PROGPT?',
+        pergunta: 'O que é a 2BSUPPLY.IA?',
         resposta:
           'Uma plataforma de inteligência artificial para Suprimentos: um chat especialista em compras, assistentes que entregam documentos e planilhas prontos, o Fluxo de Compras com aprovação em cada etapa e bases próprias de fornecedores e materiais.',
       },
@@ -38,7 +38,7 @@ export const FAQ_SUPORTE: FaqSecao[] = [
         id: 'celular',
         pergunta: 'Funciona no celular?',
         resposta:
-          'Sim. Pelo navegador do celular, o menu fica no botão do canto superior. Dá também para instalar o PROGPT como aplicativo: no navegador, use a opção "Adicionar à tela inicial" ou "Instalar app".',
+          'Sim. Pelo navegador do celular, o menu fica no botão do canto superior. Dá também para instalar a 2BSUPPLY.IA como aplicativo: no navegador, use a opção "Adicionar à tela inicial" ou "Instalar app".',
         termos: 'mobile app instalar android iphone',
       },
     ],
@@ -51,7 +51,7 @@ export const FAQ_SUPORTE: FaqSecao[] = [
         id: 'de-onde-vem',
         pergunta: 'De onde vêm as respostas do chat?',
         resposta:
-          'De uma base de conhecimento de Strategic Sourcing (teorias, frameworks e práticas de compras). Quando a base não tem fonte sobre o assunto, o PROGPT diz isso em vez de inventar.',
+          'De uma base de conhecimento de Strategic Sourcing (teorias, frameworks e práticas de compras). Quando a base não tem fonte sobre o assunto, a 2BSUPPLY.IA diz isso em vez de inventar.',
         termos: 'fonte base conhecimento confiável',
       },
       {

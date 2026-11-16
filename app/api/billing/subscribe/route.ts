@@ -48,7 +48,7 @@ export const dynamic =
 // ============================================================
 // POST /api/billing/subscribe
 //
-// Checkout interno do PROGPT.
+// Checkout interno da 2BSUPPLY.IA.
 //
 // O cartão NÃO é salvo no Supabase.
 // Ele é recebido por esta rota e enviado diretamente ao Asaas.

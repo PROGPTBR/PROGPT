@@ -52,7 +52,7 @@ describe('GET /api/admin/email-health', () => {
 
   it('flags a From that does not match SMTP_USER even when credentials are set', async () => {
     setSmtpEnv();
-    process.env.EMAIL_FROM = 'PROGPT <outra-caixa@2bsupply.com.br>';
+    process.env.EMAIL_FROM = '2BSUPPLY.IA <outra-caixa@2bsupply.com.br>';
     mockAdmin(true);
     const { GET } = await import('@/app/api/admin/email-health/route');
     const res = await GET();

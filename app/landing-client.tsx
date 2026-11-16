@@ -139,20 +139,20 @@ const BENEFITS = [
 
 const FAQS = [
   {
-    q: 'O que é o PROGPT?',
-    a: 'O PROGPT é uma IA especializada em Suprimentos, criada para apoiar compradores, gestores e empresas em análises, cotações, contratos, negociação, estratégia de categorias e tomada de decisão.',
+    q: 'O que é a 2BSUPPLY.IA?',
+    a: 'A 2BSUPPLY.IA é uma IA especializada em Suprimentos, criada para apoiar compradores, gestores e empresas em análises, cotações, contratos, negociação, estratégia de categorias e tomada de decisão.',
   },
   {
     q: 'Qual a diferença em relação ao ChatGPT genérico?',
-    a: 'O ChatGPT genérico responde sobre vários assuntos. O PROGPT foi criado para Suprimentos. Ele entende compras, fornecedores, contratos, RFI, RFQ, Kraljic, TCO, Curva ABC, negociação e rotinas reais da área.',
+    a: 'O ChatGPT genérico responde sobre vários assuntos. A 2BSUPPLY.IA foi criada para Suprimentos. Ela entende compras, fornecedores, contratos, RFI, RFQ, Kraljic, TCO, Curva ABC, negociação e rotinas reais da área.',
   },
   {
     q: 'A base de conhecimento é da minha empresa ou compartilhada?',
-    a: 'Depende do plano contratado. No plano individual, o usuário acessa a base padrão do PROGPT. No plano empresa, a IA pode trabalhar com documentos, políticas, processos e informações internas da própria contratante, conforme os requisitos de TI e compliance.',
+    a: 'Depende do plano contratado. No plano individual, o usuário acessa a base padrão da 2BSUPPLY.IA. No plano empresa, a IA pode trabalhar com documentos, políticas, processos e informações internas da própria contratante, conforme os requisitos de TI e compliance.',
   },
   {
     q: 'Quanto custa? Tem plano gratuito?',
-    a: 'Sim. O PROGPT possui plano gratuito para uso inicial e planos pagos com mais recursos, mais mensagens, upload de arquivos, histórico, acesso aos assistentes e funcionalidades avançadas.',
+    a: 'Sim. A 2BSUPPLY.IA possui plano gratuito para uso inicial e planos pagos com mais recursos, mais mensagens, upload de arquivos, histórico, acesso aos assistentes e funcionalidades avançadas.',
   },
   {
     q: 'Como funcionam os assistentes (RFP, Kraljic, Negociação…)?',
@@ -160,7 +160,7 @@ const FAQS = [
   },
   {
     q: 'Posso baixar os artefatos em Word ou Excel?',
-    a: 'Sim. O PROGPT pode gerar materiais prontos para uso, como análises, relatórios, comparativos, planos de ação, modelos de RFI/RFQ e planilhas, que podem ser baixados em Word ou Excel, conforme a funcionalidade disponível.',
+    a: 'Sim. A 2BSUPPLY.IA pode gerar materiais prontos para uso, como análises, relatórios, comparativos, planos de ação, modelos de RFI/RFQ e planilhas, que podem ser baixados em Word ou Excel, conforme a funcionalidade disponível.',
   },
   {
     q: 'Como cancelo a assinatura?',
@@ -789,7 +789,7 @@ const isDark = !mounted || resolvedTheme !== 'light';
                 <BrandLogo size="lg" />
               </div>
               <p className="text-sm text-gray-500 leading-relaxed">
-                PROGPT, plataforma 2B Supply. Inteligência aplicada para cada
+                2BSUPPLY.IA, plataforma 2B Supply. Inteligência aplicada para cada
                 passo do Strategic Sourcing.
               </p>
             </div>

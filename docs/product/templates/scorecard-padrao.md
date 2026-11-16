@@ -89,4 +89,4 @@ Este scorecard foi gerado com base em avaliação multidimensional de fornecedor
 
 Este scorecard contém avaliações individuais de fornecedores da {{cliente}}. Tratar como confidencial; não compartilhar com fornecedores avaliados antes de alinhamento com a liderança de Compras.
 
-*Documento gerado automaticamente pelo Assistente Scorecard do PROGPT.*
+*Documento gerado automaticamente pelo Assistente Scorecard da 2BSUPPLY.IA.*

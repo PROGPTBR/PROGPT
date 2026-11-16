@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 // Aprovação do gestor pelo e-mail (sub-projeto 90). Página PÚBLICA, fora do
 // matcher do middleware: o gestor não tem conta. O token do link é a credencial.
 export const metadata: Metadata = {
-  title: 'Aprovação de compra | PROGPT',
+  title: 'Aprovação de compra | 2BSUPPLY.IA',
   robots: { index: false, follow: false },
 };
 

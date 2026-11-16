@@ -4,7 +4,7 @@
       "Type": "WordBoundary",
       "Data": {
         "Offset": 980830,
-        "Duration": 3725830,
+        "Duration": 3846250,
         "text": {
           "Text": "Ficou",
           "Length": 5,
@@ -15,7 +15,7 @@
     {
       "Type": "WordBoundary",
       "Data": {
-        "Offset": 4827080,
+        "Offset": 4947080,
         "Duration": 2403750,
         "text": {
           "Text": "mais",
@@ -27,8 +27,8 @@
     {
       "Type": "WordBoundary",
       "Data": {
-        "Offset": 7350830,
-        "Duration": 3485410,
+        "Offset": 7471250,
+        "Duration": 3605830,
         "text": {
           "Text": "fácil",
           "Length": 5,
@@ -39,7 +39,7 @@
     {
       "Type": "WordBoundary",
       "Data": {
-        "Offset": 10956660,
+        "Offset": 11197080,
         "Duration": 4327080,
         "text": {
           "Text": "encontrar",
@@ -51,8 +51,8 @@
     {
       "Type": "WordBoundary",
       "Data": {
-        "Offset": 15403750,
-        "Duration": 480830,
+        "Offset": 15644160,
+        "Duration": 360409,
         "text": {
           "Text": "o",
           "Length": 1,
@@ -63,8 +63,8 @@
     {
       "Type": "WordBoundary",
       "Data": {
-        "Offset": 16005000,
-        "Duration": 5288330,
+        "Offset": 16125000,
+        "Duration": 5168330,
         "text": {
           "Text": "assistente",
           "Length": 10,
@@ -76,7 +76,7 @@
       "Type": "WordBoundary",
       "Data": {
         "Offset": 21413330,
-        "Duration": 841250,
+        "Duration": 721250,
         "text": {
           "Text": "que",
           "Length": 3,
@@ -87,7 +87,7 @@
     {
       "Type": "WordBoundary",
       "Data": {
-        "Offset": 22375000,
+        "Offset": 22255000,
         "Duration": 2403750,
         "text": {
           "Text": "você",
@@ -99,7 +99,7 @@
     {
       "Type": "WordBoundary",
       "Data": {
-        "Offset": 24899160,
+        "Offset": 24778750,
         "Duration": 4447080,
         "text": {
           "Text": "precisa",
@@ -111,10 +111,22 @@
     {
       "Type": "WordBoundary",
       "Data": {
-        "Offset": 29466250,
+        "Offset": 29346250,
         "Duration": 1081660,
         "text": {
-          "Text": "no",
+          "Text": "na",
+          "Length": 2,
+          "BoundaryType": "WordBoundary"
+        }
+      }
+    },
+    {
+      "Type": "WordBoundary",
+      "Data": {
+        "Offset": 30547910,
+        "Duration": 4807919,
+        "text": {
+          "Text": "2B",
           "Length": 2,
           "BoundaryType": "WordBoundary"
         }
@@ -124,10 +136,10 @@
       "Type": "SentenceBoundary",
       "Data": {
         "Offset": 1000000,
-        "Duration": 45173078,
+        "Duration": 50221155,
         "text": {
-          "Text": "Ficou mais fácil encontrar o assistente que você precisa no Pró GPT.",
-          "Length": 68,
+          "Text": "Ficou mais fácil encontrar o assistente que você precisa na 2B Supply I.A.",
+          "Length": 74,
           "BoundaryType": "SentenceBoundary"
         }
       }
@@ -135,11 +147,11 @@
     {
       "Type": "WordBoundary",
       "Data": {
-        "Offset": 30668330,
-        "Duration": 1922910,
+        "Offset": 35475830,
+        "Duration": 4086660,
         "text": {
-          "Text": "Pró",
-          "Length": 3,
+          "Text": "Supply",
+          "Length": 6,
           "BoundaryType": "WordBoundary"
         }
       }
@@ -147,11 +159,11 @@
     {
       "Type": "WordBoundary",
       "Data": {
-        "Offset": 32711660,
-        "Duration": 5168330,
+        "Offset": 39682500,
+        "Duration": 3245000,
         "text": {
-          "Text": "GPT",
-          "Length": 3,
+          "Text": "I.A.",
+          "Length": 4,
           "BoundaryType": "WordBoundary"
         }
       }

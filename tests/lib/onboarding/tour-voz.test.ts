@@ -15,8 +15,8 @@ describe('voz do assistente do tour', () => {
   });
 
   it('ajusta a pronúncia do que a voz lê errado', () => {
-    expect(textoFalado({ title: 'O PROGPT', body: 'Baixe o "relatório" .docx e a planilha .xlsx.' })).toBe(
-      'O Pró GPT. Baixe o relatório Word e a planilha Excel.',
+    expect(textoFalado({ title: 'A 2BSUPPLY.IA', body: 'Baixe o "relatório" .docx e a planilha .xlsx.' })).toBe(
+      'A 2B Supply I.A.. Baixe o relatório Word e a planilha Excel.',
     );
   });
 

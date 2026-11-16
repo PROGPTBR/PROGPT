@@ -90,7 +90,7 @@ function update() {
 		['Projetado', 8]
 	].map(([n, s]) => `<tr><td>${n}</td><td>${s}%</td><td>${money(hourValue+vol*coverage*s/100)}</td><td>${num((hourValue+vol*coverage*s/100)/p.price)}×</td></tr>`).join('');
 	set('annual', `Em 12 meses: benefício estimado de ${money(benefit*12)} e saldo econômico de ${money(benefit*12-annualFee-second-3825-training)}, descontando mensalidades, implantação e tempo de treinamento.${chosen===3?' Considera a manutenção da segunda assistente a R$ 680/mês a partir de fevereiro.':''}`);
-	summary = `PROGPT — Proposta para Engetal\n${p.name}\n${p.volume} negociações/mês\n${p.assistants} assistentes${p.management?" + Assistentes de Gestão de Obras":""}\nMensalidade: ${money(p.price)}${p.special?' em novembro/2026, dezembro/2026 e janeiro/2027':''}\n${p.special?'A partir de fevereiro/2027: '+money(p.regular)+'/mês\n':''}${chosen===3?'2ª assistente: gratuita nos 3 primeiros meses; depois R$ 680/mês, caso mantida.\n':''}Implantação (única): R$ 3.825,00\nTreinamento de até 4 pessoas incluído.\nPlano mensal. Proposta válida até 30/10/2026.\nKick-off em até 2 dias úteis após a assinatura.\nIntegração com Siecon sujeita à validação técnica da API.`;
+	summary = `2BSUPPLY.IA — Proposta para Engetal\n${p.name}\n${p.volume} negociações/mês\n${p.assistants} assistentes${p.management?" + Assistentes de Gestão de Obras":""}\nMensalidade: ${money(p.price)}${p.special?' em novembro/2026, dezembro/2026 e janeiro/2027':''}\n${p.special?'A partir de fevereiro/2027: '+money(p.regular)+'/mês\n':''}${chosen===3?'2ª assistente: gratuita nos 3 primeiros meses; depois R$ 680/mês, caso mantida.\n':''}Implantação (única): R$ 3.825,00\nTreinamento de até 4 pessoas incluído.\nPlano mensal. Proposta válida até 30/10/2026.\nKick-off em até 2 dias úteis após a assinatura.\nIntegração com Siecon sujeita à validação técnica da API.`;
 	$('summaryText').textContent = summary;
 }
 document.querySelectorAll('.plan').forEach(b => b.addEventListener('click', () => {
@@ -111,7 +111,7 @@ document.querySelector('.close').onclick = () => $('summary').close();
 $('copy').onclick = async () => {
 	try {
 		await navigator.clipboard.writeText(summary);
-		$('copyStatus').textContent = 'Resumo copiado. Compartilhe com a PROGPT para continuar.'
+		$('copyStatus').textContent = 'Resumo copiado. Compartilhe com a 2BSUPPLY.IA para continuar.'
 	} catch {
 		$('copyStatus').textContent = 'Selecione o resumo acima e copie com Ctrl+C.'
 	}

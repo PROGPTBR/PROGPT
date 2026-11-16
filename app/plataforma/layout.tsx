@@ -36,7 +36,7 @@ export default async function PlataformaLayout({
     <div className="flex min-h-screen bg-background text-foreground font-outfit antialiased">
       <aside className="w-56 shrink-0 border-r border-amber-500/30 bg-amber-500/5 flex flex-col h-screen sticky top-0">
         <div className="px-4 py-4 border-b border-amber-500/20">
-          <div className="text-sm font-semibold">PROGPT</div>
+          <div className="text-sm font-semibold">2BSUPPLY.IA</div>
           <div className="text-[10px] font-medium uppercase tracking-wider text-amber-600 dark:text-amber-400">
             Super Admin
           </div>

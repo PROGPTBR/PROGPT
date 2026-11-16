@@ -7,10 +7,10 @@
   "lines": [
     {
       "id": "scene-1",
-      "writtenText": "Ficou mais fácil encontrar o assistente que você precisa no PROGPT.",
-      "submittedText": "Ficou mais fácil encontrar o assistente que você precisa no Pró GPT.",
+      "writtenText": "Ficou mais fácil encontrar o assistente que você precisa na 2BSUPPLY.IA.",
+      "submittedText": "Ficou mais fácil encontrar o assistente que você precisa na 2B Supply I.A.",
       "file": "audio/scene-1.mp3",
-      "durationSeconds": 4.632,
+      "durationSeconds": 5.14,
       "wordBoundaries": "audio/scene-1-boundaries.json"
     },
     {
@@ -39,11 +39,11 @@
     },
     {
       "id": "scene-5",
-      "writtenText": "PROGPT. Mais agilidade para o seu dia a dia.",
-      "submittedText": "Pró GPT. Mais agilidade para o seu dia a dia.",
+      "writtenText": "2BSUPPLY.IA. Mais agilidade para o seu dia a dia.",
+      "submittedText": "2B Supply I.A. Mais agilidade para o seu dia a dia.",
       "file": "audio/scene-5.mp3",
-      "durationSeconds": 4.56,
-      "wordBoundaries": "audio/scene-5-boundaries.json"
+      "durationSeconds": 5.11,
+      "wordBoundaries": null
     }
   ],
   "music": {

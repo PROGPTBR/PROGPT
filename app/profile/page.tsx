@@ -33,7 +33,7 @@ export default async function ProfilePage() {
           <div className="min-w-0">
             <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">Meu perfil</h1>
             <p className="text-sm text-muted-foreground">
-              Preencha uma vez: o logo e os dados da sua empresa entram sozinhos nos documentos que o PROGPT gera.
+              Preencha uma vez: o logo e os dados da sua empresa entram sozinhos nos documentos que a 2BSUPPLY.IA gera.
             </p>
           </div>
         </header>

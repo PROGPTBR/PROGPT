@@ -100,7 +100,7 @@ export function AcceptInviteForm({ token, email, inviterName, inviterEmail }: Pr
   return (
     <div className="mx-auto w-full max-w-md space-y-6">
       <div className="space-y-2">
-        <h1 className="text-2xl font-bold tracking-tight">Seu acesso ao PROGPT</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Seu acesso à 2BSUPPLY.IA</h1>
         <p className="text-sm text-muted-foreground">
           <strong>{who}</strong> reservou um acesso para você. Crie sua senha para entrar, sem
           cartão, a assinatura é da empresa.

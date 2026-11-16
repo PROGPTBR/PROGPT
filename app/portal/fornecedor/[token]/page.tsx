@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 
 // Recebimento de NF (sub-projeto 95). Página PÚBLICA, fora do matcher do
 // middleware: o fornecedor não tem conta. O token do link é a credencial.
-export const metadata: Metadata = { title: 'Nota fiscal do pedido | PROGPT', robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: 'Nota fiscal do pedido | 2BSUPPLY.IA', robots: { index: false, follow: false } };
 
 export default async function PortalFornecedorPage({ params }: { params: { token: string } }) {
   const c = await getPedidoPorToken('fornecedor', params.token);

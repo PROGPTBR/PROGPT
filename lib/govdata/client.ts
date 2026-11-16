@@ -77,7 +77,7 @@ function buildUrl(base: GovBase, path: string, params?: Params): string {
 async function govGetOnce<T>(url: string): Promise<T> {
   const res = await fetch(url, {
     method: 'GET',
-    headers: { Accept: 'application/json', 'User-Agent': 'PROGPT/1.0' },
+    headers: { Accept: 'application/json', 'User-Agent': '2BSUPPLY.IA/1.0' },
     signal: AbortSignal.timeout(TIMEOUT_MS),
   });
 

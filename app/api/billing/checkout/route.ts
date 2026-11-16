@@ -244,7 +244,7 @@ export async function POST(req: Request) {
         billingType: 'CREDIT_CARD',
 
         description:
-          `PROGPT Pro · ${seatsLabel(seats)} · ${priceLabel} (${settings.trialDays} dias grátis)`,
+          `2BSUPPLY.IA Pro · ${seatsLabel(seats)} · ${priceLabel} (${settings.trialDays} dias grátis)`,
 
         nextDueDate: charge.date,
 

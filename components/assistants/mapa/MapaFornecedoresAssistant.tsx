@@ -132,7 +132,7 @@ export function MapaFornecedoresAssistant({ pedidoInicial = '' }: { pedidoInicia
           Mapa de Fornecedores da Operação <span className="text-brand">.</span>
         </h1>
         <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
-          Descreva a empresa e a região. O PROGPT monta as categorias de compra (CAPEX e OPEX), procura fornecedores
+          Descreva a empresa e a região. A 2BSUPPLY.IA monta as categorias de compra (CAPEX e OPEX), procura fornecedores
           reais na internet para cada uma, mostra todos num mapa e diz quem acionar primeiro e onde pedir mais
           cotações.
         </p>

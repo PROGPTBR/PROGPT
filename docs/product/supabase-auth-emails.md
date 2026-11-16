@@ -1,4 +1,4 @@
-# E-mails de autenticação (Supabase) — modelos oficiais PROGPT
+# E-mails de autenticação (Supabase) — modelos oficiais 2BSUPPLY.IA
 
 Guia único pra configurar os e-mails de auth no painel do Supabase. Todos usam
 o **fluxo `token_hash`** (token na _query_, não no `#`) — resistente a filtros
@@ -36,17 +36,17 @@ que gera o link antigo (com `#`, frágil).
 ---
 
 ## 1. Reset Password (Redefinir senha)
-**Subject:** `Redefinir sua senha · PROGPT`
+**Subject:** `Redefinir sua senha · 2BSUPPLY.IA`
 
 ```html
 <div style="max-width:480px;margin:0 auto;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #e6ebf1">
   <div style="background:linear-gradient(135deg,#0ed1e0,#0e8de1);padding:22px 28px">
-    <span style="color:#fff;font-size:20px;font-weight:800;letter-spacing:-.5px">PROGPT</span>
+    <span style="color:#fff;font-size:20px;font-weight:800;letter-spacing:-.5px">2BSUPPLY.IA</span>
   </div>
   <div style="padding:28px">
     <h1 style="margin:0 0 8px;font-size:20px;color:#0f172a">Redefinir sua senha</h1>
     <p style="margin:0 0 20px;font-size:14px;line-height:1.6;color:#475569">
-      Recebemos um pedido para redefinir a senha da sua conta PROGPT. Clique no botão abaixo para escolher uma nova senha. O link vale por 1 hora.
+      Recebemos um pedido para redefinir a senha da sua conta 2BSUPPLY.IA. Clique no botão abaixo para escolher uma nova senha. O link vale por 1 hora.
     </p>
     <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/reset-password"
        style="display:inline-block;background:linear-gradient(135deg,#0ed1e0,#0e8de1);color:#000;font-weight:600;font-size:14px;text-decoration:none;padding:12px 28px;border-radius:9999px">
@@ -67,17 +67,17 @@ que gera o link antigo (com `#`, frágil).
 ---
 
 ## 2. Invite user (Convite de usuário)
-**Subject:** `Você foi convidado para o PROGPT`
+**Subject:** `Você foi convidado para a 2BSUPPLY.IA`
 
 ```html
 <div style="max-width:480px;margin:0 auto;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #e6ebf1">
   <div style="background:linear-gradient(135deg,#0ed1e0,#0e8de1);padding:22px 28px">
-    <span style="color:#fff;font-size:20px;font-weight:800;letter-spacing:-.5px">PROGPT</span>
+    <span style="color:#fff;font-size:20px;font-weight:800;letter-spacing:-.5px">2BSUPPLY.IA</span>
   </div>
   <div style="padding:28px">
     <h1 style="margin:0 0 8px;font-size:20px;color:#0f172a">Você foi convidado 🎉</h1>
     <p style="margin:0 0 20px;font-size:14px;line-height:1.6;color:#475569">
-      Você recebeu acesso ao PROGPT — a IA de compras da 2B Supply. Clique abaixo para criar sua senha e entrar.
+      Você recebeu acesso à 2BSUPPLY.IA — a IA de compras da 2B Supply. Clique abaixo para criar sua senha e entrar.
     </p>
     <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=invite&next=/reset-password"
        style="display:inline-block;background:linear-gradient(135deg,#0ed1e0,#0e8de1);color:#000;font-weight:600;font-size:14px;text-decoration:none;padding:12px 28px;border-radius:9999px">
@@ -97,7 +97,7 @@ que gera o link antigo (com `#`, frágil).
 ---
 
 ## 3. Confirm signup (Confirmação de cadastro)
-**Subject:** `Confirme seu e-mail · PROGPT`
+**Subject:** `Confirme seu e-mail · 2BSUPPLY.IA`
 
 > Só dispara se a confirmação de e-mail estiver ligada em Authentication →
 > Providers → Email → *Confirm email*. Se o onboarding é card-first com
@@ -106,12 +106,12 @@ que gera o link antigo (com `#`, frágil).
 ```html
 <div style="max-width:480px;margin:0 auto;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #e6ebf1">
   <div style="background:linear-gradient(135deg,#0ed1e0,#0e8de1);padding:22px 28px">
-    <span style="color:#fff;font-size:20px;font-weight:800;letter-spacing:-.5px">PROGPT</span>
+    <span style="color:#fff;font-size:20px;font-weight:800;letter-spacing:-.5px">2BSUPPLY.IA</span>
   </div>
   <div style="padding:28px">
     <h1 style="margin:0 0 8px;font-size:20px;color:#0f172a">Confirme seu e-mail</h1>
     <p style="margin:0 0 20px;font-size:14px;line-height:1.6;color:#475569">
-      Falta um passo para ativar sua conta PROGPT. Confirme seu e-mail clicando no botão abaixo.
+      Falta um passo para ativar sua conta 2BSUPPLY.IA. Confirme seu e-mail clicando no botão abaixo.
     </p>
     <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=signup&next=/chat"
        style="display:inline-block;background:linear-gradient(135deg,#0ed1e0,#0e8de1);color:#000;font-weight:600;font-size:14px;text-decoration:none;padding:12px 28px;border-radius:9999px">
@@ -132,7 +132,7 @@ que gera o link antigo (com `#`, frágil).
 ---
 
 ## 4. Change Email Address (Alteração de e-mail)
-**Subject:** `Confirme a alteração de e-mail · PROGPT`
+**Subject:** `Confirme a alteração de e-mail · 2BSUPPLY.IA`
 
 > No **secure email change** (padrão), o Supabase envia este e-mail pro endereço
 > **antigo e novo** — os dois precisam confirmar. A rota trata cada link.
@@ -140,12 +140,12 @@ que gera o link antigo (com `#`, frágil).
 ```html
 <div style="max-width:480px;margin:0 auto;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #e6ebf1">
   <div style="background:linear-gradient(135deg,#0ed1e0,#0e8de1);padding:22px 28px">
-    <span style="color:#fff;font-size:20px;font-weight:800;letter-spacing:-.5px">PROGPT</span>
+    <span style="color:#fff;font-size:20px;font-weight:800;letter-spacing:-.5px">2BSUPPLY.IA</span>
   </div>
   <div style="padding:28px">
     <h1 style="margin:0 0 8px;font-size:20px;color:#0f172a">Confirme seu novo e-mail</h1>
     <p style="margin:0 0 20px;font-size:14px;line-height:1.6;color:#475569">
-      Recebemos um pedido para alterar o e-mail da sua conta PROGPT para
+      Recebemos um pedido para alterar o e-mail da sua conta 2BSUPPLY.IA para
       <strong style="color:#0f172a">{{ .NewEmail }}</strong>. Confirme clicando no botão abaixo.
     </p>
     <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email_change&next=/chat"

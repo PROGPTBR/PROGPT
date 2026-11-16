@@ -109,7 +109,7 @@ async function main() {
   }
   console.log(`\nScrub de marca alterou ${scrubbedTitles.length} prompt(s):`);
   for (const t of scrubbedTitles) console.log(`  • ${t}`);
-  console.log('\nRevise o JSON e rode `python scripts/seed_prompts.py` pra carregar no PROGPT.');
+  console.log('\nRevise o JSON e rode `python scripts/seed_prompts.py` pra carregar na 2BSUPPLY.IA.');
 }
 
 main().catch((err) => {

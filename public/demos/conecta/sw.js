@@ -1,4 +1,4 @@
-// ConectaPROGPT — demonstração: SEM service worker.
+// Conecta 2BSUPPLY.IA — demonstração: SEM service worker.
 // A demonstração roda dentro de outro produto, na mesma origem; um service
 // worker aqui passaria a interceptar e cachear as páginas dele. Este arquivo
 // só existe para que um registro antigo (se houver) se desfaça sozinho.

@@ -33,9 +33,9 @@ export async function POST(req: Request): Promise<Response> {
   const { relatorio, nomeArquivo } = body.data;
 
   const wb = new ExcelJS.Workbook();
-  wb.creator = 'PROGPT';
+  wb.creator = '2BSUPPLY.IA';
   const resumo = wb.addWorksheet('Resumo');
-  resumo.addRow(['PROGPT']).font = { bold: true, size: 16 };
+  resumo.addRow(['2BSUPPLY.IA']).font = { bold: true, size: 16 };
   resumo.addRow([relatorio.titulo]).font = { bold: true, size: 13 };
   resumo.addRow([]);
   for (const [k, v] of relatorio.resumo) {

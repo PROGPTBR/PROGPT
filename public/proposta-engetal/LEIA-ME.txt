@@ -1,4 +1,4 @@
-PROGPT - Proposta Engetal
+2BSUPPLY.IA - Proposta Engetal
 
 Site em HTML, CSS e JavaScript puro, sem React e sem dependencias.
 

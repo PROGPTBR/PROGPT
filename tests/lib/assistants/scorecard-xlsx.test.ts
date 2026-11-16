@@ -15,13 +15,13 @@ const p: ScorecardParams = {
 };
 
 describe('buildScorecardXlsxBuffer', () => {
-  it('produces Scorecard and Ranking sheets with PROGPT creator', async () => {
+  it('produces Scorecard and Ranking sheets with 2BSUPPLY.IA creator', async () => {
     const buf = await buildScorecardXlsxBuffer(p, scoreSuppliers(p));
     const wb = new ExcelJS.Workbook();
     await wb.xlsx.load(buf as unknown as ArrayBuffer);
     expect(wb.getWorksheet('Scorecard')).toBeTruthy();
     expect(wb.getWorksheet('Ranking')).toBeTruthy();
-    expect(wb.creator).toBe('PROGPT');
+    expect(wb.creator).toBe('2BSUPPLY.IA');
   });
   it('adds a Gráfico sheet when chartPng is provided', async () => {
     const png = Buffer.from('89504e470d0a1a0a', 'hex'); // minimal PNG header bytes

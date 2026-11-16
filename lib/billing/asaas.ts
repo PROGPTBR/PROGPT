@@ -171,7 +171,7 @@ async function asaasFetch<T>(
       headers: {
         access_token: apiKey,
         'Content-Type': 'application/json',
-        'User-Agent': 'PROGPT/1.0',
+        'User-Agent': '2BSUPPLY.IA/1.0',
       },
 
       body: body
@@ -261,7 +261,7 @@ export async function createAsaasCustomer(
  *    - sem cartão
  *    - busca invoiceUrl
  *
- * 2. Checkout interno PROGPT:
+ * 2. Checkout interno 2BSUPPLY.IA:
  *    - envia creditCard
  *    - envia creditCardHolderInfo
  *    - envia remoteIp

@@ -14,8 +14,8 @@ const rate = '+4%';
 const lines = [
   {
     id: 'scene-1',
-    text: 'Ficou mais fácil encontrar o assistente que você precisa no Pró GPT.',
-    writtenText: 'Ficou mais fácil encontrar o assistente que você precisa no PROGPT.',
+    text: 'Ficou mais fácil encontrar o assistente que você precisa na 2B Supply I.A.',
+    writtenText: 'Ficou mais fácil encontrar o assistente que você precisa na 2BSUPPLY.IA.',
   },
   {
     id: 'scene-2',
@@ -34,8 +34,8 @@ const lines = [
   },
   {
     id: 'scene-5',
-    text: 'Pró GPT. Mais agilidade para o seu dia a dia.',
-    writtenText: 'PROGPT. Mais agilidade para o seu dia a dia.',
+    text: '2B Supply I.A. Mais agilidade para o seu dia a dia.',
+    writtenText: '2BSUPPLY.IA. Mais agilidade para o seu dia a dia.',
   },
 ];
 

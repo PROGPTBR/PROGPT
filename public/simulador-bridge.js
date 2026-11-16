@@ -14,7 +14,7 @@
  *
  * A rota /api/simulador/* NÃO é interceptada pelo fetch-mock do bundle (ele só
  * pega /api/simulacoes e /api/cnpj), então cai no fetch real (mesma origem,
- * cookies de auth do PROGPT viajam junto). Tudo fail-soft: sem rede/deslogado,
+ * cookies de auth da 2BSUPPLY.IA viajam junto). Tudo fail-soft: sem rede/deslogado,
  * o simulador segue funcionando só com o localStorage.
  */
 (function () {

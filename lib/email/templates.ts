@@ -22,7 +22,7 @@ const BG_ACCENT = '#050b18';
 const BG_PANEL = '#0d1829';
 const BORDER_COLOR = '#14304d';
 const LOGO_URL =
-  'https://yxpxibmqdazyhpyohwqa.supabase.co/storage/v1/object/public/user-logos/progpt-logo-neon.png';
+  'https://yxpxibmqdazyhpyohwqa.supabase.co/storage/v1/object/public/user-logos/2bsupplyia-logo-email.png';
 
 function shell(content: string, preheader: string): string {
   // `preheader` aparece na lista de inbox antes do user abrir.
@@ -54,7 +54,7 @@ ${preheader}
 <tr><td align="center">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" class="email-card" style="background:${BG};border:1px solid ${BORDER_COLOR};border-radius:16px;overflow:hidden;max-width:600px;width:100%;">
 <tr><td align="center" class="email-header" style="padding:40px 30px 20px;">
-<img src="${LOGO_URL}" alt="PROGPT" width="220" class="email-logo" style="display:block;border:0;max-width:100%;height:auto;" />
+<img src="${LOGO_URL}" alt="2BSUPPLY.IA" width="220" class="email-logo" style="display:block;border:0;max-width:100%;height:auto;" />
 </td></tr>
 <tr><td class="email-content" style="padding:24px 40px 40px;">
 ${content}
@@ -120,7 +120,7 @@ ${button(href, 'Ver atualização')}
 `;
 
   return {
-    subject: `Novidade no PROGPT: ${title}`,
+    subject: `Novidade na 2BSUPPLY.IA: ${title}`,
     html: shell(content, esc(summary)),
   };
 }
@@ -131,15 +131,15 @@ export function buildWelcomeEmail(args: { email: string; magicLink?: string | nu
   subject: string;
   html: string;
 } {
-  const subject = 'Bem-vindo ao PROGPT';
+  const subject = 'Bem-vindo à 2BSUPPLY.IA';
   // Com magic link: CTA principal já entra logado, sem digitar nada — "compra
   // assertiva, sem burocracia". Sem magic link (geração falhou — fail-soft),
   // cai no botão antigo pro /chat (login normal se a sessão já expirou).
   const primaryHref = args.magicLink ?? `${getAppUrl()}/chat`;
-  const primaryLabel = args.magicLink ? 'Entrar automaticamente' : 'Abrir PROGPT';
+  const primaryLabel = args.magicLink ? 'Entrar automaticamente' : 'Abrir 2BSUPPLY.IA';
   const content = `
 ${h(`Bem-vindo, ${args.email.split('@')[0]} 👋`)}
-${p('Sua conta no PROGPT está pronta. Você já pode usar o chat ilimitadamente e tem 1 execução grátis de cada uma das dezenas de assistentes (lifetime) — RFP, Kraljic, Porter, ABC, Negociação, Análise Financeira e Perfil de Categoria.')}
+${p('Sua conta na 2BSUPPLY.IA está pronta. Você já pode usar o chat ilimitadamente e tem 1 execução grátis de cada uma das dezenas de assistentes (lifetime) — RFP, Kraljic, Porter, ABC, Negociação, Análise Financeira e Perfil de Categoria.')}
 ${accountCard(args.email)}
 ${p('Comece pelo chat — pergunte como faria pra um colega sênior. Ou vá direto pra um assistente se quiser um artefato pronto em .docx/.xlsx.')}
 <div style="text-align:center;margin:24px 0;">
@@ -148,7 +148,7 @@ ${button(primaryHref, primaryLabel)}
 ${p(`Prefere entrar com e-mail e senha? <a href="${getAppUrl()}/login" style="color:${BRAND_COLOR};">Acesse o login</a> · Esqueceu ou ainda não tem uma senha? <a href="${getAppUrl()}/forgot-password" style="color:${BRAND_COLOR};">Redefinir senha</a>.`)}
 ${p(`Precisa de ajuda? Responda este email ou escreva pra <a href="mailto:${LEGAL_CONTACT_EMAIL}" style="color:${BRAND_COLOR};">${LEGAL_CONTACT_EMAIL}</a>.`)}
 `;
-  return { subject, html: shell(content, 'Sua conta no PROGPT está pronta.') };
+  return { subject, html: shell(content, 'Sua conta na 2BSUPPLY.IA está pronta.') };
 }
 
 // ─── 1b. Definir senha (onboarding card-first, pós cartão) ───────────────
@@ -158,7 +158,7 @@ export function buildSetPasswordEmail(args: { name: string; link: string }): {
   html: string;
 } {
   const first = (args.name || '').trim().split(/\s+/)[0] || 'Olá';
-  const subject = 'Cartão cadastrado — defina sua senha e acesse o PROGPT';
+  const subject = 'Cartão cadastrado — defina sua senha e acesse a 2BSUPPLY.IA';
   const content = `
 ${h(`Tudo certo, ${first}! 🎉`)}
 ${p('Seu cartão foi cadastrado com sucesso e seus <strong>3 dias grátis</strong> já estão liberados — sem nenhuma cobrança agora.')}
@@ -184,20 +184,20 @@ export function buildSeatInviteEmail(args: {
     (args.inviterEmail || '').trim() ||
     'Alguém da sua empresa';
 
-  const subject = `${who} liberou seu acesso ao PROGPT`;
+  const subject = `${who} liberou seu acesso à 2BSUPPLY.IA`;
 
   const content = `
-${h('Seu acesso ao PROGPT está pronto 🎉')}
-${p(`<strong>${who}</strong> contratou o PROGPT para a equipe e reservou um acesso para você.`)}
+${h('Seu acesso à 2BSUPPLY.IA está pronto 🎉')}
+${p(`<strong>${who}</strong> contratou a 2BSUPPLY.IA para a equipe e reservou um acesso para você.`)}
 ${p('Você terá sua própria conta — com login, histórico de conversas e assistentes separados. O pagamento é da assinatura da empresa; você não precisa cadastrar cartão.')}
 <div style="text-align:center;margin:24px 0;">
 ${button(args.link, 'Criar minha senha e entrar')}
 </div>
-${p('Se você já tem conta no PROGPT com este e-mail, o acesso é vinculado automaticamente — é só entrar normalmente depois de abrir o link.')}
+${p('Se você já tem conta na 2BSUPPLY.IA com este e-mail, o acesso é vinculado automaticamente — é só entrar normalmente depois de abrir o link.')}
 ${p(`Dúvidas? Responda este email ou escreva pra <a href="mailto:${LEGAL_CONTACT_EMAIL}" style="color:${BRAND_COLOR};">${LEGAL_CONTACT_EMAIL}</a>.`)}
 `;
 
-  return { subject, html: shell(content, `${who} reservou um acesso ao PROGPT para você.`) };
+  return { subject, html: shell(content, `${who} reservou um acesso à 2BSUPPLY.IA para você.`) };
 }
 
 // ─── 2. Recibo de pagamento (pós PAYMENT_CONFIRMED) ──────────────────────
@@ -214,7 +214,7 @@ export function buildPaymentConfirmedEmail(args: {
   const subject = `Pagamento confirmado — R$ ${amount}`;
   const content = `
 ${h('Pagamento recebido com sucesso ✅')}
-${p(`Obrigado! Confirmamos o recebimento de <strong>R$ ${amount}</strong> referente à sua assinatura Pro do PROGPT.`)}
+${p(`Obrigado! Confirmamos o recebimento de <strong>R$ ${amount}</strong> referente à sua assinatura Pro da 2BSUPPLY.IA.`)}
 <div style="background:${BG_PANEL};border:1px solid ${BORDER_COLOR};border-radius:10px;padding:16px;margin:18px 0;font-size:14px;line-height:1.6;color:${TEXT_PRIMARY};">
 <div><strong>Plano:</strong> Pro · R$ ${amount}/mês</div>
 <div style="margin-top:4px;"><strong>Próxima cobrança:</strong> ${args.nextDueDate}</div>
@@ -236,7 +236,7 @@ export function buildPaymentOverdueEmail(args: {
   subject: string;
   html: string;
 } {
-  const subject = 'Atualize seu pagamento — PROGPT';
+  const subject = 'Atualize seu pagamento — 2BSUPPLY.IA';
   const content = `
 ${h('Não conseguimos cobrar sua assinatura ⚠️')}
 ${p('Tentamos processar a cobrança mensal da sua assinatura Pro mas não foi possível — pode ser cartão recusado, limite excedido ou problema com Pix.')}
@@ -267,7 +267,7 @@ export function buildSubscriptionCancelledEmail(args: {
   const subject = 'Assinatura cancelada — acesso até ' + args.accessUntil;
   const content = `
 ${h('Cancelamento confirmado')}
-${p('Confirmamos o cancelamento da sua assinatura Pro do PROGPT. Pena perder você 😢')}
+${p('Confirmamos o cancelamento da sua assinatura Pro da 2BSUPPLY.IA. Pena perder você 😢')}
 <div style="background:${BG_PANEL};border:1px solid ${BORDER_COLOR};border-radius:10px;padding:16px;margin:18px 0;font-size:14px;line-height:1.6;color:${TEXT_PRIMARY};">
 <strong>Acesso Pro até:</strong> ${args.accessUntil}<br/>
 <span style="color:${TEXT_MUTED};font-size:12px;">Depois dessa data, sua conta volta pro plano Free (chat ilimitado, mas sem assistentes adicionais).</span>
@@ -323,7 +323,7 @@ export function buildFluxoAprovacaoEmail(args: {
   const ola = args.aprovadorNome.trim() ? `Olá, ${esc(args.aprovadorNome.trim().split(/\s+/)[0]!)}` : 'Olá';
   const content = `
 ${h(`${ola}, sua aprovação é necessária`)}
-${p(`<strong>${esc(quem)}</strong> pediu a sua aprovação nesta compra, pelo PROGPT.`)}
+${p(`<strong>${esc(quem)}</strong> pediu a sua aprovação nesta compra, pela 2BSUPPLY.IA.`)}
 ${quadro([
   ['Compra', args.tituloCompra],
   ['Etapa', args.etapaLabel],
@@ -405,7 +405,7 @@ ${p(`<strong>${esc(quem)}</strong> ${args.aprovado ? 'aprovou' : 'reprovou'} a e
 ${quadro(linhas)}
 ${p(
   args.aprovado
-    ? 'A compra já seguiu para a próxima etapa no PROGPT.'
+    ? 'A compra já seguiu para a próxima etapa na 2BSUPPLY.IA.'
     : 'A etapa voltou para ajuste com o motivo acima. Rode a etapa de novo para a IA refazer.',
 )}
 <div style="text-align:center;margin:24px 0;">

@@ -6,7 +6,7 @@ import { getPedido, linkDoPapel } from '@/lib/recebimento/service';
 import { PedidoRecebimento } from '@/components/recebimento/PedidoRecebimento';
 
 export const dynamic = 'force-dynamic';
-export const metadata: Metadata = { title: 'Pedido | Recebimento de NF | PROGPT' };
+export const metadata: Metadata = { title: 'Pedido | Recebimento de NF | 2BSUPPLY.IA' };
 
 export default async function PedidoPage({ params }: { params: { id: string } }) {
   const u = await requireUser();

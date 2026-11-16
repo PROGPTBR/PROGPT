@@ -1,4 +1,4 @@
-// PROGPT service worker v2.
+// 2BSUPPLY.IA service worker v2.
 //
 // Mantém a instalação como PWA, mas deliberadamente NÃO intercepta
 // navegações nem /_next/static. O cache offline v1 podia restaurar HTML de

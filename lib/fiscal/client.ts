@@ -55,7 +55,7 @@ function onlyDigits(s: string): string {
 async function fiscalGetOnce<T>(path: string): Promise<T> {
   const res = await fetch(`${getBaseUrl()}${path}`, {
     method: 'GET',
-    headers: { Accept: 'application/json', 'User-Agent': 'PROGPT/1.0' },
+    headers: { Accept: 'application/json', 'User-Agent': '2BSUPPLY.IA/1.0' },
     signal: AbortSignal.timeout(TIMEOUT_MS),
   });
 

@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic';
 // Recebimento de NF (sub-projeto 95). Página PÚBLICA do financeiro: a nota
 // financeira conferida contra o pedido (preço, impostos, NCM) e se o
 // almoxarifado já liberou o pagamento.
-export const metadata: Metadata = { title: 'Nota financeira | PROGPT', robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: 'Nota financeira | 2BSUPPLY.IA', robots: { index: false, follow: false } };
 
 export default async function PortalFinanceiroPage({ params }: { params: { token: string } }) {
   const c = await getPedidoPorToken('financeiro', params.token);
