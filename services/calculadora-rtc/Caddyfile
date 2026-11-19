@@ -1,0 +1,27 @@
+# Roteador das duas calculadoras oficiais da Receita (código aberto, MIT).
+# Regime regular na porta 8080 e Simples Nacional na 8082, atrás de uma porta só.
+{
+	admin off
+	auto_https off
+}
+
+:{$PORT:8000} {
+	encode gzip
+	# Calculadora do Simples Nacional
+	@simples path /api/calculadora/simples-nacional* /api/calculadora/observabilidade/simples-nacional*
+	handle @simples {
+		reverse_proxy 127.0.0.1:8082
+	}
+	handle_path /simples/* {
+		reverse_proxy 127.0.0.1:8082
+	}
+	handle /healthz {
+		reverse_proxy 127.0.0.1:8080 {
+			rewrite /api/calculadora/dados-abertos/versao
+		}
+	}
+	# Calculadora do regime regular (CBS, IBS e Imposto Seletivo)
+	handle {
+		reverse_proxy 127.0.0.1:8080
+	}
+}

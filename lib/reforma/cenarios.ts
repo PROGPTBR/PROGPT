@@ -156,6 +156,96 @@ export function interpretarResposta(args: {
   });
 }
 
+// --- Fornecedor do Simples Nacional (sub-projeto 99) ---------------------------
+//
+// A empresa do Simples recolhe CBS e IBS dentro do DAS, sobre o preço que já
+// cobra: o imposto está DENTRO do valor do item, não por fora. O comprador do
+// regime regular pode tomar como crédito exatamente o que o fornecedor
+// recolheu (LC 214/2025, art. 47). O cálculo é do motor oficial do Simples;
+// aqui só montamos a alíquota do ano e lemos a resposta.
+
+export type FornecedorSimples = {
+  /** Código oficial de atividade do Simples (cAtivSN, 2 dígitos). */
+  atividade: string;
+  /** Alíquotas efetivas de CBS e IBS do fornecedor no Simples (%), como
+   *  aparecem na nota dele ou informadas pelo contador. */
+  pCbs: number;
+  pIbs: number;
+};
+
+/** Alíquotas do Simples no ano. 2026 devolve null: o ano de teste vale só
+ *  para o regime regular. Na transição, o IBS cresce na mesma proporção do
+ *  regime regular (estimativa: a partilha do DAS ainda será regulamentada). */
+export function aliquotasSimplesDoAno(
+  ano: number,
+  f: Pick<FornecedorSimples, 'pCbs' | 'pIbs'>,
+  ref: Referencia,
+): { pCBSSN: number; pIBSSN: number } | null {
+  if (ano <= 2026) return null;
+  let fatia = 1;
+  if (ano <= 2028) fatia = ref.ibs > 0 ? 0.1 / ref.ibs : 0;
+  else if (ano < 2033) fatia = (ano - 2028) / 10;
+  return { pCBSSN: r4(f.pCbs), pIBSSN: r4(f.pIbs * fatia) };
+}
+
+export type RespostaSimplesMinima = {
+  objetos: Array<{
+    nObj: number;
+    estadoItem: string;
+    tribCalc?: { vCBSSN?: string; vIBSSN?: string; pCBSSN?: string; pIBSSN?: string };
+    erros?: Array<{ detail?: string; title?: string }>;
+  }>;
+};
+
+export function interpretarSimples(args: {
+  resposta: RespostaSimplesMinima | null;
+  itens: ItemCalculo[];
+  ano: number;
+  regime: RegimeComprador;
+  classificacoes: Map<string, Pick<Classificacao, 'creditoCbs' | 'creditoIbs'>>;
+}): ResultadoItemAno[] {
+  const { resposta, itens, ano, regime, classificacoes } = args;
+  return itens.map((it, i) => {
+    const vazio: ResultadoItemAno = {
+      cbs: 0, ibs: 0, ibsUf: 0, ibsMun: 0, total: 0, aliqCbs: 0, aliqIbs: 0, reducao: 0,
+      aliquotaEfetiva: 0, credito: 0, custoReal: r2(it.valor), memoria: '',
+    };
+    if (ano <= 2026 || !resposta) {
+      return { ...vazio, memoria: 'Em 2026 a empresa do Simples Nacional não recolhe CBS nem IBS (o ano de teste vale só para o regime regular).' };
+    }
+    const obj = resposta.objetos.find((o) => o.nObj === i + 1);
+    if (!obj || obj.estadoItem !== 'CALCULADO') {
+      const motivo = obj?.erros?.[0]?.detail || obj?.erros?.[0]?.title || 'a atividade escolhida não vale para este item';
+      return { ...vazio, memoria: `A calculadora do Simples não calculou este item: ${motivo}.` };
+    }
+    const t = obj.tribCalc ?? {};
+    const cbs = num(t.vCBSSN);
+    const ibs = num(t.vIBSSN);
+    const total = r2(cbs + ibs);
+    const cl = classificacoes.get(it.cClassTrib);
+    const credito = regime === 'simples' ? 0 : r2((cl?.creditoCbs ? cbs : 0) + (cl?.creditoIbs ? ibs : 0));
+    return {
+      cbs: r2(cbs),
+      ibs: r2(ibs),
+      ibsUf: 0,
+      ibsMun: 0,
+      total,
+      aliqCbs: num(t.pCBSSN),
+      aliqIbs: num(t.pIBSSN),
+      reducao: 0,
+      aliquotaEfetiva: it.valor > 0 ? r2((total / it.valor) * 100) : 0,
+      credito,
+      // O imposto do Simples já está dentro do preço: custo = preço − crédito.
+      custoReal: r2(it.valor - credito),
+      memoria:
+        `Simples Nacional: CBS ${t.pCBSSN ?? '0'}% e IBS ${t.pIBSSN ?? '0'}% dentro do DAS, sobre o preço do item. ` +
+        (regime === 'regular'
+          ? 'O comprador do regime regular toma como crédito o valor recolhido pelo fornecedor (LC 214/2025, art. 47).'
+          : 'Empresa do Simples não toma crédito.'),
+    };
+  });
+}
+
 export type TotalAno = { valor: number; cbs: number; ibs: number; total: number; credito: number; custoReal: number };
 
 export function totalizar(itens: ItemCalculo[], resultados: ResultadoItemAno[]): TotalAno {

@@ -5,6 +5,7 @@ import { getCurrentUser } from '@/lib/auth';
 import { checkChatRateLimit } from '@/lib/rate-limit';
 import { CalculadoraErro } from '@/lib/reforma/calculadora';
 import { calcularCenarios } from '@/lib/reforma/servidor';
+import { simplesDisponivel } from '@/lib/reforma/simples';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -29,6 +30,14 @@ const Body = z.object({
     )
     .min(1)
     .max(100),
+  fornecedorSimples: z
+    .object({
+      atividade: z.string().regex(/^\d{2}$/),
+      pCbs: z.number().min(0).max(30),
+      pIbs: z.number().min(0).max(30),
+    })
+    .nullable()
+    .optional(),
 });
 
 export async function POST(req: Request) {
@@ -41,6 +50,13 @@ export async function POST(req: Request) {
     body = Body.parse(await req.json());
   } catch {
     return NextResponse.json({ error: 'invalid_body', message: 'Confira os itens: valor, classificação e local.' }, { status: 400 });
+  }
+
+  if (body.fornecedorSimples && !simplesDisponivel()) {
+    return NextResponse.json(
+      { error: 'simples_indisponivel', message: 'O cálculo de fornecedor do Simples Nacional não está disponível agora.' },
+      { status: 503 },
+    );
   }
 
   try {

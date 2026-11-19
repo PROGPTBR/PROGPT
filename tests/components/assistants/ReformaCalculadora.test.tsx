@@ -26,7 +26,7 @@ const resultado = {
   })),
 };
 
-function mockFetch() {
+function mockFetch(simples: Array<{ codigo: string; descricao: string; anexo: string }> = []) {
   const calls: Array<{ url: string; body?: unknown }> = [];
   global.fetch = vi.fn(async (url: string, init?: RequestInit) => {
     calls.push({ url, body: init?.body ? JSON.parse(String(init.body)) : undefined });
@@ -36,6 +36,7 @@ function mockFetch() {
         versao: { versaoApp: '1.6.2-a39944eb', versaoDb: 'V0066', dataVersaoDb: '2026-10-28' },
         ufs: [{ sigla: 'PR', nome: 'PARANÁ', codigo: 41 }, { sigla: 'SP', nome: 'SÃO PAULO', codigo: 35 }],
         classificacoes,
+        simples: { atividades: simples },
       });
     if (url.startsWith('/api/reforma/municipios?uf=PR')) return json({ municipios: [{ codigo: 4100103, nome: 'Abatiá' }, { codigo: 4106902, nome: 'Curitiba' }] });
     if (url.startsWith('/api/reforma/municipios')) return json({ municipios: [{ codigo: 3550308, nome: 'São Paulo' }] });
@@ -96,4 +97,27 @@ describe('Calculadora da Reforma', () => {
     fireEvent.click(screen.getByRole('button', { name: /Calcular com o motor oficial/ }));
     await waitFor(() => expect(calls.some((c) => c.url === '/api/reforma/calcular')).toBe(false));
   });
+
+  it('sem a nossa cópia da calculadora, a opção de fornecedor do Simples não aparece', async () => {
+    mockFetch();
+    render(<ReformaCalculadora />);
+    await screen.findByText(/Motor oficial conectado/);
+    expect(screen.queryByLabelText('Como o fornecedor paga imposto')).toBeNull();
+  });
+
+  it('fornecedor do Simples: manda atividade e alíquotas para o cálculo', async () => {
+    const calls = mockFetch([{ codigo: '01', descricao: 'Revenda de mercadorias', anexo: 'I' }]);
+    render(<ReformaCalculadora />);
+    await screen.findByText(/Motor oficial conectado/);
+    fireEvent.click(screen.getByRole('button', { name: /Carregar exemplo/ }));
+    await waitFor(() => expect((screen.getByLabelText('Município') as HTMLSelectElement).value).toBe('4106902'));
+    fireEvent.change(screen.getByLabelText('Como o fornecedor paga imposto'), { target: { value: 'simples' } });
+    expect(screen.getAllByText('Preço cobrado').length).toBeGreaterThan(0);
+    fireEvent.change(screen.getByLabelText('CBS do fornecedor no Simples (%)'), { target: { value: '3,1' } });
+    fireEvent.click(screen.getByRole('button', { name: /Calcular com o motor oficial/ }));
+    await screen.findByText('Resultado ano a ano');
+    const pedido = calls.find((c) => c.url === '/api/reforma/calcular')!.body as { fornecedorSimples: unknown };
+    expect(pedido.fornecedorSimples).toEqual({ atividade: '01', pCbs: 3.1, pIbs: 1.25 });
+  });
 });
+

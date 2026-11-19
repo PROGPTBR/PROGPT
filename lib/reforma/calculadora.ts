@@ -1,18 +1,41 @@
 // Cliente da Calculadora de Tributos oficial da Reforma Tributária (Receita
 // Federal, Plataforma RTC). É o mesmo motor que a Receita usa: CBS, IBS
 // estadual e IBS municipal por item, com redução, memória de cálculo e base
-// legal. Sub-projeto 96.
+// legal. Sub-projetos 96 e 99.
 //
-// Por padrão usa a calculadora pública da Receita. A Receita também distribui
-// a calculadora para rodar no nosso próprio servidor (Java, com a base de
-// regras embarcada, sem enviar dados): basta subir o serviço e apontar
-// CALCULADORA_RTC_URL para ele, sem mudar nada no código.
+// Dois endereços:
+//  - PRINCIPAL: a calculadora pública da Receita (CALCULADORA_RTC_URL troca).
+//    É a que tem as regras mais novas: o código aberto no GitHub sai algumas
+//    semanas depois (em 2026-11-19 a pública estava na base V0073 e o GitHub
+//    na V0059).
+//  - RESERVA: a nossa cópia do código aberto da Receita, rodando no Railway
+//    (services/calculadora-rtc, CALCULADORA_RTC_PROPRIA_URL). Entra sozinha
+//    quando a pública cai ou demora. É também a única que tem a calculadora
+//    do Simples Nacional (lib/reforma/simples.ts).
 
 const PADRAO = 'https://consumo.tributos.gov.br/servico/calcular-tributos-consumo/api/calculadora';
 const TIMEOUT_MS = 20_000;
 
 export function urlCalculadora(): string {
   return (process.env.CALCULADORA_RTC_URL || PADRAO).replace(/\/+$/, '');
+}
+
+/** Raiz da nossa cópia da calculadora (sem /api/...), ou null se não houver. */
+export function urlCalculadoraPropria(): string | null {
+  const u = (process.env.CALCULADORA_RTC_PROPRIA_URL || '').trim();
+  if (!u) return null;
+  const comEsquema = /^https?:\/\//i.test(u) ? u : `https://${u}`;
+  return comEsquema.replace(/\/+$/, '');
+}
+
+function basesDoRegime(): string[] {
+  const propria = urlCalculadoraPropria();
+  const bases = [urlCalculadora()];
+  if (propria) {
+    const reserva = `${propria}/api/calculadora`;
+    if (reserva !== bases[0]) bases.push(reserva);
+  }
+  return bases;
 }
 
 export function calculadoraLigada(): boolean {
@@ -29,13 +52,15 @@ export class CalculadoraErro extends Error {
   }
 }
 
-async function chamar<T>(path: string, init?: RequestInit, tentativas = 2): Promise<T> {
+/** Uma chamada HTTP com repetição em 5xx/timeout. 4xx é resposta do motor
+ *  (dado inválido) e sobe na hora. */
+export async function chamarEm<T>(base: string, path: string, init?: RequestInit, tentativas = 2): Promise<T> {
   let ultimo: unknown;
   for (let i = 0; i < tentativas; i++) {
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
     try {
-      const res = await fetch(`${urlCalculadora()}${path}`, {
+      const res = await fetch(`${base}${path}`, {
         ...init,
         signal: ctrl.signal,
         headers: { Accept: 'application/json', ...(init?.body ? { 'Content-Type': 'application/json' } : {}) },
@@ -45,12 +70,11 @@ async function chamar<T>(path: string, init?: RequestInit, tentativas = 2): Prom
       if (!res.ok) {
         let detalhe: string | undefined;
         try {
-          const j = JSON.parse(texto) as { detail?: string; title?: string };
-          detalhe = j.detail || j.title;
+          const j = JSON.parse(texto) as { detail?: string; title?: string; errors?: Array<{ detail?: string }> };
+          detalhe = j.errors?.[0]?.detail || j.detail || j.title;
         } catch {
           detalhe = texto.slice(0, 300);
         }
-        // 4xx é resposta do motor (dado inválido): não adianta repetir.
         if (res.status < 500) throw new CalculadoraErro('A calculadora oficial recusou os dados.', res.status, detalhe);
         ultimo = new CalculadoraErro('A calculadora oficial está fora do ar.', res.status, detalhe);
         continue;
@@ -67,12 +91,45 @@ async function chamar<T>(path: string, init?: RequestInit, tentativas = 2): Prom
   throw new CalculadoraErro('Não foi possível falar com a calculadora oficial.', 503, String(ultimo));
 }
 
+// Quando a pública falha, lembramos disso por 5 minutos e vamos direto para a
+// nossa cópia: sem isso, cada chamada esperaria o tempo-limite da pública
+// (até 40 s) antes de tentar a reserva.
+const ESPERA_PRIMARIA_MS = 5 * 60 * 1000;
+let primariaForaAte = 0;
+
+export function _reiniciarEstadoCalculadora(): void {
+  primariaForaAte = 0;
+}
+
+/** Tenta a calculadora pública e, se ela estiver fora, a nossa cópia. */
+async function chamar<T>(path: string, init?: RequestInit, tentativas = 2): Promise<T> {
+  const todas = basesDoRegime();
+  const pularPrimaria = todas.length > 1 && Date.now() < primariaForaAte;
+  const bases = pularPrimaria ? [...todas.slice(1), todas[0]!] : todas;
+  let ultimo: unknown;
+  for (const [i, base] of bases.entries()) {
+    try {
+      const r = await chamarEm<T>(base, path, init, tentativas);
+      if (base === todas[0]) primariaForaAte = 0;
+      return r;
+    } catch (err) {
+      if (err instanceof CalculadoraErro && err.status < 500) throw err;
+      ultimo = err;
+      if (base === todas[0] && todas.length > 1) {
+        primariaForaAte = Date.now() + ESPERA_PRIMARIA_MS;
+        if (i < bases.length - 1) console.warn('[reforma] calculadora pública fora; usando a nossa cópia:', String(err));
+      }
+    }
+  }
+  throw ultimo;
+}
+
 // --- Cache em memória (o processo do Railway é de longa duração) ------------
 
 const cache = new Map<string, { ate: number; valor: unknown }>();
 const UM_DIA = 24 * 60 * 60 * 1000;
 
-async function comCache<T>(chave: string, ttl: number, fn: () => Promise<T>): Promise<T> {
+export async function comCache<T>(chave: string, ttl: number, fn: () => Promise<T>): Promise<T> {
   const c = cache.get(chave);
   if (c && c.ate > Date.now()) return c.valor as T;
   const valor = await fn();

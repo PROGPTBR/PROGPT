@@ -5,13 +5,17 @@ import {
   ncmAplicavel,
   type Classificacao,
 } from './calculadora';
+import { calcularSimples } from './simples';
 import {
+  aliquotasSimplesDoAno,
   CANDIDATAS_SUGESTAO,
   CENARIOS_REFORMA,
   dataDoFatoGerador,
   interpretarResposta,
+  interpretarSimples,
   itensParaMotor,
   totalizar,
+  type FornecedorSimples,
   type ItemCalculo,
   type Referencia,
   type RegimeComprador,
@@ -73,25 +77,47 @@ export async function calcularCenarios(args: {
   regime: RegimeComprador;
   referencia: Referencia;
   itens: ItemCalculo[];
+  /** Fornecedor do Simples Nacional: calcula pelo motor oficial do Simples. */
+  fornecedorSimples?: FornecedorSimples | null;
 }): Promise<ResultadoCalculo> {
   const todas = await classificacoes();
   const mapa = new Map(todas.map((c) => [c.codigo, c]));
+  const fs = args.fornecedorSimples ?? null;
   // Um cálculo por cenário, em paralelo: o motor responde em ~1 s.
   const anos = await Promise.all(
     CENARIOS_REFORMA.map(async (cen) => {
-      const resposta = await calcularRegimeGeral({
-        dhFatoGerador: dataDoFatoGerador(cen.ano),
-        municipio: args.municipio,
-        uf: args.uf,
-        itens: itensParaMotor(args.itens, cen.ano, args.referencia),
-      });
-      const itens = interpretarResposta({
-        resposta,
-        itens: args.itens,
-        ano: cen.ano,
-        regime: args.regime,
-        classificacoes: mapa,
-      });
+      let itens: ResultadoItemAno[];
+      if (fs) {
+        const aliq = aliquotasSimplesDoAno(cen.ano, fs, args.referencia);
+        const resposta = aliq
+          ? await calcularSimples(
+              dataDoFatoGerador(cen.ano).slice(0, 10),
+              args.itens.map((it, i) => ({
+                numero: i + 1,
+                cAtivSN: fs.atividade,
+                cClassTrib: it.cClassTrib,
+                baseCalculo: it.valor,
+                pCBSSN: aliq.pCBSSN,
+                pIBSSN: aliq.pIBSSN,
+              })),
+            )
+          : null;
+        itens = interpretarSimples({ resposta, itens: args.itens, ano: cen.ano, regime: args.regime, classificacoes: mapa });
+      } else {
+        const resposta = await calcularRegimeGeral({
+          dhFatoGerador: dataDoFatoGerador(cen.ano),
+          municipio: args.municipio,
+          uf: args.uf,
+          itens: itensParaMotor(args.itens, cen.ano, args.referencia),
+        });
+        itens = interpretarResposta({
+          resposta,
+          itens: args.itens,
+          ano: cen.ano,
+          regime: args.regime,
+          classificacoes: mapa,
+        });
+      }
       return { ano: cen.ano, rotulo: cen.rotulo, oficial: cen.oficial, itens, total: totalizar(args.itens, itens) };
     }),
   );

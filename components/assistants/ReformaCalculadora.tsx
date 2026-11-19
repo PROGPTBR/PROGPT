@@ -13,6 +13,7 @@ import {
   type RegimeComprador,
 } from '@/lib/reforma/cenarios';
 import type { ResultadoCalculo, Sugestao } from '@/lib/reforma/servidor';
+import type { AtividadeSimples } from '@/lib/reforma/simples';
 
 // Calculadora da Reforma (sub-projeto 96): CBS e IBS de cada item de compra
 // calculados pelo motor oficial da Receita Federal, com redução, crédito e
@@ -76,6 +77,13 @@ export function ReformaCalculadora() {
   const [refCbs, setRefCbs] = useState(String(REFERENCIA_PADRAO.cbs).replace('.', ','));
   const [refIbs, setRefIbs] = useState(String(REFERENCIA_PADRAO.ibs).replace('.', ','));
   const [linhas, setLinhas] = useState<Linha[]>([{ ...LINHA_VAZIA }]);
+  // Fornecedor do Simples Nacional (motor oficial do Simples, nossa cópia).
+  const [atividadesSn, setAtividadesSn] = useState<AtividadeSimples[]>([]);
+  const [fornecedor, setFornecedor] = useState<'regular' | 'simples'>('regular');
+  const [atividadeSn, setAtividadeSn] = useState('01');
+  const [pCbsSn, setPCbsSn] = useState('2,75');
+  const [pIbsSn, setPIbsSn] = useState('1,25');
+  const [fornecedorCalculado, setFornecedorCalculado] = useState<'regular' | 'simples'>('regular');
   const [origemNota, setOrigemNota] = useState<string | null>(null);
 
   const [sugerindo, setSugerindo] = useState(false);
@@ -96,6 +104,7 @@ export function ReformaCalculadora() {
         setVersao(d.versao);
         setListaUfs(d.ufs);
         setClassifs(d.classificacoes);
+        setAtividadesSn(d.simples?.atividades ?? []);
       })
       .catch((e: Error) => setErroBase(e.message));
   }, []);
@@ -235,12 +244,22 @@ export function ReformaCalculadora() {
       toast.error('Inclua pelo menos um item.');
       return;
     }
+    let fornecedorSimples: { atividade: string; pCbs: number; pIbs: number } | null = null;
+    if (fornecedor === 'simples') {
+      const pCbs = lerNumero(pCbsSn);
+      const pIbs = lerNumero(pIbsSn);
+      if (pCbs == null || pIbs == null || pCbs < 0 || pIbs < 0) {
+        toast.error('Informe as alíquotas do fornecedor no Simples (CBS e IBS).');
+        return;
+      }
+      fornecedorSimples = { atividade: atividadeSn, pCbs, pIbs };
+    }
     setCalculando(true);
     try {
       const res = await fetch('/api/reforma/calcular', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ uf, municipio, regime, referencia: { cbs, ibs }, itens }),
+        body: JSON.stringify({ uf, municipio, regime, referencia: { cbs, ibs }, itens, fornecedorSimples }),
       });
       const d = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -248,8 +267,9 @@ export function ReformaCalculadora() {
         return;
       }
       setItensCalculados(itens);
+      setFornecedorCalculado(fornecedor);
       setResultado(d as ResultadoCalculo);
-      setTimeout(() => document.getElementById('resultado-reforma')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+      setTimeout(() => document.getElementById('resultado-reforma')?.scrollIntoView?.({ behavior: 'smooth', block: 'start' }), 60);
     } finally {
       setCalculando(false);
     }
@@ -320,6 +340,46 @@ export function ReformaCalculadora() {
           </label>
         </div>
 
+        {atividadesSn.length > 0 && (
+          <div className="grid gap-3 md:grid-cols-4">
+            <label className="space-y-1 md:col-span-2">
+              <span className="text-xs font-medium text-muted-foreground">Como o fornecedor paga imposto</span>
+              <select className={CAMPO} value={fornecedor} onChange={(e) => setFornecedor(e.target.value as 'regular' | 'simples')}>
+                <option value="regular">Regime normal: CBS e IBS cobrados por fora do preço</option>
+                <option value="simples">Simples Nacional: CBS e IBS já dentro do preço (DAS)</option>
+              </select>
+            </label>
+            {fornecedor === 'simples' && (
+              <>
+                <label className="space-y-1 md:col-span-2">
+                  <span className="text-xs font-medium text-muted-foreground">Atividade do fornecedor no Simples</span>
+                  <select className={CAMPO} value={atividadeSn} onChange={(e) => setAtividadeSn(e.target.value)}>
+                    {atividadesSn.map((a) => (
+                      <option key={a.codigo} value={a.codigo}>
+                        {a.codigo} · {a.descricao.slice(0, 90)}
+                        {a.anexo ? ` (Anexo ${a.anexo})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="space-y-1">
+                  <span className="text-xs font-medium text-muted-foreground">CBS do fornecedor no Simples (%)</span>
+                  <input className={CAMPO} inputMode="decimal" value={pCbsSn} onChange={(e) => setPCbsSn(e.target.value)} />
+                </label>
+                <label className="space-y-1">
+                  <span className="text-xs font-medium text-muted-foreground">IBS do fornecedor no Simples (%)</span>
+                  <input className={CAMPO} inputMode="decimal" value={pIbsSn} onChange={(e) => setPIbsSn(e.target.value)} />
+                </label>
+                <p className="md:col-span-2 text-xs text-muted-foreground self-end">
+                  São as alíquotas efetivas do fornecedor dentro do Simples, que dependem do faturamento dele. A partir de 2027
+                  vêm na nota fiscal dele; antes disso, peça ao fornecedor ou ao contador dele. Cálculo pela calculadora
+                  oficial do Simples Nacional da Receita.
+                </p>
+              </>
+            )}
+          </div>
+        )}
+
         <div className="space-y-2">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-sm font-semibold">Itens da compra</h2>
@@ -348,7 +408,7 @@ export function ReformaCalculadora() {
                       />
                     </label>
                     <label className="space-y-1">
-                      <span className="text-[11px] text-muted-foreground">Valor sem impostos</span>
+                      <span className="text-[11px] text-muted-foreground">{fornecedor === 'simples' ? 'Preço cobrado' : 'Valor sem impostos'}</span>
                       <input className={CAMPO} inputMode="decimal" placeholder="R$" value={l.valor} onChange={(e) => setLinha(i, { valor: e.target.value })} />
                     </label>
                     <label className="space-y-1 min-w-0">
@@ -454,6 +514,7 @@ export function ReformaCalculadora() {
                 setOrigemNota(null);
                 setResultado(null);
                 setUf('PR');
+                setFornecedor('regular');
               }}
               className="inline-flex items-center gap-1.5 rounded-full border border-brand/40 bg-brand/5 h-9 px-4 text-xs font-medium hover:bg-brand/10"
             >
@@ -500,6 +561,7 @@ export function ReformaCalculadora() {
             <h2 className="text-lg font-semibold tracking-tight">Resultado ano a ano</h2>
             <p className="text-sm text-muted-foreground">
               Compra de {brl(ano.total.valor)} em {nomeMunicipio ?? uf}/{uf}.{' '}
+              {fornecedorCalculado === 'simples' && 'Fornecedor do Simples Nacional: a CBS e o IBS já estão dentro do preço. '}
               {regime === 'regular'
                 ? 'Como a sua empresa recupera a CBS e o IBS, o imposto que volta como crédito sai do custo.'
                 : 'No Simples Nacional a sua empresa não recupera a CBS e o IBS: o imposto vira custo.'}
@@ -540,7 +602,9 @@ export function ReformaCalculadora() {
             </table>
           </div>
           <p className="text-xs text-muted-foreground -mt-4">
-            2026 é ano de teste: o imposto aparece na nota, mas é compensável e não muda o custo. Clique num ano para ver os itens.
+            {fornecedorCalculado === 'simples'
+              ? 'Em 2026 a empresa do Simples não recolhe CBS nem IBS. Clique num ano para ver os itens.'
+              : '2026 é ano de teste: o imposto aparece na nota, mas é compensável e não muda o custo. Clique num ano para ver os itens.'}
           </p>
 
           <div className="space-y-3">
@@ -647,8 +711,10 @@ export function ReformaCalculadora() {
             Cálculo feito pela Calculadora de Tributos oficial da Receita Federal
             {versao ? ` (aplicativo ${versao.versaoApp.split('-')[0]}, regras de ${dataBr(versao.dataVersaoDb)})` : ''}. De 2027 em
             diante as alíquotas são de referência e mudam quando forem fixadas oficialmente. O custo real considera só a CBS e o
-            IBS: o ICMS e o ISS, que vão diminuindo até sumir em 2033, não entram nesta conta. Fornecedor do Simples Nacional que
-            não optou pelo regime regular do IBS e da CBS transfere crédito menor do que o mostrado aqui.
+            IBS: o ICMS e o ISS, que vão diminuindo até sumir em 2033, não entram nesta conta.
+            {fornecedorCalculado === 'simples'
+              ? ' Fornecedor do Simples: calculado pela calculadora oficial do Simples Nacional com as alíquotas informadas; na transição (2027 a 2032) o IBS cresce na mesma proporção do regime normal, uma estimativa até a partilha do DAS ser regulamentada.'
+              : ' Se o fornecedor for do Simples Nacional, escolha essa opção acima: ele transfere crédito menor.'}
           </p>
         </section>
       )}
