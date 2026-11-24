@@ -5,13 +5,15 @@ import { cleanup, fireEvent, render, screen, within } from '@testing-library/rea
 import { AreaMedicaRoot } from '@/components/medico/AreaMedicaRoot';
 import { casarItens, totalDosItens } from '@/lib/medico/conciliacao';
 import { dadosDeExemplo } from '@/lib/medico/exemplo';
-import type { Cirurgia, Demonstrativo, EstadoMedico, Hospital } from '@/lib/medico/types';
+import { CONFIG_VAZIA, type Cirurgia, type Demonstrativo, type EstadoMedico, type Hospital, type Integracoes } from '@/lib/medico/types';
 
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 vi.mock('@/components/assistants/CompradorImportDialog', () => ({ CompradorImportDialog: () => null }));
+vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ estado: 'close', grupos: [], configurado: true }), { status: 200 })));
 
 const HOJE = '2026-11-24';
 afterEach(cleanup);
+const INTEGRACOES: Integracoes = { whatsapp: true, email_envio: true, email_entrada: 'medico-abc@inbound.exemplo.com', super_admin: false };
 
 /** O mesmo estado que "Carregar exemplo" grava, montado em memória. */
 function estadoDeExemplo(): EstadoMedico {
@@ -26,14 +28,14 @@ function estadoDeExemplo(): EstadoMedico {
     const ids = new Set(itens.map((x) => x.cirurgia_id));
     cirurgias = cirurgias.map((c) => (ids.has(c.id) ? { ...c, demonstrativo_id: `d${i}` } : c));
     return { id: `d${i}`, hospital_id: d.hospital, referencia: d.referencia, recebido_em: d.recebido_em, valor_total: totalDosItens(d.itens), itens,
-      nota_pedida_em: d.nota_pedida_em, nota_numero: d.nota_numero, nota_emitida_em: d.nota_emitida_em, nota_enviada_em: d.nota_enviada_em, pago_em: d.pago_em, valor_pago: d.valor_pago, exemplo: true };
+      nota_pedida_em: d.nota_pedida_em, nota_numero: d.nota_numero, nota_emitida_em: d.nota_emitida_em, nota_enviada_em: d.nota_enviada_em, pago_em: d.pago_em, valor_pago: d.valor_pago, exemplo: true, tipo: 'hospital' as const, pagador_nome: '', pagador_documento: '', pagador_contato: '' };
   });
-  return { config: ex.config, hospitais, cirurgias, demonstrativos };
+  return { config: { ...CONFIG_VAZIA, ...ex.config }, hospitais, cirurgias, demonstrativos, entradas: [], integracoes: INTEGRACOES };
 }
 
 describe('Área Médica (tela)', () => {
   it('conta nova começa nos cadastros', () => {
-    render(<AreaMedicaRoot estadoInicial={{ config: { medico_nome: '', contador_nome: '', contador_email: '' }, hospitais: [], cirurgias: [], demonstrativos: [] }} hoje={HOJE} />);
+    render(<AreaMedicaRoot estadoInicial={{ config: CONFIG_VAZIA, hospitais: [], cirurgias: [], demonstrativos: [], entradas: [], integracoes: INTEGRACOES }} hoje={HOJE} />);
     expect(screen.getByText('Hospitais')).toBeTruthy();
     expect(screen.getByRole('button', { name: /Carregar exemplo/ })).toBeTruthy();
   });
@@ -71,5 +73,49 @@ describe('Área Médica (tela)', () => {
     const texto = (screen.getByLabelText('Texto do e-mail') as HTMLTextAreaElement).value;
     expect(texto).toContain('L. M. N.');
     expect(texto).toContain('P. H. S.');
+  });
+
+  it('caixa de entrada: mensagens do grupo e e-mail recebido aparecem para conferir', () => {
+    const estado = estadoDeExemplo();
+    estado.config.grupo_nome = 'Cirurgias Dr. Ricardo';
+    estado.entradas = [
+      { id: 'e1', canal: 'whatsapp', remetente: 'Secretária', assunto: '', texto: 'feita hoje hérnia do J.P.', recebido_em: '2026-11-24T12:00:00Z' },
+      { id: 'e2', canal: 'whatsapp', remetente: 'Você', assunto: '', texto: 'ok', recebido_em: '2026-11-24T12:05:00Z' },
+      { id: 'e3', canal: 'email', remetente: 'repasse@hospital.com', assunto: 'Demonstrativo de novembro', texto: 'linhas...', recebido_em: '2026-11-24T13:00:00Z' },
+    ];
+    render(<AreaMedicaRoot estadoInicial={estado} hoje={HOJE} />);
+    const abas = screen.getByRole('navigation', { name: 'Seções da Área Médica' });
+
+    fireEvent.click(within(abas).getByText('Cirurgias'));
+    expect(screen.getByText(/2 mensagens novas/)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Ler cirurgias' }));
+    expect((screen.getByLabelText('Texto com as cirurgias') as HTMLTextAreaElement).value).toContain('Secretária: feita hoje hérnia do J.P.');
+    fireEvent.click(screen.getByRole('button', { name: 'Fechar' }));
+
+    fireEvent.click(within(abas).getByText('Demonstrativos e notas'));
+    expect(screen.getByText('Demonstrativo de novembro')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Conferir demonstrativo' }));
+    expect((screen.getByLabelText('Texto do demonstrativo') as HTMLTextAreaElement).value).toContain('linhas...');
+  });
+
+  it('cobrança direta, envio automático e integrações estão na tela', () => {
+    render(<AreaMedicaRoot estadoInicial={estadoDeExemplo()} hoje={HOJE} />);
+    const abas = screen.getByRole('navigation', { name: 'Seções da Área Médica' });
+
+    fireEvent.click(within(abas).getByText('Demonstrativos e notas'));
+    fireEvent.click(screen.getByRole('button', { name: 'Pedir a nota ao contador' }));
+    expect(screen.getByRole('button', { name: /Enviar agora/ })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Fechar' }));
+    fireEvent.click(screen.getByRole('button', { name: /Cobrança direta/ }));
+    expect(screen.getByText('CPF ou CNPJ de quem paga')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Fechar' }));
+
+    fireEvent.click(within(abas).getByText('Integrações'));
+    expect(screen.getByText('Seu WhatsApp')).toBeTruthy();
+    expect(screen.getByText('Avisos fora da tela')).toBeTruthy();
+    expect(screen.getByText('medico-abc@inbound.exemplo.com')).toBeTruthy();
+    expect(screen.getByText(/Conferir extrato/)).toBeTruthy();
+    // O quadro do número de avisos da 2B Supply é só para super admin.
+    expect(screen.queryByText(/Número que envia os avisos/)).toBeNull();
   });
 });

@@ -65,6 +65,42 @@ export function cobranca(cirurgias: Cirurgia[], hospital: Hospital, config: Medi
   };
 }
 
+/** E-mail ao contador pedindo a nota de uma cobrança direta: o tomador é quem paga (o paciente). */
+export function pedidoDeNotaDireto(d: Demonstrativo, hospital: Hospital, config: MedicoConfig): Mensagem {
+  const item = d.itens[0];
+  return {
+    para: config.contador_email,
+    assunto: `Emissão de nota fiscal: ${d.pagador_nome || 'paciente particular'}`,
+    corpo:
+      `Olá${config.contador_nome ? `, ${config.contador_nome}` : ''}.\n\n` +
+      `Por favor, emita a nota fiscal abaixo. É cobrança direta, preciso dela o quanto antes.\n\n` +
+      `Tomador: ${d.pagador_nome || 'não informado'}\n` +
+      `CPF ou CNPJ: ${d.pagador_documento || 'não informado'}\n` +
+      `Serviço: ${item?.procedimento || 'honorários médicos'}\n` +
+      `Data: ${dataBr(d.recebido_em)}\n` +
+      `Local: ${hospital.nome}\n` +
+      `Valor: ${brl(d.valor_total)}` +
+      assinatura(config),
+  };
+}
+
+/** Mensagem ao paciente com o valor e o Pix (a nota vai em anexo). */
+export function cobrancaAoPaciente(d: Demonstrativo, config: MedicoConfig): Mensagem {
+  const item = d.itens[0];
+  return {
+    para: d.pagador_contato,
+    assunto: `Honorários médicos${config.medico_nome ? `: ${config.medico_nome}` : ''}`,
+    corpo:
+      `Olá${d.pagador_nome ? `, ${d.pagador_nome}` : ''}.\n\n` +
+      `Seguem os honorários ${item?.procedimento ? `referentes a ${item.procedimento}` : 'do procedimento'} em ${dataBr(d.recebido_em)}.\n\n` +
+      `Valor: ${brl(d.valor_total)}\n` +
+      (config.chave_pix ? `Pix: ${config.chave_pix}\n` : '') +
+      (d.nota_numero ? `Nota fiscal: ${d.nota_numero}\n` : '') +
+      `\nQualquer dúvida, é só responder esta mensagem.` +
+      assinatura(config),
+  };
+}
+
 /** Link mailto com o texto pronto (corpo cortado no limite que os clientes de e-mail aceitam). */
 export function mailto(m: Mensagem): string {
   const corpo = m.corpo.length > 1800 ? `${m.corpo.slice(0, 1800)}\n[...]` : m.corpo;

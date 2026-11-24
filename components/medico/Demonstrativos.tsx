@@ -1,13 +1,13 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Check, ChevronDown, FileUp, Plus, Trash2, Undo2 } from 'lucide-react';
+import { Check, ChevronDown, FileUp, Mail, Plus, Trash2, Undo2, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { CompradorImportDialog } from '@/components/assistants/CompradorImportDialog';
-import { casarItens, ETAPA_LABEL, ETAPAS, etapaDe, PROXIMO_PASSO, totalDosItens, type Etapa } from '@/lib/medico/conciliacao';
-import { envioDaNota, pedidoDeNota } from '@/lib/medico/mensagens';
-import type { Demonstrativo } from '@/lib/medico/types';
+import { casarItens, ETAPA_LABEL, ETAPA_LABEL_DIRETO, ETAPAS, etapaDe, PROXIMO_PASSO, PROXIMO_PASSO_DIRETO, totalDosItens, type Etapa } from '@/lib/medico/conciliacao';
+import { cobrancaAoPaciente, envioDaNota, pedidoDeNota, pedidoDeNotaDireto } from '@/lib/medico/mensagens';
+import type { Demonstrativo, Entrada } from '@/lib/medico/types';
 import { hospitalPeloNome } from './Cirurgias';
 import { Botao, brl, CAMPO, CARTAO, chamar, dataBr, Janela, JanelaDeMensagem, lerNumero, ROTULO, Selo, TD, TH, type PropsDaAba } from './ui';
 
@@ -31,8 +31,11 @@ const DATA_DA_ETAPA: Record<Etapa, keyof Demonstrativo> = {
 };
 
 export function Demonstrativos(props: PropsDaAba) {
-  const { estado } = props;
+  const { estado, enviar } = props;
   const [novo, setNovo] = useState(false);
+  const [direto, setDireto] = useState(false);
+  const [conferindo, setConferindo] = useState<Entrada | null>(null);
+  const emails = estado.entradas.filter((e) => e.canal === 'email');
 
   if (estado.hospitais.length === 0) {
     return <p className={`${CARTAO} text-sm text-muted-foreground`}>Cadastre pelo menos um hospital em &quot;Cadastros&quot; para registrar demonstrativos.</p>;
@@ -42,28 +45,58 @@ export function Demonstrativos(props: PropsDaAba) {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted-foreground">Registre o demonstrativo assim que o hospital mandar: o sistema confere com as suas cirurgias e acompanha a nota até o pagamento.</p>
-        <Botao onClick={() => setNovo(true)}>
-          <Plus className="h-4 w-4" aria-hidden /> Novo demonstrativo
-        </Botao>
+        <div className="flex flex-wrap gap-2">
+          <Botao tipo="secundario" onClick={() => setDireto(true)} titulo="O paciente paga na hora e a nota sai na hora (anestesista, particular)">
+            <Zap className="h-4 w-4" aria-hidden /> Cobrança direta
+          </Botao>
+          <Botao onClick={() => setNovo(true)}>
+            <Plus className="h-4 w-4" aria-hidden /> Novo demonstrativo
+          </Botao>
+        </div>
       </div>
 
+      {emails.map((e) => (
+        <div key={e.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-brand/40 bg-brand/5 px-4 py-3 text-sm">
+          <p className="min-w-0">
+            <Mail className="mr-1.5 inline h-4 w-4 text-brand" aria-hidden />
+            <strong>Chegou por e-mail:</strong> {e.assunto || 'sem assunto'}
+            <span className="text-muted-foreground"> · {e.remetente}</span>
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Botao tipo="secundario" onClick={() => void enviar('POST', '/entradas', { ids: [e.id] }, 'E-mail descartado.')}>
+              Descartar
+            </Botao>
+            <Botao onClick={() => setConferindo(e)}>Conferir demonstrativo</Botao>
+          </div>
+        </div>
+      ))}
+
       {estado.demonstrativos.length === 0 ? (
-        <p className={`${CARTAO} text-sm text-muted-foreground`}>Nenhum demonstrativo registrado ainda.</p>
+        emails.length === 0 && <p className={`${CARTAO} text-sm text-muted-foreground`}>Nenhum demonstrativo registrado ainda.</p>
       ) : (
         estado.demonstrativos.map((d) => <CartaoDoDemonstrativo key={d.id} d={d} {...props} />)
       )}
 
       {novo && <NovoDemonstrativo {...props} onFechar={() => setNovo(false)} />}
+      {conferindo && <NovoDemonstrativo {...props} entrada={conferindo} onFechar={() => setConferindo(null)} />}
+      {direto && <NovaCobrancaDireta {...props} onFechar={() => setDireto(false)} />}
     </div>
   );
 }
 
-function CartaoDoDemonstrativo({ d, estado, hoje, enviar }: PropsDaAba & { d: Demonstrativo }) {
+function CartaoDoDemonstrativo({ d, estado, hoje, enviar, recarregar }: PropsDaAba & { d: Demonstrativo }) {
   const hospital = estado.hospitais.find((h) => h.id === d.hospital_id);
   const etapa = etapaDe(d);
   const indice = ETAPAS.indexOf(etapa);
   const [aberto, setAberto] = useState(false);
   const [mensagem, setMensagem] = useState<'pedido' | 'envio' | null>(null);
+  const direto = d.tipo === 'direto';
+  const rotulos = direto ? ETAPA_LABEL_DIRETO : ETAPA_LABEL;
+  const canais = estado.integracoes.email_envio ? (['email'] as const) : ([] as const);
+  const aoEnviar = async () => {
+    await recarregar();
+    setMensagem(null);
+  };
   const [numero, setNumero] = useState('');
   const [dataNota, setDataNota] = useState(hoje);
   const [valorPago, setValorPago] = useState(String(d.valor_total.toFixed(2)).replace('.', ','));
@@ -96,17 +129,19 @@ function CartaoDoDemonstrativo({ d, estado, hoje, enviar }: PropsDaAba & { d: De
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <h3 className="font-semibold">
-            {hospital.nome}
-            {d.referencia && <span className="font-normal text-muted-foreground">, {d.referencia}</span>}
+            {direto ? d.pagador_nome || 'Paciente' : hospital.nome}
+            {direto ? <span className="ml-2 align-middle"><Selo>Cobrança direta</Selo></span> : d.referencia && <span className="font-normal text-muted-foreground">, {d.referencia}</span>}
           </h3>
           <p className="mt-0.5 text-sm text-muted-foreground">
-            Recebido em {dataBr(d.recebido_em)} · {d.itens.length} {d.itens.length === 1 ? 'procedimento' : 'procedimentos'}
+            {direto
+              ? `${d.itens[0]?.procedimento || 'Procedimento'} em ${dataBr(d.recebido_em)} · ${hospital.nome}`
+              : `Recebido em ${dataBr(d.recebido_em)} · ${d.itens.length} ${d.itens.length === 1 ? 'procedimento' : 'procedimentos'}`}
             {d.nota_numero && ` · Nota ${d.nota_numero}`}
           </p>
         </div>
         <div className="text-right">
           <div className="text-lg font-semibold">{brl(d.valor_total)}</div>
-          <Selo cor={COR_ETAPA[etapa]}>{ETAPA_LABEL[etapa]}</Selo>
+          <Selo cor={COR_ETAPA[etapa]}>{rotulos[etapa]}</Selo>
         </div>
       </div>
 
@@ -118,7 +153,7 @@ function CartaoDoDemonstrativo({ d, estado, hoje, enviar }: PropsDaAba & { d: De
             <li key={e} className={`rounded-xl border px-3 py-2 text-xs ${feita ? 'border-emerald-500/40 bg-emerald-500/5' : 'border-dashed border-border text-muted-foreground'}`}>
               <div className="flex items-center gap-1.5 font-medium">
                 {feita ? <Check className="h-3.5 w-3.5 text-emerald-600" aria-hidden /> : <span className="inline-block h-3.5 w-3.5 rounded-full border border-current opacity-50" aria-hidden />}
-                {ETAPA_LABEL[e]}
+                {rotulos[e]}
               </div>
               <div className="mt-0.5 pl-5">{feita && data ? dataBr(data) : i === indice + 1 ? 'próximo passo' : ''}</div>
             </li>
@@ -128,13 +163,13 @@ function CartaoDoDemonstrativo({ d, estado, hoje, enviar }: PropsDaAba & { d: De
 
       {pagoAMenos && (
         <p className="mt-3 rounded-xl bg-red-500/10 px-3 py-2 text-sm text-red-800 dark:text-red-200">
-          O hospital pagou {brl(d.valor_pago)} e o demonstrativo dizia {brl(d.valor_total)}: faltam {brl(d.valor_total - d.valor_pago!)}.
+          {direto ? 'O paciente' : 'O hospital'} pagou {brl(d.valor_pago)} e {direto ? 'a cobrança era de' : 'o demonstrativo dizia'} {brl(d.valor_total)}: faltam {brl(d.valor_total - d.valor_pago!)}.
         </p>
       )}
 
       {etapa !== 'pago' && (
         <div className="mt-4 rounded-xl bg-muted/50 p-3">
-          <p className="mb-2 text-sm font-medium">Agora: {PROXIMO_PASSO[etapa]}</p>
+          <p className="mb-2 text-sm font-medium">Agora: {(direto ? PROXIMO_PASSO_DIRETO : PROXIMO_PASSO)[etapa]}</p>
           {etapa === 'recebido' && <Botao onClick={() => setMensagem('pedido')}>Pedir a nota ao contador</Botao>}
           {etapa === 'nota_pedida' && (
             <div className="flex flex-wrap items-end gap-2">
@@ -151,7 +186,7 @@ function CartaoDoDemonstrativo({ d, estado, hoje, enviar }: PropsDaAba & { d: De
               </Botao>
             </div>
           )}
-          {etapa === 'nota_emitida' && <Botao onClick={() => setMensagem('envio')}>Enviar a nota ao hospital</Botao>}
+          {etapa === 'nota_emitida' && <Botao onClick={() => setMensagem('envio')}>{direto ? 'Enviar a nota e o Pix ao paciente' : 'Enviar a nota ao hospital'}</Botao>}
           {etapa === 'nota_enviada' && (
             <div className="flex flex-wrap items-end gap-2">
               <label>
@@ -186,7 +221,7 @@ function CartaoDoDemonstrativo({ d, estado, hoje, enviar }: PropsDaAba & { d: De
         <button
           type="button"
           onClick={() => {
-            if (window.confirm('Apagar este demonstrativo? As cirurgias dele voltam a ficar em aberto.')) void enviar('DELETE', `/demonstrativos/${d.id}`, undefined, 'Demonstrativo apagado.');
+            if (window.confirm(direto ? 'Apagar esta cobrança direta?' : 'Apagar este demonstrativo? As cirurgias dele voltam a ficar em aberto.')) void enviar('DELETE', `/demonstrativos/${d.id}`, undefined, direto ? 'Cobrança apagada.' : 'Demonstrativo apagado.');
           }}
           className="ml-auto inline-flex items-center gap-1 hover:text-red-600"
         >
@@ -224,8 +259,9 @@ function CartaoDoDemonstrativo({ d, estado, hoje, enviar }: PropsDaAba & { d: De
       {mensagem === 'pedido' && (
         <JanelaDeMensagem
           titulo="Pedir a nota ao contador"
-          mensagem={pedidoDeNota(d, hospital, estado.config)}
+          mensagem={direto ? pedidoDeNotaDireto(d, hospital, estado.config) : pedidoDeNota(d, hospital, estado.config)}
           onFechar={() => setMensagem(null)}
+          envio={{ tipo: 'pedido_nota', id: d.id, canais: [...canais], aoEnviar }}
           acao={{
             rotulo: 'Já pedi a nota',
             executar: async () => {
@@ -237,14 +273,21 @@ function CartaoDoDemonstrativo({ d, estado, hoje, enviar }: PropsDaAba & { d: De
       )}
       {mensagem === 'envio' && (
         <JanelaDeMensagem
-          titulo="Enviar a nota ao hospital"
-          mensagem={envioDaNota(d, hospital, estado.config)}
-          aviso="Lembre de anexar o PDF da nota no e-mail antes de enviar."
+          titulo={direto ? 'Enviar a nota e o Pix ao paciente' : 'Enviar a nota ao hospital'}
+          mensagem={direto ? cobrancaAoPaciente(d, estado.config) : envioDaNota(d, hospital, estado.config)}
+          aviso={direto && !estado.config.chave_pix ? 'Cadastre a sua chave Pix em Integrações para ela sair na mensagem.' : 'No envio manual, lembre de anexar o PDF da nota.'}
           onFechar={() => setMensagem(null)}
+          envio={{
+            tipo: direto ? 'cobranca_paciente' : 'envio_nota',
+            id: d.id,
+            canais: direto ? [...canais, ...(estado.integracoes.whatsapp ? (['whatsapp'] as const) : [])] : [...canais],
+            anexo: true,
+            aoEnviar,
+          }}
           acao={{
             rotulo: 'Já enviei a nota',
             executar: async () => {
-              await gravar({ nota_enviada_em: hoje }, 'Marcado: nota enviada ao hospital.');
+              await gravar({ nota_enviada_em: hoje }, 'Marcado: nota enviada.');
               setMensagem(null);
             },
           }}
@@ -256,11 +299,11 @@ function CartaoDoDemonstrativo({ d, estado, hoje, enviar }: PropsDaAba & { d: De
 
 type ItemLido = { data: string | null; paciente: string; procedimento: string; convenio: string; valor: number | null };
 
-function NovoDemonstrativo({ estado, hoje, enviar, onFechar }: PropsDaAba & { onFechar: () => void }) {
+function NovoDemonstrativo({ estado, hoje, enviar, onFechar, entrada }: PropsDaAba & { onFechar: () => void; entrada?: Entrada }) {
   const [hospitalId, setHospitalId] = useState(estado.hospitais.length === 1 ? estado.hospitais[0]!.id : '');
   const [recebido, setRecebido] = useState(hoje);
   const [referencia, setReferencia] = useState('');
-  const [texto, setTexto] = useState('');
+  const [texto, setTexto] = useState(() => (entrada ? `${entrada.assunto}\n\n${entrada.texto}`.trim() : ''));
   const [importar, setImportar] = useState(false);
   const [lendo, setLendo] = useState(false);
   const [salvando, setSalvando] = useState(false);
@@ -299,6 +342,7 @@ function NovoDemonstrativo({ estado, hoje, enviar, onFechar }: PropsDaAba & { on
       valor_total: total,
       itens,
     });
+    if (r && entrada) await enviar('POST', '/entradas', { ids: [entrada.id] });
     setSalvando(false);
     if (!r) return;
     toast.success(`Demonstrativo salvo: ${r.casadas} ${r.casadas === 1 ? 'cirurgia conferida' : 'cirurgias conferidas'}${r.criadas > 0 ? `, ${r.criadas} que você não tinha anotado` : ''}.`);
@@ -306,7 +350,7 @@ function NovoDemonstrativo({ estado, hoje, enviar, onFechar }: PropsDaAba & { on
   }
 
   return (
-    <Janela titulo="Novo demonstrativo" onFechar={onFechar} larga>
+    <Janela titulo={entrada ? 'Conferir demonstrativo recebido por e-mail' : 'Novo demonstrativo'} onFechar={onFechar} larga>
       <div className="space-y-4 text-sm">
         <div className="grid gap-3 sm:grid-cols-3">
           <label>
@@ -422,6 +466,91 @@ function NovoDemonstrativo({ estado, hoje, enviar, onFechar }: PropsDaAba & { on
         titulo="Importar demonstrativo"
         onImported={(t) => setTexto((atual) => (atual.trim() ? `${atual}\n\n${t}` : t))}
       />
+    </Janela>
+  );
+}
+
+/** Cobrança direta: o paciente paga na hora (anestesista, particular). Registrar e pedir a nota é um passo só. */
+function NovaCobrancaDireta({ estado, hoje, enviar, onFechar }: PropsDaAba & { onFechar: () => void }) {
+  const [f, setF] = useState({
+    hospital_id: estado.hospitais[0]?.id ?? '',
+    data: hoje,
+    paciente: '',
+    procedimento: '',
+    valor: '',
+    pagador_nome: '',
+    pagador_documento: '',
+    pagador_contato: '',
+    pedir_nota: estado.integracoes.email_envio && !!estado.config.contador_email,
+  });
+  const [salvando, setSalvando] = useState(false);
+  const campo = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setF({ ...f, [k]: e.target.value });
+  const valor = lerNumero(f.valor);
+  const pronto = !!f.hospital_id && !!f.data && !!f.paciente.trim() && valor != null && valor > 0;
+
+  async function salvar() {
+    setSalvando(true);
+    const r = await enviar<{ nota_pedida: boolean; aviso: string | null }>('POST', '/direto', { ...f, valor });
+    setSalvando(false);
+    if (!r) return;
+    if (r.aviso) toast.error(r.aviso);
+    else toast.success(r.nota_pedida ? 'Cobrança registrada e nota pedida ao contador.' : 'Cobrança registrada.');
+    onFechar();
+  }
+
+  return (
+    <Janela titulo="Cobrança direta" onFechar={onFechar}>
+      <div className="grid gap-3 text-sm sm:grid-cols-2">
+        <p className="text-muted-foreground sm:col-span-2">Para quando o paciente paga na hora. Informe quem paga (é o nome que sai na nota) e o sistema já pede a nota ao contador.</p>
+        <label>
+          <span className={ROTULO}>Hospital</span>
+          <select value={f.hospital_id} onChange={campo('hospital_id')} className={CAMPO}>
+            {estado.hospitais.map((h) => (
+              <option key={h.id} value={h.id}>
+                {h.nome}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          <span className={ROTULO}>Data</span>
+          <input type="date" value={f.data} onChange={campo('data')} className={CAMPO} />
+        </label>
+        <label>
+          <span className={ROTULO}>Paciente (iniciais)</span>
+          <input value={f.paciente} onChange={campo('paciente')} className={CAMPO} />
+        </label>
+        <label>
+          <span className={ROTULO}>Valor (R$)</span>
+          <input value={f.valor} onChange={campo('valor')} inputMode="decimal" className={CAMPO} />
+        </label>
+        <label className="sm:col-span-2">
+          <span className={ROTULO}>Procedimento</span>
+          <input value={f.procedimento} onChange={campo('procedimento')} placeholder="ex.: anestesia para cesariana" className={CAMPO} />
+        </label>
+        <label>
+          <span className={ROTULO}>Quem paga (nome para a nota)</span>
+          <input value={f.pagador_nome} onChange={campo('pagador_nome')} className={CAMPO} />
+        </label>
+        <label>
+          <span className={ROTULO}>CPF ou CNPJ de quem paga</span>
+          <input value={f.pagador_documento} onChange={campo('pagador_documento')} inputMode="numeric" className={CAMPO} />
+        </label>
+        <label className="sm:col-span-2">
+          <span className={ROTULO}>WhatsApp ou e-mail de quem paga (para enviar a nota e o Pix)</span>
+          <input value={f.pagador_contato} onChange={campo('pagador_contato')} className={CAMPO} />
+        </label>
+        <label className="flex items-center gap-2 sm:col-span-2">
+          <input type="checkbox" checked={f.pedir_nota} disabled={!estado.integracoes.email_envio} onChange={(e) => setF({ ...f, pedir_nota: e.target.checked })} />
+          Pedir a nota ao contador agora, por e-mail
+          {!estado.config.contador_email && <span className="text-xs text-amber-700 dark:text-amber-300">(cadastre o e-mail do contador)</span>}
+        </label>
+        <div className="flex justify-end sm:col-span-2">
+          <Botao ocupado={salvando} desabilitado={!pronto} onClick={salvar}>
+            Registrar cobrança
+          </Botao>
+        </div>
+      </div>
     </Janela>
   );
 }

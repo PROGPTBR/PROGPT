@@ -3,6 +3,7 @@ import { getServerSupabase } from '@/lib/db/supabase';
 import { casarItens, totalDosItens } from './conciliacao';
 import { dadosDeExemplo } from './exemplo';
 import type { z } from 'zod';
+import { CONFIG_VAZIA } from './types';
 import type {
   Cirurgia,
   CirurgiaPatchSchema,
@@ -10,6 +11,8 @@ import type {
   Demonstrativo,
   DemonstrativoPatchSchema,
   DemonstrativoSchema,
+  DiretoSchema,
+  Entrada,
   EstadoMedico,
   Hospital,
   HospitalSchema,
@@ -27,7 +30,10 @@ const HOSPITAL = 'id, nome, email, prazo_pagamento_dias, exemplo';
 const CIRURGIA =
   'id, hospital_id, data, paciente, procedimento, convenio, valor, origem, demonstrativo_id, cobrada_em, observacao, exemplo';
 const DEMONSTRATIVO =
-  'id, hospital_id, referencia, recebido_em, valor_total, itens, nota_pedida_em, nota_numero, nota_emitida_em, nota_enviada_em, pago_em, valor_pago, exemplo';
+  'id, hospital_id, referencia, recebido_em, valor_total, itens, nota_pedida_em, nota_numero, nota_emitida_em, nota_enviada_em, pago_em, valor_pago, exemplo, tipo, pagador_nome, pagador_documento, pagador_contato';
+export const CONFIG =
+  'medico_nome, contador_nome, contador_email, medico_email, whatsapp_numero, chave_pix, avisos_email, avisos_whatsapp, grupo_jid, grupo_nome';
+const ENTRADA = 'id, canal, remetente, assunto, texto, recebido_em';
 
 const num = (v: unknown): number | null => (v == null ? null : Number(v));
 
@@ -44,30 +50,107 @@ function demonstrativoDe(r: Record<string, unknown>): Demonstrativo {
   };
 }
 
-export async function carregarEstado(userId: string): Promise<EstadoMedico> {
+/** Os dados do médico, sem o que depende de quem está logado (`integracoes` é preenchido pela página e pela rota). */
+export async function carregarEstado(userId: string): Promise<Omit<EstadoMedico, 'integracoes'>> {
   const db = getServerSupabase();
-  const [config, hospitais, cirurgias, demonstrativos] = await Promise.all([
-    db.from('medico_config').select('medico_nome, contador_nome, contador_email').eq('user_id', userId).maybeSingle(),
+  const [config, hospitais, cirurgias, demonstrativos, entradas] = await Promise.all([
+    db.from('medico_config').select(CONFIG).eq('user_id', userId).maybeSingle(),
     db.from('medico_hospitais').select(HOSPITAL).eq('user_id', userId).order('nome'),
     db.from('medico_cirurgias').select(CIRURGIA).eq('user_id', userId).order('data', { ascending: false }).limit(2000),
     db.from('medico_demonstrativos').select(DEMONSTRATIVO).eq('user_id', userId).order('recebido_em', { ascending: false }).limit(500),
+    db.from('medico_entradas').select(ENTRADA).eq('user_id', userId).is('tratado_em', null).order('recebido_em').limit(400),
   ]);
-  for (const r of [config, hospitais, cirurgias, demonstrativos]) {
+  for (const r of [config, hospitais, cirurgias, demonstrativos, entradas]) {
     if (r.error) throw new Error(`[medico] leitura falhou: ${r.error.message}`);
   }
   return {
-    config: (config.data as MedicoConfig | null) ?? { medico_nome: '', contador_nome: '', contador_email: '' },
+    config: { ...CONFIG_VAZIA, ...((config.data as Partial<MedicoConfig> | null) ?? {}) },
     hospitais: (hospitais.data ?? []) as Hospital[],
     cirurgias: (cirurgias.data ?? []).map(cirurgiaDe),
     demonstrativos: (demonstrativos.data ?? []).map(demonstrativoDe),
+    entradas: (entradas.data ?? []) as Entrada[],
   };
 }
 
-export async function salvarConfig(userId: string, config: MedicoConfig): Promise<boolean> {
+export async function salvarConfig(userId: string, config: Partial<MedicoConfig>): Promise<boolean> {
   const { error } = await getServerSupabase()
     .from('medico_config')
     .upsert({ user_id: userId, ...config, updated_at: new Date().toISOString() });
   return !error;
+}
+
+// ---------------------------------------------------------------------------
+// Caixa de entrada: o que chegou sozinho e espera a conferência do médico.
+
+export async function registrarEntrada(
+  userId: string,
+  e: { canal: 'whatsapp' | 'email'; origem_id: string; remetente: string; assunto?: string; texto: string; recebido_em?: string },
+): Promise<void> {
+  const { error } = await getServerSupabase()
+    .from('medico_entradas')
+    .upsert(
+      {
+        user_id: userId,
+        canal: e.canal,
+        origem_id: e.origem_id.slice(0, 200),
+        remetente: e.remetente.slice(0, 200),
+        assunto: (e.assunto ?? '').slice(0, 300),
+        texto: e.texto.slice(0, 60_000),
+        ...(e.recebido_em ? { recebido_em: e.recebido_em } : {}),
+      },
+      { onConflict: 'user_id,canal,origem_id', ignoreDuplicates: true },
+    );
+  if (error) console.error('[medico] registrar entrada falhou:', error.message);
+}
+
+export async function marcarEntradasTratadas(userId: string, ids: string[]): Promise<boolean> {
+  if (ids.length === 0) return true;
+  const { error } = await getServerSupabase()
+    .from('medico_entradas')
+    .update({ tratado_em: new Date().toISOString() })
+    .eq('user_id', userId)
+    .in('id', ids);
+  return !error;
+}
+
+/**
+ * Cobrança direta (anestesista, particular): o paciente paga na hora. Grava a
+ * cirurgia e o recebimento já ligados, com os dados de quem paga (o tomador
+ * da nota).
+ */
+export async function criarDireto(userId: string, input: z.infer<typeof DiretoSchema>): Promise<string> {
+  if (!(await hospitalDoUsuario(userId, input.hospital_id))) throw new RegraMedica('Escolha um hospital cadastrado.');
+  const db = getServerSupabase();
+  const { data: cirurgia, error: erroC } = await db
+    .from('medico_cirurgias')
+    .insert({ user_id: userId, hospital_id: input.hospital_id, data: input.data, paciente: input.paciente, procedimento: input.procedimento, convenio: 'Particular', valor: input.valor, origem: 'manual' })
+    .select('id')
+    .single();
+  if (erroC || !cirurgia) throw new Error(`[medico] gravar cirurgia falhou: ${erroC?.message}`);
+
+  const item: ItemDemonstrativo = { data: input.data, paciente: input.paciente, procedimento: input.procedimento, convenio: 'Particular', valor: input.valor, cirurgia_id: cirurgia.id as string };
+  const { data: novo, error } = await db
+    .from('medico_demonstrativos')
+    .insert({
+      user_id: userId,
+      hospital_id: input.hospital_id,
+      tipo: 'direto',
+      referencia: input.paciente,
+      recebido_em: input.data,
+      valor_total: input.valor,
+      itens: [item],
+      pagador_nome: input.pagador_nome || input.paciente,
+      pagador_documento: input.pagador_documento,
+      pagador_contato: input.pagador_contato,
+    })
+    .select('id')
+    .single();
+  if (error || !novo) {
+    await db.from('medico_cirurgias').delete().eq('user_id', userId).eq('id', cirurgia.id);
+    throw new Error(`[medico] gravar cobrança direta falhou: ${error?.message}`);
+  }
+  await db.from('medico_cirurgias').update({ demonstrativo_id: novo.id }).eq('user_id', userId).eq('id', cirurgia.id);
+  return novo.id as string;
 }
 
 async function hospitalDoUsuario(userId: string, hospitalId: string): Promise<boolean> {
@@ -213,6 +296,8 @@ export async function apagar(userId: string, recurso: Recurso, id: string): Prom
     // Cirurgias que só existiam por causa deste demonstrativo saem junto; as
     // que o médico anotou voltam a ficar em aberto (o FK já zera o vínculo).
     await db.from('medico_cirurgias').delete().eq('user_id', userId).eq('demonstrativo_id', id).eq('origem', 'demonstrativo');
+    const { data: d } = await db.from('medico_demonstrativos').select('tipo').eq('user_id', userId).eq('id', id).maybeSingle();
+    if (d?.tipo === 'direto') await db.from('medico_cirurgias').delete().eq('user_id', userId).eq('demonstrativo_id', id);
   }
   const { error } = await db.from(TABELA[recurso]).delete().eq('user_id', userId).eq('id', id);
   return !error;
@@ -290,4 +375,14 @@ export async function carregarExemplo(userId: string, hoje: string): Promise<voi
 
   const { data: config } = await db.from('medico_config').select('user_id').eq('user_id', userId).maybeSingle();
   if (!config) await salvarConfig(userId, ex.config);
+}
+
+/** Um demonstrativo do usuário, com o hospital. Null se não é dele. */
+export async function demonstrativoDoUsuario(userId: string, id: string): Promise<{ d: Demonstrativo; hospital: Hospital } | null> {
+  const db = getServerSupabase();
+  const { data } = await db.from('medico_demonstrativos').select(DEMONSTRATIVO).eq('user_id', userId).eq('id', id).maybeSingle();
+  if (!data) return null;
+  const d = demonstrativoDe(data);
+  const { data: h } = await db.from('medico_hospitais').select(HOSPITAL).eq('user_id', userId).eq('id', d.hospital_id).maybeSingle();
+  return h ? { d, hospital: h as Hospital } : null;
 }

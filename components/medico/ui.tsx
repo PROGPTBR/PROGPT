@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Copy, Loader2, Mail, X } from 'lucide-react';
+import { Copy, Loader2, Mail, MessageCircle, Paperclip, Send, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { mailto, type Mensagem } from '@/lib/medico/mensagens';
@@ -42,6 +42,19 @@ export type PropsDaAba = {
   hoje: string;
   /** Chama a API, avisa o erro na tela e recarrega os dados. Devolve a resposta ou null. */
   enviar: <T = unknown>(metodo: 'POST' | 'PATCH' | 'PUT' | 'DELETE', caminho: string, corpo?: unknown, sucesso?: string) => Promise<T | null>;
+  recarregar: () => Promise<void>;
+};
+
+/** Envio automático pelo sistema (e-mail, ou WhatsApp ao paciente). */
+export type EnvioAutomatico = {
+  tipo: 'pedido_nota' | 'envio_nota' | 'cobranca_hospital' | 'cobranca_paciente';
+  id: string;
+  /** Canais que o servidor tem prontos para este envio. */
+  canais: ('email' | 'whatsapp')[];
+  /** Mostra o campo para anexar o PDF da nota. */
+  anexo?: boolean;
+  /** Depois de enviado (a etapa já foi avançada no servidor). */
+  aoEnviar: () => Promise<void>;
 };
 
 export async function chamar<T>(metodo: string, caminho: string, corpo?: unknown): Promise<{ ok: true; dados: T } | { ok: false; mensagem: string }> {
@@ -121,23 +134,31 @@ export function Janela({ titulo, onFechar, children, larga = false }: { titulo: 
   );
 }
 
-/** Mostra um e-mail pronto: copiar o texto ou abrir no programa de e-mail. A ação final (ex.: marcar como pedido) é opcional. */
+/**
+ * Mostra uma mensagem pronta. Com `envio`, o sistema manda por conta própria
+ * (e a etapa avança sozinha); sempre dá para copiar ou abrir no e-mail e
+ * marcar à mão com `acao`.
+ */
 export function JanelaDeMensagem({
   titulo,
   mensagem,
   onFechar,
   acao,
   aviso,
+  envio,
 }: {
   titulo: string;
   mensagem: Mensagem;
   onFechar: () => void;
   acao?: { rotulo: string; executar: () => Promise<void> };
   aviso?: string;
+  envio?: EnvioAutomatico;
 }) {
   const [corpo, setCorpo] = useState(mensagem.corpo);
-  const [ocupado, setOcupado] = useState(false);
+  const [ocupado, setOcupado] = useState<string | null>(null);
+  const [arquivo, setArquivo] = useState<File | null>(null);
   const atual = { ...mensagem, corpo };
+  const ehEmail = mensagem.para.includes('@');
 
   async function copiar() {
     try {
@@ -148,33 +169,82 @@ export function JanelaDeMensagem({
     }
   }
 
+  async function enviarAgora(canal: 'email' | 'whatsapp') {
+    if (!envio) return;
+    setOcupado(canal);
+    const fd = new FormData();
+    fd.set('tipo', envio.tipo);
+    fd.set('canal', canal);
+    fd.set('id', envio.id);
+    fd.set('corpo', corpo);
+    if (arquivo) fd.set('arquivo', arquivo);
+    try {
+      const res = await fetch('/api/medico/enviar', { method: 'POST', body: fd });
+      const dados = (await res.json().catch(() => ({}))) as { message?: string };
+      if (!res.ok) toast.error(dados.message ?? 'Não foi possível enviar agora.');
+      else {
+        toast.success(canal === 'email' ? 'E-mail enviado.' : 'Mensagem enviada pelo WhatsApp.');
+        await envio.aoEnviar();
+      }
+    } catch {
+      toast.error('Sem conexão. Tente de novo.');
+    }
+    setOcupado(null);
+  }
+
   return (
     <Janela titulo={titulo} onFechar={onFechar}>
       <div className="space-y-3 text-sm">
         <p>
           <span className="text-muted-foreground">Para: </span>
-          {mensagem.para || <span className="text-amber-700 dark:text-amber-300">sem e-mail cadastrado (preencha em Cadastros)</span>}
+          {mensagem.para || <span className="text-amber-700 dark:text-amber-300">sem contato cadastrado</span>}
         </p>
         <p>
           <span className="text-muted-foreground">Assunto: </span>
           {mensagem.assunto}
         </p>
         <textarea value={corpo} onChange={(e) => setCorpo(e.target.value)} rows={12} className={`${CAMPO} h-auto py-2 font-mono text-xs leading-relaxed`} aria-label="Texto do e-mail" />
+        {envio?.anexo && (
+          <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-dashed border-border px-3 py-2 text-xs hover:bg-muted">
+            <Paperclip className="h-4 w-4 shrink-0" aria-hidden />
+            <span className="min-w-0 flex-1 truncate">{arquivo ? arquivo.name : 'Anexar o PDF da nota (vai junto no envio automático)'}</span>
+            <input type="file" accept=".pdf,.xml,image/*" className="hidden" onChange={(e) => setArquivo(e.target.files?.[0] ?? null)} />
+          </label>
+        )}
         {aviso && <p className="text-xs text-muted-foreground">{aviso}</p>}
-        <div className="flex flex-wrap justify-end gap-2">
+        {envio && envio.canais.length > 0 && (
+          <div className="flex flex-wrap justify-end gap-2">
+            {envio.canais.includes('whatsapp') && !ehEmail && (
+              <Botao ocupado={ocupado === 'whatsapp'} desabilitado={!!ocupado} onClick={() => enviarAgora('whatsapp')}>
+                <MessageCircle className="h-4 w-4" aria-hidden /> Enviar pelo WhatsApp
+              </Botao>
+            )}
+            {envio.canais.includes('email') && ehEmail && (
+              <Botao ocupado={ocupado === 'email'} desabilitado={!!ocupado} onClick={() => enviarAgora('email')}>
+                <Send className="h-4 w-4" aria-hidden /> Enviar agora
+              </Botao>
+            )}
+          </div>
+        )}
+        <div className="flex flex-wrap items-center justify-end gap-2 border-t border-border pt-3">
+          <span className="mr-auto text-xs text-muted-foreground">{envio && envio.canais.length > 0 ? 'Ou envie você mesmo:' : ''}</span>
           <Botao tipo="secundario" onClick={copiar}>
             <Copy className="h-4 w-4" aria-hidden /> Copiar
           </Botao>
-          <a href={mailto(atual)} className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-border px-3 text-sm font-medium hover:bg-muted">
-            <Mail className="h-4 w-4" aria-hidden /> Abrir no e-mail
-          </a>
+          {ehEmail && (
+            <a href={mailto(atual)} className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-border px-3 text-sm font-medium hover:bg-muted">
+              <Mail className="h-4 w-4" aria-hidden /> Abrir no e-mail
+            </a>
+          )}
           {acao && (
             <Botao
-              ocupado={ocupado}
+              tipo="secundario"
+              ocupado={ocupado === 'acao'}
+              desabilitado={!!ocupado}
               onClick={async () => {
-                setOcupado(true);
+                setOcupado('acao');
                 await acao.executar();
-                setOcupado(false);
+                setOcupado(null);
               }}
             >
               {acao.rotulo}

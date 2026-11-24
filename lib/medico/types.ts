@@ -2,7 +2,53 @@ import { z } from 'zod';
 
 // Tipos da Área Médica (sub-projeto 100).
 
-export type MedicoConfig = { medico_nome: string; contador_nome: string; contador_email: string };
+export type MedicoConfig = {
+  medico_nome: string;
+  contador_nome: string;
+  contador_email: string;
+  /** Para onde vão as respostas dos e-mails enviados em nome do médico, e os avisos. */
+  medico_email: string;
+  /** WhatsApp que recebe os avisos diários. */
+  whatsapp_numero: string;
+  chave_pix: string;
+  avisos_email: boolean;
+  avisos_whatsapp: boolean;
+  /** Grupo de WhatsApp de onde o sistema lê as cirurgias. */
+  grupo_jid: string;
+  grupo_nome: string;
+};
+
+export const CONFIG_VAZIA: MedicoConfig = {
+  medico_nome: '',
+  contador_nome: '',
+  contador_email: '',
+  medico_email: '',
+  whatsapp_numero: '',
+  chave_pix: '',
+  avisos_email: true,
+  avisos_whatsapp: true,
+  grupo_jid: '',
+  grupo_nome: '',
+};
+
+/** O que chegou sozinho (grupo de WhatsApp, e-mail encaminhado) e espera conferência. */
+export type Entrada = {
+  id: string;
+  canal: 'whatsapp' | 'email';
+  remetente: string;
+  assunto: string;
+  texto: string;
+  recebido_em: string;
+};
+
+/** O que o servidor tem ligado, para a tela mostrar só o que funciona. */
+export type Integracoes = {
+  whatsapp: boolean;
+  email_envio: boolean;
+  /** Endereço para onde o médico encaminha os e-mails do hospital; null se o recebimento está desligado. */
+  email_entrada: string | null;
+  super_admin: boolean;
+};
 
 export type Hospital = {
   id: string;
@@ -52,6 +98,11 @@ export type Demonstrativo = {
   pago_em: string | null;
   valor_pago: number | null;
   exemplo: boolean;
+  /** 'direto': o paciente paga na hora (anestesista, particular). */
+  tipo: 'hospital' | 'direto';
+  pagador_nome: string;
+  pagador_documento: string;
+  pagador_contato: string;
 };
 
 export type EstadoMedico = {
@@ -59,6 +110,8 @@ export type EstadoMedico = {
   hospitais: Hospital[];
   cirurgias: Cirurgia[];
   demonstrativos: Demonstrativo[];
+  entradas: Entrada[];
+  integracoes: Integracoes;
 };
 
 const dia = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
@@ -68,6 +121,25 @@ export const ConfigSchema = z.object({
   medico_nome: texto(120).default(''),
   contador_nome: texto(120).default(''),
   contador_email: texto(200).default(''),
+  medico_email: texto(200).default(''),
+  whatsapp_numero: texto(30).default(''),
+  chave_pix: texto(140).default(''),
+  avisos_email: z.boolean().default(true),
+  avisos_whatsapp: z.boolean().default(true),
+});
+
+/** Cobrança direta: o paciente paga na hora e a nota sai na hora. */
+export const DiretoSchema = z.object({
+  hospital_id: z.string().uuid(),
+  data: dia,
+  paciente: texto(120).min(1),
+  procedimento: texto(200).default(''),
+  valor: z.number().positive().max(10_000_000),
+  pagador_nome: texto(160).default(''),
+  pagador_documento: texto(20).default(''),
+  pagador_contato: texto(60).default(''),
+  /** Já manda o e-mail ao contador pedindo a nota. */
+  pedir_nota: z.boolean().default(true),
 });
 
 export const HospitalSchema = z.object({

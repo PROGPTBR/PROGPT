@@ -11,7 +11,7 @@ import { Botao, brl, CARTAO, dataBr, JanelaDeMensagem, Selo, TD, TH, type PropsD
 // Pendências a cobrar: cirurgias feitas que não apareceram em nenhum
 // demonstrativo. É o cruzamento que o médico fazia à mão.
 
-export function Pendencias({ estado, hoje, enviar }: PropsDaAba) {
+export function Pendencias({ estado, hoje, enviar, recarregar }: PropsDaAba) {
   const lista = useMemo(() => pendencias(estado.cirurgias, estado.hospitais, hoje), [estado, hoje]);
   const [cobrando, setCobrando] = useState<Hospital | null>(null);
 
@@ -82,6 +82,15 @@ export function Pendencias({ estado, hoje, enviar }: PropsDaAba) {
           titulo={`Cobrança: ${cobrando.nome}`}
           mensagem={cobranca(doHospital(cobrando.id), cobrando, estado.config)}
           onFechar={() => setCobrando(null)}
+          envio={{
+            tipo: 'cobranca_hospital',
+            id: cobrando.id,
+            canais: estado.integracoes.email_envio ? ['email'] : [],
+            aoEnviar: async () => {
+              await recarregar();
+              setCobrando(null);
+            },
+          }}
           acao={{
             rotulo: 'Já cobrei',
             executar: async () => {

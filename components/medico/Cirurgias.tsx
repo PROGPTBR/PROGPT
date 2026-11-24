@@ -5,7 +5,7 @@ import { MessageSquareText, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { diasEntre, partesDoNome } from '@/lib/medico/conciliacao';
-import type { Cirurgia, EstadoMedico } from '@/lib/medico/types';
+import type { Cirurgia, Entrada, EstadoMedico } from '@/lib/medico/types';
 import { Botao, brl, CAMPO, CARTAO, chamar, dataBr, Janela, lerNumero, ROTULO, Selo, TD, TH, type PropsDaAba } from './ui';
 
 // Cirurgias feitas: a lista que o médico mantinha no grupo de WhatsApp. É
@@ -17,7 +17,8 @@ type Linha = { hospital_id: string; data: string; paciente: string; procedimento
 export function situacao(c: Cirurgia, estado: EstadoMedico, hoje: string): { rotulo: string; cor: 'verde' | 'azul' | 'amarelo' | 'vermelho' } {
   if (c.demonstrativo_id) {
     const d = estado.demonstrativos.find((x) => x.id === c.demonstrativo_id);
-    return d?.pago_em ? { rotulo: 'Paga', cor: 'verde' } : { rotulo: 'No demonstrativo', cor: 'azul' };
+    if (d?.pago_em) return { rotulo: 'Paga', cor: 'verde' };
+    return d?.tipo === 'direto' ? { rotulo: 'Cobrada do paciente', cor: 'azul' } : { rotulo: 'No demonstrativo', cor: 'azul' };
   }
   const prazo = estado.hospitais.find((h) => h.id === c.hospital_id)?.prazo_pagamento_dias ?? 30;
   return diasEntre(c.data, hoje) > prazo ? { rotulo: 'Sem pagamento, atrasada', cor: 'vermelho' } : { rotulo: 'Aguardando demonstrativo', cor: 'amarelo' };
@@ -40,6 +41,8 @@ export function Cirurgias({ estado, hoje, enviar }: PropsDaAba) {
   const [filtroSituacao, setFiltroSituacao] = useState('');
   const [nova, setNova] = useState(false);
   const [colar, setColar] = useState(false);
+  const [doGrupo, setDoGrupo] = useState<Entrada[] | null>(null);
+  const novas = useMemo(() => estado.entradas.filter((e) => e.canal === 'whatsapp'), [estado.entradas]);
 
   const nomeHospital = (id: string) => estado.hospitais.find((h) => h.id === id)?.nome ?? '';
   const lista = useMemo(
@@ -56,6 +59,22 @@ export function Cirurgias({ estado, hoje, enviar }: PropsDaAba) {
 
   return (
     <div className="space-y-4">
+      {novas.length > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-brand/40 bg-brand/5 px-4 py-3 text-sm">
+          <p>
+            <strong>
+              {novas.length} {novas.length === 1 ? 'mensagem nova' : 'mensagens novas'}
+            </strong>{' '}
+            no grupo {estado.config.grupo_nome ? `"${estado.config.grupo_nome}"` : 'das cirurgias'}.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Botao tipo="secundario" onClick={() => void enviar('POST', '/entradas', { ids: novas.map((e) => e.id) }, 'Mensagens descartadas.')}>
+              Descartar
+            </Botao>
+            <Botao onClick={() => setDoGrupo(novas)}>Ler cirurgias</Botao>
+          </div>
+        </div>
+      )}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="flex flex-wrap gap-2">
           <select value={filtroHospital} onChange={(e) => setFiltroHospital(e.target.value)} className={`${CAMPO} w-auto`} aria-label="Filtrar por hospital">
@@ -68,7 +87,7 @@ export function Cirurgias({ estado, hoje, enviar }: PropsDaAba) {
           </select>
           <select value={filtroSituacao} onChange={(e) => setFiltroSituacao(e.target.value)} className={`${CAMPO} w-auto`} aria-label="Filtrar por situação">
             <option value="">Todas as situações</option>
-            {['Paga', 'No demonstrativo', 'Aguardando demonstrativo', 'Sem pagamento, atrasada'].map((s) => (
+            {['Paga', 'No demonstrativo', 'Cobrada do paciente', 'Aguardando demonstrativo', 'Sem pagamento, atrasada'].map((s) => (
               <option key={s}>{s}</option>
             ))}
           </select>
@@ -143,12 +162,23 @@ export function Cirurgias({ estado, hoje, enviar }: PropsDaAba) {
         />
       )}
       {colar && <ColarDoWhatsApp estado={estado} onFechar={() => setColar(false)} enviar={enviar} />}
+      {doGrupo && <ColarDoWhatsApp estado={estado} entradas={doGrupo} onFechar={() => setDoGrupo(null)} enviar={enviar} />}
     </div>
   );
 }
 
-function ColarDoWhatsApp({ estado, onFechar, enviar }: Pick<PropsDaAba, 'estado' | 'enviar'> & { onFechar: () => void }) {
-  const [texto, setTexto] = useState('');
+/** Mensagens do grupo no formato que a IA lê: "[dia hora] quem: texto". */
+export function textoDasEntradas(entradas: Entrada[]): string {
+  return entradas
+    .map((e) => {
+      const quando = new Date(e.recebido_em).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' });
+      return `[${quando}] ${e.remetente || 'Grupo'}: ${e.texto}`;
+    })
+    .join('\n');
+}
+
+function ColarDoWhatsApp({ estado, onFechar, enviar, entradas }: Pick<PropsDaAba, 'estado' | 'enviar'> & { onFechar: () => void; entradas?: Entrada[] }) {
+  const [texto, setTexto] = useState(() => (entradas ? textoDasEntradas(entradas) : ''));
   const [lendo, setLendo] = useState(false);
   const [linhas, setLinhas] = useState<Linha[] | null>(null);
 
@@ -175,12 +205,15 @@ function ColarDoWhatsApp({ estado, onFechar, enviar }: Pick<PropsDaAba, 'estado'
     );
   }
 
+  // Depois de salvar o que veio do grupo, as mensagens saem da caixa de entrada.
+  const aoSalvar = entradas ? () => enviar('POST', '/entradas', { ids: entradas.map((e) => e.id) }).then(() => undefined) : undefined;
+
   if (linhas) {
-    return <EditorDeCirurgias titulo={`Conferir ${linhas.length} ${linhas.length === 1 ? 'cirurgia lida' : 'cirurgias lidas'}`} estado={estado} linhasIniciais={linhas} origem="whatsapp" onFechar={onFechar} enviar={enviar} />;
+    return <EditorDeCirurgias aoSalvar={aoSalvar} titulo={`Conferir ${linhas.length} ${linhas.length === 1 ? 'cirurgia lida' : 'cirurgias lidas'}`} estado={estado} linhasIniciais={linhas} origem="whatsapp" onFechar={onFechar} enviar={enviar} />;
   }
 
   return (
-    <Janela titulo="Colar do WhatsApp" onFechar={onFechar}>
+    <Janela titulo={entradas ? 'Mensagens novas do grupo' : 'Colar do WhatsApp'} onFechar={onFechar}>
       <div className="space-y-3 text-sm">
         <p className="text-muted-foreground">
           Cole as mensagens do grupo, suas anotações ou uma lista copiada de planilha. A IA separa as cirurgias e você confere antes de salvar.
@@ -211,7 +244,8 @@ function EditorDeCirurgias({
   origem,
   onFechar,
   enviar,
-}: Pick<PropsDaAba, 'estado' | 'enviar'> & { titulo: string; linhasIniciais: Linha[]; origem: 'manual' | 'whatsapp'; onFechar: () => void }) {
+  aoSalvar,
+}: Pick<PropsDaAba, 'estado' | 'enviar'> & { titulo: string; linhasIniciais: Linha[]; origem: 'manual' | 'whatsapp'; onFechar: () => void; aoSalvar?: () => Promise<void> }) {
   const [linhas, setLinhas] = useState(linhasIniciais);
   const [salvando, setSalvando] = useState(false);
   const mudar = (i: number, campo: keyof Linha, v: string) => setLinhas((l) => l.map((x, k) => (k === i ? { ...x, [campo]: v } : x)));
@@ -226,6 +260,7 @@ function EditorDeCirurgias({
       { cirurgias: linhas.map((l) => ({ ...l, valor: lerNumero(l.valor), origem })) },
       linhas.length === 1 ? 'Cirurgia salva.' : `${linhas.length} cirurgias salvas.`,
     );
+    if (ok) await aoSalvar?.();
     setSalvando(false);
     if (ok) onFechar();
   }

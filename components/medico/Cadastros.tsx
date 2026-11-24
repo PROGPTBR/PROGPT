@@ -17,7 +17,7 @@ export function Cadastros({ estado, enviar }: PropsDaAba) {
 
   async function salvarConfig() {
     setSalvando(true);
-    await enviar('PUT', '/config', config, 'Dados salvos.');
+    await enviar('PUT', '/config', { medico_nome: config.medico_nome, contador_nome: config.contador_nome, contador_email: config.contador_email }, 'Dados salvos.');
     setSalvando(false);
   }
 

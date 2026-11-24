@@ -65,6 +65,8 @@ const nextConfig = {
   },
 
   experimental: {
+    // Agendador interno (instrumentation.ts): avisos diários da Área Médica.
+    instrumentationHook: true,
     // `@napi-rs/canvas` ships platform-specific `.node` binaries that
     // webpack can't bundle (parses as "Unexpected character"). Treating
     // it as an external server-side package keeps it as a runtime

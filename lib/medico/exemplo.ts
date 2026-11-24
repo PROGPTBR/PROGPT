@@ -71,7 +71,7 @@ export function dadosDeExemplo(hoje: string) {
   const pagoNoMes = -Math.min(Number(hoje.slice(8, 10)) - 1, 8);
 
   return {
-    config: { medico_nome: 'Dr. Ricardo Menezes', contador_nome: 'Paula', contador_email: 'paula@contabilidade-exemplo.com.br' },
+    config: { medico_nome: 'Dr. Ricardo Menezes', contador_nome: 'Paula', contador_email: 'paula@contabilidade-exemplo.com.br' } as const,
     hospitais: [
       { chave: 'dor', nome: "Niterói D'Or", email: 'repasse@hospital-exemplo.com.br', prazo: 30 },
       { chave: 'chn', nome: 'CHN', email: 'honorarios@chn-exemplo.com.br', prazo: 30 },

@@ -84,6 +84,14 @@ export type EmailInput = {
    * aqui de propósito.
    */
   idempotencyKey?: string;
+  /** Texto puro, quando o e-mail é uma mensagem escrita por uma pessoa (sem moldura de marca). */
+  text?: string;
+  /** Para quem vai a resposta (ex.: o médico, quando o sistema envia em nome dele). */
+  replyTo?: string;
+  cc?: string;
+  /** Nome exibido no remetente; o endereço continua sendo a caixa autenticada. */
+  fromName?: string;
+  attachments?: { filename: string; content: Buffer; contentType?: string }[];
 };
 
 /**
@@ -102,11 +110,16 @@ export async function sendEmail(
   }
   const from = process.env.EMAIL_FROM ?? defaultFrom();
   try {
+    const endereco = /<([^>]+)>/.exec(from)?.[1] ?? from;
     const info = await transporter.sendMail({
-      from,
+      from: input.fromName ? { name: input.fromName.replace(/[\r\n"<>]/g, ' ').trim(), address: endereco } : from,
       to: input.to,
       subject: input.subject,
       html: input.html,
+      ...(input.text ? { text: input.text } : {}),
+      ...(input.replyTo ? { replyTo: input.replyTo } : {}),
+      ...(input.cc ? { cc: input.cc } : {}),
+      ...(input.attachments?.length ? { attachments: input.attachments } : {}),
     });
     return { ok: true, id: info.messageId };
   } catch (err) {

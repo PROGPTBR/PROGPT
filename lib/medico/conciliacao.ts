@@ -125,6 +125,17 @@ export const PROXIMO_PASSO: Record<Etapa, string> = {
   pago: '',
 };
 
+/** Na cobrança direta quem recebe a nota e paga é o paciente. */
+export const ETAPA_LABEL_DIRETO: Record<Etapa, string> = {
+  ...ETAPA_LABEL,
+  recebido: 'Cobrança registrada',
+  nota_enviada: 'Nota e Pix enviados ao paciente',
+};
+export const PROXIMO_PASSO_DIRETO: Record<Etapa, string> = { ...PROXIMO_PASSO, nota_emitida: 'Enviar a nota e o Pix ao paciente' };
+
+/** Dias que o paciente tem para pagar a cobrança direta antes de virar aviso. */
+export const PRAZO_DIRETO_DIAS = 3;
+
 export function etapaDe(d: Demonstrativo): Etapa {
   if (d.pago_em) return 'pago';
   if (d.nota_enviada_em) return 'nota_enviada';
@@ -173,7 +184,8 @@ export function avisos(
   const out: Aviso[] = [];
   for (const d of demonstrativos) {
     const etapa = etapaDe(d);
-    const nome = nomeDo(hospitais, d.hospital_id);
+    const direto = d.tipo === 'direto';
+    const nome = direto ? `${d.pagador_nome || 'Paciente'} (cobrança direta)` : nomeDo(hospitais, d.hospital_id);
     const base = { tipo: 'demonstrativo' as const, hospital_id: d.hospital_id, demonstrativo_id: d.id };
     if (etapa === 'recebido') {
       const dias = diasEntre(d.recebido_em, hoje);
@@ -183,9 +195,9 @@ export function avisos(
       if (dias > PRAZO_ETAPA.nota_pedida) out.push({ ...base, dias, gravidade: 'media', texto: `${nome}: o contador ainda não emitiu a nota` });
     } else if (etapa === 'nota_emitida') {
       const dias = diasEntre(d.nota_emitida_em!, hoje);
-      out.push({ ...base, dias, gravidade: dias > PRAZO_ETAPA.nota_emitida ? 'alta' : 'media', texto: `${nome}: enviar a nota ${d.nota_numero || ''} ao hospital`.replace(/\s+/g, ' ') });
+      out.push({ ...base, dias, gravidade: dias > PRAZO_ETAPA.nota_emitida ? 'alta' : 'media', texto: `${nome}: enviar a nota ${d.nota_numero || ''} ${direto ? 'e o Pix ao paciente' : 'ao hospital'}`.replace(/\s+/g, ' ') });
     } else if (etapa === 'nota_enviada') {
-      const prazo = hospitais.find((h) => h.id === d.hospital_id)?.prazo_pagamento_dias ?? 30;
+      const prazo = direto ? PRAZO_DIRETO_DIAS : (hospitais.find((h) => h.id === d.hospital_id)?.prazo_pagamento_dias ?? 30);
       const dias = diasEntre(d.nota_enviada_em!, hoje);
       if (dias > prazo) out.push({ ...base, dias, gravidade: 'alta', texto: `${nome}: pagamento atrasado (nota enviada há ${dias} dias)` });
     }

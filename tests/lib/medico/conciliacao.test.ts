@@ -4,7 +4,7 @@ import { areaMedicaLiberada } from '@/lib/medico/acesso';
 import { avisos, casarItens, etapaDe, pendencias, pontosDoPaciente, resumo } from '@/lib/medico/conciliacao';
 import { dadosDeExemplo } from '@/lib/medico/exemplo';
 import { cobranca, mailto, pedidoDeNota } from '@/lib/medico/mensagens';
-import type { Cirurgia, Demonstrativo, Hospital } from '@/lib/medico/types';
+import { CONFIG_VAZIA, type Cirurgia, type Demonstrativo, type Hospital } from '@/lib/medico/types';
 
 const HOJE = '2026-11-24';
 const H: Hospital = { id: 'h1', nome: "Niterói D'Or", email: 'repasse@h.com', prazo_pagamento_dias: 30, exemplo: false };
@@ -15,7 +15,7 @@ function cir(id: string, data: string, paciente: string, extra: Partial<Cirurgia
 }
 
 function dem(extra: Partial<Demonstrativo> = {}): Demonstrativo {
-  return { id: 'd1', hospital_id: 'h1', referencia: 'outubro/2026', recebido_em: '2026-11-20', valor_total: 6000, itens: [], nota_pedida_em: null, nota_numero: '', nota_emitida_em: null, nota_enviada_em: null, pago_em: null, valor_pago: null, exemplo: false, ...extra };
+  return { id: 'd1', hospital_id: 'h1', referencia: 'outubro/2026', recebido_em: '2026-11-20', valor_total: 6000, itens: [], nota_pedida_em: null, nota_numero: '', nota_emitida_em: null, nota_enviada_em: null, pago_em: null, valor_pago: null, exemplo: false, tipo: 'hospital', pagador_nome: '', pagador_documento: '', pagador_contato: '', ...extra };
 }
 
 describe('nome do paciente', () => {
@@ -128,7 +128,7 @@ describe('pendências, avisos e resumo', () => {
 
 describe('textos prontos', () => {
   it('pedido de nota e cobrança saem com os dados e sem travessão', () => {
-    const config = { medico_nome: 'Dr. Teste', contador_nome: 'Paula', contador_email: 'paula@c.com' };
+    const config = { ...CONFIG_VAZIA, medico_nome: 'Dr. Teste', contador_nome: 'Paula', contador_email: 'paula@c.com' };
     const pedido = pedidoDeNota(dem({ itens: [{ data: '2026-10-05', paciente: 'M. A. S.', procedimento: 'Colecistectomia', convenio: 'Unimed', valor: 3000, cirurgia_id: null }] }), H, config);
     expect(pedido.para).toBe('paula@c.com');
     expect(pedido.corpo).toContain('R$');

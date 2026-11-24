@@ -5,7 +5,7 @@ import { requireUser, NotAuthenticated } from '@/lib/auth';
 import { AppShell } from '@/components/layout/AppShell';
 import { AreaMedicaRoot } from '@/components/medico/AreaMedicaRoot';
 import { usuarioComAreaMedica } from '@/lib/medico/acesso-servidor';
-import { carregarEstado } from '@/lib/medico/service';
+import { estadoCompleto } from '@/lib/medico/integracoes';
 import { hojeEmBrasilia } from '@/lib/vitrine/datas';
 
 export const dynamic = 'force-dynamic';
@@ -25,7 +25,7 @@ export default async function AreaMedicaPage() {
 
   return (
     <AppShell back={{ href: '/chat', label: 'Voltar ao chat' }}>
-      <AreaMedicaRoot estadoInicial={await carregarEstado(user.id)} hoje={hojeEmBrasilia()} />
+      <AreaMedicaRoot estadoInicial={await estadoCompleto(user.id)} hoje={hojeEmBrasilia()} />
     </AppShell>
   );
 }

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { tratarEmailDaAreaMedica } from '@/lib/medico/inbound';
 import { getServerSupabase } from '@/lib/db/supabase';
 import { recordApiUsage } from '@/lib/observability/api-usage';
 import {
@@ -61,6 +62,10 @@ export async function POST(req: Request) {
   if (payload.type !== 'email.received' || !payload.data?.email_id) {
     return NextResponse.json({ ok: true, ignored: true });
   }
+
+  // E-mail endereçado à Área Médica (medico-<id>@): vira entrada do médico.
+  const daAreaMedica = await tratarEmailDaAreaMedica(payload.data);
+  if (daAreaMedica) return daAreaMedica;
 
   const { email_id, from, to, subject, attachments } = payload.data;
   const fromParsed = parseFrom(from);

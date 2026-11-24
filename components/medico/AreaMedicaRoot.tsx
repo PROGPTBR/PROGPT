@@ -9,6 +9,7 @@ import type { EstadoMedico } from '@/lib/medico/types';
 import { Cadastros } from './Cadastros';
 import { Cirurgias } from './Cirurgias';
 import { Demonstrativos } from './Demonstrativos';
+import { Integracoes } from './Integracoes';
 import { Pendencias } from './Pendencias';
 import { Botao, brl, CARTAO, chamar, type PropsDaAba } from './ui';
 
@@ -22,6 +23,7 @@ const ABAS = [
   { id: 'demonstrativos', rotulo: 'Demonstrativos e notas' },
   { id: 'pendencias', rotulo: 'Pendências a cobrar' },
   { id: 'cadastros', rotulo: 'Cadastros' },
+  { id: 'integracoes', rotulo: 'Integrações' },
 ] as const;
 type Aba = (typeof ABAS)[number]['id'];
 
@@ -50,8 +52,9 @@ export function AreaMedicaRoot({ estadoInicial, hoje }: { estadoInicial: EstadoM
   );
 
   const temExemplo = estado.hospitais.some((h) => h.exemplo);
-  const props: PropsDaAba = { estado, hoje, enviar };
+  const props: PropsDaAba = { estado, hoje, enviar, recarregar };
   const nPendentes = useMemo(() => pendencias(estado.cirurgias, estado.hospitais, hoje).length, [estado, hoje]);
+  const novas = { cirurgias: estado.entradas.filter((e) => e.canal === 'whatsapp').length, demonstrativos: estado.entradas.filter((e) => e.canal === 'email').length };
 
   async function exemplo(metodo: 'POST' | 'DELETE') {
     setCarregandoExemplo(true);
@@ -103,6 +106,9 @@ export function AreaMedicaRoot({ estadoInicial, hoje }: { estadoInicial: EstadoM
             }`}
           >
             {a.rotulo}
+            {(a.id === 'cirurgias' || a.id === 'demonstrativos') && novas[a.id] > 0 && (
+              <span className="ml-1.5 rounded-full bg-brand/15 px-1.5 py-0.5 text-[11px] font-semibold text-brand" title="Chegou e espera conferência">{novas[a.id]}</span>
+            )}
             {a.id === 'pendencias' && nPendentes > 0 && (
               <span className="ml-1.5 rounded-full bg-red-500/15 px-1.5 py-0.5 text-[11px] font-semibold text-red-700 dark:text-red-300">{nPendentes}</span>
             )}
@@ -115,6 +121,7 @@ export function AreaMedicaRoot({ estadoInicial, hoje }: { estadoInicial: EstadoM
       {aba === 'demonstrativos' && <Demonstrativos {...props} />}
       {aba === 'pendencias' && <Pendencias {...props} />}
       {aba === 'cadastros' && <Cadastros {...props} />}
+      {aba === 'integracoes' && <Integracoes {...props} />}
     </div>
   );
 }
