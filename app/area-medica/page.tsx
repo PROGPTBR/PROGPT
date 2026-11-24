@@ -24,6 +24,8 @@ export default async function AreaMedicaPage({ searchParams }: { searchParams: {
     throw err;
   }
   if (!(await usuarioComAreaMedica(user))) notFound();
+  // Entrou com a senha temporária: antes de tudo, cria a senha dele.
+  if (user.user_metadata?.trocar_senha === true) redirect('/area-medica/primeira-senha');
 
   const perfil = await getProfile(user.id).catch(() => null);
   const conteudo = (
