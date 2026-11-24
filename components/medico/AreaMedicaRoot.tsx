@@ -1,11 +1,12 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, ArrowRight, Banknote, CalendarCheck, FileText, Sparkles, Stethoscope, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { avisos, pendencias, resumo } from '@/lib/medico/conciliacao';
 import type { EstadoMedico } from '@/lib/medico/types';
+import { Banco } from './Banco';
 import { Cadastros } from './Cadastros';
 import { Cirurgias } from './Cirurgias';
 import { Demonstrativos } from './Demonstrativos';
@@ -22,14 +23,25 @@ const ABAS = [
   { id: 'cirurgias', rotulo: 'Cirurgias' },
   { id: 'demonstrativos', rotulo: 'Demonstrativos e notas' },
   { id: 'pendencias', rotulo: 'Pendências a cobrar' },
+  { id: 'banco', rotulo: 'Banco' },
   { id: 'cadastros', rotulo: 'Cadastros' },
   { id: 'integracoes', rotulo: 'Integrações' },
 ] as const;
 type Aba = (typeof ABAS)[number]['id'];
 
-export function AreaMedicaRoot({ estadoInicial, hoje }: { estadoInicial: EstadoMedico; hoje: string }) {
+export function AreaMedicaRoot({ estadoInicial, hoje, abaInicial, aviso }: { estadoInicial: EstadoMedico; hoje: string; abaInicial?: string; aviso?: { ok: boolean; texto: string } }) {
   const [estado, setEstado] = useState(estadoInicial);
-  const [aba, setAba] = useState<Aba>(estadoInicial.hospitais.length === 0 ? 'cadastros' : 'visao');
+  const [aba, setAba] = useState<Aba>(
+    ABAS.some((a) => a.id === abaInicial) ? (abaInicial as Aba) : estadoInicial.hospitais.length === 0 ? 'cadastros' : 'visao',
+  );
+  // Volta do login do BTG: mostra uma vez o resultado da ligação.
+  useEffect(() => {
+    if (!aviso) return;
+    if (aviso.ok) toast.success(aviso.texto);
+    else toast.error(aviso.texto);
+    window.history.replaceState(null, '', '/area-medica');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [carregandoExemplo, setCarregandoExemplo] = useState(false);
 
   const recarregar = useCallback(async () => {
@@ -120,6 +132,7 @@ export function AreaMedicaRoot({ estadoInicial, hoje }: { estadoInicial: EstadoM
       {aba === 'cirurgias' && <Cirurgias {...props} />}
       {aba === 'demonstrativos' && <Demonstrativos {...props} />}
       {aba === 'pendencias' && <Pendencias {...props} />}
+      {aba === 'banco' && <Banco {...props} />}
       {aba === 'cadastros' && <Cadastros {...props} />}
       {aba === 'integracoes' && <Integracoes {...props} />}
     </div>

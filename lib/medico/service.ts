@@ -12,12 +12,14 @@ import type {
   DemonstrativoPatchSchema,
   DemonstrativoSchema,
   DiretoSchema,
+  ContaBanco,
   Entrada,
   EstadoMedico,
   Hospital,
   HospitalSchema,
   ItemDemonstrativo,
   MedicoConfig,
+  MovimentoBanco,
 } from './types';
 
 // Serviço da Área Médica (sub-projeto 100).
@@ -53,14 +55,17 @@ function demonstrativoDe(r: Record<string, unknown>): Demonstrativo {
 /** Os dados do médico, sem o que depende de quem está logado (`integracoes` é preenchido pela página e pela rota). */
 export async function carregarEstado(userId: string): Promise<Omit<EstadoMedico, 'integracoes'>> {
   const db = getServerSupabase();
-  const [config, hospitais, cirurgias, demonstrativos, entradas] = await Promise.all([
+  const [config, hospitais, cirurgias, demonstrativos, entradas, conta, movimentos] = await Promise.all([
     db.from('medico_config').select(CONFIG).eq('user_id', userId).maybeSingle(),
     db.from('medico_hospitais').select(HOSPITAL).eq('user_id', userId).order('nome'),
     db.from('medico_cirurgias').select(CIRURGIA).eq('user_id', userId).order('data', { ascending: false }).limit(2000),
     db.from('medico_demonstrativos').select(DEMONSTRATIVO).eq('user_id', userId).order('recebido_em', { ascending: false }).limit(500),
     db.from('medico_entradas').select(ENTRADA).eq('user_id', userId).is('tratado_em', null).order('recebido_em').limit(400),
+    // Nunca seleciona o refresh token: ele só é lido em lib/medico/btg.ts.
+    db.from('medico_banco').select('cnpj, conectado_em, erro').eq('user_id', userId).maybeSingle(),
+    db.from('medico_movimentos').select('id, data, sentido, valor, forma, descricao, contraparte, demonstrativo_id').eq('user_id', userId).order('data', { ascending: false }).limit(300),
   ]);
-  for (const r of [config, hospitais, cirurgias, demonstrativos, entradas]) {
+  for (const r of [config, hospitais, cirurgias, demonstrativos, entradas, conta, movimentos]) {
     if (r.error) throw new Error(`[medico] leitura falhou: ${r.error.message}`);
   }
   return {
@@ -69,6 +74,8 @@ export async function carregarEstado(userId: string): Promise<Omit<EstadoMedico,
     cirurgias: (cirurgias.data ?? []).map(cirurgiaDe),
     demonstrativos: (demonstrativos.data ?? []).map(demonstrativoDe),
     entradas: (entradas.data ?? []) as Entrada[],
+    conta: (conta.data as ContaBanco | null) ?? null,
+    movimentos: (movimentos.data ?? []).map((m) => ({ ...(m as MovimentoBanco), valor: Number(m.valor) })),
   };
 }
 

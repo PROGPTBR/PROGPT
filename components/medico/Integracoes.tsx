@@ -1,14 +1,13 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Banknote, BellRing, Copy, FileUp, Mail, MessageCircle } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { BellRing, Copy, Mail, MessageCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { lerExtrato, sugerirPagamentos, type Credito } from '@/lib/medico/extrato';
-import { Botao, brl, CAMPO, CARTAO, chamar, dataBr, ROTULO, Selo, type PropsDaAba } from './ui';
+import { Botao, CAMPO, CARTAO, chamar, ROTULO, Selo, type PropsDaAba } from './ui';
 
-// Integrações da Área Médica (sub-projeto 101): WhatsApp, e-mail, avisos fora
-// da tela e conferência do extrato do banco.
+// Integrações da Área Médica (sub-projeto 101): WhatsApp, e-mail e avisos fora
+// da tela. O banco tem aba própria (Banco.tsx).
 
 type Conexao = { estado: 'open' | 'connecting' | 'close'; grupos: { jid: string; nome: string }[]; configurado: boolean };
 
@@ -82,7 +81,7 @@ function ConexaoWhatsapp({ alvo, aoConectar }: { alvo: 'medico' | 'avisos'; aoCo
   );
 }
 
-export function Integracoes({ estado, hoje, enviar, recarregar }: PropsDaAba) {
+export function Integracoes({ estado, enviar, recarregar }: PropsDaAba) {
   const { integracoes, config } = estado;
   const [form, setForm] = useState({
     medico_email: config.medico_email,
@@ -244,80 +243,6 @@ export function Integracoes({ estado, hoje, enviar, recarregar }: PropsDaAba) {
         </div>
       </section>
 
-      <Banco estado={estado} hoje={hoje} enviar={enviar} recarregar={recarregar} />
     </div>
-  );
-}
-
-function Banco({ estado, enviar }: PropsDaAba) {
-  const [creditos, setCreditos] = useState<Credito[] | null>(null);
-  const [confirmando, setConfirmando] = useState<string | null>(null);
-  const sugestoes = useMemo(() => (creditos ? sugerirPagamentos(creditos, estado.demonstrativos, estado.hospitais) : []), [creditos, estado]);
-
-  async function abrir(arquivo: File | undefined) {
-    if (!arquivo) return;
-    const lidos = lerExtrato(await arquivo.text());
-    if (lidos.length === 0) return void toast.error('Não encontrei créditos nesse arquivo. Exporte o extrato em OFX ou CSV.');
-    setCreditos(lidos);
-  }
-
-  return (
-    <section className={CARTAO}>
-      <h2 className="flex items-center gap-2 text-base font-semibold">
-        <Banknote className="h-5 w-5 text-brand" aria-hidden /> Banco
-      </h2>
-      <p className="mt-0.5 text-sm text-muted-foreground">
-        Exporte o extrato da conta (OFX ou CSV) e o sistema acha os depósitos que pagam as notas em aberto. Nada é marcado sem você confirmar. O arquivo é lido no seu navegador e não é guardado.
-      </p>
-      <label className="mt-3 inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-xl border border-border px-3 text-sm font-medium hover:bg-muted">
-        <FileUp className="h-4 w-4" aria-hidden /> Conferir extrato
-        <input type="file" accept=".ofx,.csv,.txt" className="hidden" onChange={(e) => void abrir(e.target.files?.[0])} />
-      </label>
-
-      {creditos && (
-        <div className="mt-3 text-sm">
-          <p className="text-muted-foreground">
-            {creditos.length} {creditos.length === 1 ? 'crédito lido' : 'créditos lidos'}.{' '}
-            {sugestoes.length === 0 ? 'Nenhum bate com as notas em aberto.' : `${sugestoes.length} ${sugestoes.length === 1 ? 'pagamento encontrado' : 'pagamentos encontrados'}:`}
-          </p>
-          <ul className="mt-2 space-y-2">
-            {sugestoes.map((s) => {
-              const d = estado.demonstrativos.find((x) => x.id === s.demonstrativo_id)!;
-              const quem = d.tipo === 'direto' ? d.pagador_nome : estado.hospitais.find((h) => h.id === d.hospital_id)?.nome;
-              return (
-                <li key={s.demonstrativo_id} className="rounded-xl border border-border p-3">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="font-medium">
-                        {quem}
-                        {d.nota_numero && `, nota ${d.nota_numero}`} <Selo cor={s.confianca === 'certa' ? 'verde' : 'amarelo'}>{s.confianca === 'certa' ? 'Valor igual' : 'Provável'}</Selo>
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Crédito de {brl(s.credito.valor)} em {dataBr(s.credito.data)}: {s.credito.descricao || 'sem descrição'}
-                        {s.diferenca > 0 && `. Veio ${brl(s.diferenca)} a menos que a nota (${brl(d.valor_total)}).`}
-                      </p>
-                    </div>
-                    <Botao
-                      ocupado={confirmando === d.id}
-                      onClick={async () => {
-                        setConfirmando(d.id);
-                        await enviar('PATCH', `/demonstrativos/${d.id}`, { pago_em: s.credito.data, valor_pago: s.credito.valor, ...(d.nota_enviada_em ? {} : { nota_enviada_em: s.credito.data }) }, 'Pagamento confirmado.');
-                        setConfirmando(null);
-                      }}
-                    >
-                      Confirmar pagamento
-                    </Botao>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      )}
-
-      <p className="mt-4 rounded-xl bg-muted/60 px-3 py-2 text-xs text-muted-foreground">
-        Ligação direta com o BTG Empresas: o banco tem a abertura (extrato e aviso de crédito em conta, com a sua autorização). Ela depende do cadastro do aplicativo da 2B Supply no BTG; quando for liberado, o pagamento passa a ser marcado sozinho.
-      </p>
-    </section>
   );
 }

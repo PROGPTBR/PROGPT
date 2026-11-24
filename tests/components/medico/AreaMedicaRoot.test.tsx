@@ -13,7 +13,7 @@ vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ estado: '
 
 const HOJE = '2026-11-24';
 afterEach(cleanup);
-const INTEGRACOES: Integracoes = { whatsapp: true, email_envio: true, email_entrada: 'medico-abc@inbound.exemplo.com', super_admin: false };
+const INTEGRACOES: Integracoes = { whatsapp: true, email_envio: true, email_entrada: 'medico-abc@inbound.exemplo.com', super_admin: false, btg: true };
 
 /** O mesmo estado que "Carregar exemplo" grava, montado em memória. */
 function estadoDeExemplo(): EstadoMedico {
@@ -30,12 +30,12 @@ function estadoDeExemplo(): EstadoMedico {
     return { id: `d${i}`, hospital_id: d.hospital, referencia: d.referencia, recebido_em: d.recebido_em, valor_total: totalDosItens(d.itens), itens,
       nota_pedida_em: d.nota_pedida_em, nota_numero: d.nota_numero, nota_emitida_em: d.nota_emitida_em, nota_enviada_em: d.nota_enviada_em, pago_em: d.pago_em, valor_pago: d.valor_pago, exemplo: true, tipo: 'hospital' as const, pagador_nome: '', pagador_documento: '', pagador_contato: '' };
   });
-  return { config: { ...CONFIG_VAZIA, ...ex.config }, hospitais, cirurgias, demonstrativos, entradas: [], integracoes: INTEGRACOES };
+  return { config: { ...CONFIG_VAZIA, ...ex.config }, hospitais, cirurgias, demonstrativos, entradas: [], conta: null, movimentos: [], integracoes: INTEGRACOES };
 }
 
 describe('Área Médica (tela)', () => {
   it('conta nova começa nos cadastros', () => {
-    render(<AreaMedicaRoot estadoInicial={{ config: CONFIG_VAZIA, hospitais: [], cirurgias: [], demonstrativos: [], entradas: [], integracoes: INTEGRACOES }} hoje={HOJE} />);
+    render(<AreaMedicaRoot estadoInicial={{ config: CONFIG_VAZIA, hospitais: [], cirurgias: [], demonstrativos: [], entradas: [], conta: null, movimentos: [], integracoes: INTEGRACOES }} hoje={HOJE} />);
     expect(screen.getByText('Hospitais')).toBeTruthy();
     expect(screen.getByRole('button', { name: /Carregar exemplo/ })).toBeTruthy();
   });
@@ -114,8 +114,28 @@ describe('Área Médica (tela)', () => {
     expect(screen.getByText('Seu WhatsApp')).toBeTruthy();
     expect(screen.getByText('Avisos fora da tela')).toBeTruthy();
     expect(screen.getByText('medico-abc@inbound.exemplo.com')).toBeTruthy();
-    expect(screen.getByText(/Conferir extrato/)).toBeTruthy();
     // O quadro do número de avisos da 2B Supply é só para super admin.
     expect(screen.queryByText(/Número que envia os avisos/)).toBeNull();
+  });
+
+  it('banco: liga a conta do BTG, mostra o que entrou e saiu e sugere o pagamento com imposto retido', () => {
+    const estado = estadoDeExemplo();
+    render(<AreaMedicaRoot estadoInicial={estado} hoje={HOJE} abaInicial="banco" />);
+    expect(screen.getByRole('button', { name: 'Conectar BTG' })).toBeTruthy();
+    expect(screen.getByText(/Conferir extrato/)).toBeTruthy();
+    cleanup();
+
+    const enviada = estado.demonstrativos.find((d) => d.nota_enviada_em && !d.pago_em)!;
+    estado.conta = { cnpj: '11222333000181', conectado_em: '2026-11-01T12:00:00Z', erro: '' };
+    estado.movimentos = [
+      { id: 'm1', data: '2026-11-23T15:00:00Z', sentido: 'entrada', valor: enviada.valor_total - 500, forma: 'TED', descricao: "TED RECEBIDA NITEROI D'OR", contraparte: '', demonstrativo_id: null },
+      { id: 'm2', data: '2026-11-20T15:00:00Z', sentido: 'saida', valor: 1200, forma: 'Pix', descricao: 'Pix enviado', contraparte: 'CONTABILIDADE', demonstrativo_id: null },
+    ];
+    render(<AreaMedicaRoot estadoInicial={estado} hoje={HOJE} abaInicial="banco" />);
+    expect(screen.getByText(/11\.222\.333\/0001-81/)).toBeTruthy();
+    expect(screen.getByText('Entrou neste mês')).toBeTruthy();
+    expect(screen.getByText('Saiu neste mês')).toBeTruthy();
+    expect(screen.getByText('Provável')).toBeTruthy();
+    expect(screen.getByText(/a menos que a nota/)).toBeTruthy();
   });
 });

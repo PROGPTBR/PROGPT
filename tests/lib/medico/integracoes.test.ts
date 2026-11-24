@@ -77,7 +77,7 @@ describe('cobrança direta', () => {
 
 describe('aviso diário', () => {
   const cirurgia: Cirurgia = { id: 'c1', hospital_id: 'h1', data: '2026-09-01', paciente: 'Maria Teste', procedimento: 'X', convenio: '', valor: 100, origem: 'manual', demonstrativo_id: null, cobrada_em: null, observacao: '', exemplo: false };
-  const base = { config: { ...CONFIG_VAZIA, medico_nome: 'Dr. Teste' }, hospitais: [H], cirurgias: [] as Cirurgia[], demonstrativos: [] as Demonstrativo[], entradas: [] };
+  const base = { config: { ...CONFIG_VAZIA, medico_nome: 'Dr. Teste' }, hospitais: [H], cirurgias: [] as Cirurgia[], demonstrativos: [] as Demonstrativo[], entradas: [], conta: null, movimentos: [] };
 
   it('dia sem pendência não gera mensagem', () => {
     expect(avisoDoDia(base, HOJE, 'https://x/area-medica')).toBeNull();

@@ -2,6 +2,7 @@ import { getProfile } from '@/lib/auth';
 import { getEmailConfigStatus } from '@/lib/email/client';
 import { inboundDomain } from '@/lib/email/inbound';
 
+import { btgConfigurado } from './btg';
 import { whatsappConfigurado } from './evolution';
 import { carregarEstado } from './service';
 import type { EstadoMedico, Integracoes } from './types';
@@ -36,6 +37,7 @@ export async function integracoesDe(userId: string): Promise<Integracoes> {
     email_envio: getEmailConfigStatus().hasKey,
     email_entrada: aliasDoMedico(userId),
     super_admin: profile?.super_admin === true,
+    btg: btgConfigurado(),
   };
 }
 

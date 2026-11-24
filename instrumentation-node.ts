@@ -9,7 +9,7 @@
 const INTERVALO_MS = 15 * 60 * 1000;
 
 export function iniciarAgendador() {
-  if (process.env.APP_ENV !== 'production' || process.env.AREA_MEDICA_AVISOS === 'false') return;
+  if (process.env.APP_ENV !== 'production') return;
 
   const g = globalThis as { __areaMedicaAvisos?: boolean };
   if (g.__areaMedicaAvisos) return;
@@ -17,8 +17,12 @@ export function iniciarAgendador() {
 
   const rodar = async () => {
     try {
+      // Mantém viva a autorização dos médicos no BTG (o refresh token vence em 10 dias).
+      const { renovarConexoes } = await import('@/lib/medico/btg');
+      await renovarConexoes().catch((e) => console.error('[medico/btg] renovação:', e instanceof Error ? e.message : e));
+
       const { enviarAvisosDoDia, horaDeAvisar } = await import('@/lib/medico/avisos');
-      if (!horaDeAvisar()) return;
+      if (!horaDeAvisar() || process.env.AREA_MEDICA_AVISOS === 'false') return;
       const r = await enviarAvisosDoDia();
       if (r.enviados > 0) console.log(`[medico/avisos] ${r.enviados} aviso(s) enviado(s)`);
     } catch (err) {

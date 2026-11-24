@@ -48,7 +48,23 @@ export type Integracoes = {
   /** Endereço para onde o médico encaminha os e-mails do hospital; null se o recebimento está desligado. */
   email_entrada: string | null;
   super_admin: boolean;
+  /** A ligação com o BTG está liberada no servidor (aplicativo cadastrado no banco). */
+  btg: boolean;
 };
+
+/** Um crédito ou débito que o banco avisou. */
+export type MovimentoBanco = {
+  id: string;
+  data: string;
+  sentido: 'entrada' | 'saida';
+  valor: number;
+  forma: string;
+  descricao: string;
+  contraparte: string;
+  demonstrativo_id: string | null;
+};
+
+export type ContaBanco = { cnpj: string; conectado_em: string; erro: string };
 
 export type Hospital = {
   id: string;
@@ -111,6 +127,9 @@ export type EstadoMedico = {
   cirurgias: Cirurgia[];
   demonstrativos: Demonstrativo[];
   entradas: Entrada[];
+  /** Conta ligada ao banco (null se não ligou) e os últimos movimentos. */
+  conta: ContaBanco | null;
+  movimentos: MovimentoBanco[];
   integracoes: Integracoes;
 };
 

@@ -13,7 +13,7 @@ export const metadata: Metadata = { title: 'Área Médica | 2BSUPPLY.IA' };
 
 // Área Médica (sub-projeto 100): área particular. Quem não foi liberado
 // recebe 404, como se a tela não existisse.
-export default async function AreaMedicaPage() {
+export default async function AreaMedicaPage({ searchParams }: { searchParams: { aba?: string; banco?: string; motivo?: string } }) {
   let user;
   try {
     user = await requireUser();
@@ -25,7 +25,18 @@ export default async function AreaMedicaPage() {
 
   return (
     <AppShell back={{ href: '/chat', label: 'Voltar ao chat' }}>
-      <AreaMedicaRoot estadoInicial={await estadoCompleto(user.id)} hoje={hojeEmBrasilia()} />
+      <AreaMedicaRoot
+        estadoInicial={await estadoCompleto(user.id)}
+        hoje={hojeEmBrasilia()}
+        abaInicial={searchParams.aba}
+        aviso={
+          searchParams.banco === 'conectado'
+            ? { ok: true, texto: 'Conta do BTG ligada. Os próximos créditos e débitos entram sozinhos.' }
+            : searchParams.banco === 'erro'
+              ? { ok: false, texto: (searchParams.motivo ?? 'Não foi possível ligar a conta do BTG.').slice(0, 200) }
+              : undefined
+        }
+      />
     </AppShell>
   );
 }
