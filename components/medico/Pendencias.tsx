@@ -6,7 +6,7 @@ import { Download, Mail } from 'lucide-react';
 import { pendencias } from '@/lib/medico/conciliacao';
 import { cobranca } from '@/lib/medico/mensagens';
 import type { Hospital } from '@/lib/medico/types';
-import { Botao, brl, CARTAO, dataBr, JanelaDeMensagem, Selo, TD, TH, type PropsDaAba } from './ui';
+import { Botao, brl, CARTAO, dataBr, Info, JanelaDeMensagem, Selo, type PropsDaAba } from './ui';
 
 // Pendências a cobrar: cirurgias feitas que não apareceram em nenhum
 // demonstrativo. O hospital só aceita a cobrança na planilha dele e não
@@ -27,81 +27,55 @@ export function Pendencias({ estado, hoje, enviar, recarregar }: PropsDaAba) {
   const doHospital = (id: string) => lista.filter((p) => p.cirurgia.hospital_id === id).map((p) => p.cirurgia);
 
   return (
-    <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">
-        Cirurgias feitas que ainda não entraram em nenhum demonstrativo. A cobrança sai na planilha de pendências, o modelo que o hospital exige. Como o hospital não costuma responder, o sistema guarda cada envio e confere sozinho a cada demonstrativo novo: o que foi pago sai daqui, o que continua volta para você cobrar de novo.
-      </p>
+    <div className="space-y-6">
+      <h2 className="flex items-center gap-1 text-xl font-semibold">
+        A cobrar{' '}
+        <Info>
+          Cirurgias feitas que ainda não entraram em nenhum demonstrativo. A cobrança sai na planilha de pendências, o modelo que o hospital exige. Como o hospital não costuma responder, cada envio fica registrado e o que continua sem pagamento volta para cobrar de novo.
+        </Info>
+      </h2>
       {faltaCabecalho && (
-        <p className="rounded-xl bg-amber-500/10 px-3 py-2 text-sm text-amber-900 dark:text-amber-200">
-          Preencha em Cadastros o seu nome completo, a empresa, o CNPJ e o CRM: eles saem no cabeçalho da planilha de pendências.
-        </p>
+        <p className="rounded-2xl bg-amber-100 px-4 py-3 text-sm text-amber-900">Falta preencher seu nome, empresa, CNPJ e CRM em Cadastros: eles saem na planilha.</p>
       )}
       {grupos.map(({ h, itens }) => {
-        const atrasadas = itens.filter((p) => p.atrasada).length;
         const aCobrar = itens.filter((p) => p.cobrarAgora).length;
-        const jaCobradas = itens.filter((p) => p.vezes > 0).length;
         const valor = itens.reduce((s, p) => s + (p.cirurgia.valor ?? 0), 0);
         return (
-          <section key={h.id} className={CARTAO}>
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <h3 className="font-semibold">{h.nome}</h3>
-                <p className="mt-0.5 text-sm text-muted-foreground">
-                  {itens.length} {itens.length === 1 ? 'cirurgia' : 'cirurgias'} sem pagamento{valor > 0 && `, ${brl(valor)}`} · prazo de {h.prazo_pagamento_dias} dias
-                  {atrasadas > 0 && ` · ${atrasadas} fora do prazo`}
-                  {jaCobradas > 0 && ` · ${jaCobradas} já ${jaCobradas === 1 ? 'cobrada' : 'cobradas'} sem resposta`}
+          <section key={h.id}>
+            <div className="flex items-end justify-between gap-3">
+              <div className="min-w-0">
+                <h3 className="truncate text-base font-semibold">{h.nome}</h3>
+                <p className="text-sm text-neutral-500">
+                  {itens.length} {itens.length === 1 ? 'cirurgia' : 'cirurgias'}
+                  {valor > 0 && ` · ${brl(valor)}`}
                 </p>
-                {aCobrar > 0 && <p className="mt-1 text-sm font-medium text-red-700 dark:text-red-300">{aCobrar === 1 ? '1 precisa' : `${aCobrar} precisam`} ser cobrada{aCobrar === 1 ? '' : 's'} agora.</p>}
               </div>
-              <div className="flex flex-wrap gap-2">
-                <a href={`/api/medico/pendencias/${h.id}`} className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-border px-3 text-sm font-medium hover:bg-muted">
-                  <Download className="h-4 w-4" aria-hidden /> Baixar planilha
-                </a>
-                <Botao onClick={() => setCobrando(h)}>
-                  <Mail className="h-4 w-4" aria-hidden /> Enviar ao hospital
-                </Botao>
-              </div>
+              {aCobrar > 0 && <Selo cor="vermelho">{aCobrar} para cobrar</Selo>}
             </div>
-            <div className="mt-3 overflow-x-auto rounded-xl border border-border">
-              <table className="w-full text-sm">
-                <thead className="bg-muted/50 text-left text-[11px] uppercase tracking-wider text-muted-foreground">
-                  <tr>
-                    <th className={TH}>Data</th>
-                    <th className={TH}>Paciente</th>
-                    <th className={TH}>Função</th>
-                    <th className={TH}>Procedimento</th>
-                    <th className={TH}>Convênio</th>
-                    <th className={`${TH} text-right`}>Valor</th>
-                    <th className={TH}>Situação</th>
-                    <th className={TH}>Cobranças</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {itens.map(({ cirurgia: c, dias, atrasada, vezes, diasSemResposta }) => (
-                    <tr key={c.id}>
-                      <td className={`${TD} whitespace-nowrap`}>{dataBr(c.data)}</td>
-                      <td className={`${TD} whitespace-nowrap font-medium`}>{c.paciente}</td>
-                      <td className={`${TD} whitespace-nowrap`}>{c.funcao}</td>
-                      <td className={`${TD} min-w-[12rem]`}>{c.procedimento}</td>
-                      <td className={`${TD} whitespace-nowrap`}>{c.convenio}</td>
-                      <td className={`${TD} whitespace-nowrap text-right`}>{brl(c.valor)}</td>
-                      <td className={TD}>
-                        <Selo cor={atrasada ? 'vermelho' : 'amarelo'}>{atrasada ? `Atrasada, ${dias} dias` : `Há ${dias} ${dias === 1 ? 'dia' : 'dias'}`}</Selo>
-                      </td>
-                      <td className={`${TD} whitespace-nowrap text-xs`}>
-                        {vezes === 0 ? (
-                          <span className="text-muted-foreground">Nunca cobrada</span>
-                        ) : (
-                          <>
-                            {vezes} {vezes === 1 ? 'vez' : 'vezes'}, a última em {dataBr(c.cobrada_em)}
-                            <span className="block text-muted-foreground">sem resposta há {diasSemResposta} {diasSemResposta === 1 ? 'dia' : 'dias'}</span>
-                          </>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <ul className="mt-3 divide-y divide-neutral-200 border-y border-neutral-200">
+              {itens.map(({ cirurgia: c, dias, atrasada, vezes, diasSemResposta }) => (
+                <li key={c.id} className="flex items-center gap-3 py-3">
+                  <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${atrasada ? 'bg-red-500' : 'bg-amber-400'}`} aria-hidden />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-medium">{c.paciente}</span>
+                    <span className="block truncate text-xs text-neutral-500">
+                      {dataBr(c.data)} · {c.procedimento || 'Cirurgia'}
+                    </span>
+                    <span className="block text-xs text-neutral-500">
+                      {vezes === 0 ? `Há ${dias} ${dias === 1 ? 'dia' : 'dias'}, nunca cobrada` : `Cobrada ${vezes} ${vezes === 1 ? 'vez' : 'vezes'}, sem resposta há ${diasSemResposta} ${diasSemResposta === 1 ? 'dia' : 'dias'}`}
+                    </span>
+                  </span>
+                  <span className="shrink-0 text-sm font-semibold">{c.valor == null ? '' : brl(c.valor)}</span>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Botao onClick={() => setCobrando(h)}>
+                <Mail className="h-4 w-4" aria-hidden /> Enviar ao hospital
+              </Botao>
+              <a href={`/api/medico/pendencias/${h.id}`} className="inline-flex h-10 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-neutral-100 px-4 text-sm font-semibold text-neutral-900 hover:bg-neutral-200">
+                <Download className="h-4 w-4" aria-hidden /> Baixar planilha
+              </a>
             </div>
           </section>
         );

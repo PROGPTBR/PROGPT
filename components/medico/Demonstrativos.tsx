@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Check, ChevronDown, FileUp, Mail, Paperclip, Plus, Trash2, Undo2, Zap } from 'lucide-react';
+import { ChevronDown, FileUp, Mail, Paperclip, Plus, Trash2, Undo2, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { CompradorImportDialog } from '@/components/assistants/CompradorImportDialog';
@@ -10,7 +10,7 @@ import { cobrancaAoPaciente, envioDaNota, pedidoDeNota, pedidoDeNotaDireto } fro
 import type { Demonstrativo, Entrada } from '@/lib/medico/types';
 import { hospitalPeloNome } from './Cirurgias';
 import { Anexar, ListaDeDocumentos } from './Documentos';
-import { Botao, brl, CAMPO, CARTAO, chamar, dataBr, Janela, JanelaDeMensagem, lerNumero, ROTULO, Selo, TD, TH, type PropsDaAba } from './ui';
+import { Botao, brl, CAMPO, CARTAO, chamar, dataBr, Janela, JanelaDeMensagem, lerNumero, ROTULO, Selo, TD, TH, type PropsDaAba, Info } from './ui';
 
 // Demonstrativos e notas: cada demonstrativo que o hospital manda percorre
 // recebido → nota pedida ao contador → nota emitida → nota enviada → pago.
@@ -45,13 +45,15 @@ export function Demonstrativos(props: PropsDaAba & { abrir?: string | null }) {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-muted-foreground">Registre o demonstrativo assim que o hospital mandar: o sistema confere com as suas cirurgias e acompanha a nota até o pagamento.</p>
-        <div className="flex flex-wrap gap-2">
-          <Botao tipo="secundario" onClick={() => setDireto(true)} titulo="O paciente paga na hora e a nota sai na hora (anestesista, particular)">
-            <Zap className="h-4 w-4" aria-hidden /> Cobrança direta
+        <h2 className="flex items-center gap-1 text-xl font-semibold">
+          Notas <Info>Registre o demonstrativo assim que o hospital mandar: o sistema confere com as suas cirurgias e acompanha a nota até o pagamento. Cobrança direta é para quando o paciente paga na hora.</Info>
+        </h2>
+        <div className="flex gap-2">
+          <Botao tipo="secundario" onClick={() => setDireto(true)}>
+            <Zap className="h-4 w-4" aria-hidden /> Pagou na hora
           </Botao>
           <Botao onClick={() => setNovo(true)}>
-            <Plus className="h-4 w-4" aria-hidden /> Novo demonstrativo
+            <Plus className="h-4 w-4" aria-hidden /> Demonstrativo
           </Botao>
         </div>
       </div>
@@ -128,18 +130,13 @@ function CartaoDoDemonstrativo({ d, estado, hoje, enviar, recarregar }: PropsDaA
   const pagoAMenos = d.pago_em && d.valor_pago != null && d.valor_pago < d.valor_total - 0.005;
 
   return (
-    <article className={CARTAO}>
+    <article className="rounded-3xl bg-neutral-50 p-4 ring-1 ring-black/[0.05] sm:p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="font-semibold">
-            {direto ? d.pagador_nome || 'Paciente' : hospital.nome}
-            {direto ? <span className="ml-2 align-middle"><Selo>Cobrança direta</Selo></span> : d.referencia && <span className="font-normal text-muted-foreground">, {d.referencia}</span>}
-          </h3>
-          <p className="mt-0.5 text-sm text-muted-foreground">
-            {direto
-              ? `${d.itens[0]?.procedimento || 'Procedimento'} em ${dataBr(d.recebido_em)} · ${hospital.nome}`
-              : `Recebido em ${dataBr(d.recebido_em)} · ${d.itens.length} ${d.itens.length === 1 ? 'procedimento' : 'procedimentos'}`}
-            {d.nota_numero && ` · Nota ${d.nota_numero}`}
+          <h3 className="truncate text-base font-semibold">{direto ? d.pagador_nome || 'Paciente' : hospital.nome}</h3>
+          <p className="truncate text-sm text-neutral-500">
+            {direto ? `${d.itens[0]?.procedimento || 'Procedimento'} · ${dataBr(d.recebido_em)}` : `${d.referencia || dataBr(d.recebido_em)} · ${d.itens.length} ${d.itens.length === 1 ? 'procedimento' : 'procedimentos'}`}
+            {d.nota_numero && ` · nota ${d.nota_numero}`}
           </p>
         </div>
         <div className="text-right">
@@ -148,21 +145,15 @@ function CartaoDoDemonstrativo({ d, estado, hoje, enviar, recarregar }: PropsDaA
         </div>
       </div>
 
-      <ol className="mt-4 grid gap-2 sm:grid-cols-5">
-        {ETAPAS.map((e, i) => {
-          const feita = i <= indice;
-          const data = d[DATA_DA_ETAPA[e]] as string | null;
-          return (
-            <li key={e} className={`rounded-xl border px-3 py-2 text-xs ${feita ? 'border-emerald-500/40 bg-emerald-500/5' : 'border-dashed border-border text-muted-foreground'}`}>
-              <div className="flex items-center gap-1.5 font-medium">
-                {feita ? <Check className="h-3.5 w-3.5 text-emerald-600" aria-hidden /> : <span className="inline-block h-3.5 w-3.5 rounded-full border border-current opacity-50" aria-hidden />}
-                {rotulos[e]}
-              </div>
-              <div className="mt-0.5 pl-5">{feita && data ? dataBr(data) : i === indice + 1 ? 'próximo passo' : ''}</div>
-            </li>
-          );
-        })}
+      <ol className="mt-4 flex gap-1" aria-label={`Etapa: ${rotulos[etapa]}`}>
+        {ETAPAS.map((e, i) => (
+          <li key={e} title={rotulos[e]} className={`h-1.5 flex-1 rounded-full ${i <= indice ? (etapa === 'pago' ? 'bg-emerald-500' : 'bg-medico') : 'bg-neutral-200'}`} />
+        ))}
       </ol>
+      <p className="mt-1.5 text-xs text-neutral-500">
+        {rotulos[etapa]}
+        {d[DATA_DA_ETAPA[etapa]] ? ` desde ${dataBr(d[DATA_DA_ETAPA[etapa]] as string)}` : ''}
+      </p>
 
       {pagoAMenos && (
         <p className="mt-3 rounded-xl bg-red-500/10 px-3 py-2 text-sm text-red-800 dark:text-red-200">
@@ -171,8 +162,8 @@ function CartaoDoDemonstrativo({ d, estado, hoje, enviar, recarregar }: PropsDaA
       )}
 
       {etapa !== 'pago' && (
-        <div className="mt-4 rounded-xl bg-muted/50 p-3">
-          <p className="mb-2 text-sm font-medium">Agora: {(direto ? PROXIMO_PASSO_DIRETO : PROXIMO_PASSO)[etapa]}</p>
+        <div className="mt-4">
+          <p className="sr-only">Agora: {(direto ? PROXIMO_PASSO_DIRETO : PROXIMO_PASSO)[etapa]}</p>
           {etapa === 'recebido' && <Botao onClick={() => setMensagem('pedido')}>Pedir a nota ao contador</Botao>}
           {etapa === 'nota_pedida' && (
             <div className="flex flex-wrap items-end gap-2">

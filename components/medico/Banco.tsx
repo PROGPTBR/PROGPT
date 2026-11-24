@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 
 import { lerExtrato, sugerirPagamentos, type Credito, type Sugestao } from '@/lib/medico/extrato';
 import type { EstadoMedico, MovimentoBanco } from '@/lib/medico/types';
-import { Botao, brl, CAMPO, CARTAO, chamar, dataBr, ROTULO, Selo, TD, TH, type PropsDaAba } from './ui';
+import { Botao, brl, CAMPO, CARTAO, chamar, dataBr, ROTULO, Selo, TD, TH, type PropsDaAba, Info } from './ui';
 
 // Banco (sub-projeto 102): a conta do BTG ligada, o que entrou e o que saiu, e
 // os créditos que pagam as notas em aberto. Sem a ligação direta, o médico
@@ -159,14 +159,13 @@ export function Banco({ estado, hoje, enviar }: PropsDaAba) {
 
           {sugestoesDoBanco.length > 0 && (
             <section className={CARTAO}>
-              <h2 className="text-base font-semibold">Créditos que parecem pagar notas em aberto</h2>
-              <p className="mt-0.5 text-sm text-muted-foreground">Quando o valor é igual ao da nota, o sistema marca sozinho. Estes vieram com valor diferente (imposto retido, por exemplo) e esperam a sua confirmação.</p>
+              <h2 className="text-base font-semibold">Créditos que parecem pagar notas em aberto <Info>Quando o valor é igual ao da nota, o sistema marca sozinho. Estes vieram com valor diferente (imposto retido, por exemplo) e esperam a sua confirmação.</Info></h2>
               {listaDeSugestoes(sugestoesDoBanco)}
             </section>
           )}
 
           <section className={CARTAO}>
-            <h2 className="text-base font-semibold">Movimentos da conta</h2>
+            <h2 className="text-base font-semibold flex items-center gap-1">Movimentos da conta</h2>
             {movimentos.length === 0 ? (
               <p className="mt-2 text-sm text-muted-foreground">Nenhum movimento ainda. Eles aparecem aqui assim que o banco avisar o primeiro crédito ou débito.</p>
             ) : (
@@ -205,10 +204,7 @@ export function Banco({ estado, hoje, enviar }: PropsDaAba) {
       )}
 
       <section className={CARTAO}>
-        <h2 className="text-base font-semibold">Conferir pelo arquivo do extrato</h2>
-        <p className="mt-0.5 text-sm text-muted-foreground">
-          Serve para qualquer banco: exporte o extrato (OFX ou CSV) e o sistema acha os depósitos que pagam as notas em aberto. Nada é marcado sem você confirmar. O arquivo é lido no seu navegador e não é guardado.
-        </p>
+        <h2 className="text-base font-semibold">Conferir pelo arquivo do extrato <Info>Serve para qualquer banco: exporte o extrato (OFX ou CSV) e o sistema acha os depósitos que pagam as notas em aberto. Nada é marcado sem você confirmar. O arquivo é lido no seu navegador e não é guardado.</Info></h2>
         <label className="mt-3 inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-xl border border-border px-3 text-sm font-medium hover:bg-muted">
           <FileUp className="h-4 w-4" aria-hidden /> Conferir extrato
           <input type="file" accept=".ofx,.csv,.txt" className="hidden" onChange={(e) => void abrirArquivo(e.target.files?.[0])} />

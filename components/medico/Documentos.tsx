@@ -5,7 +5,7 @@ import { Camera, Download, FileText, Paperclip, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { TIPO_DE_DOCUMENTO_LABEL, TIPOS_DE_DOCUMENTO, type Documento, type TipoDeDocumento } from '@/lib/medico/types';
-import { Botao, CAMPO, CARTAO, dataBr, type PropsDaAba } from './ui';
+import { Botao, CAMPO, CARTAO, dataBr, type PropsDaAba, Info } from './ui';
 
 // Documentos do médico (sub-projeto 108): nota fiscal, demonstrativo,
 // comprovante e o que mais ele quiser guardar. Dá para escolher o arquivo,
@@ -141,8 +141,7 @@ export function Documentos({ estado, recarregar }: PropsDaAba) {
   return (
     <div className="space-y-4">
       <section className={CARTAO}>
-        <h2 className="text-base font-semibold">Guardar documento</h2>
-        <p className="mb-3 mt-0.5 text-sm text-muted-foreground">Nota fiscal, demonstrativo do hospital, comprovante de pagamento ou o que você precisar ter à mão.</p>
+        <h2 className="text-base font-semibold flex items-center gap-1">Guardar documento <Info>Nota fiscal, demonstrativo do hospital, comprovante de pagamento ou o que você precisar ter à mão.</Info></h2>
         <Anexar recarregar={recarregar} tipoInicial="nota" />
       </section>
       <section className={CARTAO}>

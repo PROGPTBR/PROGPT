@@ -5,7 +5,7 @@ import { Copy, MessageCircle, UserPlus, Users } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { lerContatos } from '@/lib/medico/agenda';
-import { Botao, CAMPO, CARTAO, dataBr, ROTULO, Selo, type PropsDaAba } from './ui';
+import { Botao, CAMPO, CARTAO, dataBr, ROTULO, Selo, type PropsDaAba, Info } from './ui';
 
 // Indicar um colega (sub-projeto 109). O médico manda o convite pelo
 // WhatsApp DELE (o sistema só abre a conversa com o texto pronto) e registra
@@ -67,8 +67,7 @@ export function Indicar({ estado, enviar }: PropsDaAba) {
 
       <div className="grid gap-5 lg:grid-cols-2">
         <section className={CARTAO}>
-          <h3 className="text-base font-semibold">Indicar um colega</h3>
-          <p className="mt-0.5 text-sm text-muted-foreground">A indicação fica registrada e a equipe pode procurar o colega para apresentar o app.</p>
+          <h3 className="text-base font-semibold flex items-center gap-1">Indicar um colega <Info>A indicação fica registrada e a equipe pode procurar o colega para apresentar o app.</Info></h3>
           <div className="mt-3 grid gap-3">
             <label>
               <span className={ROTULO}>Nome</span>
@@ -89,8 +88,7 @@ export function Indicar({ estado, enviar }: PropsDaAba) {
         <section className={CARTAO}>
           <h3 className="flex items-center gap-2 text-base font-semibold">
             <Users className="h-4 w-4 text-medico" aria-hidden /> Colar uma lista de contatos
-          </h3>
-          <p className="mt-0.5 text-sm text-muted-foreground">Uma pessoa por linha, com nome e WhatsApp ou e-mail. Serve copiar de uma planilha ou da lista de um grupo.</p>
+           <Info>Uma pessoa por linha, com nome e WhatsApp ou e-mail. Serve copiar de uma planilha ou da lista de um grupo.</Info></h3>
           <textarea value={lista} onChange={(e) => setLista(e.target.value)} rows={5} placeholder={'Dra. Marina Lopes, (21) 99999-0000\nDr. Paulo Reis; paulo@clinica.com.br'} className={`${CAMPO} mt-3 h-auto py-2`} aria-label="Lista de contatos" />
           <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
             <span className="text-xs text-muted-foreground">{lista.trim() ? `${lidos.length} ${lidos.length === 1 ? 'contato reconhecido' : 'contatos reconhecidos'}` : ''}</span>

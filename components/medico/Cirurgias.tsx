@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 
 import { diasEntre, partesDoNome } from '@/lib/medico/conciliacao';
 import { FUNCOES, type Cirurgia, type Entrada, type EstadoMedico } from '@/lib/medico/types';
-import { Botao, brl, CAMPO, CARTAO, chamar, dataBr, Janela, lerNumero, ROTULO, Selo, TD, TH, type PropsDaAba } from './ui';
+import { Botao, brl, CAMPO, CARTAO, chamar, dataBr, Janela, lerNumero, ROTULO, Selo, TD, TH, type PropsDaAba, Info } from './ui';
 
 // Cirurgias feitas: a lista que o médico mantinha no grupo de WhatsApp. É
 // contra ela que cada demonstrativo é conferido.
@@ -88,6 +88,19 @@ export function Cirurgias({ estado, hoje, enviar, abrir }: PropsDaAba & { abrir?
           </div>
         </div>
       )}
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="flex items-center gap-1 text-xl font-semibold">
+          Cirurgias <Info>A lista do que você operou. É contra ela que cada demonstrativo do hospital é conferido. Você pode colar as mensagens do grupo de WhatsApp e a IA separa as cirurgias.</Info>
+        </h2>
+        <div className="flex gap-2">
+          <Botao tipo="secundario" onClick={() => setColar(true)}>
+            <MessageSquareText className="h-4 w-4" aria-hidden /> Colar
+          </Botao>
+          <Botao onClick={() => setNova(true)}>
+            <Plus className="h-4 w-4" aria-hidden /> Nova
+          </Botao>
+        </div>
+      </div>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="flex flex-wrap gap-2">
           <select value={filtroHospital} onChange={(e) => setFiltroHospital(e.target.value)} className={`${CAMPO} w-auto`} aria-label="Filtrar por hospital">
@@ -105,20 +118,29 @@ export function Cirurgias({ estado, hoje, enviar, abrir }: PropsDaAba & { abrir?
             ))}
           </select>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Botao tipo="secundario" onClick={() => setColar(true)}>
-            <MessageSquareText className="h-4 w-4" aria-hidden /> Colar do WhatsApp
-          </Botao>
-          <Botao onClick={() => setNova(true)}>
-            <Plus className="h-4 w-4" aria-hidden /> Nova cirurgia
-          </Botao>
-        </div>
       </div>
 
       {lista.length === 0 ? (
         <p className={`${CARTAO} text-sm text-muted-foreground`}>Nenhuma cirurgia aqui ainda. Registre uma ou cole as mensagens do grupo de WhatsApp.</p>
       ) : (
-        <div className="overflow-x-auto rounded-2xl border border-border">
+        <ul className="divide-y divide-neutral-200 border-y border-neutral-200 sm:hidden">
+          {lista.map(({ c, s }) => (
+            <li key={c.id} className="flex items-center gap-3 py-3">
+              <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${{ verde: 'bg-emerald-500', azul: 'bg-medico-claro', amarelo: 'bg-amber-400', vermelho: 'bg-red-500' }[s.cor]}`} title={s.rotulo} aria-hidden />
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm font-medium">{c.paciente}</span>
+                <span className="block truncate text-xs text-neutral-500">
+                  {dataBr(c.data)} · {nomeHospital(c.hospital_id)} · {c.procedimento || 'Cirurgia'}
+                </span>
+                <span className="block text-xs text-neutral-500">{s.rotulo}</span>
+              </span>
+              <span className="shrink-0 text-sm font-semibold">{c.valor == null ? '' : brl(c.valor)}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+      {lista.length > 0 && (
+        <div className="hidden overflow-x-auto rounded-2xl ring-1 ring-black/[0.06] sm:block">
           <table className="w-full text-sm">
             <thead className="bg-muted/50 text-left text-[11px] uppercase tracking-wider text-muted-foreground">
               <tr>

@@ -34,19 +34,20 @@ function estadoDeExemplo(): EstadoMedico {
 }
 
 describe('Área Médica (tela)', () => {
-  it('conta nova começa nos cadastros', () => {
+  it('conta nova começa pedindo os hospitais, com a opção de ver o exemplo', () => {
     render(<AreaMedicaRoot estadoInicial={{ config: CONFIG_VAZIA, hospitais: [], cirurgias: [], demonstrativos: [], entradas: [], conta: null, movimentos: [], documentos: [], indicacoes: [], integracoes: INTEGRACOES }} hoje={HOJE} />);
-    expect(screen.getByText('Hospitais')).toBeTruthy();
-    expect(screen.getByRole('button', { name: /Carregar exemplo/ })).toBeTruthy();
+    expect(screen.getByText('Comece pelos hospitais onde você opera')).toBeTruthy();
+    expect(screen.getByRole('button', { name: /Cadastrar hospital/ })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /Ver com exemplo/ })).toBeTruthy();
   });
 
   it('visão geral mostra os indicadores e a fila do que fazer', () => {
     render(<AreaMedicaRoot estadoInicial={estadoDeExemplo()} hoje={HOJE} />);
     expect(screen.getByText('A receber')).toBeTruthy();
-    expect(screen.getByText('O que fazer agora')).toBeTruthy();
-    expect(screen.getByText(/2 cirurgias feitas e não pagas/)).toBeTruthy();
-    expect(screen.getByText(/pedir a nota ao contador/)).toBeTruthy();
-    expect(screen.getByText(/dados fictícios de exemplo/)).toBeTruthy();
+    expect(screen.getByRole('list', { name: 'O que fazer agora' })).toBeTruthy();
+    expect(screen.getByText(/2 cirurgias sem pagamento, cobrar de novo/)).toBeTruthy();
+    expect(screen.getByText(/Hospital Itaipu: pedir a nota/)).toBeTruthy();
+    expect(screen.getByText(/Dados de exemplo/)).toBeTruthy();
   });
 
   it('percorre as abas: cirurgias, demonstrativos (com o e-mail ao contador) e pendências (com a cobrança)', () => {
@@ -55,7 +56,8 @@ describe('Área Médica (tela)', () => {
 
     fireEvent.click(within(abas).getByText('Cirurgias'));
     expect(screen.getAllByText('Paga').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Sem pagamento, atrasada').length).toBe(2 + 1); // 2 linhas + opção do filtro
+    // 2 cirurgias atrasadas: aparecem na lista do celular e na tabela do computador, mais a opção do filtro.
+    expect(screen.getAllByText('Sem pagamento, atrasada').length).toBe(2 + 2 + 1);
 
     fireEvent.click(within(abas).getByText('Demonstrativos e notas'));
     expect(screen.getAllByText('Pago').length).toBeGreaterThan(0);
@@ -71,8 +73,8 @@ describe('Área Médica (tela)', () => {
     expect(cobrar.length).toBe(3);
     expect(screen.getAllByRole('link', { name: /Baixar planilha/ }).length).toBe(3);
     // As duas que o hospital deixou de fora já foram cobradas há 32 dias, sem resposta.
-    expect(screen.getAllByText(/sem resposta há 32 dias/).length).toBe(2);
-    expect(screen.getByText('2 precisam ser cobradas agora.')).toBeTruthy();
+    expect(screen.getAllByText(/Cobrada 1 vez, sem resposta há 32 dias/).length).toBe(2);
+    expect(screen.getByText('2 para cobrar')).toBeTruthy();
     fireEvent.click(cobrar[0]!);
     const texto = (screen.getByLabelText('Texto do e-mail') as HTMLTextAreaElement).value;
     expect(texto).toContain('planilha de levantamento de pendências');
@@ -110,7 +112,7 @@ describe('Área Médica (tela)', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Pedir a nota ao contador' }));
     expect(screen.getByRole('button', { name: /Enviar agora/ })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Fechar' }));
-    fireEvent.click(screen.getByRole('button', { name: /Cobrança direta/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Pagou na hora/ }));
     expect(screen.getByText('CPF ou CNPJ de quem paga')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Fechar' }));
 

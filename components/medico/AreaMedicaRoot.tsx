@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, ArrowRight, CalendarCheck, CalendarDays, Eye, EyeOff, FileText, Home, Landmark, MoreHorizontal, Paperclip, Plus, Send, Sparkles, Stethoscope, Trash2, UserPlus, Zap } from 'lucide-react';
+import { ArrowRight, CalendarDays, Eye, EyeOff, FileText, Home, Landmark, MoreHorizontal, Paperclip, Plus, Send, Sparkles, Stethoscope, UserPlus, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { avisos, pendencias, resumo } from '@/lib/medico/conciliacao';
@@ -15,7 +15,7 @@ import { Documentos } from './Documentos';
 import { Indicar } from './Indicar';
 import { Integracoes } from './Integracoes';
 import { Pendencias } from './Pendencias';
-import { Botao, brl, CARTAO, chamar, type PropsDaAba } from './ui';
+import { Botao, brl, chamar, Info, type PropsDaAba } from './ui';
 
 // Área Médica (sub-projeto 100): o controle que o cirurgião fazia em planilha.
 // Cirurgia feita → demonstrativo do hospital → nota do contador → nota enviada
@@ -65,7 +65,7 @@ export function AreaMedicaRoot({
 }) {
   const [estado, setEstado] = useState(estadoInicial);
   const [aba, setAba] = useState<Aba>(
-    ABAS.some((a) => a.id === abaInicial) ? (abaInicial as Aba) : estadoInicial.hospitais.length === 0 ? 'cadastros' : 'visao',
+    ABAS.some((a) => a.id === abaInicial) ? (abaInicial as Aba) : 'visao',
   );
   // Volta do login do BTG: mostra uma vez o resultado da ligação.
   useEffect(() => {
@@ -117,37 +117,16 @@ export function AreaMedicaRoot({
   }
 
   return (
-    <div className="space-y-5 pb-28 sm:pb-0">
-      <header className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className={contaDeMedico ? 'sr-only' : 'flex items-center gap-2'}>
-            <Stethoscope className="h-6 w-6 text-medico" aria-hidden />
-            <h1 className="text-2xl font-semibold tracking-tight">Área Médica</h1>
-          </div>
-          <p className="mt-1 hidden text-sm text-muted-foreground sm:block">
-            Das cirurgias feitas ao dinheiro na conta: demonstrativo do hospital, nota do contador, pagamento e o que ficou sem pagar.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {temExemplo ? (
-            <Botao tipo="secundario" ocupado={carregandoExemplo} onClick={() => exemplo('DELETE')}>
-              <Trash2 className="h-4 w-4" aria-hidden /> Apagar exemplo
-            </Botao>
-          ) : (
-            <Botao tipo="secundario" ocupado={carregandoExemplo} onClick={() => exemplo('POST')}>
-              <Sparkles className="h-4 w-4" aria-hidden /> Carregar exemplo
-            </Botao>
-          )}
-        </div>
-      </header>
-
-      {temExemplo && (
-        <p className="rounded-xl bg-amber-500/10 px-3 py-2 text-sm text-amber-900 dark:text-amber-200">
-          Você está vendo dados fictícios de exemplo. Eles não se misturam com os seus e somem em &quot;Apagar exemplo&quot;.
-        </p>
+    <div className="space-y-5 pb-28 sm:pb-8">
+      {!contaDeMedico && (
+        <header className="flex items-center gap-2 px-4 pt-2 sm:px-0">
+          <Stethoscope className="h-6 w-6 text-medico" aria-hidden />
+          <h1 className="text-2xl font-semibold tracking-tight">Área Médica</h1>
+        </header>
       )}
+      {contaDeMedico && <h1 className="sr-only">Área Médica</h1>}
 
-      <nav className="hidden gap-1 overflow-x-auto border-b border-border sm:flex" aria-label="Seções da Área Médica">
+      <nav className="hidden gap-1 overflow-x-auto border-b border-neutral-200 px-4 [scrollbar-width:none] sm:flex [&::-webkit-scrollbar]:hidden" aria-label="Seções da Área Médica">
         {ABAS.map((a) => (
           <button
             key={a.id}
@@ -169,7 +148,8 @@ export function AreaMedicaRoot({
         ))}
       </nav>
 
-      {aba === 'visao' && <VisaoGeral {...props} irPara={irPara} />}
+      {aba === 'visao' && <VisaoGeral {...props} irPara={irPara} carregarExemplo={() => exemplo('POST')} carregando={carregandoExemplo} />}
+      <div className={aba === 'visao' ? 'hidden' : 'px-4 sm:px-6'}>
       {aba === 'cirurgias' && <Cirurgias key={abrir ?? 'lista'} {...props} abrir={abrir} />}
       {aba === 'demonstrativos' && <Demonstrativos key={abrir ?? 'lista'} {...props} abrir={abrir} />}
       {aba === 'pendencias' && <Pendencias {...props} />}
@@ -179,6 +159,16 @@ export function AreaMedicaRoot({
       {aba === 'banco' && <Banco {...props} />}
       {aba === 'cadastros' && <Cadastros {...props} />}
       {aba === 'integracoes' && <Integracoes {...props} />}
+      </div>
+
+      {temExemplo && (
+        <p className="mx-4 flex items-center justify-between gap-3 rounded-2xl bg-amber-100 px-3.5 py-2 text-xs text-amber-900 sm:mx-0">
+          Dados de exemplo
+          <button type="button" disabled={carregandoExemplo} onClick={() => exemplo('DELETE')} className="font-semibold underline underline-offset-2">
+            Apagar
+          </button>
+        </p>
+      )}
 
       {mais && (
         <div className="fixed inset-0 z-40 flex items-end bg-black/40 sm:hidden" onClick={() => setMais(false)}>
@@ -193,8 +183,8 @@ export function AreaMedicaRoot({
         </div>
       )}
 
-      <nav aria-label="Navegação do aplicativo" className="fixed inset-x-0 bottom-0 z-50 sm:hidden" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
-        <ul className="mx-3 mb-3 grid grid-cols-5 rounded-[1.75rem] border border-border bg-background/95 px-1 py-1.5 shadow-[0_8px_30px_rgba(10,31,77,0.18)] backdrop-blur">
+      <nav aria-label="Navegação do aplicativo" className="fixed inset-x-0 bottom-0 z-50 border-t border-neutral-200 bg-white sm:hidden" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        <ul className="grid grid-cols-5">
           {BARRA.map((b) => {
             const ativa = b.id === 'mais' ? mais || NO_MAIS.includes(aba) : !mais && aba === b.id;
             const novo = (b.id === 'pendencias' && nPendentes > 0) || (b.id === 'cirurgias' && novas.cirurgias > 0) || (b.id === 'demonstrativos' && novas.demonstrativos > 0);
@@ -204,11 +194,11 @@ export function AreaMedicaRoot({
                   type="button"
                   onClick={() => (b.id === 'mais' ? setMais((v) => !v) : irPara(b.id))}
                   aria-current={ativa ? 'page' : undefined}
-                  className={`flex w-full flex-col items-center gap-0.5 text-[10px] font-medium ${ativa ? 'text-medico' : 'text-muted-foreground'}`}
+                  className={`flex w-full flex-col items-center gap-1 pb-2 pt-2.5 text-[10px] font-medium ${ativa ? 'text-medico' : 'text-neutral-500'}`}
                 >
-                  <span className={`relative grid h-10 w-10 place-items-center rounded-full transition ${ativa ? 'bg-medico/12 text-medico' : ''}`}>
-                    <b.icone className="h-[22px] w-[22px]" aria-hidden />
-                    {novo && <span className={`absolute right-1.5 top-1.5 h-2 w-2 rounded-full ring-2 ring-background ${b.id === 'pendencias' ? 'bg-red-500' : 'bg-medico-claro'}`} aria-hidden />}
+                  <span className={`relative grid h-9 w-12 place-items-center rounded-full transition ${ativa ? 'bg-medico/10' : ''}`}>
+                    <b.icone className="h-[22px] w-[22px]" strokeWidth={ativa ? 2.4 : 1.8} aria-hidden />
+                    {novo && <span className={`absolute right-2 top-1 h-2 w-2 rounded-full ring-2 ring-white ${b.id === 'pendencias' ? 'bg-red-500' : 'bg-medico-claro'}`} aria-hidden />}
                   </span>
                   {b.rotulo}
                 </button>
@@ -223,7 +213,13 @@ export function AreaMedicaRoot({
 
 const CHAVE_OCULTAR = 'progpt_medico_ocultar_valores_v1';
 
-function VisaoGeral({ estado, hoje, irPara }: PropsDaAba & { irPara: (a: Aba, atalho?: Atalho | null) => void }) {
+function VisaoGeral({
+  estado,
+  hoje,
+  irPara,
+  carregarExemplo,
+  carregando,
+}: PropsDaAba & { irPara: (a: Aba, atalho?: Atalho | null) => void; carregarExemplo: () => void; carregando: boolean }) {
   // Como em aplicativo de banco: dá para esconder os valores (consultório, sala de espera).
   const [oculto, setOculto] = useState(false);
   useEffect(() => {
@@ -246,115 +242,101 @@ function VisaoGeral({ estado, hoje, irPara }: PropsDaAba & { irPara: (a: Aba, at
   const r = useMemo(() => resumo(estado.demonstrativos, estado.cirurgias, hoje), [estado, hoje]);
   const fila = useMemo(() => avisos(estado.demonstrativos, estado.cirurgias, estado.hospitais, hoje), [estado, hoje]);
 
-  if (estado.hospitais.length === 0) {
-    return (
-      <div className={`${CARTAO} text-sm`}>
-        <p className="font-medium">Comece cadastrando os hospitais onde você opera.</p>
-        <p className="mt-1 text-muted-foreground">
-          Depois registre as cirurgias (pode colar as mensagens do grupo de WhatsApp) e os demonstrativos que os hospitais mandam. Para ver tudo funcionando antes, use &quot;Carregar exemplo&quot;.
-        </p>
-        <div className="mt-3">
-          <Botao onClick={() => irPara('cadastros')}>Cadastrar hospitais</Botao>
-        </div>
-      </div>
-    );
-  }
-
-  const kpis = [
-    { rotulo: 'Recebido neste mês', valor: dinheiro(r.recebidoNoMes), detalhe: 'pagamentos confirmados', icone: CalendarCheck },
-    {
-      rotulo: 'Cirurgias sem pagamento',
-      valor: String(r.pendentes),
-      detalhe: r.valorPendente > 0 ? `${dinheiro(r.valorPendente)} em aberto` : 'feitas e fora dos demonstrativos',
-      icone: AlertTriangle,
-      alerta: r.pendentes > 0,
-    },
-    { rotulo: 'Pago a menos', valor: dinheiro(r.pagoAMenos), detalhe: 'diferença entre demonstrativo e pagamento', icone: FileText, alerta: r.pagoAMenos > 0 },
+  const semHospital = estado.hospitais.length === 0;
+  const atalhos = [
+    ['Nova cirurgia', Plus, () => irPara('cirurgias', 'nova-cirurgia')],
+    ['Demonstrativo', FileText, () => irPara('demonstrativos', 'demonstrativo')],
+    ['Pagou na hora', Zap, () => irPara('demonstrativos', 'direto')],
+    ['Cobrar', Send, () => irPara('pendencias')],
+    ['Agenda', CalendarDays, () => irPara('agenda')],
+    ['Anexar', Paperclip, () => irPara('documentos')],
+    ['Banco', Landmark, () => irPara('banco')],
+    ['Indicar', UserPlus, () => irPara('indicar')],
+  ] as const;
+  const linhas = [
+    { rotulo: 'Recebido neste mês', valor: dinheiro(r.recebidoNoMes), info: 'Soma dos pagamentos confirmados neste mês.', ir: 'demonstrativos' as Aba, alerta: false },
+    { rotulo: 'Cirurgias sem pagamento', valor: String(r.pendentes), info: 'Cirurgias feitas que ainda não apareceram em nenhum demonstrativo do hospital.', ir: 'pendencias' as Aba, alerta: r.pendentes > 0 },
+    { rotulo: 'Pago a menos', valor: dinheiro(r.pagoAMenos), info: 'Diferença entre o que o demonstrativo dizia e o que caiu na conta.', ir: 'demonstrativos' as Aba, alerta: r.pagoAMenos > 0 },
   ];
 
   return (
-    <div className="space-y-5">
-      <section className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-medico-escuro via-medico to-medico-claro p-5 text-white shadow-[0_18px_50px_rgba(10,31,77,0.28)] sm:p-7">
-        <svg aria-hidden viewBox="0 0 400 160" preserveAspectRatio="none" className="pointer-events-none absolute inset-x-0 bottom-0 h-28 w-full opacity-25">
-          <path d="M0 120 C 60 110, 90 60, 150 78 S 250 130, 300 70 S 370 30, 400 44 L400 160 L0 160 Z" fill="white" fillOpacity="0.18" />
+    <div className="!-mt-5">
+      {/* Cabeçalho azul, de borda a borda */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-medico-escuro via-medico to-medico-claro px-5 pb-7 pt-6 text-white sm:px-8 sm:pb-9">
+        <svg aria-hidden viewBox="0 0 400 160" preserveAspectRatio="none" className="pointer-events-none absolute inset-x-0 bottom-0 h-24 w-full opacity-20">
           <path d="M0 120 C 60 110, 90 60, 150 78 S 250 130, 300 70 S 370 30, 400 44" fill="none" stroke="white" strokeWidth="2" />
         </svg>
-        <div className="relative">
-        <div className="flex items-start justify-between gap-3">
+        <div className="relative flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="text-sm text-white/80">Olá{estado.config.medico_nome ? `, ${estado.config.medico_nome.split(' ').slice(0, 2).join(' ')}` : ''}</p>
-            <p className="mt-3 text-xs font-medium uppercase tracking-wider text-white/70">A receber</p>
-            <p className="mt-1 text-3xl font-semibold tracking-tight sm:text-4xl">{dinheiro(r.aReceber)}</p>
-            <p className="mt-1 text-sm text-white/80">em notas e demonstrativos ainda não pagos</p>
+            <p className="mt-5 flex items-center gap-1 text-sm text-white/80">
+              A receber <Info claro>Soma das notas e dos demonstrativos que ainda não foram pagos.</Info>
+            </p>
+            <p className="text-4xl font-semibold tracking-tight">{dinheiro(r.aReceber)}</p>
           </div>
-          <button type="button" onClick={alternar} aria-label={oculto ? 'Mostrar valores' : 'Esconder valores'} aria-pressed={oculto} className="rounded-full bg-white/15 p-2.5 hover:bg-white/25">
-            {oculto ? <EyeOff className="h-5 w-5" aria-hidden /> : <Eye className="h-5 w-5" aria-hidden />}
+          <button type="button" onClick={alternar} aria-label={oculto ? 'Mostrar valores' : 'Esconder valores'} aria-pressed={oculto} className="rounded-full p-2 hover:bg-white/15">
+            {oculto ? <EyeOff className="h-6 w-6" aria-hidden /> : <Eye className="h-6 w-6" aria-hidden />}
           </button>
-        </div>
-        <ul className="mt-5 flex gap-4 overflow-x-auto pb-1">
-          {(
-            [
-              ['Nova cirurgia', Plus, () => irPara('cirurgias', 'nova-cirurgia')],
-              ['Lançar demonstrativo', FileText, () => irPara('demonstrativos', 'demonstrativo')],
-              ['Paciente pagou na hora', Zap, () => irPara('demonstrativos', 'direto')],
-              ['Cobrar hospital', Send, () => irPara('pendencias')],
-              ['Agenda', CalendarDays, () => irPara('agenda')],
-              ['Anexar documento', Paperclip, () => irPara('documentos')],
-              ['Banco', Landmark, () => irPara('banco')],
-              ['Indicar um colega', UserPlus, () => irPara('indicar')],
-            ] as const
-          ).map(([rotulo, Icone, acao]) => (
-            <li key={rotulo} className="shrink-0">
-              <button type="button" onClick={acao} className="flex w-[4.75rem] flex-col items-center gap-1.5 text-center text-[11px] font-medium leading-tight">
-                <span className="grid h-14 w-14 place-items-center rounded-full bg-white/15 ring-1 ring-white/20 transition hover:scale-105 hover:bg-white/25 active:scale-95">
-                  <Icone className="h-6 w-6" aria-hidden />
-                </span>
-                {rotulo}
-              </button>
-            </li>
-          ))}
-        </ul>
         </div>
       </section>
 
-      <div className="grid gap-3 sm:grid-cols-3">
-        {kpis.map((k) => (
-          <div key={k.rotulo} className={CARTAO}>
-            <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
-              {k.rotulo}
-              <k.icone className={`h-4 w-4 ${k.alerta ? 'text-red-600 dark:text-red-400' : ''}`} aria-hidden />
-            </div>
-            <div className={`mt-2 text-2xl font-semibold ${k.alerta ? 'text-red-700 dark:text-red-300' : ''}`}>{k.valor}</div>
-            <div className="mt-0.5 text-xs text-muted-foreground">{k.detalhe}</div>
+      {semHospital ? (
+        <div className="px-5 py-8 text-center sm:px-8">
+          <p className="text-lg font-semibold">Comece pelos hospitais onde você opera</p>
+          <div className="mt-4 flex flex-wrap justify-center gap-2">
+            <Botao onClick={() => irPara('cadastros')}>Cadastrar hospital</Botao>
+            <Botao tipo="secundario" ocupado={carregando} onClick={carregarExemplo}>
+              <Sparkles className="h-4 w-4" aria-hidden /> Ver com exemplo
+            </Botao>
           </div>
-        ))}
-      </div>
-
-      <section className={CARTAO}>
-        <h2 className="text-base font-semibold">O que fazer agora</h2>
-        {fila.length === 0 ? (
-          <p className="mt-2 text-sm text-emerald-700 dark:text-emerald-300">Tudo em dia: nenhuma nota parada e nenhuma cirurgia atrasada.</p>
-        ) : (
-          <ul className="mt-3 space-y-1.5">
-            {fila.map((a, i) => (
-              <li key={i}>
-                <button
-                  type="button"
-                  onClick={() => irPara(a.tipo === 'pendencia' ? 'pendencias' : 'demonstrativos')}
-                  className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm transition hover:brightness-95 ${
-                    a.gravidade === 'alta' ? 'bg-red-500/10 text-red-800 dark:text-red-200' : 'bg-amber-500/10 text-amber-900 dark:text-amber-200'
-                  }`}
-                >
-                  <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden />
-                  <span className="min-w-0 flex-1">{a.texto}</span>
-                  <span className="whitespace-nowrap text-xs opacity-80">{a.dias === 0 ? 'hoje' : `há ${a.dias} ${a.dias === 1 ? 'dia' : 'dias'}`}</span>
-                  <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
+        </div>
+      ) : (
+        <>
+          {/* Atalhos: rolam de lado, de borda a borda, sem barra */}
+          <ul className="flex gap-1 overflow-x-auto px-3 py-5 [scrollbar-width:none] sm:px-6 [&::-webkit-scrollbar]:hidden">
+            {atalhos.map(([rotulo, Icone, acao]) => (
+              <li key={rotulo} className="shrink-0">
+                <button type="button" onClick={acao} className="group flex w-[4.75rem] flex-col items-center gap-2 text-center text-xs font-medium text-neutral-800">
+                  <span className="grid h-16 w-16 place-items-center rounded-full bg-neutral-100 text-medico transition group-hover:bg-neutral-200 group-active:scale-95">
+                    <Icone className="h-6 w-6" aria-hidden />
+                  </span>
+                  {rotulo}
                 </button>
               </li>
             ))}
           </ul>
-        )}
-      </section>
+
+          {/* O que fazer agora */}
+          {fila.length > 0 && (
+            <ul className="space-y-2 px-4 sm:px-6" aria-label="O que fazer agora">
+              {fila.map((a, i) => (
+                <li key={i}>
+                  <button type="button" onClick={() => irPara(a.tipo === 'pendencia' ? 'pendencias' : 'demonstrativos')} className="flex w-full items-center gap-3 rounded-2xl bg-neutral-100 px-4 py-3.5 text-left text-sm hover:bg-neutral-200">
+                    <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${a.gravidade === 'alta' ? 'bg-red-500' : 'bg-amber-400'}`} aria-hidden />
+                    <span className="min-w-0 flex-1 font-medium text-neutral-900">{a.texto}</span>
+                    <ArrowRight className="h-4 w-4 shrink-0 text-neutral-400" aria-hidden />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {/* Números: linhas simples */}
+          <ul className="mt-4 divide-y divide-neutral-200 border-y border-neutral-200">
+            {linhas.map((l) => (
+              <li key={l.rotulo} className="flex items-center gap-2 px-5 py-4 sm:px-8">
+                <span className="flex min-w-0 flex-1 items-center gap-1 text-sm text-neutral-600">
+                  {l.rotulo} <Info>{l.info}</Info>
+                </span>
+                <button type="button" onClick={() => irPara(l.ir)} className="flex items-center gap-2">
+                  <span className={`text-base font-semibold ${l.alerta ? 'text-red-600' : 'text-neutral-900'}`}>{l.valor}</span>
+                  <ArrowRight className="h-4 w-4 shrink-0 text-neutral-300" aria-hidden />
+                </button>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
     </div>
   );
 }

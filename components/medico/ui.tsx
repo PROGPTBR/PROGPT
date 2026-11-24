@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Copy, Loader2, Mail, MessageCircle, Paperclip, Send, X } from 'lucide-react';
+import { Copy, Info as IconeInfo, Loader2, Mail, MessageCircle, Paperclip, Send, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { mailto, type Mensagem } from '@/lib/medico/mensagens';
@@ -10,9 +10,9 @@ import type { EstadoMedico } from '@/lib/medico/types';
 // Peças compartilhadas das telas da Área Médica (sub-projeto 100).
 
 export const CAMPO =
-  'w-full rounded-xl border border-input bg-background px-3 h-10 text-sm outline-none focus:border-medico focus:ring-2 focus:ring-medico/20';
+  'w-full rounded-2xl border-0 bg-neutral-100 px-3.5 h-11 text-sm outline-none ring-1 ring-transparent focus:bg-white focus:ring-2 focus:ring-medico';
 export const ROTULO = 'mb-1 block text-xs font-medium text-muted-foreground';
-export const CARTAO = 'rounded-2xl border border-border bg-card p-4 sm:p-5';
+export const CARTAO = 'rounded-3xl bg-white p-4 ring-1 ring-black/[0.06] sm:p-6';
 export const TH = 'px-3 py-2 font-medium whitespace-nowrap';
 export const TD = 'px-3 py-2 align-top';
 
@@ -72,6 +72,30 @@ export async function chamar<T>(metodo: string, caminho: string, corpo?: unknown
   }
 }
 
+/** O "i": a explicação fica guardada e aparece quando o médico toca. */
+export function Info({ children, claro = false }: { children: React.ReactNode; claro?: boolean }) {
+  const [aberto, setAberto] = useState(false);
+  return (
+    <span className="relative inline-flex align-middle">
+      <button
+        type="button"
+        onClick={() => setAberto((v) => !v)}
+        onBlur={() => setAberto(false)}
+        aria-label="Saiba mais"
+        aria-expanded={aberto}
+        className={`grid h-6 w-6 place-items-center rounded-full transition ${claro ? 'text-white/70 hover:bg-white/15 hover:text-white' : 'text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700'}`}
+      >
+        <IconeInfo className="h-4 w-4" aria-hidden />
+      </button>
+      {aberto && (
+        <span role="tooltip" className="absolute left-0 top-7 z-40 w-64 max-w-[78vw] rounded-2xl bg-neutral-900 px-3.5 py-3 text-left text-xs font-normal normal-case leading-relaxed tracking-normal text-white shadow-xl">
+          {children}
+        </span>
+      )}
+    </span>
+  );
+}
+
 export function Botao({
   children,
   onClick,
@@ -92,14 +116,14 @@ export function Botao({
       ? 'bg-medico text-white hover:bg-medico/90'
       : tipo === 'perigo'
         ? 'border border-red-500/40 text-red-700 hover:bg-red-500/10 dark:text-red-300'
-        : 'border border-border hover:bg-muted';
+        : 'bg-neutral-100 text-neutral-900 hover:bg-neutral-200';
   return (
     <button
       type="button"
       onClick={onClick}
       title={titulo}
       disabled={ocupado || desabilitado}
-      className={`inline-flex h-9 items-center gap-1.5 rounded-xl px-3 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50 ${cor}`}
+      className={`inline-flex h-10 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-4 text-sm font-semibold transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 ${cor}`}
     >
       {ocupado && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
       {children}

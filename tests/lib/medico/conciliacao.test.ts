@@ -109,7 +109,7 @@ describe('pendências, avisos e resumo', () => {
     expect(sAguardando[0]!.texto).toContain('aguardando o hospital');
     const sReenviar = avisos([], [cir('c', '2026-09-03', 'E. F.', { cobrancas: ['2026-10-20'] })], [H], HOJE);
     expect(sReenviar[0]).toMatchObject({ gravidade: 'alta' });
-    expect(sReenviar[0]!.texto).toContain('sem resposta: enviar a planilha de novo');
+    expect(sReenviar[0]!.texto).toContain('cobrar de novo');
   });
 
   it('etapa vem das datas', () => {

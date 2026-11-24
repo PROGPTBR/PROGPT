@@ -96,7 +96,7 @@ describe('aviso diário', () => {
     )!;
     expect(aviso.assunto).toContain('3 pendências');
     expect(aviso.texto).toContain('Dr. Teste');
-    expect(aviso.texto).toContain('1 cirurgia feita e não paga');
+    expect(aviso.texto).toContain('1 cirurgia sem pagamento, cobrar');
     expect(aviso.texto).toContain('Cobrança direta: pagamento atrasado');
     expect(aviso.texto).toContain('1 mensagem nova no grupo');
     expect(aviso.texto).toContain('https://x/area-medica');

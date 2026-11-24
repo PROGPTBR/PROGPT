@@ -212,17 +212,17 @@ export function avisos(
     const base = { tipo: 'demonstrativo' as const, hospital_id: d.hospital_id, demonstrativo_id: d.id };
     if (etapa === 'recebido') {
       const dias = diasEntre(d.recebido_em, hoje);
-      out.push({ ...base, dias, gravidade: dias > PRAZO_ETAPA.recebido ? 'alta' : 'media', texto: `${nome}: pedir a nota ao contador` });
+      out.push({ ...base, dias, gravidade: dias > PRAZO_ETAPA.recebido ? 'alta' : 'media', texto: `${nome}: pedir a nota` });
     } else if (etapa === 'nota_pedida') {
       const dias = diasEntre(d.nota_pedida_em!, hoje);
-      if (dias > PRAZO_ETAPA.nota_pedida) out.push({ ...base, dias, gravidade: 'media', texto: `${nome}: o contador ainda não emitiu a nota` });
+      if (dias > PRAZO_ETAPA.nota_pedida) out.push({ ...base, dias, gravidade: 'media', texto: `${nome}: contador não emitiu a nota` });
     } else if (etapa === 'nota_emitida') {
       const dias = diasEntre(d.nota_emitida_em!, hoje);
-      out.push({ ...base, dias, gravidade: dias > PRAZO_ETAPA.nota_emitida ? 'alta' : 'media', texto: `${nome}: enviar a nota ${d.nota_numero || ''} ${direto ? 'e o Pix ao paciente' : 'ao hospital'}`.replace(/\s+/g, ' ') });
+      out.push({ ...base, dias, gravidade: dias > PRAZO_ETAPA.nota_emitida ? 'alta' : 'media', texto: `${nome}: enviar a nota ${d.nota_numero || ''}`.replace(/\s+/g, ' ').trim() });
     } else if (etapa === 'nota_enviada') {
       const prazo = direto ? PRAZO_DIRETO_DIAS : (hospitais.find((h) => h.id === d.hospital_id)?.prazo_pagamento_dias ?? 30);
       const dias = diasEntre(d.nota_enviada_em!, hoje);
-      if (dias > prazo) out.push({ ...base, dias, gravidade: 'alta', texto: `${nome}: pagamento atrasado (nota enviada há ${dias} dias)` });
+      if (dias > prazo) out.push({ ...base, dias, gravidade: 'alta', texto: `${nome}: pagamento atrasado` });
     }
   }
 
@@ -240,9 +240,7 @@ export function avisos(
       gravidade: aCobrar === 0 ? 'media' : 'alta',
       hospital_id,
       dias: lista[0]!.dias,
-      texto:
-        `${nomeDo(hospitais, hospital_id)}: ${n} ${n === 1 ? 'cirurgia feita e não paga' : 'cirurgias feitas e não pagas'}` +
-        (aCobrar === 0 ? ', já cobradas, aguardando o hospital' : semResposta > 0 ? `, ${semResposta} já ${semResposta === 1 ? 'cobrada' : 'cobradas'} sem resposta: enviar a planilha de novo` : ': enviar a planilha de pendências'),
+      texto: `${nomeDo(hospitais, hospital_id)}: ${n} ${n === 1 ? 'cirurgia' : 'cirurgias'} sem pagamento, ${aCobrar === 0 ? 'aguardando o hospital' : semResposta > 0 ? 'cobrar de novo' : 'cobrar'}`,
     });
   }
 

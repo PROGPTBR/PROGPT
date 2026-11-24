@@ -1,3 +1,6 @@
+import { casarItens, totalDosItens } from './conciliacao';
+import { CONFIG_VAZIA, type Cirurgia, type Demonstrativo, type EstadoMedico, type Hospital } from './types';
+
 // Dados fictícios da Área Médica (sub-projeto 100), para a apresentação.
 // O médico do exemplo leva o nome do Dr. Eduardo Kastrup (pedido do Alexandre,
 // 2026-11-24: a apresentação é para ele) e os procedimentos são de ortopedia.
@@ -104,4 +107,56 @@ export function dadosDeExemplo(hoje: string) {
       d('itaipu', 'Repasse do mês passado', -3, linhas('itaipu', -35, -25), {}),
     ],
   };
+}
+
+/**
+ * O mesmo conteúdo de "Carregar exemplo", montado em memória (sem banco).
+ * Serve à prévia local do visual e aos testes de tela.
+ */
+export function estadoDeExemplo(hoje: string): Omit<EstadoMedico, 'integracoes'> {
+  const ex = dadosDeExemplo(hoje);
+  const hospitais: Hospital[] = ex.hospitais.map((h) => ({ id: h.chave, nome: h.nome, email: h.email, prazo_pagamento_dias: h.prazo, exemplo: true }));
+  let cirurgias: Cirurgia[] = ex.cirurgias.map((c, i) => ({
+    id: `c${i}`,
+    hospital_id: c.hospital,
+    data: c.data,
+    paciente: c.paciente,
+    procedimento: c.procedimento,
+    convenio: c.convenio,
+    valor: c.valor,
+    origem: 'whatsapp',
+    demonstrativo_id: null,
+    cobrada_em: c.cobrancas.at(-1) ?? null,
+    funcao: c.funcao,
+    registro: '',
+    hora: '',
+    cobrancas: c.cobrancas,
+    observacao: '',
+    exemplo: true,
+  }));
+  const demonstrativos: Demonstrativo[] = ex.demonstrativos.map((d, i) => {
+    const itens = casarItens(d.itens, cirurgias, d.hospital);
+    const ids = new Set(itens.map((x) => x.cirurgia_id));
+    cirurgias = cirurgias.map((c) => (ids.has(c.id) ? { ...c, demonstrativo_id: `d${i}` } : c));
+    return {
+      id: `d${i}`,
+      hospital_id: d.hospital,
+      referencia: d.referencia,
+      recebido_em: d.recebido_em,
+      valor_total: totalDosItens(d.itens),
+      itens,
+      nota_pedida_em: d.nota_pedida_em,
+      nota_numero: d.nota_numero,
+      nota_emitida_em: d.nota_emitida_em,
+      nota_enviada_em: d.nota_enviada_em,
+      pago_em: d.pago_em,
+      valor_pago: d.valor_pago,
+      exemplo: true,
+      tipo: 'hospital',
+      pagador_nome: '',
+      pagador_documento: '',
+      pagador_contato: '',
+    };
+  });
+  return { config: { ...CONFIG_VAZIA, ...ex.config }, hospitais, cirurgias, demonstrativos, entradas: [], conta: null, movimentos: [], documentos: [], indicacoes: [] };
 }

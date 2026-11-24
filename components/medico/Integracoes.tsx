@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { BellRing, Copy, Mail, MessageCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { Botao, CAMPO, CARTAO, chamar, ROTULO, Selo, type PropsDaAba } from './ui';
+import { Botao, CAMPO, CARTAO, chamar, ROTULO, Selo, type PropsDaAba, Info } from './ui';
 
 // Integrações da Área Médica (sub-projeto 101): WhatsApp, e-mail e avisos fora
 // da tela. O banco tem aba própria (Banco.tsx).
@@ -131,10 +131,7 @@ export function Integracoes({ estado, enviar, recarregar }: PropsDaAba) {
       <section className={CARTAO}>
         <h2 className="flex items-center gap-2 text-base font-semibold">
           <MessageCircle className="h-5 w-5 text-medico" aria-hidden /> Seu WhatsApp
-        </h2>
-        <p className="mt-0.5 text-sm text-muted-foreground">
-          Conecte o seu número para o sistema ler sozinho o grupo onde as cirurgias são avisadas e para mandar a cobrança ao paciente. Só as mensagens de texto do grupo escolhido são guardadas; conversas particulares e outros grupos não são lidos.
-        </p>
+         <Info>Conecte o seu número para o sistema ler sozinho o grupo onde as cirurgias são avisadas e para mandar a cobrança ao paciente. Só as mensagens de texto do grupo escolhido são guardadas; conversas particulares e outros grupos não são lidos.</Info></h2>
         {!integracoes.whatsapp ? (
           <p className="mt-3 rounded-xl bg-amber-500/10 px-3 py-2 text-sm text-amber-900 dark:text-amber-200">O WhatsApp ainda não foi ligado no servidor. Fale com a 2B Supply.</p>
         ) : (
@@ -168,10 +165,7 @@ export function Integracoes({ estado, enviar, recarregar }: PropsDaAba) {
       <section className={CARTAO}>
         <h2 className="flex items-center gap-2 text-base font-semibold">
           <BellRing className="h-5 w-5 text-medico" aria-hidden /> Avisos fora da tela
-        </h2>
-        <p className="mt-0.5 text-sm text-muted-foreground">
-          Toda manhã, se houver algo parado (nota para pedir, nota para enviar, pagamento atrasado, cirurgia sem pagamento), você recebe um resumo. O aviso não leva nome de paciente.
-        </p>
+         <Info>Toda manhã, se houver algo parado (nota para pedir, nota para enviar, pagamento atrasado, cirurgia sem pagamento), você recebe um resumo. O aviso não leva nome de paciente.</Info></h2>
         <div className="mt-3 grid gap-3">
           <label>
             <span className={ROTULO}>WhatsApp que recebe os avisos</span>

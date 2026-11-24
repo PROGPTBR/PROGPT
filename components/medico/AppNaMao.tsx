@@ -129,7 +129,7 @@ function Tela({ cena }: { cena: (typeof CENAS)[number]['id'] }) {
           Feita hoje no hospital: joelho do paciente das 8h, Bradesco, 2º auxiliar
         </div>
         <div className="am-item mt-2 mr-auto max-w-[85%] rounded-2xl rounded-bl-sm bg-muted px-3 py-2 text-xs" style={atraso(1)}>
-          Ok doutor, anotado
+          Ok, Dr. Eduardo Kastrup
         </div>
         <div className="am-item mt-auto rounded-2xl border border-medico/40 bg-medico/5 p-3" style={atraso(3)}>
           <p className="flex items-center gap-1.5 text-[11px] font-semibold text-medico">

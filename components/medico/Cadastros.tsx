@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 
 import type { Hospital } from '@/lib/medico/types';
-import { Botao, CAMPO, CARTAO, ROTULO, type PropsDaAba } from './ui';
+import { Botao, CAMPO, CARTAO, ROTULO, type PropsDaAba, Info } from './ui';
 
 // Cadastros: os hospitais onde o médico opera, o contador que emite as notas
 // e o nome que assina os e-mails.
@@ -32,8 +32,7 @@ export function Cadastros({ estado, enviar }: PropsDaAba) {
   return (
     <div className="grid gap-5 lg:grid-cols-2">
       <section className={CARTAO}>
-        <h2 className="text-base font-semibold">Hospitais</h2>
-        <p className="mt-0.5 text-sm text-muted-foreground">O prazo é quantos dias o hospital costuma levar para pagar. Passou disso, o sistema avisa.</p>
+        <h2 className="text-base font-semibold flex items-center gap-1">Hospitais <Info>O prazo é quantos dias o hospital costuma levar para pagar. Passou disso, o sistema avisa.</Info></h2>
         <ul className="mt-3 space-y-2">
           {estado.hospitais.map((h) => (
             <LinhaDoHospital key={h.id} h={h} enviar={enviar} />
@@ -61,8 +60,7 @@ export function Cadastros({ estado, enviar }: PropsDaAba) {
       </section>
 
       <section className={CARTAO}>
-        <h2 className="text-base font-semibold">Contador e assinatura</h2>
-        <p className="mt-0.5 text-sm text-muted-foreground">Usados nos e-mails prontos: o pedido de nota vai para o contador e o seu nome assina as mensagens.</p>
+        <h2 className="text-base font-semibold flex items-center gap-1">Contador e assinatura <Info>Usados nos e-mails prontos: o pedido de nota vai para o contador e o seu nome assina as mensagens.</Info></h2>
         <div className="mt-3 grid gap-3">
           <label>
             <span className={ROTULO}>Seu nome (como assina)</span>
