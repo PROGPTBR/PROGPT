@@ -5,13 +5,26 @@ import { MessageSquareText, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { diasEntre, partesDoNome } from '@/lib/medico/conciliacao';
-import type { Cirurgia, Entrada, EstadoMedico } from '@/lib/medico/types';
+import { FUNCOES, type Cirurgia, type Entrada, type EstadoMedico } from '@/lib/medico/types';
 import { Botao, brl, CAMPO, CARTAO, chamar, dataBr, Janela, lerNumero, ROTULO, Selo, TD, TH, type PropsDaAba } from './ui';
 
 // Cirurgias feitas: a lista que o médico mantinha no grupo de WhatsApp. É
 // contra ela que cada demonstrativo é conferido.
 
-type Linha = { hospital_id: string; data: string; paciente: string; procedimento: string; convenio: string; valor: string };
+type Linha = { hospital_id: string; data: string; paciente: string; procedimento: string; convenio: string; valor: string; funcao: string; registro: string };
+
+/** "2o auxiliar", "2º Auxiliar", "cirurgiao" → a grafia da lista; o que não for reconhecido fica em branco. */
+export function funcaoPadrao(v: string | null | undefined): string {
+  const t = (v ?? '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  if (t.includes('aux')) {
+    const n = /[123]/.exec(t)?.[0];
+    return FUNCOES.find((f) => f.startsWith(`${n}º`)) ?? '';
+  }
+  if (t.includes('cirurgi')) return 'Cirurgião';
+  if (t.includes('anest')) return 'Anestesista';
+  if (t.includes('instrument')) return 'Instrumentador';
+  return '';
+}
 
 /** Situação de uma cirurgia, derivada do demonstrativo em que ela entrou. */
 export function situacao(c: Cirurgia, estado: EstadoMedico, hoje: string): { rotulo: string; cor: 'verde' | 'azul' | 'amarelo' | 'vermelho' } {
@@ -155,7 +168,7 @@ export function Cirurgias({ estado, hoje, enviar }: PropsDaAba) {
         <EditorDeCirurgias
           titulo="Nova cirurgia"
           estado={estado}
-          linhasIniciais={[{ hospital_id: estado.hospitais[0]!.id, data: hoje, paciente: '', procedimento: '', convenio: '', valor: '' }]}
+          linhasIniciais={[{ hospital_id: estado.hospitais[0]!.id, data: hoje, paciente: '', procedimento: '', convenio: '', valor: '', funcao: '', registro: '' }]}
           origem="manual"
           onFechar={() => setNova(false)}
           enviar={enviar}
@@ -184,7 +197,7 @@ function ColarDoWhatsApp({ estado, onFechar, enviar, entradas }: Pick<PropsDaAba
 
   async function ler() {
     setLendo(true);
-    const r = await chamar<{ leitura: { cirurgias: { data: string | null; paciente: string; procedimento: string | null; convenio: string | null; valor: number | null; hospital: string | null }[] } }>(
+    const r = await chamar<{ leitura: { cirurgias: { data: string | null; paciente: string; procedimento: string | null; convenio: string | null; valor: number | null; hospital: string | null; funcao: string | null; registro: string | null }[] } }>(
       'POST',
       '/extrair',
       { tipo: 'cirurgias', texto, hospitais: estado.hospitais.map((h) => h.nome) },
@@ -201,6 +214,8 @@ function ColarDoWhatsApp({ estado, onFechar, enviar, entradas }: Pick<PropsDaAba
         procedimento: c.procedimento ?? '',
         convenio: c.convenio ?? '',
         valor: c.valor == null ? '' : String(c.valor).replace('.', ','),
+        funcao: funcaoPadrao(c.funcao),
+        registro: c.registro ?? '',
       })),
     );
   }
@@ -216,7 +231,7 @@ function ColarDoWhatsApp({ estado, onFechar, enviar, entradas }: Pick<PropsDaAba
     <Janela titulo={entradas ? 'Mensagens novas do grupo' : 'Colar do WhatsApp'} onFechar={onFechar}>
       <div className="space-y-3 text-sm">
         <p className="text-muted-foreground">
-          Cole as mensagens do grupo, suas anotações ou uma lista copiada de planilha. A IA separa as cirurgias e você confere antes de salvar.
+          Cole as mensagens do grupo, suas anotações ou as linhas da sua planilha de pendências. A IA separa as cirurgias e você confere antes de salvar.
         </p>
         <textarea
           value={texto}
@@ -226,7 +241,7 @@ function ColarDoWhatsApp({ estado, onFechar, enviar, entradas }: Pick<PropsDaAba
           className={`${CAMPO} h-auto py-2`}
           aria-label="Texto com as cirurgias"
         />
-        <p className="text-xs text-muted-foreground">Nome de paciente é dado de saúde. Se puder, use só as iniciais.</p>
+        <p className="text-xs text-muted-foreground">O hospital pede o nome completo do paciente na planilha de pendências: escreva o nome como está no prontuário.</p>
         <div className="flex justify-end">
           <Botao ocupado={lendo} desabilitado={texto.trim().length < 10} onClick={ler}>
             Ler cirurgias
@@ -286,7 +301,7 @@ function EditorDeCirurgias({
               <input type="date" value={l.data} onChange={(e) => mudar(i, 'data', e.target.value)} className={CAMPO} />
             </label>
             <label className="sm:col-span-2">
-              <span className={ROTULO}>Paciente (iniciais)</span>
+              <span className={ROTULO}>Paciente (nome como está no hospital)</span>
               <input value={l.paciente} onChange={(e) => mudar(i, 'paciente', e.target.value)} className={CAMPO} />
             </label>
             <label className="sm:col-span-3">
@@ -294,12 +309,25 @@ function EditorDeCirurgias({
               <input value={l.procedimento} onChange={(e) => mudar(i, 'procedimento', e.target.value)} className={CAMPO} />
             </label>
             <label className="sm:col-span-2">
-              <span className={ROTULO}>Convênio</span>
+              <span className={ROTULO}>Convênio e plano</span>
               <input value={l.convenio} onChange={(e) => mudar(i, 'convenio', e.target.value)} className={CAMPO} />
             </label>
             <label>
               <span className={ROTULO}>Valor (R$)</span>
               <input value={l.valor} onChange={(e) => mudar(i, 'valor', e.target.value)} inputMode="decimal" className={CAMPO} />
+            </label>
+            <label className="sm:col-span-2">
+              <span className={ROTULO}>Sua função na cirurgia</span>
+              <select value={l.funcao} onChange={(e) => mudar(i, 'funcao', e.target.value)} className={CAMPO}>
+                <option value="">Não informar</option>
+                {FUNCOES.map((f) => (
+                  <option key={f}>{f}</option>
+                ))}
+              </select>
+            </label>
+            <label className="sm:col-span-2">
+              <span className={ROTULO}>Nº de registro (opcional)</span>
+              <input value={l.registro} onChange={(e) => mudar(i, 'registro', e.target.value)} className={CAMPO} />
             </label>
             {linhas.length > 1 && (
               <div className="sm:col-span-6 text-right">

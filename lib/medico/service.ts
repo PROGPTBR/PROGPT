@@ -30,17 +30,17 @@ import type {
 
 const HOSPITAL = 'id, nome, email, prazo_pagamento_dias, exemplo';
 const CIRURGIA =
-  'id, hospital_id, data, paciente, procedimento, convenio, valor, origem, demonstrativo_id, cobrada_em, observacao, exemplo';
+  'id, hospital_id, data, paciente, procedimento, convenio, valor, origem, demonstrativo_id, cobrada_em, funcao, registro, cobrancas, observacao, exemplo';
 const DEMONSTRATIVO =
   'id, hospital_id, referencia, recebido_em, valor_total, itens, nota_pedida_em, nota_numero, nota_emitida_em, nota_enviada_em, pago_em, valor_pago, exemplo, tipo, pagador_nome, pagador_documento, pagador_contato';
 export const CONFIG =
-  'medico_nome, contador_nome, contador_email, medico_email, whatsapp_numero, chave_pix, avisos_email, avisos_whatsapp, grupo_jid, grupo_nome';
+  'medico_nome, contador_nome, contador_email, medico_email, whatsapp_numero, chave_pix, avisos_email, avisos_whatsapp, grupo_jid, grupo_nome, empresa_nome, empresa_cnpj, crm, especialidade, contato';
 const ENTRADA = 'id, canal, remetente, assunto, texto, recebido_em';
 
 const num = (v: unknown): number | null => (v == null ? null : Number(v));
 
 function cirurgiaDe(r: Record<string, unknown>): Cirurgia {
-  return { ...(r as Cirurgia), valor: num(r.valor) };
+  return { ...(r as Cirurgia), valor: num(r.valor), cobrancas: Array.isArray(r.cobrancas) ? (r.cobrancas as string[]) : [] };
 }
 
 function demonstrativoDe(r: Record<string, unknown>): Demonstrativo {
@@ -217,7 +217,7 @@ export async function atualizarCirurgia(userId: string, id: string, patch: z.inf
 export async function criarDemonstrativo(
   userId: string,
   input: z.infer<typeof DemonstrativoSchema>,
-): Promise<{ id: string; casadas: number; criadas: number }> {
+): Promise<{ id: string; casadas: number; criadas: number; cobradas_pagas: number; cobradas_pendentes: number }> {
   if (!(await hospitalDoUsuario(userId, input.hospital_id))) throw new RegraMedica('Escolha um hospital cadastrado.');
   const db = getServerSupabase();
 
@@ -229,7 +229,8 @@ export async function criarDemonstrativo(
     .is('demonstrativo_id', null);
   if (erroAbertas) throw new Error(`[medico] leitura falhou: ${erroAbertas.message}`);
 
-  const itens = casarItens(input.itens, (abertas ?? []).map(cirurgiaDe), input.hospital_id);
+  const emAberto = (abertas ?? []).map(cirurgiaDe);
+  const itens = casarItens(input.itens, emAberto, input.hospital_id);
 
   const { data: novo, error } = await db
     .from('medico_demonstrativos')
@@ -277,7 +278,10 @@ export async function criarDemonstrativo(
     }
   }
 
-  return { id, casadas: casadas.length, criadas };
+  // O hospital não responde às cobranças: é aqui que o médico fica sabendo o que entrou.
+  const jaCobradas = emAberto.filter((c) => c.cobrancas.length > 0);
+  const cobradas_pagas = jaCobradas.filter((c) => casadas.includes(c.id)).length;
+  return { id, casadas: casadas.length, criadas, cobradas_pagas, cobradas_pendentes: jaCobradas.length - cobradas_pagas };
 }
 
 export async function atualizarDemonstrativo(
@@ -344,6 +348,9 @@ export async function carregarExemplo(userId: string, hoje: string): Promise<voi
         convenio: c.convenio,
         valor: c.valor,
         origem: 'whatsapp',
+        funcao: c.funcao,
+        cobrancas: c.cobrancas,
+        cobrada_em: c.cobrancas.at(-1) ?? null,
       })),
     )
     .select(CIRURGIA);
@@ -382,6 +389,20 @@ export async function carregarExemplo(userId: string, hoje: string): Promise<voi
 
   const { data: config } = await db.from('medico_config').select('user_id').eq('user_id', userId).maybeSingle();
   if (!config) await salvarConfig(userId, ex.config);
+}
+
+/** Registra que estas cirurgias entraram numa cobrança hoje (uma data por dia, sem repetir). */
+export async function registrarCobranca(userId: string, cirurgias: Cirurgia[], hoje: string): Promise<void> {
+  const db = getServerSupabase();
+  await Promise.all(
+    cirurgias.map((c) =>
+      db
+        .from('medico_cirurgias')
+        .update({ cobrada_em: hoje, cobrancas: c.cobrancas.includes(hoje) ? c.cobrancas : [...c.cobrancas, hoje] })
+        .eq('user_id', userId)
+        .eq('id', c.id),
+    ),
+  );
 }
 
 /** Um demonstrativo do usuário, com o hospital. Null se não é dele. */

@@ -21,7 +21,7 @@ function estadoDeExemplo(): EstadoMedico {
   const hospitais: Hospital[] = ex.hospitais.map((h) => ({ id: h.chave, nome: h.nome, email: h.email, prazo_pagamento_dias: h.prazo, exemplo: true }));
   let cirurgias: Cirurgia[] = ex.cirurgias.map((c, i) => ({
     id: `c${i}`, hospital_id: c.hospital, data: c.data, paciente: c.paciente, procedimento: c.procedimento, convenio: c.convenio, valor: c.valor,
-    origem: 'whatsapp', demonstrativo_id: null, cobrada_em: null, observacao: '', exemplo: true,
+    origem: 'whatsapp', demonstrativo_id: null, cobrada_em: c.cobrancas.at(-1) ?? null, funcao: c.funcao, registro: '', cobrancas: c.cobrancas, observacao: '', exemplo: true,
   }));
   const demonstrativos: Demonstrativo[] = ex.demonstrativos.map((d, i) => {
     const itens = casarItens(d.itens, cirurgias, d.hospital);
@@ -67,12 +67,16 @@ describe('Área Médica (tela)', () => {
     fireEvent.click(within(pedido).getByRole('button', { name: 'Fechar' }));
 
     fireEvent.click(within(abas).getByText(/Pendências a cobrar/));
-    const cobrar = screen.getAllByRole('button', { name: /Gerar cobrança/ });
+    const cobrar = screen.getAllByRole('button', { name: /Enviar ao hospital/ });
     expect(cobrar.length).toBe(3);
+    expect(screen.getAllByRole('link', { name: /Baixar planilha/ }).length).toBe(3);
+    // As duas que o hospital deixou de fora já foram cobradas há 32 dias, sem resposta.
+    expect(screen.getAllByText(/sem resposta há 32 dias/).length).toBe(2);
+    expect(screen.getByText('2 precisam ser cobradas agora.')).toBeTruthy();
     fireEvent.click(cobrar[0]!);
     const texto = (screen.getByLabelText('Texto do e-mail') as HTMLTextAreaElement).value;
-    expect(texto).toContain('L. M. N.');
-    expect(texto).toContain('P. H. S.');
+    expect(texto).toContain('planilha de levantamento de pendências');
+    expect(texto).toContain('já foram enviadas antes');
   });
 
   it('caixa de entrada: mensagens do grupo e e-mail recebido aparecem para conferir', () => {

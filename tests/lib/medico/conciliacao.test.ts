@@ -11,7 +11,7 @@ const H: Hospital = { id: 'h1', nome: "Niterói D'Or", email: 'repasse@h.com', p
 const H2: Hospital = { ...H, id: 'h2', nome: 'CHN' };
 
 function cir(id: string, data: string, paciente: string, extra: Partial<Cirurgia> = {}): Cirurgia {
-  return { id, hospital_id: 'h1', data, paciente, procedimento: 'Colecistectomia', convenio: 'Unimed', valor: 3000, origem: 'manual', demonstrativo_id: null, cobrada_em: null, observacao: '', exemplo: false, ...extra };
+  return { id, hospital_id: 'h1', data, paciente, procedimento: 'Colecistectomia', convenio: 'Unimed', valor: 3000, origem: 'manual', demonstrativo_id: null, cobrada_em: null, funcao: '', registro: '', cobrancas: [], observacao: '', exemplo: false, ...extra };
 }
 
 function dem(extra: Partial<Demonstrativo> = {}): Demonstrativo {
@@ -88,6 +88,30 @@ describe('pendências, avisos e resumo', () => {
     ]);
   });
 
+  it('guarda o histórico da cobrança: o hospital não responde, então o que continua em aberto volta para cobrar', () => {
+    const [nunca, recente, antiga] = pendencias(
+      [
+        cir('a', '2026-09-01', 'A. B.'),
+        cir('b', '2026-09-02', 'C. D.', { cobrancas: ['2026-11-10'], cobrada_em: '2026-11-10' }),
+        cir('c', '2026-09-03', 'E. F.', { cobrancas: ['2026-09-20', '2026-10-20'], cobrada_em: '2026-10-20' }),
+      ],
+      [H],
+      HOJE,
+    );
+    expect([nunca!.vezes, nunca!.diasSemResposta, nunca!.cobrarAgora]).toEqual([0, null, true]);
+    // Cobrada há 14 dias: ainda aguarda o hospital.
+    expect([recente!.vezes, recente!.diasSemResposta, recente!.cobrarAgora]).toEqual([1, 14, false]);
+    // Duas cobranças, a última há 35 dias sem resposta: cobrar de novo.
+    expect([antiga!.vezes, antiga!.diasSemResposta, antiga!.cobrarAgora]).toEqual([2, 35, true]);
+
+    const sAguardando = avisos([], [cir('b', '2026-09-02', 'C. D.', { cobrancas: ['2026-11-10'] })], [H], HOJE);
+    expect(sAguardando[0]).toMatchObject({ gravidade: 'media' });
+    expect(sAguardando[0]!.texto).toContain('aguardando o hospital');
+    const sReenviar = avisos([], [cir('c', '2026-09-03', 'E. F.', { cobrancas: ['2026-10-20'] })], [H], HOJE);
+    expect(sReenviar[0]).toMatchObject({ gravidade: 'alta' });
+    expect(sReenviar[0]!.texto).toContain('sem resposta: enviar a planilha de novo');
+  });
+
   it('etapa vem das datas', () => {
     expect(etapaDe(dem())).toBe('recebido');
     expect(etapaDe(dem({ nota_pedida_em: '2026-11-21' }))).toBe('nota_pedida');
@@ -137,8 +161,10 @@ describe('textos prontos', () => {
     expect(pedido.corpo).not.toContain('M. A. S.');
 
     const c = cobranca([cir('c2', '2026-10-09', 'J. P. R.'), cir('c1', '2026-10-05', 'M. A. S.')], H, config);
-    expect(c.assunto).toContain('2 pendências');
-    expect(c.corpo.indexOf('05/10/2026')).toBeLessThan(c.corpo.indexOf('09/10/2026'));
+    expect(c.assunto).toContain('2 cirurgias sem pagamento');
+    expect(c.corpo).toContain('planilha de levantamento de pendências');
+    // A lista de pacientes vai na planilha anexa, não no corpo do e-mail.
+    expect(c.corpo).not.toContain('J. P. R.');
     for (const t of [pedido.corpo, pedido.assunto, c.corpo, c.assunto]) expect(t).not.toMatch(/[—–]/);
     expect(mailto(c)).toMatch(/^mailto:repasse%40h\.com\?subject=/);
   });

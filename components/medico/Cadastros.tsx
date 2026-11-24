@@ -17,7 +17,8 @@ export function Cadastros({ estado, enviar }: PropsDaAba) {
 
   async function salvarConfig() {
     setSalvando(true);
-    await enviar('PUT', '/config', { medico_nome: config.medico_nome, contador_nome: config.contador_nome, contador_email: config.contador_email }, 'Dados salvos.');
+    const { medico_nome, contador_nome, contador_email, empresa_nome, empresa_cnpj, crm, especialidade, contato } = config;
+    await enviar('PUT', '/config', { medico_nome, contador_nome, contador_email, empresa_nome, empresa_cnpj, crm, especialidade, contato }, 'Dados salvos.');
     setSalvando(false);
   }
 
@@ -75,6 +76,34 @@ export function Cadastros({ estado, enviar }: PropsDaAba) {
             <span className={ROTULO}>E-mail do contador</span>
             <input type="email" value={config.contador_email} onChange={(e) => setConfig({ ...config, contador_email: e.target.value })} className={CAMPO} />
           </label>
+          <p className="mt-2 text-sm font-medium">Dados para a planilha de pendências</p>
+          <p className="-mt-2 text-xs text-muted-foreground">Saem no cabeçalho da planilha que o hospital exige para cobrar cirurgia não paga.</p>
+          <label>
+            <span className={ROTULO}>Seu nome completo</span>
+            <input value={config.medico_nome} onChange={(e) => setConfig({ ...config, medico_nome: e.target.value })} className={CAMPO} />
+          </label>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label>
+              <span className={ROTULO}>Empresa (razão social)</span>
+              <input value={config.empresa_nome} onChange={(e) => setConfig({ ...config, empresa_nome: e.target.value })} className={CAMPO} />
+            </label>
+            <label>
+              <span className={ROTULO}>CNPJ</span>
+              <input value={config.empresa_cnpj} onChange={(e) => setConfig({ ...config, empresa_cnpj: e.target.value })} inputMode="numeric" className={CAMPO} />
+            </label>
+            <label>
+              <span className={ROTULO}>CRM</span>
+              <input value={config.crm} onChange={(e) => setConfig({ ...config, crm: e.target.value })} className={CAMPO} />
+            </label>
+            <label>
+              <span className={ROTULO}>Especialidade</span>
+              <input value={config.especialidade} onChange={(e) => setConfig({ ...config, especialidade: e.target.value })} className={CAMPO} />
+            </label>
+            <label className="sm:col-span-2">
+              <span className={ROTULO}>Telefone de contato</span>
+              <input value={config.contato} onChange={(e) => setConfig({ ...config, contato: e.target.value })} inputMode="tel" className={CAMPO} />
+            </label>
+          </div>
           <div>
             <Botao ocupado={salvando} onClick={salvarConfig}>
               Salvar

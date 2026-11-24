@@ -335,7 +335,7 @@ function NovoDemonstrativo({ estado, hoje, enviar, onFechar, entrada }: PropsDaA
   async function salvar() {
     if (!itens) return;
     setSalvando(true);
-    const r = await enviar<{ casadas: number; criadas: number }>('POST', '/demonstrativos', {
+    const r = await enviar<{ casadas: number; criadas: number; cobradas_pagas: number; cobradas_pendentes: number }>('POST', '/demonstrativos', {
       hospital_id: hospitalId,
       referencia,
       recebido_em: recebido,
@@ -346,6 +346,11 @@ function NovoDemonstrativo({ estado, hoje, enviar, onFechar, entrada }: PropsDaA
     setSalvando(false);
     if (!r) return;
     toast.success(`Demonstrativo salvo: ${r.casadas} ${r.casadas === 1 ? 'cirurgia conferida' : 'cirurgias conferidas'}${r.criadas > 0 ? `, ${r.criadas} que você não tinha anotado` : ''}.`);
+    // O hospital não responde às cobranças: é o demonstrativo que mostra o que entrou.
+    if (r.cobradas_pagas + r.cobradas_pendentes > 0) {
+      const total = r.cobradas_pagas + r.cobradas_pendentes;
+      toast(`Das ${total} ${total === 1 ? 'pendência cobrada' : 'pendências cobradas'} deste hospital, ${r.cobradas_pagas} ${r.cobradas_pagas === 1 ? 'entrou' : 'entraram'} neste demonstrativo e ${r.cobradas_pendentes} ${r.cobradas_pendentes === 1 ? 'continua' : 'continuam'} sem pagamento.`, { duration: 12_000 });
+    }
     onFechar();
   }
 

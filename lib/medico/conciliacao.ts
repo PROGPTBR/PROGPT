@@ -160,7 +160,19 @@ function nomeDo(hospitais: Hospital[], id: string): string {
   return hospitais.find((h) => h.id === id)?.nome ?? 'Hospital';
 }
 
-export type Pendencia = { cirurgia: Cirurgia; dias: number; atrasada: boolean };
+/** Dias sem resposta depois dos quais vale reenviar a cobrança. */
+export const DIAS_PARA_RECOBRAR = 30;
+
+export type Pendencia = {
+  cirurgia: Cirurgia;
+  dias: number;
+  atrasada: boolean;
+  /** Quantas vezes já foi cobrada e há quantos dias foi a última (null = nunca cobrada). */
+  vezes: number;
+  diasSemResposta: number | null;
+  /** Passou do prazo e nunca foi cobrada, ou a última cobrança ficou sem resposta. */
+  cobrarAgora: boolean;
+};
 
 /** Cirurgias feitas que não apareceram em nenhum demonstrativo. */
 export function pendencias(cirurgias: Cirurgia[], hospitais: Hospital[], hoje: string): Pendencia[] {
@@ -169,7 +181,18 @@ export function pendencias(cirurgias: Cirurgia[], hospitais: Hospital[], hoje: s
     .map((c) => {
       const prazo = hospitais.find((h) => h.id === c.hospital_id)?.prazo_pagamento_dias ?? 30;
       const dias = diasEntre(c.data, hoje);
-      return { cirurgia: c, dias, atrasada: dias > prazo };
+      const cobrancas = c.cobrancas ?? [];
+      const ultima = cobrancas.length > 0 ? [...cobrancas].sort().at(-1)! : null;
+      const diasSemResposta = ultima ? diasEntre(ultima, hoje) : null;
+      const atrasada = dias > prazo;
+      return {
+        cirurgia: c,
+        dias,
+        atrasada,
+        vezes: cobrancas.length,
+        diasSemResposta,
+        cobrarAgora: atrasada && (diasSemResposta === null || diasSemResposta >= DIAS_PARA_RECOBRAR),
+      };
     })
     .sort((a, b) => b.dias - a.dias);
 }
@@ -210,12 +233,16 @@ export function avisos(
   }
   for (const [hospital_id, lista] of porHospital) {
     const n = lista.length;
+    const aCobrar = lista.filter((p) => p.cobrarAgora).length;
+    const semResposta = lista.filter((p) => p.vezes > 0).length;
     out.push({
       tipo: 'pendencia',
-      gravidade: 'alta',
+      gravidade: aCobrar === 0 ? 'media' : 'alta',
       hospital_id,
       dias: lista[0]!.dias,
-      texto: `${nomeDo(hospitais, hospital_id)}: ${n} ${n === 1 ? 'cirurgia feita e não paga' : 'cirurgias feitas e não pagas'}`,
+      texto:
+        `${nomeDo(hospitais, hospital_id)}: ${n} ${n === 1 ? 'cirurgia feita e não paga' : 'cirurgias feitas e não pagas'}` +
+        (aCobrar === 0 ? ', já cobradas, aguardando o hospital' : semResposta > 0 ? `, ${semResposta} já ${semResposta === 1 ? 'cobrada' : 'cobradas'} sem resposta: enviar a planilha de novo` : ': enviar a planilha de pendências'),
     });
   }
 

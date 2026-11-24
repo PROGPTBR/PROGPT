@@ -2,7 +2,8 @@ import { sendEmail } from '@/lib/email/client';
 
 import { enviarDocumento, enviarTexto, estadoDaInstancia, instanciaDoMedico, numeroLimpo, whatsappConfigurado } from './evolution';
 import { cobranca, cobrancaAoPaciente, envioDaNota, pedidoDeNota, pedidoDeNotaDireto, type Mensagem } from './mensagens';
-import { atualizarCirurgia, atualizarDemonstrativo, carregarEstado, RegraMedica } from './service';
+import { nomeDoArquivo, planilhaDePendencias } from './planilha-pendencias';
+import { atualizarDemonstrativo, carregarEstado, registrarCobranca, RegraMedica } from './service';
 
 // Envio automático da Área Médica (sub-projeto 101): o sistema manda o e-mail
 // (ou o WhatsApp ao paciente) em nome do médico e já avança a etapa.
@@ -26,13 +27,20 @@ export async function enviarMensagem(
 
   let mensagem: Mensagem;
   let aoConcluir: () => Promise<unknown>;
+  let anexo = pedido.anexo ?? null;
 
   if (pedido.tipo === 'cobranca_hospital') {
     const hospital = estado.hospitais.find((h) => h.id === pedido.id);
     const abertas = estado.cirurgias.filter((c) => c.hospital_id === pedido.id && !c.demonstrativo_id && c.data <= hoje);
     if (!hospital || abertas.length === 0) throw new RegraMedica('Não há cirurgias pendentes nesse hospital.');
     mensagem = cobranca(abertas, hospital, config);
-    aoConcluir = () => Promise.all(abertas.map((c) => atualizarCirurgia(userId, c.id, { cobrada_em: hoje })));
+    // A cobrança vai sempre na planilha de pendências, o modelo que o hospital exige.
+    anexo = {
+      nome: nomeDoArquivo(hospital, config, hoje),
+      buf: await planilhaDePendencias(abertas, config),
+      mime: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    };
+    aoConcluir = () => registrarCobranca(userId, abertas, hoje);
   } else {
     const d = estado.demonstrativos.find((x) => x.id === pedido.id);
     const hospital = d && estado.hospitais.find((h) => h.id === d.hospital_id);
@@ -61,8 +69,8 @@ export async function enviarMensagem(
     const instancia = instanciaDoMedico(userId);
     if ((await estadoDaInstancia(instancia)) !== 'open') throw new RegraMedica('Conecte o seu WhatsApp em Integrações para enviar por ele.');
     await enviarTexto(instancia, numero, corpo);
-    if (pedido.anexo) {
-      await enviarDocumento(instancia, numero, { nome: pedido.anexo.nome, base64: pedido.anexo.buf.toString('base64'), mime: pedido.anexo.mime });
+    if (anexo) {
+      await enviarDocumento(instancia, numero, { nome: anexo.nome, base64: anexo.buf.toString('base64'), mime: anexo.mime });
     }
   } else {
     if (!emailValido(mensagem.para)) {
@@ -84,7 +92,7 @@ export async function enviarMensagem(
       // A resposta volta para o médico, e ele recebe cópia do que saiu em nome dele.
       replyTo: doMedico,
       cc: doMedico,
-      attachments: pedido.anexo ? [{ filename: pedido.anexo.nome, content: pedido.anexo.buf, contentType: pedido.anexo.mime }] : undefined,
+      attachments: anexo ? [{ filename: anexo.nome, content: anexo.buf, contentType: anexo.mime }] : undefined,
     });
     if (!r.ok) throw new RegraMedica('O e-mail não saiu agora. Tente de novo ou use "Abrir no e-mail".');
   }

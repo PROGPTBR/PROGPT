@@ -18,6 +18,9 @@ export function dadosDeExemplo(hoje: string) {
     procedimento,
     convenio,
     valor,
+    funcao: 'Cirurgião',
+    // As duas que o hospital deixou de fora já foram cobradas uma vez, sem resposta.
+    cobrancas: paciente === 'L. M. N.' || paciente === 'P. H. S.' ? [dia(hoje, -32)] : ([] as string[]),
   });
 
   const cirurgias = [
@@ -71,7 +74,16 @@ export function dadosDeExemplo(hoje: string) {
   const pagoNoMes = -Math.min(Number(hoje.slice(8, 10)) - 1, 8);
 
   return {
-    config: { medico_nome: 'Dr. Ricardo Menezes', contador_nome: 'Paula', contador_email: 'paula@contabilidade-exemplo.com.br' } as const,
+    config: {
+      medico_nome: 'Dr. Ricardo Menezes',
+      contador_nome: 'Paula',
+      contador_email: 'paula@contabilidade-exemplo.com.br',
+      empresa_nome: 'Menezes Serviços Médicos Ltda',
+      empresa_cnpj: '11.222.333/0001-81',
+      crm: '52.00000-0',
+      especialidade: 'Cirurgia geral',
+      contato: '(21) 90000-0000',
+    } as const,
     hospitais: [
       { chave: 'dor', nome: "Niterói D'Or", email: 'repasse@hospital-exemplo.com.br', prazo: 30 },
       { chave: 'chn', nome: 'CHN', email: 'honorarios@chn-exemplo.com.br', prazo: 30 },

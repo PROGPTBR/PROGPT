@@ -43,24 +43,28 @@ export function envioDaNota(d: Demonstrativo, hospital: Hospital, config: Medico
   };
 }
 
-/** Cobrança ao hospital das cirurgias feitas que não entraram em nenhum demonstrativo. */
+/**
+ * Cobrança ao hospital das cirurgias que não entraram em nenhum demonstrativo.
+ * A lista vai na planilha de pendências anexa (o modelo que o hospital exige);
+ * o texto resume e diz quantas já tinham sido cobradas antes.
+ */
 export function cobranca(cirurgias: Cirurgia[], hospital: Hospital, config: MedicoConfig): Mensagem {
-  const ordenadas = [...cirurgias].sort((a, b) => a.data.localeCompare(b.data));
-  const linhas = ordenadas
-    .map(
-      (c) =>
-        `- ${dataBr(c.data)}: paciente ${c.paciente}${c.procedimento ? `, ${c.procedimento}` : ''}` +
-        `${c.convenio ? ` (${c.convenio})` : ''}${c.valor != null ? `, ${brl(c.valor)}` : ''}`,
-    )
-    .join('\n');
-  const n = ordenadas.length;
+  const n = cirurgias.length;
+  const reenviadas = cirurgias.filter((c) => (c.cobrancas ?? []).length > 0);
+  const primeira = reenviadas.flatMap((c) => c.cobrancas).sort()[0];
+  const total = cirurgias.reduce((s, c) => s + (c.valor ?? 0), 0);
   return {
     para: hospital.email,
-    assunto: `Cirurgias sem pagamento: ${n} ${n === 1 ? 'pendência' : 'pendências'}`,
+    assunto: `Levantamento de pendências: ${n} ${n === 1 ? 'cirurgia' : 'cirurgias'} sem pagamento${config.medico_nome ? ` (${config.medico_nome})` : ''}`,
     corpo:
-      `Olá.\n\nConferi os demonstrativos recebidos do ${hospital.nome} e ` +
-      `${n === 1 ? 'a cirurgia abaixo não apareceu' : `as ${n} cirurgias abaixo não apareceram`} em nenhum deles:\n\n` +
-      `${linhas}\n\nPeço a verificação e a inclusão no próximo demonstrativo, ou o retorno com o motivo.` +
+      `Olá.\n\nSegue em anexo a planilha de levantamento de pendências do ${hospital.nome}, com ` +
+      `${n === 1 ? '1 cirurgia que não apareceu' : `${n} cirurgias que não apareceram`} em nenhum demonstrativo de repasse` +
+      `${total > 0 ? ` (${brl(total)} no total)` : ''}.\n\n` +
+      (reenviadas.length > 0
+        ? `${reenviadas.length === n ? 'Todas' : reenviadas.length} ${reenviadas.length === 1 && reenviadas.length !== n ? 'delas já foi enviada' : 'já foram enviadas'} antes` +
+          `${primeira ? `, a primeira vez em ${dataBr(primeira)}` : ''}, e não houve retorno.\n\n`
+        : '') +
+      `Peço o retorno de cada linha: se será paga e em qual repasse, ou o motivo de não ter sido faturada.` +
       assinatura(config),
   };
 }

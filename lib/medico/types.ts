@@ -16,6 +16,12 @@ export type MedicoConfig = {
   /** Grupo de WhatsApp de onde o sistema lê as cirurgias. */
   grupo_jid: string;
   grupo_nome: string;
+  /** Cabeçalho da planilha de pendências que o hospital exige. */
+  empresa_nome: string;
+  empresa_cnpj: string;
+  crm: string;
+  especialidade: string;
+  contato: string;
 };
 
 export const CONFIG_VAZIA: MedicoConfig = {
@@ -29,7 +35,15 @@ export const CONFIG_VAZIA: MedicoConfig = {
   avisos_whatsapp: true,
   grupo_jid: '',
   grupo_nome: '',
+  empresa_nome: '',
+  empresa_cnpj: '',
+  crm: '',
+  especialidade: '',
+  contato: '',
 };
+
+/** Papel do médico na cirurgia, como o hospital pede na planilha de pendências. */
+export const FUNCOES = ['Cirurgião', '1º Auxiliar', '2º Auxiliar', '3º Auxiliar', 'Anestesista', 'Instrumentador'] as const;
 
 /** O que chegou sozinho (grupo de WhatsApp, e-mail encaminhado) e espera conferência. */
 export type Entrada = {
@@ -85,6 +99,11 @@ export type Cirurgia = {
   origem: 'manual' | 'whatsapp' | 'demonstrativo';
   demonstrativo_id: string | null;
   cobrada_em: string | null;
+  /** Papel na cirurgia (cirurgião, 1º auxiliar...) e o número de registro da descrição cirúrgica. */
+  funcao: string;
+  registro: string;
+  /** Datas em que a cirurgia foi cobrada do hospital (uma por planilha enviada). */
+  cobrancas: string[];
   observacao: string;
   exemplo: boolean;
 };
@@ -145,6 +164,11 @@ export const ConfigSchema = z.object({
   chave_pix: texto(140).default(''),
   avisos_email: z.boolean().default(true),
   avisos_whatsapp: z.boolean().default(true),
+  empresa_nome: texto(160).default(''),
+  empresa_cnpj: texto(20).default(''),
+  crm: texto(30).default(''),
+  especialidade: texto(80).default(''),
+  contato: texto(60).default(''),
 });
 
 /** Cobrança direta: o paciente paga na hora e a nota sai na hora. */
@@ -175,6 +199,8 @@ export const CirurgiaSchema = z.object({
   convenio: texto(120).default(''),
   valor: z.number().min(0).max(10_000_000).nullable().default(null),
   origem: z.enum(['manual', 'whatsapp', 'demonstrativo']).default('manual'),
+  funcao: texto(40).default(''),
+  registro: texto(60).default(''),
   observacao: texto(500).default(''),
 });
 
