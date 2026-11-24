@@ -9,6 +9,7 @@ import { startTrace, flushAsync } from '@/lib/observability/langfuse';
 import { recordApiUsage } from '@/lib/observability/api-usage';
 import { withUser } from '@/lib/observability/user-context';
 import { getCurrentUser } from '@/lib/auth';
+import { recusarContaDeMedico } from '@/lib/medico/acesso-servidor';
 import { getModulosDesativados } from '@/lib/modulos/servidor';
 import { checkChatRateLimit } from '@/lib/rate-limit';
 import { summarizeChatTitle } from '@/lib/chat-title';
@@ -91,6 +92,11 @@ export async function POST(req: Request): Promise<Response> {
   const user = await getCurrentUser();
   if (!user) {
     return Response.json({ error: 'unauthorized' }, { status: 401 });
+  }
+  // A conta da Área Médica não usa o chat (sub-projeto 105).
+  {
+    const recusa = await recusarContaDeMedico(user.id);
+    if (recusa) return recusa;
   }
 
   // Acesso liberado a todo usuário logado (decisão 2026-07-07: cartão no

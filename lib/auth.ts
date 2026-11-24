@@ -26,6 +26,8 @@ export type Profile = {
   // (guard_plataforma_columns, migration 0053) — só service-role escreve.
   org_id: string;
   super_admin: boolean;
+  /** Área Médica: '' conta comum, 'medico' só a Área Médica, 'equipe' vê as duas. Só o servidor altera. */
+  area_medica?: '' | 'medico' | 'equipe';
 };
 
 export type SubscriptionStatus =
@@ -127,7 +129,8 @@ export async function getProfile(
       subscription_status,
 
       org_id,
-      super_admin
+      super_admin,
+      area_medica
     `)
     .eq('id', userId)
     .maybeSingle();

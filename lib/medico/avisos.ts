@@ -80,7 +80,8 @@ export async function enviarAvisosDoDia(): Promise<{ medicos: number; enviados: 
     try {
       const { data: perfil } = await db.from('profiles_with_email').select('email, super_admin').eq('id', user_id).maybeSingle();
       // Quem perdeu o acesso à Área Médica deixa de receber aviso.
-      if (!perfil || !areaMedicaLiberada(perfil.email as string | null, perfil.super_admin === true)) continue;
+      const { data: tipo } = await db.from('profiles').select('area_medica').eq('id', user_id).maybeSingle();
+      if (!perfil || !areaMedicaLiberada(perfil.email as string | null, perfil.super_admin === true, tipo?.area_medica as never)) continue;
       const r = await enviarAvisoPara(user_id as string, (perfil.email as string | null) ?? null);
       if (r.enviado) enviados += 1;
     } catch (err) {

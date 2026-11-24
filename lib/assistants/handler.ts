@@ -2,6 +2,7 @@ import { streamText, StreamData } from 'ai';
 import { getOpenAIModel, getStreamingOpenAI } from '@/lib/llm/openai';
 import { z } from 'zod';
 import { getCurrentUser } from '@/lib/auth';
+import { recusarContaDeMedico } from '@/lib/medico/acesso-servidor';
 import { checkChatRateLimit } from '@/lib/rate-limit';
 import { retrieve } from '@/lib/rag/retriever';
 import { rerank } from '@/lib/rag/reranker';
@@ -129,6 +130,9 @@ export function buildAssistantHandler<
 
     const user = await getCurrentUser();
     if (!user) return Response.json({ error: 'unauthorized' }, { status: 401 });
+    // A conta da Área Médica não usa os assistentes (sub-projeto 105).
+    const recusaMedico = await recusarContaDeMedico(user.id);
+    if (recusaMedico) return recusaMedico;
 
     // Módulo desligado para a empresa do usuário (console /plataforma).
     if (await moduloBloqueado(user.id, config.type)) {

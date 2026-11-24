@@ -1,10 +1,12 @@
 import type { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
 
-import { requireUser, NotAuthenticated } from '@/lib/auth';
+import { getProfile, requireUser, NotAuthenticated } from '@/lib/auth';
 import { AppShell } from '@/components/layout/AppShell';
 import { AreaMedicaRoot } from '@/components/medico/AreaMedicaRoot';
+import { soAreaMedica } from '@/lib/medico/acesso';
 import { usuarioComAreaMedica } from '@/lib/medico/acesso-servidor';
+import { ShellDoMedico } from '@/components/medico/ShellDoMedico';
 import { estadoCompleto } from '@/lib/medico/integracoes';
 import { hojeEmBrasilia } from '@/lib/vitrine/datas';
 
@@ -23,20 +25,24 @@ export default async function AreaMedicaPage({ searchParams }: { searchParams: {
   }
   if (!(await usuarioComAreaMedica(user))) notFound();
 
-  return (
-    <AppShell back={{ href: '/chat', label: 'Voltar ao chat' }}>
-      <AreaMedicaRoot
-        estadoInicial={await estadoCompleto(user.id)}
-        hoje={hojeEmBrasilia()}
-        abaInicial={searchParams.aba}
-        aviso={
-          searchParams.banco === 'conectado'
-            ? { ok: true, texto: 'Conta do BTG ligada. Os próximos créditos e débitos entram sozinhos.' }
-            : searchParams.banco === 'erro'
-              ? { ok: false, texto: (searchParams.motivo ?? 'Não foi possível ligar a conta do BTG.').slice(0, 200) }
-              : undefined
-        }
-      />
-    </AppShell>
+  const perfil = await getProfile(user.id).catch(() => null);
+  const conteudo = (
+    <AreaMedicaRoot
+      estadoInicial={await estadoCompleto(user.id)}
+      hoje={hojeEmBrasilia()}
+      abaInicial={searchParams.aba}
+      contaDeMedico={soAreaMedica(perfil?.area_medica)}
+      aviso={
+        searchParams.banco === 'conectado'
+          ? { ok: true, texto: 'Conta do BTG ligada. Os próximos créditos e débitos entram sozinhos.' }
+          : searchParams.banco === 'erro'
+            ? { ok: false, texto: (searchParams.motivo ?? 'Não foi possível ligar a conta do BTG.').slice(0, 200) }
+            : undefined
+      }
+    />
   );
+
+  // A conta de médico só tem a Área Médica: moldura própria, sem o menu do resto do sistema.
+  if (soAreaMedica(perfil?.area_medica)) return <ShellDoMedico>{conteudo}</ShellDoMedico>;
+  return <AppShell back={{ href: '/chat', label: 'Voltar ao chat' }}>{conteudo}</AppShell>;
 }

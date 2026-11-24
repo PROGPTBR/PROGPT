@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { areaMedicaLiberada } from '@/lib/medico/acesso';
+import { areaMedicaLiberada, caminhoDoMedico, soAreaMedica } from '@/lib/medico/acesso';
 import { avisos, casarItens, etapaDe, pendencias, pontosDoPaciente, resumo } from '@/lib/medico/conciliacao';
 import { dadosDeExemplo } from '@/lib/medico/exemplo';
 import { cobranca, mailto, pedidoDeNota } from '@/lib/medico/mensagens';
@@ -186,5 +186,17 @@ describe('exemplo e acesso', () => {
     expect(areaMedicaLiberada('cliente@empresa.com')).toBe(false);
     expect(areaMedicaLiberada('cliente@empresa.com', true)).toBe(true);
     expect(areaMedicaLiberada(null)).toBe(false);
+  });
+
+  it('a conta de médico entra pela Área Médica e só nela', () => {
+    // O tipo de conta libera, sem depender da lista de e-mails.
+    expect(areaMedicaLiberada('medico@clinica.com', false, 'medico')).toBe(true);
+    expect(areaMedicaLiberada('pessoa@2bsupply.com.br', false, 'equipe')).toBe(true);
+    expect(areaMedicaLiberada('cliente@empresa.com', false, '')).toBe(false);
+    // Só 'medico' fica preso à Área Médica; equipe e conta comum usam o resto.
+    expect([soAreaMedica('medico'), soAreaMedica('equipe'), soAreaMedica(''), soAreaMedica(undefined)]).toEqual([true, false, false, false]);
+    expect(caminhoDoMedico('/area-medica')).toBe(true);
+    expect(caminhoDoMedico('/area-medica/qualquer')).toBe(true);
+    for (const fora of ['/chat', '/assistants/kraljic', '/painel', '/area-medicamentos', '/profile']) expect(caminhoDoMedico(fora)).toBe(false);
   });
 });

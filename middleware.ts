@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
+import { caminhoDoMedico, soAreaMedica } from '@/lib/medico/acesso';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { moduloDoCaminho } from '@/lib/modulos/catalogo';
 
@@ -76,7 +77,7 @@ export async function middleware(req: NextRequest) {
     error: profileError,
   } = await supabase
     .from('profiles')
-    .select('role')
+    .select('role, area_medica')
     .eq('id', user.id)
     .maybeSingle();
 
@@ -100,6 +101,23 @@ export async function middleware(req: NextRequest) {
   // inclusive admins dela. Erro na consulta não bloqueia (fail-open):
   // é personalização, não controle de segurança.
   // ============================================================
+
+  // ============================================================
+  // CONTA DA ÁREA MÉDICA
+  //
+  // 'medico': só enxerga a Área Médica. Qualquer outra tela protegida
+  // (chat, assistentes, painel...) leva de volta para ela, sempre.
+  // 'medico' e 'equipe' entram na Área Médica sem passar pela
+  // assinatura do plano de compras: é outro produto.
+  // ============================================================
+
+  const naAreaMedica = caminhoDoMedico(req.nextUrl.pathname);
+  if (soAreaMedica(profile.area_medica) && !naAreaMedica) {
+    return NextResponse.redirect(new URL('/area-medica', req.url));
+  }
+  if (naAreaMedica && (profile.area_medica === 'medico' || profile.area_medica === 'equipe')) {
+    return res;
+  }
 
   const modulo = moduloDoCaminho(req.nextUrl.pathname);
   if (modulo) {

@@ -43,7 +43,20 @@ const NO_MAIS: Aba[] = ['banco', 'cadastros', 'integracoes'];
 /** Atalho da tela inicial: abre a aba já com a janela certa. */
 export type Atalho = 'nova-cirurgia' | 'demonstrativo' | 'direto';
 
-export function AreaMedicaRoot({ estadoInicial, hoje, abaInicial, aviso }: { estadoInicial: EstadoMedico; hoje: string; abaInicial?: string; aviso?: { ok: boolean; texto: string } }) {
+export function AreaMedicaRoot({
+  estadoInicial,
+  hoje,
+  abaInicial,
+  aviso,
+  contaDeMedico = false,
+}: {
+  estadoInicial: EstadoMedico;
+  hoje: string;
+  abaInicial?: string;
+  aviso?: { ok: boolean; texto: string };
+  /** Conta que só usa a Área Médica: a moldura já mostra o nome da área. */
+  contaDeMedico?: boolean;
+}) {
   const [estado, setEstado] = useState(estadoInicial);
   const [aba, setAba] = useState<Aba>(
     ABAS.some((a) => a.id === abaInicial) ? (abaInicial as Aba) : estadoInicial.hospitais.length === 0 ? 'cadastros' : 'visao',
@@ -101,7 +114,7 @@ export function AreaMedicaRoot({ estadoInicial, hoje, abaInicial, aviso }: { est
     <div className="space-y-5 pb-24 sm:pb-0">
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="flex items-center gap-2">
+          <div className={contaDeMedico ? 'sr-only' : 'flex items-center gap-2'}>
             <Stethoscope className="h-6 w-6 text-brand" aria-hidden />
             <h1 className="text-2xl font-semibold tracking-tight">Área Médica</h1>
           </div>
