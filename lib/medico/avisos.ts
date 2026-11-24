@@ -4,6 +4,7 @@ import { sendEmail } from '@/lib/email/client';
 import { hojeEmBrasilia } from '@/lib/vitrine/datas';
 
 import { areaMedicaLiberada } from './acesso';
+import { lembreteDaVespera } from './agenda';
 import { avisoDoDia } from './aviso-texto';
 import { enviarTexto, estadoDaInstancia, INSTANCIA_AVISOS, numeroLimpo, whatsappConfigurado } from './evolution';
 import { carregarEstado } from './service';
@@ -100,4 +101,61 @@ export function horaEmBrasilia(agora: Date = new Date()): number {
 export function horaDeAvisar(agora: Date = new Date()): boolean {
   const h = horaEmBrasilia(agora);
   return h >= 8 && h < 12;
+}
+
+/** Os lembretes da agenda saem na véspera, entre 18h e 21h de Brasília. */
+export function horaDeLembrar(agora: Date = new Date()): boolean {
+  const h = horaEmBrasilia(agora);
+  return h >= 18 && h < 21;
+}
+
+/**
+ * Rodada da noite: quem tem cirurgia marcada para amanhã recebe a agenda pelo
+ * WhatsApp (e por e-mail). Mesma reserva por UPDATE condicional dos avisos:
+ * não duplica.
+ */
+export async function enviarLembretesDaAgenda(): Promise<{ enviados: number }> {
+  const hoje = hojeEmBrasilia();
+  const db = getServerSupabase();
+  const { data: configs } = await db
+    .from('medico_config')
+    .select('user_id')
+    .eq('lembretes_agenda', true)
+    .or(`ultimo_lembrete_em.is.null,ultimo_lembrete_em.lt.${hoje}`)
+    .limit(500);
+
+  let enviados = 0;
+  for (const { user_id } of configs ?? []) {
+    const { data: reservado } = await db
+      .from('medico_config')
+      .update({ ultimo_lembrete_em: hoje })
+      .eq('user_id', user_id)
+      .or(`ultimo_lembrete_em.is.null,ultimo_lembrete_em.lt.${hoje}`)
+      .select('user_id');
+    if (!reservado || reservado.length === 0) continue;
+    try {
+      const estado = await carregarEstado(user_id as string);
+      const lembrete = lembreteDaVespera(estado.cirurgias, estado.hospitais, hoje, estado.config.medico_nome);
+      if (!lembrete) continue;
+      let saiu = false;
+      const numero = numeroLimpo(estado.config.whatsapp_numero);
+      if (numero && whatsappConfigurado() && (await estadoDaInstancia(INSTANCIA_AVISOS)) === 'open') {
+        await enviarTexto(INSTANCIA_AVISOS, numero, lembrete.texto);
+        saiu = true;
+      }
+      if (estado.config.medico_email.trim()) {
+        const r = await sendEmail({
+          to: estado.config.medico_email.trim(),
+          subject: lembrete.assunto,
+          text: lembrete.texto,
+          html: `<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#111">${esc(lembrete.texto).replace(/\n/g, '<br/>')}</div>`,
+        });
+        saiu = saiu || r.ok;
+      }
+      if (saiu) enviados += 1;
+    } catch (err) {
+      console.error('[medico/agenda] lembrete falhou para um médico:', err instanceof Error ? err.message : err);
+    }
+  }
+  return { enviados };
 }

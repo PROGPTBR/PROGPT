@@ -16,6 +16,7 @@ import type {
   Documento,
   Entrada,
   EstadoMedico,
+  Indicacao,
   Hospital,
   HospitalSchema,
   ItemDemonstrativo,
@@ -31,11 +32,11 @@ import type {
 
 const HOSPITAL = 'id, nome, email, prazo_pagamento_dias, exemplo';
 const CIRURGIA =
-  'id, hospital_id, data, paciente, procedimento, convenio, valor, origem, demonstrativo_id, cobrada_em, funcao, registro, cobrancas, observacao, exemplo';
+  'id, hospital_id, data, paciente, procedimento, convenio, valor, origem, demonstrativo_id, cobrada_em, funcao, registro, hora, cobrancas, observacao, exemplo';
 const DEMONSTRATIVO =
   'id, hospital_id, referencia, recebido_em, valor_total, itens, nota_pedida_em, nota_numero, nota_emitida_em, nota_enviada_em, pago_em, valor_pago, exemplo, tipo, pagador_nome, pagador_documento, pagador_contato';
 export const CONFIG =
-  'medico_nome, contador_nome, contador_email, medico_email, whatsapp_numero, chave_pix, avisos_email, avisos_whatsapp, grupo_jid, grupo_nome, empresa_nome, empresa_cnpj, crm, especialidade, contato';
+  'medico_nome, contador_nome, contador_email, medico_email, whatsapp_numero, chave_pix, avisos_email, avisos_whatsapp, lembretes_agenda, grupo_jid, grupo_nome, empresa_nome, empresa_cnpj, crm, especialidade, contato';
 const ENTRADA = 'id, canal, remetente, assunto, texto, recebido_em';
 
 const num = (v: unknown): number | null => (v == null ? null : Number(v));
@@ -56,7 +57,7 @@ function demonstrativoDe(r: Record<string, unknown>): Demonstrativo {
 /** Os dados do médico, sem o que depende de quem está logado (`integracoes` é preenchido pela página e pela rota). */
 export async function carregarEstado(userId: string): Promise<Omit<EstadoMedico, 'integracoes'>> {
   const db = getServerSupabase();
-  const [config, hospitais, cirurgias, demonstrativos, entradas, conta, movimentos, documentos] = await Promise.all([
+  const [config, hospitais, cirurgias, demonstrativos, entradas, conta, movimentos, documentos, indicacoes] = await Promise.all([
     db.from('medico_config').select(CONFIG).eq('user_id', userId).maybeSingle(),
     db.from('medico_hospitais').select(HOSPITAL).eq('user_id', userId).order('nome'),
     db.from('medico_cirurgias').select(CIRURGIA).eq('user_id', userId).order('data', { ascending: false }).limit(2000),
@@ -66,8 +67,9 @@ export async function carregarEstado(userId: string): Promise<Omit<EstadoMedico,
     db.from('medico_banco').select('cnpj, conectado_em, erro').eq('user_id', userId).maybeSingle(),
     db.from('medico_movimentos').select('id, data, sentido, valor, forma, descricao, contraparte, demonstrativo_id').eq('user_id', userId).order('data', { ascending: false }).limit(300),
     db.from('medico_documentos').select('id, demonstrativo_id, tipo, nome, mime, tamanho, created_at').eq('user_id', userId).order('created_at', { ascending: false }).limit(500),
+    db.from('medico_indicacoes').select('id, nome, contato, especialidade, situacao, created_at').eq('user_id', userId).order('created_at', { ascending: false }).limit(300),
   ]);
-  for (const r of [config, hospitais, cirurgias, demonstrativos, entradas, conta, movimentos, documentos]) {
+  for (const r of [config, hospitais, cirurgias, demonstrativos, entradas, conta, movimentos, documentos, indicacoes]) {
     if (r.error) throw new Error(`[medico] leitura falhou: ${r.error.message}`);
   }
   return {
@@ -78,6 +80,7 @@ export async function carregarEstado(userId: string): Promise<Omit<EstadoMedico,
     entradas: (entradas.data ?? []) as Entrada[],
     conta: (conta.data as ContaBanco | null) ?? null,
     documentos: (documentos.data ?? []) as Documento[],
+    indicacoes: (indicacoes.data ?? []) as Indicacao[],
     movimentos: (movimentos.data ?? []).map((m) => ({ ...(m as MovimentoBanco), valor: Number(m.valor) })),
   };
 }

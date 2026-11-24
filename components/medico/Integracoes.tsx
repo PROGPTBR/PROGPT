@@ -89,6 +89,7 @@ export function Integracoes({ estado, enviar, recarregar }: PropsDaAba) {
     chave_pix: config.chave_pix,
     avisos_email: config.avisos_email,
     avisos_whatsapp: config.avisos_whatsapp,
+    lembretes_agenda: config.lembretes_agenda,
   });
   const [salvando, setSalvando] = useState(false);
   const [testando, setTestando] = useState(false);
@@ -185,6 +186,9 @@ export function Integracoes({ estado, enviar, recarregar }: PropsDaAba) {
           </label>
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={form.avisos_email} onChange={(e) => setForm({ ...form, avisos_email: e.target.checked })} /> Avisar por e-mail
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={form.lembretes_agenda} onChange={(e) => setForm({ ...form, lembretes_agenda: e.target.checked })} /> Na véspera, mandar a agenda das cirurgias do dia seguinte
           </label>
           <label>
             <span className={ROTULO}>Sua chave Pix (vai na cobrança ao paciente)</span>

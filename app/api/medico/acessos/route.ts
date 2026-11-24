@@ -31,7 +31,7 @@ export async function GET() {
   const db = getServerSupabase();
   const { data: perfis } = await db.from('profiles').select('id, area_medica').in('area_medica', ['medico', 'equipe']);
   const ids = (perfis ?? []).map((p) => p.id as string);
-  if (ids.length === 0) return NextResponse.json({ acessos: [], avisos: await estadoDosAvisos() }, { headers: { 'Cache-Control': 'private, no-store' } });
+  if (ids.length === 0) return NextResponse.json({ acessos: [], indicacoes: [], avisos: await estadoDosAvisos() }, { headers: { 'Cache-Control': 'private, no-store' } });
 
   // Só números: o painel da 2B Supply não mostra paciente nem valor por cirurgia.
   const hoje = hojeEmBrasilia();
@@ -67,7 +67,28 @@ export async function GET() {
       };
     })
     .sort((a, b) => a.email.localeCompare(b.email));
-  return NextResponse.json({ acessos, avisos: await estadoDosAvisos() }, { headers: { 'Cache-Control': 'private, no-store' } });
+  const { data: indicacoes } = await db.from('medico_indicacoes').select('id, user_id, nome, contato, especialidade, situacao, created_at').order('created_at', { ascending: false }).limit(300);
+  const quem = (id: unknown) => acessos.find((a) => a.id === id);
+  return NextResponse.json(
+    {
+      acessos,
+      avisos: await estadoDosAvisos(),
+      indicacoes: (indicacoes ?? []).map((i) => ({ ...i, indicado_por: quem(i.user_id)?.nome || quem(i.user_id)?.email || '' })),
+    },
+    { headers: { 'Cache-Control': 'private, no-store' } },
+  );
+}
+
+const SituacaoSchema = z.object({ id: z.string().uuid(), situacao: z.enum(['nova', 'em_contato', 'virou_cliente', 'sem_interesse']) });
+
+/** PATCH: a equipe marca como anda o contato com um colega indicado. */
+export async function PATCH(req: Request) {
+  const u = await superAdminOu404();
+  if (u instanceof NextResponse) return u;
+  const body = SituacaoSchema.safeParse(await req.json().catch(() => null));
+  if (!body.success) return NextResponse.json({ error: 'invalid_body', message: 'Pedido inválido.' }, { status: 400 });
+  const { error } = await getServerSupabase().from('medico_indicacoes').update({ situacao: body.data.situacao }).eq('id', body.data.id);
+  return error ? NextResponse.json({ error: 'persist_failed', message: 'Não foi possível salvar agora.' }, { status: 500 }) : NextResponse.json({ ok: true });
 }
 
 /** O que está ligado para o produto inteiro (número de avisos, e-mail, banco). */

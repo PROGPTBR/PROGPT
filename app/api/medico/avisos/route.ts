@@ -2,7 +2,7 @@ import { timingSafeEqual } from 'crypto';
 import { NextResponse } from 'next/server';
 
 import { medicoOuErro } from '@/lib/medico/acesso-servidor';
-import { enviarAvisoPara, enviarAvisosDoDia, horaDeAvisar } from '@/lib/medico/avisos';
+import { enviarAvisoPara, enviarAvisosDoDia, enviarLembretesDaAgenda, horaDeAvisar, horaDeLembrar } from '@/lib/medico/avisos';
 import { renovarConexoes } from '@/lib/medico/btg';
 import { tokenInterno } from '@/lib/medico/evolution';
 
@@ -26,7 +26,8 @@ export async function POST(req: Request) {
     // hora em hora: cada médico recebe no máximo um aviso por dia.
     const btg = await renovarConexoes().catch(() => ({ renovadas: 0, falhas: 0 }));
     const avisos = horaDeAvisar() ? await enviarAvisosDoDia() : { medicos: 0, enviados: 0 };
-    return NextResponse.json({ ...avisos, btg });
+    const lembretes = horaDeLembrar() ? await enviarLembretesDaAgenda() : { enviados: 0 };
+    return NextResponse.json({ ...avisos, lembretes: lembretes.enviados, btg });
   }
 
   const u = await medicoOuErro();

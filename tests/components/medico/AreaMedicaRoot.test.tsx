@@ -21,7 +21,7 @@ function estadoDeExemplo(): EstadoMedico {
   const hospitais: Hospital[] = ex.hospitais.map((h) => ({ id: h.chave, nome: h.nome, email: h.email, prazo_pagamento_dias: h.prazo, exemplo: true }));
   let cirurgias: Cirurgia[] = ex.cirurgias.map((c, i) => ({
     id: `c${i}`, hospital_id: c.hospital, data: c.data, paciente: c.paciente, procedimento: c.procedimento, convenio: c.convenio, valor: c.valor,
-    origem: 'whatsapp', demonstrativo_id: null, cobrada_em: c.cobrancas.at(-1) ?? null, funcao: c.funcao, registro: '', cobrancas: c.cobrancas, observacao: '', exemplo: true,
+    origem: 'whatsapp', demonstrativo_id: null, cobrada_em: c.cobrancas.at(-1) ?? null, funcao: c.funcao, registro: '', hora: '', cobrancas: c.cobrancas, observacao: '', exemplo: true,
   }));
   const demonstrativos: Demonstrativo[] = ex.demonstrativos.map((d, i) => {
     const itens = casarItens(d.itens, cirurgias, d.hospital);
@@ -30,12 +30,12 @@ function estadoDeExemplo(): EstadoMedico {
     return { id: `d${i}`, hospital_id: d.hospital, referencia: d.referencia, recebido_em: d.recebido_em, valor_total: totalDosItens(d.itens), itens,
       nota_pedida_em: d.nota_pedida_em, nota_numero: d.nota_numero, nota_emitida_em: d.nota_emitida_em, nota_enviada_em: d.nota_enviada_em, pago_em: d.pago_em, valor_pago: d.valor_pago, exemplo: true, tipo: 'hospital' as const, pagador_nome: '', pagador_documento: '', pagador_contato: '' };
   });
-  return { config: { ...CONFIG_VAZIA, ...ex.config }, hospitais, cirurgias, demonstrativos, entradas: [], conta: null, movimentos: [], documentos: [], integracoes: INTEGRACOES };
+  return { config: { ...CONFIG_VAZIA, ...ex.config }, hospitais, cirurgias, demonstrativos, entradas: [], conta: null, movimentos: [], documentos: [], indicacoes: [], integracoes: INTEGRACOES };
 }
 
 describe('Área Médica (tela)', () => {
   it('conta nova começa nos cadastros', () => {
-    render(<AreaMedicaRoot estadoInicial={{ config: CONFIG_VAZIA, hospitais: [], cirurgias: [], demonstrativos: [], entradas: [], conta: null, movimentos: [], documentos: [], integracoes: INTEGRACOES }} hoje={HOJE} />);
+    render(<AreaMedicaRoot estadoInicial={{ config: CONFIG_VAZIA, hospitais: [], cirurgias: [], demonstrativos: [], entradas: [], conta: null, movimentos: [], documentos: [], indicacoes: [], integracoes: INTEGRACOES }} hoje={HOJE} />);
     expect(screen.getByText('Hospitais')).toBeTruthy();
     expect(screen.getByRole('button', { name: /Carregar exemplo/ })).toBeTruthy();
   });

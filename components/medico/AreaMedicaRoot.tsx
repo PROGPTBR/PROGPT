@@ -1,16 +1,18 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, ArrowRight, CalendarCheck, Eye, EyeOff, FileText, Home, Landmark, MoreHorizontal, Paperclip, Plus, Send, Sparkles, Stethoscope, Trash2, Zap } from 'lucide-react';
+import { AlertTriangle, ArrowRight, CalendarCheck, CalendarDays, Eye, EyeOff, FileText, Home, Landmark, MoreHorizontal, Paperclip, Plus, Send, Sparkles, Stethoscope, Trash2, UserPlus, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { avisos, pendencias, resumo } from '@/lib/medico/conciliacao';
 import type { EstadoMedico } from '@/lib/medico/types';
+import { Agenda } from './Agenda';
 import { Banco } from './Banco';
 import { Cadastros } from './Cadastros';
 import { Cirurgias } from './Cirurgias';
 import { Demonstrativos } from './Demonstrativos';
 import { Documentos } from './Documentos';
+import { Indicar } from './Indicar';
 import { Integracoes } from './Integracoes';
 import { Pendencias } from './Pendencias';
 import { Botao, brl, CARTAO, chamar, type PropsDaAba } from './ui';
@@ -24,10 +26,12 @@ const ABAS = [
   { id: 'cirurgias', rotulo: 'Cirurgias' },
   { id: 'demonstrativos', rotulo: 'Demonstrativos e notas' },
   { id: 'pendencias', rotulo: 'Pendências a cobrar' },
+  { id: 'agenda', rotulo: 'Agenda' },
   { id: 'documentos', rotulo: 'Documentos' },
   { id: 'banco', rotulo: 'Banco' },
   { id: 'cadastros', rotulo: 'Cadastros' },
   { id: 'integracoes', rotulo: 'Integrações' },
+  { id: 'indicar', rotulo: 'Indicar um colega' },
 ] as const;
 type Aba = (typeof ABAS)[number]['id'];
 
@@ -40,7 +44,7 @@ const BARRA: { id: Aba | 'mais'; rotulo: string; icone: typeof Home }[] = [
   { id: 'pendencias', rotulo: 'Cobrar', icone: Send },
   { id: 'mais', rotulo: 'Mais', icone: MoreHorizontal },
 ];
-const NO_MAIS: Aba[] = ['documentos', 'banco', 'cadastros', 'integracoes'];
+const NO_MAIS: Aba[] = ['agenda', 'documentos', 'banco', 'cadastros', 'integracoes', 'indicar'];
 
 /** Atalho da tela inicial: abre a aba já com a janela certa. */
 export type Atalho = 'nova-cirurgia' | 'demonstrativo' | 'direto';
@@ -169,6 +173,8 @@ export function AreaMedicaRoot({
       {aba === 'cirurgias' && <Cirurgias key={abrir ?? 'lista'} {...props} abrir={abrir} />}
       {aba === 'demonstrativos' && <Demonstrativos key={abrir ?? 'lista'} {...props} abrir={abrir} />}
       {aba === 'pendencias' && <Pendencias {...props} />}
+      {aba === 'agenda' && <Agenda {...props} />}
+      {aba === 'indicar' && <Indicar {...props} />}
       {aba === 'documentos' && <Documentos {...props} />}
       {aba === 'banco' && <Banco {...props} />}
       {aba === 'cadastros' && <Cadastros {...props} />}
@@ -292,8 +298,10 @@ function VisaoGeral({ estado, hoje, irPara }: PropsDaAba & { irPara: (a: Aba, at
               ['Lançar demonstrativo', FileText, () => irPara('demonstrativos', 'demonstrativo')],
               ['Paciente pagou na hora', Zap, () => irPara('demonstrativos', 'direto')],
               ['Cobrar hospital', Send, () => irPara('pendencias')],
+              ['Agenda', CalendarDays, () => irPara('agenda')],
               ['Anexar documento', Paperclip, () => irPara('documentos')],
               ['Banco', Landmark, () => irPara('banco')],
+              ['Indicar um colega', UserPlus, () => irPara('indicar')],
             ] as const
           ).map(([rotulo, Icone, acao]) => (
             <li key={rotulo} className="shrink-0">

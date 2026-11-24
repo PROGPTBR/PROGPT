@@ -10,7 +10,7 @@ const H: Hospital = { id: 'h1', nome: "Niterói D'Or", email: '', prazo_pagament
 const config = { ...CONFIG_VAZIA, medico_nome: 'Ana Teste', empresa_nome: 'Teste Serviços Médicos Ltda', empresa_cnpj: '11.222.333/0001-81', crm: '52.00000-0', especialidade: 'Ortopedia', contato: '(21) 90000-0000' };
 
 function cir(extra: Partial<Cirurgia>): Cirurgia {
-  return { id: 'c', hospital_id: 'h1', data: '2026-07-09', paciente: 'Paciente Exemplo Um', procedimento: '30733073 Reconstrução de ligamento', convenio: 'Bradesco / Nacional III', valor: null, origem: 'manual', demonstrativo_id: null, cobrada_em: null, funcao: '2º Auxiliar', registro: '', cobrancas: [], observacao: '', exemplo: false, ...extra };
+  return { id: 'c', hospital_id: 'h1', data: '2026-07-09', paciente: 'Paciente Exemplo Um', procedimento: '30733073 Reconstrução de ligamento', convenio: 'Bradesco / Nacional III', valor: null, origem: 'manual', demonstrativo_id: null, cobrada_em: null, funcao: '2º Auxiliar', registro: '', hora: '', cobrancas: [], observacao: '', exemplo: false, ...extra };
 }
 
 describe('planilha de pendências no modelo do hospital', () => {

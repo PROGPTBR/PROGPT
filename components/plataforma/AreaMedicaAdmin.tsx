@@ -25,7 +25,8 @@ type Acesso = {
   whatsapp: boolean;
   banco: boolean;
 };
-type Dados = { acessos: Acesso[]; avisos: { whatsapp: string | null; email: boolean; btg: boolean } };
+type IndicacaoAdmin = { id: string; nome: string; contato: string; situacao: string; created_at: string; indicado_por: string };
+type Dados = { acessos: Acesso[]; indicacoes: IndicacaoAdmin[]; avisos: { whatsapp: string | null; email: boolean; btg: boolean } };
 
 export function AreaMedicaAdmin() {
   const [dados, setDados] = useState<Dados | null>(null);
@@ -187,6 +188,42 @@ export function AreaMedicaAdmin() {
           </div>
         )}
         <p className="mt-2 text-xs text-muted-foreground">Os números não contam os dados de exemplo. Verde em WhatsApp = o médico escolheu o grupo das cirurgias; em Banco = ligou a conta.</p>
+      </section>
+
+      <section className={CARTAO}>
+        <h2 className="text-base font-semibold">Colegas indicados pelos médicos</h2>
+        <p className="mt-0.5 text-sm text-muted-foreground">São os contatos para a equipe procurar. Marque como anda cada conversa; o médico que indicou vê a situação.</p>
+        {!dados || dados.indicacoes.length === 0 ? (
+          <p className="mt-2 text-sm text-muted-foreground">Nenhuma indicação ainda.</p>
+        ) : (
+          <ul className="mt-3 divide-y divide-border rounded-xl border border-border text-sm">
+            {dados.indicacoes.map((i) => (
+              <li key={i.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
+                <span className="min-w-0">
+                  <span className="font-medium">{i.nome}</span> <span className="text-muted-foreground">· {i.contato}</span>
+                  <span className="block text-xs text-muted-foreground">
+                    indicado por {i.indicado_por || 'médico'} em {new Date(i.created_at).toLocaleDateString('pt-BR')}
+                  </span>
+                </span>
+                <select
+                  value={i.situacao}
+                  aria-label={`Situação de ${i.nome}`}
+                  onChange={async (e) => {
+                    const r = await chamar('PATCH', '/acessos', { id: i.id, situacao: e.target.value });
+                    if (!r.ok) toast.error(r.mensagem);
+                    await carregar();
+                  }}
+                  className={`${CAMPO} w-auto`}
+                >
+                  <option value="nova">Nova</option>
+                  <option value="em_contato">Em contato</option>
+                  <option value="virou_cliente">Virou cliente</option>
+                  <option value="sem_interesse">Sem interesse</option>
+                </select>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       <section className={CARTAO}>

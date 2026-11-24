@@ -1,3 +1,4 @@
+import { cirurgiasDoDia, linhaDaAgenda } from './agenda';
 import { avisos } from './conciliacao';
 import type { EstadoMedico } from './types';
 
@@ -15,15 +16,21 @@ export function avisoDoDia(estado: Omit<EstadoMedico, 'integracoes'>, hoje: stri
   const email = estado.entradas.filter((e) => e.canal === 'email').length;
   if (zap > 0) linhas.push(`${zap} ${zap === 1 ? 'mensagem nova' : 'mensagens novas'} no grupo das cirurgias para conferir`);
   if (email > 0) linhas.push(`${email} ${email === 1 ? 'e-mail recebido' : 'e-mails recebidos'} para conferir`);
-  if (linhas.length === 0) return null;
+  // A agenda de hoje abre o aviso (sem paciente: só hora, hospital e procedimento).
+  const hojeOpera = cirurgiasDoDia(estado.cirurgias, hoje).filter((c) => c.hora);
+  if (linhas.length === 0 && hojeOpera.length === 0) return null;
 
   // Na cobrança direta o aviso leva o nome de quem paga; fora da tela vai sem.
   const seguras = linhas.map((l) => l.replace(/^.+ \(cobrança direta\):/, 'Cobrança direta:'));
   const nome = estado.config.medico_nome ? `, ${estado.config.medico_nome}` : '';
   const n = seguras.length;
   return {
-    assunto: `Área Médica: ${n} ${n === 1 ? 'pendência' : 'pendências'} hoje`,
+    assunto: n > 0 ? `Área Médica: ${n} ${n === 1 ? 'pendência' : 'pendências'} hoje` : 'Área Médica: sua agenda de hoje',
     linhas: seguras,
-    texto: `Bom dia${nome}. Hoje na Área Médica:\n\n${seguras.map((l) => `• ${l}`).join('\n')}\n\nAbrir: ${url}`,
+    texto:
+      `Bom dia${nome}.` +
+      (hojeOpera.length > 0 ? ` Sua agenda de hoje:\n\n${hojeOpera.map((c) => `• ${linhaDaAgenda(c, estado.hospitais)}`).join('\n')}\n\n` : ' ') +
+      (seguras.length > 0 ? `${hojeOpera.length > 0 ? 'Pendências' : 'Hoje'} na Área Médica:\n\n${seguras.map((l) => `• ${l}`).join('\n')}\n\n` : '') +
+      `Abrir: ${url}`,
   };
 }

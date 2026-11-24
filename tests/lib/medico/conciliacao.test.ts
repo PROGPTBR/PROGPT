@@ -11,7 +11,7 @@ const H: Hospital = { id: 'h1', nome: "Niterói D'Or", email: 'repasse@h.com', p
 const H2: Hospital = { ...H, id: 'h2', nome: 'CHN' };
 
 function cir(id: string, data: string, paciente: string, extra: Partial<Cirurgia> = {}): Cirurgia {
-  return { id, hospital_id: 'h1', data, paciente, procedimento: 'Colecistectomia', convenio: 'Unimed', valor: 3000, origem: 'manual', demonstrativo_id: null, cobrada_em: null, funcao: '', registro: '', cobrancas: [], observacao: '', exemplo: false, ...extra };
+  return { id, hospital_id: 'h1', data, paciente, procedimento: 'Colecistectomia', convenio: 'Unimed', valor: 3000, origem: 'manual', demonstrativo_id: null, cobrada_em: null, funcao: '', registro: '', hora: '', cobrancas: [], observacao: '', exemplo: false, ...extra };
 }
 
 function dem(extra: Partial<Demonstrativo> = {}): Demonstrativo {

@@ -13,6 +13,8 @@ export type MedicoConfig = {
   chave_pix: string;
   avisos_email: boolean;
   avisos_whatsapp: boolean;
+  /** Lembrete, na véspera, das cirurgias marcadas para o dia seguinte. */
+  lembretes_agenda: boolean;
   /** Grupo de WhatsApp de onde o sistema lê as cirurgias. */
   grupo_jid: string;
   grupo_nome: string;
@@ -33,6 +35,7 @@ export const CONFIG_VAZIA: MedicoConfig = {
   chave_pix: '',
   avisos_email: true,
   avisos_whatsapp: true,
+  lembretes_agenda: true,
   grupo_jid: '',
   grupo_nome: '',
   empresa_nome: '',
@@ -98,6 +101,9 @@ export type Documento = {
   created_at: string;
 };
 
+/** Colega indicado pelo médico. */
+export type Indicacao = { id: string; nome: string; contato: string; especialidade: string; situacao: string; created_at: string };
+
 export type ContaBanco = { cnpj: string; conectado_em: string; erro: string };
 
 export type Hospital = {
@@ -122,6 +128,8 @@ export type Cirurgia = {
   /** Papel na cirurgia (cirurgião, 1º auxiliar...) e o número de registro da descrição cirúrgica. */
   funcao: string;
   registro: string;
+  /** Hora marcada (HH:MM), para a agenda. Vazio quando não foi informada. */
+  hora: string;
   /** Datas em que a cirurgia foi cobrada do hospital (uma por planilha enviada). */
   cobrancas: string[];
   observacao: string;
@@ -170,6 +178,7 @@ export type EstadoMedico = {
   conta: ContaBanco | null;
   movimentos: MovimentoBanco[];
   documentos: Documento[];
+  indicacoes: Indicacao[];
   integracoes: Integracoes;
 };
 
@@ -185,6 +194,7 @@ export const ConfigSchema = z.object({
   chave_pix: texto(140).default(''),
   avisos_email: z.boolean().default(true),
   avisos_whatsapp: z.boolean().default(true),
+  lembretes_agenda: z.boolean().default(true),
   empresa_nome: texto(160).default(''),
   empresa_cnpj: texto(20).default(''),
   crm: texto(30).default(''),
@@ -222,6 +232,7 @@ export const CirurgiaSchema = z.object({
   origem: z.enum(['manual', 'whatsapp', 'demonstrativo']).default('manual'),
   funcao: texto(40).default(''),
   registro: texto(60).default(''),
+  hora: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).or(z.literal('')).default(''),
   observacao: texto(500).default(''),
 });
 
@@ -257,4 +268,8 @@ export const DemonstrativoPatchSchema = z.object({
   nota_enviada_em: dia.nullable().optional(),
   pago_em: dia.nullable().optional(),
   valor_pago: z.number().min(0).max(100_000_000).nullable().optional(),
+});
+
+export const IndicacoesSchema = z.object({
+  indicacoes: z.array(z.object({ nome: texto(120).min(2), contato: texto(120).min(5), especialidade: texto(80).default('') })).min(1).max(200),
 });
