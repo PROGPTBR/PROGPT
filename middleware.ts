@@ -264,5 +264,6 @@ export const config = {
     '/obras-materiais/:path*',
     '/gestao-demandas/:path*',
     '/recebimento/:path*',
+    '/area-medica/:path*',
   ],
 };

@@ -7,6 +7,7 @@ import { ReplySchema } from '@/lib/assistants/comprador-inbox';
 import { ExtracaoTributariaSchema } from '@/lib/tributario/extrair';
 import { PlanoSchema } from '@/lib/mapa-fornecedores/tipos';
 import { NotaExtraidaSchema, PedidoExtraidoSchema } from '@/lib/recebimento/extrair';
+import { CirurgiasExtraidasSchema, DemonstrativoExtraidoSchema } from '@/lib/medico/extrair';
 
 // O tier de geração em produção (gpt-5.x) é tratado como modelo de raciocínio
 // pelo @ai-sdk/openai, que liga o modo ESTRITO do structured output: o OpenAI
@@ -38,6 +39,8 @@ describe('esquemas de generateObject compatíveis com o modo estrito', () => {
     ['PlanoSchema (mapa de fornecedores)', PlanoSchema],
     ['NotaExtraidaSchema (recebimento)', NotaExtraidaSchema],
     ['PedidoExtraidoSchema (recebimento)', PedidoExtraidoSchema],
+    ['CirurgiasExtraidasSchema (área médica)', CirurgiasExtraidasSchema],
+    ['DemonstrativoExtraidoSchema (área médica)', DemonstrativoExtraidoSchema],
   ])('%s não tem campo opcional', (_n, schema) => {
     expect(camposOpcionais(zodToJsonSchema(schema as never, { target: 'openApi3' }))).toEqual([]);
   });

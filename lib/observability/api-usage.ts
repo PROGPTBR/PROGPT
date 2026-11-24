@@ -113,7 +113,9 @@ export type ApiOperation =
   | 'mapa-fornecedores-relatorio'
   | 'chat-tool-websearch'
   | 'recebimento-ler-nota'
-  | 'recebimento-importar-pedido';
+  | 'recebimento-importar-pedido'
+  | 'medico-ler-cirurgias'
+  | 'medico-ler-demonstrativo';
 
 export type RecordUsageInput = {
   provider: ApiProvider;

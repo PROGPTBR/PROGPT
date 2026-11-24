@@ -1,0 +1,293 @@
+import { getServerSupabase } from '@/lib/db/supabase';
+
+import { casarItens, totalDosItens } from './conciliacao';
+import { dadosDeExemplo } from './exemplo';
+import type { z } from 'zod';
+import type {
+  Cirurgia,
+  CirurgiaPatchSchema,
+  CirurgiaSchema,
+  Demonstrativo,
+  DemonstrativoPatchSchema,
+  DemonstrativoSchema,
+  EstadoMedico,
+  Hospital,
+  HospitalSchema,
+  ItemDemonstrativo,
+  MedicoConfig,
+} from './types';
+
+// Serviço da Área Médica (sub-projeto 100).
+//
+// Tudo passa por service-role, e o filtro `.eq('user_id')` EXPLÍCITO é o que
+// segura o isolamento entre médicos. Remover o filtro vaza paciente de um
+// médico para outro.
+
+const HOSPITAL = 'id, nome, email, prazo_pagamento_dias, exemplo';
+const CIRURGIA =
+  'id, hospital_id, data, paciente, procedimento, convenio, valor, origem, demonstrativo_id, cobrada_em, observacao, exemplo';
+const DEMONSTRATIVO =
+  'id, hospital_id, referencia, recebido_em, valor_total, itens, nota_pedida_em, nota_numero, nota_emitida_em, nota_enviada_em, pago_em, valor_pago, exemplo';
+
+const num = (v: unknown): number | null => (v == null ? null : Number(v));
+
+function cirurgiaDe(r: Record<string, unknown>): Cirurgia {
+  return { ...(r as Cirurgia), valor: num(r.valor) };
+}
+
+function demonstrativoDe(r: Record<string, unknown>): Demonstrativo {
+  return {
+    ...(r as Demonstrativo),
+    valor_total: Number(r.valor_total ?? 0),
+    valor_pago: num(r.valor_pago),
+    itens: Array.isArray(r.itens) ? (r.itens as ItemDemonstrativo[]) : [],
+  };
+}
+
+export async function carregarEstado(userId: string): Promise<EstadoMedico> {
+  const db = getServerSupabase();
+  const [config, hospitais, cirurgias, demonstrativos] = await Promise.all([
+    db.from('medico_config').select('medico_nome, contador_nome, contador_email').eq('user_id', userId).maybeSingle(),
+    db.from('medico_hospitais').select(HOSPITAL).eq('user_id', userId).order('nome'),
+    db.from('medico_cirurgias').select(CIRURGIA).eq('user_id', userId).order('data', { ascending: false }).limit(2000),
+    db.from('medico_demonstrativos').select(DEMONSTRATIVO).eq('user_id', userId).order('recebido_em', { ascending: false }).limit(500),
+  ]);
+  for (const r of [config, hospitais, cirurgias, demonstrativos]) {
+    if (r.error) throw new Error(`[medico] leitura falhou: ${r.error.message}`);
+  }
+  return {
+    config: (config.data as MedicoConfig | null) ?? { medico_nome: '', contador_nome: '', contador_email: '' },
+    hospitais: (hospitais.data ?? []) as Hospital[],
+    cirurgias: (cirurgias.data ?? []).map(cirurgiaDe),
+    demonstrativos: (demonstrativos.data ?? []).map(demonstrativoDe),
+  };
+}
+
+export async function salvarConfig(userId: string, config: MedicoConfig): Promise<boolean> {
+  const { error } = await getServerSupabase()
+    .from('medico_config')
+    .upsert({ user_id: userId, ...config, updated_at: new Date().toISOString() });
+  return !error;
+}
+
+async function hospitalDoUsuario(userId: string, hospitalId: string): Promise<boolean> {
+  const { data } = await getServerSupabase()
+    .from('medico_hospitais')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('id', hospitalId)
+    .maybeSingle();
+  return !!data;
+}
+
+export async function criarHospital(userId: string, h: z.infer<typeof HospitalSchema>): Promise<Hospital | null> {
+  const { data, error } = await getServerSupabase()
+    .from('medico_hospitais')
+    .insert({ user_id: userId, ...h })
+    .select(HOSPITAL)
+    .single();
+  return error ? null : (data as Hospital);
+}
+
+export async function atualizarHospital(userId: string, id: string, h: Partial<z.infer<typeof HospitalSchema>>): Promise<boolean> {
+  const { error } = await getServerSupabase().from('medico_hospitais').update(h).eq('user_id', userId).eq('id', id);
+  return !error;
+}
+
+/** Erro que a rota mostra ao médico como está. */
+export class RegraMedica extends Error {}
+
+export async function criarCirurgias(userId: string, lista: z.infer<typeof CirurgiaSchema>[]): Promise<Cirurgia[]> {
+  const ids = [...new Set(lista.map((c) => c.hospital_id))];
+  for (const id of ids) {
+    if (!(await hospitalDoUsuario(userId, id))) throw new RegraMedica('Escolha um hospital cadastrado.');
+  }
+  const { data, error } = await getServerSupabase()
+    .from('medico_cirurgias')
+    .insert(lista.map((c) => ({ user_id: userId, ...c })))
+    .select(CIRURGIA);
+  if (error) throw new Error(`[medico] gravar cirurgias falhou: ${error.message}`);
+  return (data ?? []).map(cirurgiaDe);
+}
+
+export async function atualizarCirurgia(userId: string, id: string, patch: z.infer<typeof CirurgiaPatchSchema>): Promise<boolean> {
+  if (patch.hospital_id && !(await hospitalDoUsuario(userId, patch.hospital_id))) {
+    throw new RegraMedica('Escolha um hospital cadastrado.');
+  }
+  const { error } = await getServerSupabase().from('medico_cirurgias').update(patch).eq('user_id', userId).eq('id', id);
+  return !error;
+}
+
+/**
+ * Grava o demonstrativo e faz o cruzamento com as cirurgias do médico:
+ * cada linha que casa marca a cirurgia como incluída; linha sem cirurgia
+ * correspondente vira cirurgia nova (o hospital pagou algo que o médico não
+ * tinha anotado), se `criar_faltantes`.
+ */
+export async function criarDemonstrativo(
+  userId: string,
+  input: z.infer<typeof DemonstrativoSchema>,
+): Promise<{ id: string; casadas: number; criadas: number }> {
+  if (!(await hospitalDoUsuario(userId, input.hospital_id))) throw new RegraMedica('Escolha um hospital cadastrado.');
+  const db = getServerSupabase();
+
+  const { data: abertas, error: erroAbertas } = await db
+    .from('medico_cirurgias')
+    .select(CIRURGIA)
+    .eq('user_id', userId)
+    .eq('hospital_id', input.hospital_id)
+    .is('demonstrativo_id', null);
+  if (erroAbertas) throw new Error(`[medico] leitura falhou: ${erroAbertas.message}`);
+
+  const itens = casarItens(input.itens, (abertas ?? []).map(cirurgiaDe), input.hospital_id);
+
+  const { data: novo, error } = await db
+    .from('medico_demonstrativos')
+    .insert({
+      user_id: userId,
+      hospital_id: input.hospital_id,
+      referencia: input.referencia,
+      recebido_em: input.recebido_em,
+      valor_total: input.valor_total ?? totalDosItens(input.itens),
+      itens,
+    })
+    .select('id')
+    .single();
+  if (error || !novo) throw new Error(`[medico] gravar demonstrativo falhou: ${error?.message}`);
+  const id = novo.id as string;
+
+  const casadas = itens.filter((i) => i.cirurgia_id).map((i) => i.cirurgia_id!) as string[];
+  if (casadas.length > 0) {
+    await db.from('medico_cirurgias').update({ demonstrativo_id: id }).eq('user_id', userId).in('id', casadas);
+  }
+
+  let criadas = 0;
+  const faltantes = itens.map((item, i) => ({ item, i })).filter(({ item }) => !item.cirurgia_id && item.data);
+  if (input.criar_faltantes && faltantes.length > 0) {
+    const { data: novas } = await db
+      .from('medico_cirurgias')
+      .insert(
+        faltantes.map(({ item }) => ({
+          user_id: userId,
+          hospital_id: input.hospital_id,
+          data: item.data,
+          paciente: item.paciente,
+          procedimento: item.procedimento,
+          convenio: item.convenio,
+          valor: item.valor,
+          origem: 'demonstrativo',
+          demonstrativo_id: id,
+        })),
+      )
+      .select('id');
+    if (novas && novas.length === faltantes.length) {
+      faltantes.forEach(({ i }, k) => (itens[i]!.cirurgia_id = novas[k]!.id as string));
+      await db.from('medico_demonstrativos').update({ itens }).eq('user_id', userId).eq('id', id);
+      criadas = novas.length;
+    }
+  }
+
+  return { id, casadas: casadas.length, criadas };
+}
+
+export async function atualizarDemonstrativo(
+  userId: string,
+  id: string,
+  patch: z.infer<typeof DemonstrativoPatchSchema>,
+): Promise<boolean> {
+  const { error } = await getServerSupabase().from('medico_demonstrativos').update(patch).eq('user_id', userId).eq('id', id);
+  return !error;
+}
+
+const TABELA = {
+  hospitais: 'medico_hospitais',
+  cirurgias: 'medico_cirurgias',
+  demonstrativos: 'medico_demonstrativos',
+} as const;
+export type Recurso = keyof typeof TABELA;
+export const RECURSOS = Object.keys(TABELA) as Recurso[];
+
+export async function apagar(userId: string, recurso: Recurso, id: string): Promise<boolean> {
+  const db = getServerSupabase();
+  if (recurso === 'demonstrativos') {
+    // Cirurgias que só existiam por causa deste demonstrativo saem junto; as
+    // que o médico anotou voltam a ficar em aberto (o FK já zera o vínculo).
+    await db.from('medico_cirurgias').delete().eq('user_id', userId).eq('demonstrativo_id', id).eq('origem', 'demonstrativo');
+  }
+  const { error } = await db.from(TABELA[recurso]).delete().eq('user_id', userId).eq('id', id);
+  return !error;
+}
+
+// ---------------------------------------------------------------------------
+// Dados de exemplo: gravados na conta de quem pediu, marcados `exemplo`, para
+// a apresentação. Apagar o exemplo não toca em dado real.
+
+export async function apagarExemplo(userId: string): Promise<void> {
+  // Os hospitais de exemplo levam junto cirurgias e demonstrativos (cascade).
+  await getServerSupabase().from('medico_hospitais').delete().eq('user_id', userId).eq('exemplo', true);
+}
+
+export async function carregarExemplo(userId: string, hoje: string): Promise<void> {
+  await apagarExemplo(userId);
+  const db = getServerSupabase();
+  const ex = dadosDeExemplo(hoje);
+
+  const { data: hospitais, error } = await db
+    .from('medico_hospitais')
+    .insert(ex.hospitais.map((h) => ({ user_id: userId, exemplo: true, nome: h.nome, email: h.email, prazo_pagamento_dias: h.prazo })))
+    .select('id, nome');
+  if (error || !hospitais) throw new Error(`[medico] exemplo falhou: ${error?.message}`);
+  const idDe = (chave: string) => hospitais.find((h) => h.nome === ex.hospitais.find((x) => x.chave === chave)!.nome)!.id as string;
+
+  const { data: cirurgias, error: erroC } = await db
+    .from('medico_cirurgias')
+    .insert(
+      ex.cirurgias.map((c) => ({
+        user_id: userId,
+        exemplo: true,
+        hospital_id: idDe(c.hospital),
+        data: c.data,
+        paciente: c.paciente,
+        procedimento: c.procedimento,
+        convenio: c.convenio,
+        valor: c.valor,
+        origem: 'whatsapp',
+      })),
+    )
+    .select(CIRURGIA);
+  if (erroC || !cirurgias) throw new Error(`[medico] exemplo falhou: ${erroC?.message}`);
+  let abertas = cirurgias.map(cirurgiaDe);
+
+  for (const d of ex.demonstrativos) {
+    const hospital_id = idDe(d.hospital);
+    const itens = casarItens(d.itens, abertas, hospital_id);
+    const { data: novo } = await db
+      .from('medico_demonstrativos')
+      .insert({
+        user_id: userId,
+        exemplo: true,
+        hospital_id,
+        referencia: d.referencia,
+        recebido_em: d.recebido_em,
+        valor_total: totalDosItens(d.itens),
+        itens,
+        nota_pedida_em: d.nota_pedida_em,
+        nota_numero: d.nota_numero,
+        nota_emitida_em: d.nota_emitida_em,
+        nota_enviada_em: d.nota_enviada_em,
+        pago_em: d.pago_em,
+        valor_pago: d.valor_pago,
+      })
+      .select('id')
+      .single();
+    if (!novo) continue;
+    const ids = itens.filter((i) => i.cirurgia_id).map((i) => i.cirurgia_id!) as string[];
+    if (ids.length > 0) {
+      await db.from('medico_cirurgias').update({ demonstrativo_id: novo.id }).eq('user_id', userId).in('id', ids);
+      abertas = abertas.map((c) => (ids.includes(c.id) ? { ...c, demonstrativo_id: novo.id as string } : c));
+    }
+  }
+
+  const { data: config } = await db.from('medico_config').select('user_id').eq('user_id', userId).maybeSingle();
+  if (!config) await salvarConfig(userId, ex.config);
+}

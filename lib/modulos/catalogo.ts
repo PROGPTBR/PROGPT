@@ -33,6 +33,9 @@ export const MODULOS: readonly Modulo[] = [
   { id: 'obras_materiais', rotulo: 'Obras & Materiais', grupo: 'plataforma', caminhos: ['/obras-materiais'] },
   { id: 'gestao_demandas', rotulo: 'Gestão de Demandas', grupo: 'plataforma', caminhos: ['/gestao-demandas'] },
   { id: 'recebimento', rotulo: 'Recebimento de NF', grupo: 'plataforma', caminhos: ['/recebimento'] },
+  // Área particular (sub-projeto 100): além deste liga/desliga por empresa, só
+  // aparece para quem está em EMAILS_AREA_MEDICA (lib/medico/acesso.ts).
+  { id: 'area_medica', rotulo: 'Área Médica', grupo: 'plataforma', caminhos: ['/area-medica'] },
   // Assistentes
   { id: 'abc', rotulo: 'Análise ABC', grupo: 'assistentes', caminhos: ['/assistants/abc'] },
   { id: 'spend_analysis', rotulo: 'Análise de Gastos', grupo: 'assistentes', caminhos: ['/assistants/spend_analysis'] },

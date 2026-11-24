@@ -26,6 +26,7 @@ import {
   FolderKanban,
   Warehouse,
   PackageCheck,
+  Stethoscope,
 } from 'lucide-react';
 
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -132,6 +133,14 @@ const GESTAO_ITEMS = [
     label: 'Recebimento de NF',
     description: 'Nota do fornecedor conferida contra o pedido, almoxarifado e liberação do pagamento.',
     icon: PackageCheck,
+  },
+  // Área Médica (sub-projeto 100): particular, só aparece para quem foi
+  // liberado (a rota de módulos a devolve como desligada para os demais).
+  {
+    href: '/area-medica',
+    label: 'Área Médica',
+    description: 'Cirurgias, demonstrativos dos hospitais, notas e pagamentos.',
+    icon: Stethoscope,
   },
 ] as const;
 
