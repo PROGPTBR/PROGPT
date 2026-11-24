@@ -119,6 +119,13 @@ export async function middleware(req: NextRequest) {
     return res;
   }
 
+  // /account só passa por aqui para fechar a porta à conta de médico (acima).
+  // Para os demais nada muda: quem está com a assinatura vencida precisa
+  // chegar à tela de pagamento, então não há checagem de assinatura nela.
+  if (req.nextUrl.pathname.startsWith('/account')) {
+    return res;
+  }
+
   const modulo = moduloDoCaminho(req.nextUrl.pathname);
   if (modulo) {
     const { data: desligados } = await supabase.rpc('modulos_desativados');
@@ -285,5 +292,6 @@ export const config = {
     '/gestao-demandas/:path*',
     '/recebimento/:path*',
     '/area-medica/:path*',
+    '/account/:path*',
   ],
 };
