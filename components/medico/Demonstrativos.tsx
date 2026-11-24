@@ -30,10 +30,10 @@ const DATA_DA_ETAPA: Record<Etapa, keyof Demonstrativo> = {
   pago: 'pago_em',
 };
 
-export function Demonstrativos(props: PropsDaAba) {
+export function Demonstrativos(props: PropsDaAba & { abrir?: string | null }) {
   const { estado, enviar } = props;
-  const [novo, setNovo] = useState(false);
-  const [direto, setDireto] = useState(false);
+  const [novo, setNovo] = useState(props.abrir === 'demonstrativo');
+  const [direto, setDireto] = useState(props.abrir === 'direto');
   const [conferindo, setConferindo] = useState<Entrada | null>(null);
   const emails = estado.entradas.filter((e) => e.canal === 'email');
 

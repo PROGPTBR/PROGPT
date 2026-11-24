@@ -55,7 +55,9 @@ export async function middleware(req: NextRequest) {
   // ============================================================
 
   if (userError || !user) {
-    const url = new URL('/login', req.url);
+    // A Área Médica tem entrada própria, feita para o médico.
+    const entrada = req.nextUrl.pathname.startsWith('/area-medica') ? '/medicos' : '/login';
+    const url = new URL(entrada, req.url);
 
     url.searchParams.set(
       'next',

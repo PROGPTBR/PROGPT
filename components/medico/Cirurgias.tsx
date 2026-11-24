@@ -49,10 +49,10 @@ export function hospitalPeloNome(nome: string | null, estado: EstadoMedico): str
   return achado?.id ?? '';
 }
 
-export function Cirurgias({ estado, hoje, enviar }: PropsDaAba) {
+export function Cirurgias({ estado, hoje, enviar, abrir }: PropsDaAba & { abrir?: string | null }) {
   const [filtroHospital, setFiltroHospital] = useState('');
   const [filtroSituacao, setFiltroSituacao] = useState('');
-  const [nova, setNova] = useState(false);
+  const [nova, setNova] = useState(abrir === 'nova-cirurgia');
   const [colar, setColar] = useState(false);
   const [doGrupo, setDoGrupo] = useState<Entrada[] | null>(null);
   const novas = useMemo(() => estado.entradas.filter((e) => e.canal === 'whatsapp'), [estado.entradas]);
