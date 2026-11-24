@@ -81,7 +81,7 @@ describe('Área Médica (tela)', () => {
 
   it('caixa de entrada: mensagens do grupo e e-mail recebido aparecem para conferir', () => {
     const estado = estadoDeExemplo();
-    estado.config.grupo_nome = 'Cirurgias Dr. Ricardo';
+    estado.config.grupo_nome = 'Cirurgias Dr. Eduardo';
     estado.entradas = [
       { id: 'e1', canal: 'whatsapp', remetente: 'Secretária', assunto: '', texto: 'feita hoje hérnia do J.P.', recebido_em: '2026-11-24T12:00:00Z' },
       { id: 'e2', canal: 'whatsapp', remetente: 'Você', assunto: '', texto: 'ok', recebido_em: '2026-11-24T12:05:00Z' },

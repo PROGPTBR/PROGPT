@@ -1,4 +1,7 @@
 // Dados fictícios da Área Médica (sub-projeto 100), para a apresentação.
+// O médico do exemplo leva o nome do Dr. Eduardo Kastrup (pedido do Alexandre,
+// 2026-11-24: a apresentação é para ele) e os procedimentos são de ortopedia.
+// Empresa, CNPJ, CRM, telefone e pacientes continuam inventados.
 // Datas relativas a hoje, para os prazos e avisos fazerem sentido em qualquer
 // dia. Nenhum nome é de paciente real.
 
@@ -25,25 +28,25 @@ export function dadosDeExemplo(hoje: string) {
 
   const cirurgias = [
     // Niterói D'Or: mês passado (pago) e mês corrente (parte sem pagamento).
-    c('dor', -78, 'M. A. S.', 'Colecistectomia videolaparoscópica', 'Bradesco Saúde', 3200),
-    c('dor', -74, 'J. P. R.', 'Hernioplastia inguinal', 'SulAmérica', 2600),
-    c('dor', -70, 'C. L. F.', 'Apendicectomia', 'Amil', 2400),
-    c('dor', -52, 'R. T. O.', 'Colecistectomia videolaparoscópica', 'Unimed', 3200),
-    c('dor', -49, 'A. B. C.', 'Hernioplastia umbilical', 'Bradesco Saúde', 2100),
-    c('dor', -47, 'L. M. N.', 'Gastroplastia', 'SulAmérica', 6800),
-    c('dor', -45, 'P. H. S.', 'Apendicectomia', 'Particular', 4500),
-    c('dor', -41, 'F. G. A.', 'Hernioplastia inguinal', 'Amil', 2600),
-    c('dor', -12, 'T. R. V.', 'Colecistectomia videolaparoscópica', 'Unimed', 3200),
-    c('dor', -6, 'E. S. M.', 'Hernioplastia incisional', 'Bradesco Saúde', 3900),
+    c('dor', -78, 'M. A. S.', 'Reconstrução de ligamento do joelho', 'Bradesco Saúde', 3200),
+    c('dor', -74, 'J. P. R.', 'Reparo do manguito rotador', 'SulAmérica', 2600),
+    c('dor', -70, 'C. L. F.', 'Fratura de punho: redução e fixação', 'Amil', 2400),
+    c('dor', -52, 'R. T. O.', 'Reconstrução de ligamento do joelho', 'Unimed', 3200),
+    c('dor', -49, 'A. B. C.', 'Sutura de menisco', 'Bradesco Saúde', 2100),
+    c('dor', -47, 'L. M. N.', 'Artroplastia total de joelho', 'SulAmérica', 6800),
+    c('dor', -45, 'P. H. S.', 'Fratura de punho: redução e fixação', 'Particular', 4500),
+    c('dor', -41, 'F. G. A.', 'Reparo do manguito rotador', 'Amil', 2600),
+    c('dor', -12, 'T. R. V.', 'Reconstrução de ligamento do joelho', 'Unimed', 3200),
+    c('dor', -6, 'E. S. M.', 'Fratura de fêmur: tratamento cirúrgico', 'Bradesco Saúde', 3900),
     // CHN
-    c('chn', -40, 'V. C. D.', 'Tireoidectomia', 'Unimed', 5200),
-    c('chn', -36, 'N. O. P.', 'Colecistectomia videolaparoscópica', 'Amil', 3100),
-    c('chn', -20, 'G. F. L.', 'Hernioplastia inguinal', 'SulAmérica', 2500),
-    c('chn', -9, 'D. A. R.', 'Apendicectomia', 'Bradesco Saúde', 2400),
+    c('chn', -40, 'V. C. D.', 'Artroplastia total de quadril', 'Unimed', 5200),
+    c('chn', -36, 'N. O. P.', 'Reconstrução de ligamento do joelho', 'Amil', 3100),
+    c('chn', -20, 'G. F. L.', 'Reparo do manguito rotador', 'SulAmérica', 2500),
+    c('chn', -9, 'D. A. R.', 'Fratura de punho: redução e fixação', 'Bradesco Saúde', 2400),
     // Hospital Itaipu
-    c('itaipu', -33, 'S. M. B.', 'Hernioplastia umbilical', 'Unimed', 2000),
-    c('itaipu', -30, 'I. C. T.', 'Colecistectomia videolaparoscópica', 'Amil', 3000),
-    c('itaipu', -4, 'B. R. S.', 'Hernioplastia inguinal', 'Particular', 3800),
+    c('itaipu', -33, 'S. M. B.', 'Sutura de menisco', 'Unimed', 2000),
+    c('itaipu', -30, 'I. C. T.', 'Reconstrução de ligamento do joelho', 'Amil', 3000),
+    c('itaipu', -4, 'B. R. S.', 'Reparo do manguito rotador', 'Particular', 3800),
   ];
 
   const linhas = (hospital: string, de: number, ate: number, fora: string[] = []): LinhaEx[] =>
@@ -75,13 +78,13 @@ export function dadosDeExemplo(hoje: string) {
 
   return {
     config: {
-      medico_nome: 'Dr. Ricardo Menezes',
+      medico_nome: 'Dr. Eduardo Kastrup',
       contador_nome: 'Paula',
       contador_email: 'paula@contabilidade-exemplo.com.br',
-      empresa_nome: 'Menezes Serviços Médicos Ltda',
+      empresa_nome: 'Empresa de exemplo Serviços Ortopédicos Ltda',
       empresa_cnpj: '11.222.333/0001-81',
       crm: '52.00000-0',
-      especialidade: 'Cirurgia geral',
+      especialidade: 'Ortopedia',
       contato: '(21) 90000-0000',
     } as const,
     hospitais: [
