@@ -10,7 +10,7 @@ import type { EstadoMedico } from '@/lib/medico/types';
 // Peças compartilhadas das telas da Área Médica (sub-projeto 100).
 
 export const CAMPO =
-  'w-full rounded-xl border border-input bg-background px-3 h-10 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20';
+  'w-full rounded-xl border border-input bg-background px-3 h-10 text-sm outline-none focus:border-medico focus:ring-2 focus:ring-medico/20';
 export const ROTULO = 'mb-1 block text-xs font-medium text-muted-foreground';
 export const CARTAO = 'rounded-2xl border border-border bg-card p-4 sm:p-5';
 export const TH = 'px-3 py-2 font-medium whitespace-nowrap';
@@ -89,7 +89,7 @@ export function Botao({
 }) {
   const cor =
     tipo === 'primario'
-      ? 'bg-brand text-white hover:bg-brand/90'
+      ? 'bg-medico text-white hover:bg-medico/90'
       : tipo === 'perigo'
         ? 'border border-red-500/40 text-red-700 hover:bg-red-500/10 dark:text-red-300'
         : 'border border-border hover:bg-muted';

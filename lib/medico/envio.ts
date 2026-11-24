@@ -2,6 +2,7 @@ import { sendEmail } from '@/lib/email/client';
 
 import { enviarDocumento, enviarTexto, estadoDaInstancia, instanciaDoMedico, numeroLimpo, whatsappConfigurado } from './evolution';
 import { cobranca, cobrancaAoPaciente, envioDaNota, pedidoDeNota, pedidoDeNotaDireto, type Mensagem } from './mensagens';
+import { notaGuardada } from './documentos';
 import { nomeDoArquivo, planilhaDePendencias } from './planilha-pendencias';
 import { atualizarDemonstrativo, carregarEstado, registrarCobranca, RegraMedica } from './service';
 
@@ -57,6 +58,11 @@ export async function enviarMensagem(
     } else {
       throw new RegraMedica('Esse envio não vale para este registro.');
     }
+  }
+
+  // Sem anexo escolhido na hora, a nota guardada no recebimento vai junto.
+  if (!anexo && (pedido.tipo === 'envio_nota' || pedido.tipo === 'cobranca_paciente')) {
+    anexo = await notaGuardada(userId, pedido.id).catch(() => null);
   }
 
   const corpo = (pedido.corpo ?? '').trim().slice(0, 20_000) || mensagem.corpo;

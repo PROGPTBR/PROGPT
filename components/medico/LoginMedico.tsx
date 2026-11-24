@@ -66,7 +66,7 @@ export function LoginMedico() {
       </div>
       <p className="text-center text-xs text-muted-foreground">
         Primeiro acesso ou esqueceu a senha?{' '}
-        <a href={AJUDA} target="_blank" rel="noreferrer" className="font-medium text-brand hover:underline">
+        <a href={AJUDA} target="_blank" rel="noreferrer" className="font-medium text-medico hover:underline">
           Fale com a gente
         </a>
       </p>

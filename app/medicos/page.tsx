@@ -4,6 +4,7 @@ import { ShieldCheck, Smartphone, Stethoscope } from 'lucide-react';
 
 import { AppNaMao } from '@/components/medico/AppNaMao';
 import { LoginMedico } from '@/components/medico/LoginMedico';
+import { TemaClaro } from '@/components/medico/TemaClaro';
 import { getCurrentUser } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
@@ -19,38 +20,46 @@ export default async function MedicosPage() {
   if (await getCurrentUser()) redirect('/area-medica');
 
   return (
-    <div className="relative flex min-h-screen flex-col bg-background text-foreground antialiased">
-      <div aria-hidden className="pointer-events-none absolute -top-24 right-0 h-96 w-96 rounded-full bg-brand/10 blur-3xl" />
-      <div aria-hidden className="pointer-events-none absolute bottom-0 left-0 h-80 w-80 rounded-full bg-brand/5 blur-3xl" />
-      <header className="relative z-10 mx-auto flex h-16 w-full max-w-[1500px] items-center px-4 sm:px-6 lg:px-10">
-        <span className="flex items-center gap-2 text-base font-semibold">
-          <Stethoscope className="h-6 w-6 text-brand" aria-hidden /> Área Médica
-        </span>
-      </header>
-
-      <main className="relative z-10 mx-auto grid w-full max-w-[1500px] flex-1 items-center gap-10 px-4 pb-12 pt-4 sm:px-6 lg:grid-cols-[1.35fr_1fr] lg:px-10">
-        <section className="order-2 lg:order-1">
-          <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Você opera. O app cobra, confere e avisa quando o dinheiro cai.</h1>
-          <p className="mt-3 max-w-2xl text-base text-muted-foreground">
-            Chega de planilha: cada cirurgia é acompanhada do demonstrativo do hospital até o pagamento, e o que ficou sem pagar é cobrado até entrar.
-          </p>
-          <div className="mt-8">
-            <AppNaMao />
+    <div className="min-h-screen bg-[#f6f8fc] text-neutral-900 antialiased">
+      <TemaClaro />
+      <main className="mx-auto grid min-h-screen w-full max-w-[1600px] gap-6 p-3 sm:p-5 lg:grid-cols-[1.4fr_1fr]">
+        {/* Painel azul-marinho: o que o app faz, com o celular na mão */}
+        <section className="relative order-2 overflow-hidden rounded-[2rem] bg-gradient-to-br from-medico-escuro via-medico to-medico-claro p-6 text-white shadow-[0_24px_60px_rgba(10,31,77,0.30)] sm:p-10 lg:order-1">
+          <svg aria-hidden viewBox="0 0 800 300" preserveAspectRatio="none" className="pointer-events-none absolute inset-x-0 bottom-0 h-56 w-full opacity-20">
+            <path d="M0 230 C 120 210, 180 110, 300 150 S 500 250, 600 130 S 740 50, 800 80 L800 300 L0 300 Z" fill="white" fillOpacity="0.2" />
+            <path d="M0 230 C 120 210, 180 110, 300 150 S 500 250, 600 130 S 740 50, 800 80" fill="none" stroke="white" strokeWidth="2" />
+          </svg>
+          <div className="relative">
+            <p className="flex items-center gap-2 text-sm font-semibold">
+              <span className="grid h-9 w-9 place-items-center rounded-full bg-white/15 ring-1 ring-white/25">
+                <Stethoscope className="h-5 w-5" aria-hidden />
+              </span>
+              Área Médica
+            </p>
+            <h1 className="mt-6 max-w-2xl text-3xl font-semibold leading-tight tracking-tight sm:text-5xl">Você opera. O app cobra, confere e avisa quando o dinheiro cai.</h1>
+            <p className="mt-4 max-w-xl text-base text-white/80">Cada cirurgia é acompanhada do demonstrativo do hospital até o pagamento, e o que ficou sem pagar é cobrado até entrar.</p>
+            <div className="mt-10">
+              <AppNaMao />
+            </div>
+            <ul className="mt-10 flex flex-wrap gap-x-6 gap-y-2 text-sm text-white/80">
+              <li className="flex items-center gap-1.5">
+                <Smartphone className="h-4 w-4" aria-hidden /> Funciona no celular, como um aplicativo
+              </li>
+              <li className="flex items-center gap-1.5">
+                <ShieldCheck className="h-4 w-4" aria-hidden /> Acesso só seu, com os seus dados separados
+              </li>
+            </ul>
           </div>
-          <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
-            <li className="flex items-center gap-1.5">
-              <Smartphone className="h-4 w-4 text-brand" aria-hidden /> Funciona no celular, como um aplicativo
-            </li>
-            <li className="flex items-center gap-1.5">
-              <ShieldCheck className="h-4 w-4 text-brand" aria-hidden /> Acesso só seu, com os seus dados separados
-            </li>
-          </ul>
         </section>
 
-        <section className="order-1 lg:order-2">
-          <div className="mx-auto w-full max-w-md rounded-3xl border border-border bg-card p-6 shadow-xl sm:p-8">
-            <h2 className="text-xl font-semibold">Entrar</h2>
-            <p className="mb-5 mt-1 text-sm text-muted-foreground">Use o e-mail e a senha que você recebeu.</p>
+        {/* Login */}
+        <section className="order-1 flex items-center justify-center lg:order-2">
+          <div className="w-full max-w-md rounded-[2rem] bg-white p-7 shadow-[0_18px_50px_rgba(10,31,77,0.10)] ring-1 ring-black/5 sm:p-9">
+            <span className="grid h-12 w-12 place-items-center rounded-2xl bg-medico text-white">
+              <Stethoscope className="h-6 w-6" aria-hidden />
+            </span>
+            <h2 className="mt-5 text-2xl font-semibold tracking-tight">Entrar</h2>
+            <p className="mb-6 mt-1 text-sm text-neutral-500">Use o e-mail e a senha que você recebeu.</p>
             <LoginMedico />
           </div>
         </section>

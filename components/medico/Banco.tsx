@@ -100,7 +100,7 @@ export function Banco({ estado, hoje, enviar }: PropsDaAba) {
     <div className="space-y-5">
       <section className={CARTAO}>
         <h2 className="flex items-center gap-2 text-base font-semibold">
-          <Landmark className="h-5 w-5 text-brand" aria-hidden /> Conta no BTG Empresas
+          <Landmark className="h-5 w-5 text-medico" aria-hidden /> Conta no BTG Empresas
         </h2>
         {conta ? (
           <div className="mt-2 flex flex-wrap items-center justify-between gap-3 text-sm">

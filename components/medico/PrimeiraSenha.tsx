@@ -30,7 +30,7 @@ export function PrimeiraSenha() {
 
   return (
     <div className="mx-auto mt-10 w-full max-w-md rounded-3xl border border-border bg-card p-6 shadow-xl sm:p-8">
-      <KeyRound className="h-8 w-8 text-brand" aria-hidden />
+      <KeyRound className="h-8 w-8 text-medico" aria-hidden />
       <h1 className="mt-3 text-xl font-semibold">Crie a sua senha</h1>
       <p className="mt-1 text-sm text-muted-foreground">Você entrou com a senha temporária. Escolha agora a sua: só você vai saber, e é com ela que você entra daqui para a frente.</p>
       <form

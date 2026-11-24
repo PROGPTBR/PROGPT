@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, ArrowRight, CalendarCheck, Eye, EyeOff, FileText, Home, Landmark, MoreHorizontal, Plus, Send, Sparkles, Stethoscope, Trash2, Zap } from 'lucide-react';
+import { AlertTriangle, ArrowRight, CalendarCheck, Eye, EyeOff, FileText, Home, Landmark, MoreHorizontal, Paperclip, Plus, Send, Sparkles, Stethoscope, Trash2, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { avisos, pendencias, resumo } from '@/lib/medico/conciliacao';
@@ -10,6 +10,7 @@ import { Banco } from './Banco';
 import { Cadastros } from './Cadastros';
 import { Cirurgias } from './Cirurgias';
 import { Demonstrativos } from './Demonstrativos';
+import { Documentos } from './Documentos';
 import { Integracoes } from './Integracoes';
 import { Pendencias } from './Pendencias';
 import { Botao, brl, CARTAO, chamar, type PropsDaAba } from './ui';
@@ -23,6 +24,7 @@ const ABAS = [
   { id: 'cirurgias', rotulo: 'Cirurgias' },
   { id: 'demonstrativos', rotulo: 'Demonstrativos e notas' },
   { id: 'pendencias', rotulo: 'Pendências a cobrar' },
+  { id: 'documentos', rotulo: 'Documentos' },
   { id: 'banco', rotulo: 'Banco' },
   { id: 'cadastros', rotulo: 'Cadastros' },
   { id: 'integracoes', rotulo: 'Integrações' },
@@ -38,7 +40,7 @@ const BARRA: { id: Aba | 'mais'; rotulo: string; icone: typeof Home }[] = [
   { id: 'pendencias', rotulo: 'Cobrar', icone: Send },
   { id: 'mais', rotulo: 'Mais', icone: MoreHorizontal },
 ];
-const NO_MAIS: Aba[] = ['banco', 'cadastros', 'integracoes'];
+const NO_MAIS: Aba[] = ['documentos', 'banco', 'cadastros', 'integracoes'];
 
 /** Atalho da tela inicial: abre a aba já com a janela certa. */
 export type Atalho = 'nova-cirurgia' | 'demonstrativo' | 'direto';
@@ -111,11 +113,11 @@ export function AreaMedicaRoot({
   }
 
   return (
-    <div className="space-y-5 pb-24 sm:pb-0">
+    <div className="space-y-5 pb-28 sm:pb-0">
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <div className={contaDeMedico ? 'sr-only' : 'flex items-center gap-2'}>
-            <Stethoscope className="h-6 w-6 text-brand" aria-hidden />
+            <Stethoscope className="h-6 w-6 text-medico" aria-hidden />
             <h1 className="text-2xl font-semibold tracking-tight">Área Médica</h1>
           </div>
           <p className="mt-1 hidden text-sm text-muted-foreground sm:block">
@@ -149,12 +151,12 @@ export function AreaMedicaRoot({
             onClick={() => irPara(a.id)}
             aria-current={aba === a.id ? 'page' : undefined}
             className={`whitespace-nowrap border-b-2 px-3 py-2 text-sm font-medium transition ${
-              aba === a.id ? 'border-brand text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'
+              aba === a.id ? 'border-medico text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'
             }`}
           >
             {a.rotulo}
             {(a.id === 'cirurgias' || a.id === 'demonstrativos') && novas[a.id] > 0 && (
-              <span className="ml-1.5 rounded-full bg-brand/15 px-1.5 py-0.5 text-[11px] font-semibold text-brand" title="Chegou e espera conferência">{novas[a.id]}</span>
+              <span className="ml-1.5 rounded-full bg-medico/15 px-1.5 py-0.5 text-[11px] font-semibold text-medico" title="Chegou e espera conferência">{novas[a.id]}</span>
             )}
             {a.id === 'pendencias' && nPendentes > 0 && (
               <span className="ml-1.5 rounded-full bg-red-500/15 px-1.5 py-0.5 text-[11px] font-semibold text-red-700 dark:text-red-300">{nPendentes}</span>
@@ -167,13 +169,14 @@ export function AreaMedicaRoot({
       {aba === 'cirurgias' && <Cirurgias key={abrir ?? 'lista'} {...props} abrir={abrir} />}
       {aba === 'demonstrativos' && <Demonstrativos key={abrir ?? 'lista'} {...props} abrir={abrir} />}
       {aba === 'pendencias' && <Pendencias {...props} />}
+      {aba === 'documentos' && <Documentos {...props} />}
       {aba === 'banco' && <Banco {...props} />}
       {aba === 'cadastros' && <Cadastros {...props} />}
       {aba === 'integracoes' && <Integracoes {...props} />}
 
       {mais && (
         <div className="fixed inset-0 z-40 flex items-end bg-black/40 sm:hidden" onClick={() => setMais(false)}>
-          <div className="w-full rounded-t-3xl border-t border-border bg-background p-4 pb-24" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full rounded-t-3xl border-t border-border bg-background p-4 pb-28" onClick={(e) => e.stopPropagation()}>
             <div aria-hidden className="mx-auto mb-3 h-1 w-10 rounded-full bg-muted" />
             {ABAS.filter((a) => NO_MAIS.includes(a.id)).map((a) => (
               <button key={a.id} type="button" onClick={() => irPara(a.id)} className="flex w-full items-center justify-between rounded-2xl px-3 py-3.5 text-left text-sm font-medium hover:bg-muted">
@@ -184,23 +187,24 @@ export function AreaMedicaRoot({
         </div>
       )}
 
-      <nav aria-label="Navegação do aplicativo" className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-background/95 backdrop-blur sm:hidden" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
-        <ul className="grid grid-cols-5">
+      <nav aria-label="Navegação do aplicativo" className="fixed inset-x-0 bottom-0 z-50 sm:hidden" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        <ul className="mx-3 mb-3 grid grid-cols-5 rounded-[1.75rem] border border-border bg-background/95 px-1 py-1.5 shadow-[0_8px_30px_rgba(10,31,77,0.18)] backdrop-blur">
           {BARRA.map((b) => {
             const ativa = b.id === 'mais' ? mais || NO_MAIS.includes(aba) : !mais && aba === b.id;
+            const novo = (b.id === 'pendencias' && nPendentes > 0) || (b.id === 'cirurgias' && novas.cirurgias > 0) || (b.id === 'demonstrativos' && novas.demonstrativos > 0);
             return (
               <li key={b.id}>
                 <button
                   type="button"
                   onClick={() => (b.id === 'mais' ? setMais((v) => !v) : irPara(b.id))}
                   aria-current={ativa ? 'page' : undefined}
-                  className={`relative flex w-full flex-col items-center gap-0.5 py-2.5 text-[11px] font-medium ${ativa ? 'text-brand' : 'text-muted-foreground'}`}
+                  className={`flex w-full flex-col items-center gap-0.5 text-[10px] font-medium ${ativa ? 'text-medico' : 'text-muted-foreground'}`}
                 >
-                  <b.icone className="h-5 w-5" aria-hidden />
+                  <span className={`relative grid h-10 w-10 place-items-center rounded-full transition ${ativa ? 'bg-medico/12 text-medico' : ''}`}>
+                    <b.icone className="h-[22px] w-[22px]" aria-hidden />
+                    {novo && <span className={`absolute right-1.5 top-1.5 h-2 w-2 rounded-full ring-2 ring-background ${b.id === 'pendencias' ? 'bg-red-500' : 'bg-medico-claro'}`} aria-hidden />}
+                  </span>
                   {b.rotulo}
-                  {b.id === 'pendencias' && nPendentes > 0 && <span className="absolute right-[26%] top-1.5 h-2 w-2 rounded-full bg-red-500" aria-hidden />}
-                  {b.id === 'cirurgias' && novas.cirurgias > 0 && <span className="absolute right-[26%] top-1.5 h-2 w-2 rounded-full bg-brand" aria-hidden />}
-                  {b.id === 'demonstrativos' && novas.demonstrativos > 0 && <span className="absolute right-[26%] top-1.5 h-2 w-2 rounded-full bg-brand" aria-hidden />}
                 </button>
               </li>
             );
@@ -264,7 +268,12 @@ function VisaoGeral({ estado, hoje, irPara }: PropsDaAba & { irPara: (a: Aba, at
 
   return (
     <div className="space-y-5">
-      <section className="rounded-3xl bg-brand p-5 text-white shadow-lg sm:p-6">
+      <section className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-medico-escuro via-medico to-medico-claro p-5 text-white shadow-[0_18px_50px_rgba(10,31,77,0.28)] sm:p-7">
+        <svg aria-hidden viewBox="0 0 400 160" preserveAspectRatio="none" className="pointer-events-none absolute inset-x-0 bottom-0 h-28 w-full opacity-25">
+          <path d="M0 120 C 60 110, 90 60, 150 78 S 250 130, 300 70 S 370 30, 400 44 L400 160 L0 160 Z" fill="white" fillOpacity="0.18" />
+          <path d="M0 120 C 60 110, 90 60, 150 78 S 250 130, 300 70 S 370 30, 400 44" fill="none" stroke="white" strokeWidth="2" />
+        </svg>
+        <div className="relative">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="text-sm text-white/80">Olá{estado.config.medico_nome ? `, ${estado.config.medico_nome.split(' ').slice(0, 2).join(' ')}` : ''}</p>
@@ -283,12 +292,13 @@ function VisaoGeral({ estado, hoje, irPara }: PropsDaAba & { irPara: (a: Aba, at
               ['Lançar demonstrativo', FileText, () => irPara('demonstrativos', 'demonstrativo')],
               ['Paciente pagou na hora', Zap, () => irPara('demonstrativos', 'direto')],
               ['Cobrar hospital', Send, () => irPara('pendencias')],
+              ['Anexar documento', Paperclip, () => irPara('documentos')],
               ['Banco', Landmark, () => irPara('banco')],
             ] as const
           ).map(([rotulo, Icone, acao]) => (
             <li key={rotulo} className="shrink-0">
               <button type="button" onClick={acao} className="flex w-[4.75rem] flex-col items-center gap-1.5 text-center text-[11px] font-medium leading-tight">
-                <span className="grid h-14 w-14 place-items-center rounded-full bg-white/15 transition hover:bg-white/25">
+                <span className="grid h-14 w-14 place-items-center rounded-full bg-white/15 ring-1 ring-white/20 transition hover:scale-105 hover:bg-white/25 active:scale-95">
                   <Icone className="h-6 w-6" aria-hidden />
                 </span>
                 {rotulo}
@@ -296,6 +306,7 @@ function VisaoGeral({ estado, hoje, irPara }: PropsDaAba & { irPara: (a: Aba, at
             </li>
           ))}
         </ul>
+        </div>
       </section>
 
       <div className="grid gap-3 sm:grid-cols-3">

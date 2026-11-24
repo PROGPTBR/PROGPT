@@ -30,12 +30,12 @@ function estadoDeExemplo(): EstadoMedico {
     return { id: `d${i}`, hospital_id: d.hospital, referencia: d.referencia, recebido_em: d.recebido_em, valor_total: totalDosItens(d.itens), itens,
       nota_pedida_em: d.nota_pedida_em, nota_numero: d.nota_numero, nota_emitida_em: d.nota_emitida_em, nota_enviada_em: d.nota_enviada_em, pago_em: d.pago_em, valor_pago: d.valor_pago, exemplo: true, tipo: 'hospital' as const, pagador_nome: '', pagador_documento: '', pagador_contato: '' };
   });
-  return { config: { ...CONFIG_VAZIA, ...ex.config }, hospitais, cirurgias, demonstrativos, entradas: [], conta: null, movimentos: [], integracoes: INTEGRACOES };
+  return { config: { ...CONFIG_VAZIA, ...ex.config }, hospitais, cirurgias, demonstrativos, entradas: [], conta: null, movimentos: [], documentos: [], integracoes: INTEGRACOES };
 }
 
 describe('Área Médica (tela)', () => {
   it('conta nova começa nos cadastros', () => {
-    render(<AreaMedicaRoot estadoInicial={{ config: CONFIG_VAZIA, hospitais: [], cirurgias: [], demonstrativos: [], entradas: [], conta: null, movimentos: [], integracoes: INTEGRACOES }} hoje={HOJE} />);
+    render(<AreaMedicaRoot estadoInicial={{ config: CONFIG_VAZIA, hospitais: [], cirurgias: [], demonstrativos: [], entradas: [], conta: null, movimentos: [], documentos: [], integracoes: INTEGRACOES }} hoje={HOJE} />);
     expect(screen.getByText('Hospitais')).toBeTruthy();
     expect(screen.getByRole('button', { name: /Carregar exemplo/ })).toBeTruthy();
   });

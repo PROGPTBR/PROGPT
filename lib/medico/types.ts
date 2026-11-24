@@ -78,6 +78,26 @@ export type MovimentoBanco = {
   demonstrativo_id: string | null;
 };
 
+/** Documento guardado pelo médico. O caminho do arquivo fica só no servidor. */
+export const TIPOS_DE_DOCUMENTO = ['nota', 'demonstrativo', 'comprovante', 'pendencias', 'outro'] as const;
+export type TipoDeDocumento = (typeof TIPOS_DE_DOCUMENTO)[number];
+export const TIPO_DE_DOCUMENTO_LABEL: Record<TipoDeDocumento, string> = {
+  nota: 'Nota fiscal',
+  demonstrativo: 'Demonstrativo do hospital',
+  comprovante: 'Comprovante de pagamento',
+  pendencias: 'Planilha de pendências',
+  outro: 'Outro documento',
+};
+export type Documento = {
+  id: string;
+  demonstrativo_id: string | null;
+  tipo: TipoDeDocumento;
+  nome: string;
+  mime: string;
+  tamanho: number;
+  created_at: string;
+};
+
 export type ContaBanco = { cnpj: string; conectado_em: string; erro: string };
 
 export type Hospital = {
@@ -149,6 +169,7 @@ export type EstadoMedico = {
   /** Conta ligada ao banco (null se não ligou) e os últimos movimentos. */
   conta: ContaBanco | null;
   movimentos: MovimentoBanco[];
+  documentos: Documento[];
   integracoes: Integracoes;
 };
 

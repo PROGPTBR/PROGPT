@@ -73,7 +73,7 @@ export function Cirurgias({ estado, hoje, enviar, abrir }: PropsDaAba & { abrir?
   return (
     <div className="space-y-4">
       {novas.length > 0 && (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-brand/40 bg-brand/5 px-4 py-3 text-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-medico/40 bg-medico/5 px-4 py-3 text-sm">
           <p>
             <strong>
               {novas.length} {novas.length === 1 ? 'mensagem nova' : 'mensagens novas'}

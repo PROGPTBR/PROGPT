@@ -56,7 +56,7 @@ export function AppNaMao() {
 
       {/* O celular na mão */}
       <div className="am-mao relative shrink-0" style={{ animation: 'am-flutua 6s ease-in-out infinite' }}>
-        <svg aria-hidden viewBox="0 0 320 560" className="absolute -left-10 top-10 h-[520px] w-[300px] text-foreground/10" fill="currentColor">
+        <svg aria-hidden viewBox="0 0 320 560" className="absolute -left-10 top-10 h-[520px] w-[300px] text-white/15" fill="currentColor">
           {/* palma e dedos atrás do aparelho */}
           <rect x="60" y="250" width="230" height="300" rx="90" />
           <rect x="262" y="150" width="46" height="170" rx="23" />
@@ -67,9 +67,9 @@ export function AppNaMao() {
           type="button"
           onClick={() => ir((cena + 1) % CENAS.length)}
           aria-label="Avançar a demonstração"
-          className="relative block h-[500px] w-[250px] rounded-[2.6rem] border-[10px] border-neutral-900 bg-background text-left shadow-2xl dark:border-neutral-700"
+          className="relative block h-[500px] w-[250px] rounded-[2.6rem] border-[10px] border-neutral-900 bg-white text-left text-neutral-900 shadow-2xl"
         >
-          <span aria-hidden className="absolute left-1/2 top-2 h-5 w-24 -translate-x-1/2 rounded-full bg-neutral-900 dark:bg-neutral-700" />
+          <span aria-hidden className="absolute left-1/2 top-2 h-5 w-24 -translate-x-1/2 rounded-full bg-neutral-900" />
           <div key={`${cena}-${volta}`} className="flex h-full flex-col overflow-hidden rounded-[1.9rem] px-4 pb-4 pt-10">
             <Tela cena={atual.id} />
           </div>
@@ -79,11 +79,11 @@ export function AppNaMao() {
       {/* Capítulos: o que está passando, clicável */}
       <div className="w-full max-w-md">
         <div className="mb-3 flex items-center justify-between">
-          <p className="text-xs font-semibold uppercase tracking-wider text-brand">Veja em 20 segundos</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-white/70">Veja em 20 segundos</p>
           <button
             type="button"
             onClick={() => setTocando((v) => !v)}
-            className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1 text-xs font-medium hover:bg-muted"
+            className="inline-flex items-center gap-1.5 rounded-full border border-white/30 px-3 py-1 text-xs font-medium text-white hover:bg-white/10"
           >
             {tocando ? <Pause className="h-3.5 w-3.5" aria-hidden /> : <Play className="h-3.5 w-3.5" aria-hidden />}
             {tocando ? 'Pausar' : 'Continuar'}
@@ -98,15 +98,15 @@ export function AppNaMao() {
                   type="button"
                   onClick={() => ir(i)}
                   aria-current={ativa ? 'step' : undefined}
-                  className={`relative w-full overflow-hidden rounded-2xl border px-4 py-3 text-left transition ${ativa ? 'border-brand/50 bg-brand/5' : 'border-border hover:bg-muted/60'}`}
+                  className={`relative w-full overflow-hidden rounded-2xl border px-4 py-3 text-left transition ${ativa ? 'border-white/50 bg-white/15' : 'border-white/15 hover:bg-white/10'}`}
                 >
-                  <span className="flex items-center gap-2 text-sm font-semibold">
-                    <c.icone className={`h-4 w-4 ${ativa ? 'text-brand' : 'text-muted-foreground'}`} aria-hidden />
+                  <span className="flex items-center gap-2 text-sm font-semibold text-white">
+                    <c.icone className={`h-4 w-4 ${ativa ? 'text-white' : 'text-white/60'}`} aria-hidden />
                     {c.titulo}
                   </span>
-                  {ativa && <span className="mt-1 block text-sm text-muted-foreground">{c.texto}</span>}
+                  {ativa && <span className="mt-1 block text-sm text-white/80">{c.texto}</span>}
                   {ativa && tocando && (
-                    <span key={volta} aria-hidden className="absolute bottom-0 left-0 h-0.5 w-full origin-left bg-brand" style={{ animation: `am-progresso ${DURACAO_MS}ms linear both` }} />
+                    <span key={volta} aria-hidden className="absolute bottom-0 left-0 h-0.5 w-full origin-left bg-white" style={{ animation: `am-progresso ${DURACAO_MS}ms linear both` }} />
                   )}
                 </button>
               </li>
@@ -131,8 +131,8 @@ function Tela({ cena }: { cena: (typeof CENAS)[number]['id'] }) {
         <div className="am-item mt-2 mr-auto max-w-[85%] rounded-2xl rounded-bl-sm bg-muted px-3 py-2 text-xs" style={atraso(1)}>
           Ok doutor, anotado
         </div>
-        <div className="am-item mt-auto rounded-2xl border border-brand/40 bg-brand/5 p-3" style={atraso(3)}>
-          <p className="flex items-center gap-1.5 text-[11px] font-semibold text-brand">
+        <div className="am-item mt-auto rounded-2xl border border-medico/40 bg-medico/5 p-3" style={atraso(3)}>
+          <p className="flex items-center gap-1.5 text-[11px] font-semibold text-medico">
             <Stethoscope className="h-3.5 w-3.5" aria-hidden /> Cirurgia registrada
           </p>
           <p className="mt-1 text-xs font-medium">Reconstrução de ligamento</p>
@@ -191,7 +191,7 @@ function Tela({ cena }: { cena: (typeof CENAS)[number]['id'] }) {
           <span className="font-semibold">Enviada ao hospital</span>
           <span className="block text-muted-foreground">Cobrada 2 vezes, sem resposta há 31 dias</span>
         </p>
-        <div className="am-item mt-auto rounded-full bg-brand px-4 py-2.5 text-center text-xs font-semibold text-white" style={atraso(4)}>
+        <div className="am-item mt-auto rounded-full bg-medico px-4 py-2.5 text-center text-xs font-semibold text-white" style={atraso(4)}>
           Cobrar de novo
         </div>
       </>
@@ -214,7 +214,7 @@ function Tela({ cena }: { cena: (typeof CENAS)[number]['id'] }) {
         {barras.map((h, i) => (
           <span
             key={i}
-            className={`flex-1 origin-bottom rounded-t-md ${i === barras.length - 1 ? 'bg-brand' : 'bg-brand/30'}`}
+            className={`flex-1 origin-bottom rounded-t-md ${i === barras.length - 1 ? 'bg-medico' : 'bg-medico/30'}`}
             style={{ height: `${h}%`, animation: `am-barra 0.7s ease-out ${0.6 + i * 0.12}s both` }}
           />
         ))}

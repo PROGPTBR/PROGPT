@@ -129,7 +129,7 @@ export function Integracoes({ estado, enviar, recarregar }: PropsDaAba) {
     <div className="grid gap-5 lg:grid-cols-2">
       <section className={CARTAO}>
         <h2 className="flex items-center gap-2 text-base font-semibold">
-          <MessageCircle className="h-5 w-5 text-brand" aria-hidden /> Seu WhatsApp
+          <MessageCircle className="h-5 w-5 text-medico" aria-hidden /> Seu WhatsApp
         </h2>
         <p className="mt-0.5 text-sm text-muted-foreground">
           Conecte o seu número para o sistema ler sozinho o grupo onde as cirurgias são avisadas e para mandar a cobrança ao paciente. Só as mensagens de texto do grupo escolhido são guardadas; conversas particulares e outros grupos não são lidos.
@@ -166,7 +166,7 @@ export function Integracoes({ estado, enviar, recarregar }: PropsDaAba) {
 
       <section className={CARTAO}>
         <h2 className="flex items-center gap-2 text-base font-semibold">
-          <BellRing className="h-5 w-5 text-brand" aria-hidden /> Avisos fora da tela
+          <BellRing className="h-5 w-5 text-medico" aria-hidden /> Avisos fora da tela
         </h2>
         <p className="mt-0.5 text-sm text-muted-foreground">
           Toda manhã, se houver algo parado (nota para pedir, nota para enviar, pagamento atrasado, cirurgia sem pagamento), você recebe um resumo. O aviso não leva nome de paciente.
@@ -204,7 +204,7 @@ export function Integracoes({ estado, enviar, recarregar }: PropsDaAba) {
 
       <section className={CARTAO}>
         <h2 className="flex items-center gap-2 text-base font-semibold">
-          <Mail className="h-5 w-5 text-brand" aria-hidden /> E-mail
+          <Mail className="h-5 w-5 text-medico" aria-hidden /> E-mail
         </h2>
         <div className="mt-2 space-y-3 text-sm">
           <div>

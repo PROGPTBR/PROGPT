@@ -7,6 +7,7 @@ import { AreaMedicaRoot } from '@/components/medico/AreaMedicaRoot';
 import { soAreaMedica } from '@/lib/medico/acesso';
 import { usuarioComAreaMedica } from '@/lib/medico/acesso-servidor';
 import { ShellDoMedico } from '@/components/medico/ShellDoMedico';
+import { TemaClaro } from '@/components/medico/TemaClaro';
 import { estadoCompleto } from '@/lib/medico/integracoes';
 import { hojeEmBrasilia } from '@/lib/vitrine/datas';
 
@@ -46,5 +47,10 @@ export default async function AreaMedicaPage({ searchParams }: { searchParams: {
 
   // A conta de médico só tem a Área Médica: moldura própria, sem o menu do resto do sistema.
   if (soAreaMedica(perfil?.area_medica)) return <ShellDoMedico>{conteudo}</ShellDoMedico>;
-  return <AppShell back={{ href: '/chat', label: 'Voltar ao chat' }}>{conteudo}</AppShell>;
+  return (
+    <AppShell back={{ href: '/chat', label: 'Voltar ao chat' }}>
+      <TemaClaro />
+      {conteudo}
+    </AppShell>
+  );
 }

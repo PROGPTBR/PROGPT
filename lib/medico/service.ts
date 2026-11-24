@@ -13,6 +13,7 @@ import type {
   DemonstrativoSchema,
   DiretoSchema,
   ContaBanco,
+  Documento,
   Entrada,
   EstadoMedico,
   Hospital,
@@ -55,7 +56,7 @@ function demonstrativoDe(r: Record<string, unknown>): Demonstrativo {
 /** Os dados do médico, sem o que depende de quem está logado (`integracoes` é preenchido pela página e pela rota). */
 export async function carregarEstado(userId: string): Promise<Omit<EstadoMedico, 'integracoes'>> {
   const db = getServerSupabase();
-  const [config, hospitais, cirurgias, demonstrativos, entradas, conta, movimentos] = await Promise.all([
+  const [config, hospitais, cirurgias, demonstrativos, entradas, conta, movimentos, documentos] = await Promise.all([
     db.from('medico_config').select(CONFIG).eq('user_id', userId).maybeSingle(),
     db.from('medico_hospitais').select(HOSPITAL).eq('user_id', userId).order('nome'),
     db.from('medico_cirurgias').select(CIRURGIA).eq('user_id', userId).order('data', { ascending: false }).limit(2000),
@@ -64,8 +65,9 @@ export async function carregarEstado(userId: string): Promise<Omit<EstadoMedico,
     // Nunca seleciona o refresh token: ele só é lido em lib/medico/btg.ts.
     db.from('medico_banco').select('cnpj, conectado_em, erro').eq('user_id', userId).maybeSingle(),
     db.from('medico_movimentos').select('id, data, sentido, valor, forma, descricao, contraparte, demonstrativo_id').eq('user_id', userId).order('data', { ascending: false }).limit(300),
+    db.from('medico_documentos').select('id, demonstrativo_id, tipo, nome, mime, tamanho, created_at').eq('user_id', userId).order('created_at', { ascending: false }).limit(500),
   ]);
-  for (const r of [config, hospitais, cirurgias, demonstrativos, entradas, conta, movimentos]) {
+  for (const r of [config, hospitais, cirurgias, demonstrativos, entradas, conta, movimentos, documentos]) {
     if (r.error) throw new Error(`[medico] leitura falhou: ${r.error.message}`);
   }
   return {
@@ -75,6 +77,7 @@ export async function carregarEstado(userId: string): Promise<Omit<EstadoMedico,
     demonstrativos: (demonstrativos.data ?? []).map(demonstrativoDe),
     entradas: (entradas.data ?? []) as Entrada[],
     conta: (conta.data as ContaBanco | null) ?? null,
+    documentos: (documentos.data ?? []) as Documento[],
     movimentos: (movimentos.data ?? []).map((m) => ({ ...(m as MovimentoBanco), valor: Number(m.valor) })),
   };
 }

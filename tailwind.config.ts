@@ -44,6 +44,13 @@ const config: Config = {
         // 2B Supply brand palette — derived from the logo (cyan -> blue).
         // `brand` (DEFAULT) keeps every existing `bg-brand`/`text-brand` working;
         // `brand-cyan`/`brand-blue` expose the two gradient stops directly.
+        // Área Médica (sub-projeto 108): identidade própria, azul-marinho de
+        // banco, separada da marca do sistema de compras.
+        medico: {
+          DEFAULT: '#12357a',
+          escuro: '#0a1f4d',
+          claro: '#2563eb',
+        },
         brand: {
           DEFAULT: '#0e8de1',
           cyan: '#0ed1e0',

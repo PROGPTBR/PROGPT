@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Check, ChevronDown, FileUp, Mail, Plus, Trash2, Undo2, Zap } from 'lucide-react';
+import { Check, ChevronDown, FileUp, Mail, Paperclip, Plus, Trash2, Undo2, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { CompradorImportDialog } from '@/components/assistants/CompradorImportDialog';
@@ -9,6 +9,7 @@ import { casarItens, ETAPA_LABEL, ETAPA_LABEL_DIRETO, ETAPAS, etapaDe, PROXIMO_P
 import { cobrancaAoPaciente, envioDaNota, pedidoDeNota, pedidoDeNotaDireto } from '@/lib/medico/mensagens';
 import type { Demonstrativo, Entrada } from '@/lib/medico/types';
 import { hospitalPeloNome } from './Cirurgias';
+import { Anexar, ListaDeDocumentos } from './Documentos';
 import { Botao, brl, CAMPO, CARTAO, chamar, dataBr, Janela, JanelaDeMensagem, lerNumero, ROTULO, Selo, TD, TH, type PropsDaAba } from './ui';
 
 // Demonstrativos e notas: cada demonstrativo que o hospital manda percorre
@@ -56,9 +57,9 @@ export function Demonstrativos(props: PropsDaAba & { abrir?: string | null }) {
       </div>
 
       {emails.map((e) => (
-        <div key={e.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-brand/40 bg-brand/5 px-4 py-3 text-sm">
+        <div key={e.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-medico/40 bg-medico/5 px-4 py-3 text-sm">
           <p className="min-w-0">
-            <Mail className="mr-1.5 inline h-4 w-4 text-brand" aria-hidden />
+            <Mail className="mr-1.5 inline h-4 w-4 text-medico" aria-hidden />
             <strong>Chegou por e-mail:</strong> {e.assunto || 'sem assunto'}
             <span className="text-muted-foreground"> · {e.remetente}</span>
           </p>
@@ -90,6 +91,8 @@ function CartaoDoDemonstrativo({ d, estado, hoje, enviar, recarregar }: PropsDaA
   const indice = ETAPAS.indexOf(etapa);
   const [aberto, setAberto] = useState(false);
   const [mensagem, setMensagem] = useState<'pedido' | 'envio' | null>(null);
+  const [anexos, setAnexos] = useState(false);
+  const docs = estado.documentos.filter((x) => x.demonstrativo_id === d.id);
   const direto = d.tipo === 'direto';
   const rotulos = direto ? ETAPA_LABEL_DIRETO : ETAPA_LABEL;
   const canais = estado.integracoes.email_envio ? (['email'] as const) : ([] as const);
@@ -213,6 +216,9 @@ function CartaoDoDemonstrativo({ d, estado, hoje, enviar, recarregar }: PropsDaA
         <button type="button" onClick={() => setAberto((v) => !v)} aria-expanded={aberto} className="inline-flex items-center gap-1 hover:text-foreground">
           <ChevronDown className={`h-4 w-4 transition ${aberto ? 'rotate-180' : ''}`} aria-hidden /> {aberto ? 'Esconder' : 'Ver'} procedimentos
         </button>
+        <button type="button" onClick={() => setAnexos((v) => !v)} aria-expanded={anexos} className="inline-flex items-center gap-1 hover:text-foreground">
+          <Paperclip className="h-3.5 w-3.5" aria-hidden /> Anexar nota ou comprovante{docs.length > 0 ? ` (${docs.length})` : ''}
+        </button>
         {etapa !== 'recebido' && (
           <button type="button" onClick={voltar} disabled={ocupado} className="inline-flex items-center gap-1 hover:text-foreground">
             <Undo2 className="h-3.5 w-3.5" aria-hidden /> Desfazer última etapa
@@ -228,6 +234,13 @@ function CartaoDoDemonstrativo({ d, estado, hoje, enviar, recarregar }: PropsDaA
           <Trash2 className="h-3.5 w-3.5" aria-hidden /> Apagar
         </button>
       </div>
+
+      {(anexos || docs.length > 0) && (
+        <div className="mt-3 space-y-2">
+          <ListaDeDocumentos documentos={docs} recarregar={recarregar} />
+          {anexos && <Anexar recarregar={recarregar} demonstrativoId={d.id} tipoInicial={etapa === 'nota_enviada' || etapa === 'pago' ? 'comprovante' : 'nota'} compacto />}
+        </div>
+      )}
 
       {aberto && (
         <div className="mt-3 overflow-x-auto rounded-xl border border-border">
@@ -275,7 +288,7 @@ function CartaoDoDemonstrativo({ d, estado, hoje, enviar, recarregar }: PropsDaA
         <JanelaDeMensagem
           titulo={direto ? 'Enviar a nota e o Pix ao paciente' : 'Enviar a nota ao hospital'}
           mensagem={direto ? cobrancaAoPaciente(d, estado.config) : envioDaNota(d, hospital, estado.config)}
-          aviso={direto && !estado.config.chave_pix ? 'Cadastre a sua chave Pix em Integrações para ela sair na mensagem.' : 'No envio manual, lembre de anexar o PDF da nota.'}
+          aviso={direto && !estado.config.chave_pix ? 'Cadastre a sua chave Pix em Integrações para ela sair na mensagem.' : docs.some((x) => x.tipo === 'nota') ? 'A nota guardada neste recebimento vai anexada sozinha no envio automático.' : 'No envio manual, lembre de anexar o PDF da nota.'}
           onFechar={() => setMensagem(null)}
           envio={{
             tipo: direto ? 'cobranca_paciente' : 'envio_nota',
@@ -384,7 +397,7 @@ function NovoDemonstrativo({ estado, hoje, enviar, onFechar, entrada }: PropsDaA
             <div>
               <div className="mb-1 flex items-center justify-between">
                 <span className={ROTULO}>Demonstrativo (cole o texto do e-mail ou importe o arquivo)</span>
-                <button type="button" onClick={() => setImportar(true)} className="inline-flex items-center gap-1 text-xs font-medium text-brand hover:underline">
+                <button type="button" onClick={() => setImportar(true)} className="inline-flex items-center gap-1 text-xs font-medium text-medico hover:underline">
                   <FileUp className="h-3.5 w-3.5" aria-hidden /> Importar PDF, Excel ou Word
                 </button>
               </div>
