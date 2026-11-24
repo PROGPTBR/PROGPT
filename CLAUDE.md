@@ -24,7 +24,8 @@ Audiência: gestores de compras brasileiros (PT-BR primário, EN secundário).
 - Voyage AI para embeddings (`voyage-3-large`, 1024 dims)
 - Cohere Rerank 3 para reranking
 - Langfuse para observabilidade (sub-projeto 7)
-- **Deploy em Railway** (decisão 2026-05-04). Roda Next.js como processo long-lived (não serverless), então `maxDuration` exports são no-op e o padrão fire-and-forget de `/api/admin/ingest/run/[jobId]` fica naturalmente mais robusto que em Vercel — sem timeout de função nem morte súbita após response.
+- **Produção roda num VPS da Hostinger desde 19/11/2026** (`2bsupply.ia.br` → `187.53.127.155`; nginx + Docker Compose em `/docker/2bsupply-ia`, imagem construída da branch `deploy-hostinger`, sem deploy automático). Publicar = levar o `main` para `deploy-hostinger` e rodar `docker compose build && docker compose up -d` no servidor. Variável nova entra no `.env` **e** na lista `environment:` do compose (não há `env_file`). Em 2026-11-24 o container não recebia `COHERE_API_KEY`, `ASAAS_*`, `LANGFUSE_*`, `FISCAL_API_URL`, `RECEITA_DATABASE_URL`, `RESEND_API_KEY` nem `OPENAI_MODEL*`, embora estivessem no `.env`. O texto abaixo sobre o Railway é histórico.
+- ~~Deploy em Railway~~ (decisão 2026-05-04, substituída). Roda Next.js como processo long-lived (não serverless), então `maxDuration` exports são no-op e o padrão fire-and-forget de `/api/admin/ingest/run/[jobId]` fica naturalmente mais robusto que em Vercel — sem timeout de função nem morte súbita após response.
 
 ## Princípios não-negociáveis
 1. **Retrieval híbrido obrigatório** — vetorial + lexical (FTS portuguese) + RRF + Cohere rerank, nunca só cosine

@@ -2,6 +2,8 @@
 
 Para quem cuida do servidor de produção da 2BSUPPLY.IA.
 
+**Atualização de 24/11/2026: publicado.** O `main` foi levado para a branch `deploy-hostinger`, a imagem foi reconstruída no VPS e as seções 1, 2 (Evolution e SMTP) e 3.1 a 3.3 estão feitas. Continuam pendentes as variáveis listadas como ausentes no container (ver `CLAUDE.md`, seção Stack) e o BTG.
+
 O código está todo na branch `main` (último commit: "primeiro acesso do médico com senha temporária" e os seguintes). O servidor de produção ainda roda uma versão de 16/11/2026, sem a Área Médica: `https://2bsupply.ia.br/medicos` responde 404.
 
 O que falta é publicar o `main`, criar duas variáveis de ambiente e conferir quatro pontos da plataforma. O banco de dados já está pronto.
