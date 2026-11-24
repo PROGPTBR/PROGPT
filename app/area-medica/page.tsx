@@ -11,7 +11,7 @@ import { estadoCompleto } from '@/lib/medico/integracoes';
 import { hojeEmBrasilia } from '@/lib/vitrine/datas';
 
 export const dynamic = 'force-dynamic';
-export const metadata: Metadata = { title: 'Área Médica | 2BSUPPLY.IA' };
+export const metadata: Metadata = { title: 'Área Médica' };
 
 // Área Médica (sub-projeto 100): área particular. Quem não foi liberado
 // recebe 404, como se a tela não existisse.

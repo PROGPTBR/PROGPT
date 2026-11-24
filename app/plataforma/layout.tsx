@@ -1,6 +1,6 @@
 import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
-import { Gauge, Building2, Users, FileCode, Activity, ArrowLeft } from 'lucide-react';
+import { Gauge, Building2, Users, FileCode, Activity, ArrowLeft, Stethoscope } from 'lucide-react';
 import { requireSuperAdmin, NotSuperAdmin, NotAuthenticated } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
@@ -53,6 +53,15 @@ export default async function PlataformaLayout({
               <span>{label}</span>
             </Link>
           ))}
+          {/* Produtos à parte do sistema de compras: cada um com o seu painel. */}
+          <div className="px-3 pb-1 pt-4 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Outros produtos</div>
+          <Link
+            href="/plataforma/area-medica"
+            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-amber-500/10 hover:text-foreground border border-transparent transition-colors"
+          >
+            <Stethoscope className="h-4 w-4" aria-hidden="true" />
+            <span>Área Médica</span>
+          </Link>
         </nav>
         <div className="p-2 border-t border-amber-500/20">
           <Link

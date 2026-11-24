@@ -12,7 +12,7 @@ import { Botao, CAMPO, CARTAO, chamar, ROTULO, Selo, type PropsDaAba } from './u
 type Conexao = { estado: 'open' | 'connecting' | 'close'; grupos: { jid: string; nome: string }[]; configurado: boolean };
 
 /** Conecta um WhatsApp por QR code e mostra o estado. `alvo=avisos` é o número da 2B Supply. */
-function ConexaoWhatsapp({ alvo, aoConectar }: { alvo: 'medico' | 'avisos'; aoConectar?: () => void }) {
+export function ConexaoWhatsapp({ alvo, aoConectar }: { alvo: 'medico' | 'avisos'; aoConectar?: () => void }) {
   const [estado, setEstado] = useState<Conexao['estado'] | null>(null);
   const [qr, setQr] = useState<string | null>(null);
   const [ocupado, setOcupado] = useState(false);
@@ -199,16 +199,8 @@ export function Integracoes({ estado, enviar, recarregar }: PropsDaAba) {
             </Botao>
           </div>
         </div>
-        {integracoes.super_admin && integracoes.whatsapp && (
-          <div className="mt-4 rounded-xl border border-dashed border-border p-3">
-            <p className="text-sm font-medium">Número que envia os avisos (2B Supply)</p>
-            <p className="mb-2 text-xs text-muted-foreground">Só a equipe da 2B Supply vê este quadro. É um número da empresa, conectado uma vez, que manda o aviso para todos os médicos.</p>
-            <ConexaoWhatsapp alvo="avisos" />
-          </div>
-        )}
       </section>
 
-      {integracoes.super_admin && <Acessos />}
 
       <section className={CARTAO}>
         <h2 className="flex items-center gap-2 text-base font-semibold">
@@ -246,80 +238,5 @@ export function Integracoes({ estado, enviar, recarregar }: PropsDaAba) {
       </section>
 
     </div>
-  );
-}
-
-type Acesso = { id: string; tipo: string; email: string; ultimo_acesso: string | null };
-
-/** Quem tem conta na Área Médica. Só a equipe da 2B Supply vê: convida o médico por e-mail e remove. */
-function Acessos() {
-  const [lista, setLista] = useState<Acesso[] | null>(null);
-  const [email, setEmail] = useState('');
-  const [tipo, setTipo] = useState<'medico' | 'equipe'>('medico');
-  const [ocupado, setOcupado] = useState(false);
-
-  const carregar = useCallback(async () => {
-    const r = await chamar<{ acessos: Acesso[] }>('GET', '/acessos');
-    if (r.ok) setLista(r.dados.acessos);
-  }, []);
-  useEffect(() => {
-    void carregar();
-  }, [carregar]);
-
-  async function convidar() {
-    setOcupado(true);
-    const r = await chamar<{ convidado: boolean }>('POST', '/acessos', { email, tipo });
-    setOcupado(false);
-    if (!r.ok) return void toast.error(r.mensagem);
-    toast.success(r.dados.convidado ? 'Convite enviado por e-mail: a pessoa cria a senha e entra.' : 'Acesso liberado para a conta que já existia.');
-    setEmail('');
-    await carregar();
-  }
-
-  async function remover(a: Acesso) {
-    if (!window.confirm(`Tirar o acesso de ${a.email} à Área Médica? Os dados dele ficam guardados.`)) return;
-    const r = await chamar('DELETE', `/acessos?id=${a.id}`);
-    if (!r.ok) return void toast.error(r.mensagem);
-    await carregar();
-  }
-
-  return (
-    <section className={`${CARTAO} lg:col-span-2`}>
-      <h2 className="text-base font-semibold">Quem tem acesso (2B Supply)</h2>
-      <p className="mt-0.5 text-sm text-muted-foreground">
-        Só a equipe da 2B Supply vê este quadro. A conta de <strong>médico</strong> entra só na Área Médica: não vê chat, assistentes nem a assinatura do plano de compras, e os dados dela ficam separados. A conta de <strong>equipe</strong> usa o sistema normal e também vê a Área Médica.
-      </p>
-      <div className="mt-3 flex flex-wrap items-end gap-2">
-        <label className="min-w-[16rem] flex-1">
-          <span className={ROTULO}>E-mail</span>
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="medico@clinica.com.br" className={CAMPO} />
-        </label>
-        <label>
-          <span className={ROTULO}>Tipo de conta</span>
-          <select value={tipo} onChange={(e) => setTipo(e.target.value as 'medico' | 'equipe')} className={`${CAMPO} w-auto`}>
-            <option value="medico">Médico (só a Área Médica)</option>
-            <option value="equipe">Equipe (sistema todo)</option>
-          </select>
-        </label>
-        <Botao ocupado={ocupado} desabilitado={!/^\S+@\S+\.\S+$/.test(email.trim())} onClick={convidar}>
-          Convidar
-        </Botao>
-      </div>
-      {lista && lista.length > 0 && (
-        <ul className="mt-4 divide-y divide-border rounded-xl border border-border text-sm">
-          {lista.map((a) => (
-            <li key={a.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
-              <span className="min-w-0 break-all">
-                {a.email} <Selo cor={a.tipo === 'medico' ? 'azul' : 'neutro'}>{a.tipo === 'medico' ? 'Médico' : 'Equipe'}</Selo>
-                <span className="ml-2 text-xs text-muted-foreground">{a.ultimo_acesso ? `último acesso em ${new Date(a.ultimo_acesso).toLocaleDateString('pt-BR')}` : 'ainda não entrou'}</span>
-              </span>
-              <button type="button" onClick={() => void remover(a)} className="text-xs text-muted-foreground hover:text-red-600">
-                Tirar acesso
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-    </section>
   );
 }

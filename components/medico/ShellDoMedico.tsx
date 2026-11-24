@@ -23,7 +23,6 @@ export function ShellDoMedico({ children }: { children: React.ReactNode }) {
         <div className="mx-auto flex h-14 w-full max-w-[1800px] items-center justify-between px-4 sm:px-6 lg:px-10">
           <span className="flex items-center gap-2 text-sm font-semibold">
             <Stethoscope className="h-5 w-5 text-brand" aria-hidden /> Área Médica
-            <span className="hidden font-normal text-muted-foreground sm:inline">· 2BSUPPLY.IA</span>
           </span>
           <button type="button" onClick={sair} disabled={saindo} className="inline-flex h-9 items-center gap-1.5 rounded-xl px-3 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground">
             <LogOut className="h-4 w-4" aria-hidden /> Sair
