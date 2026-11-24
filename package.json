@@ -17,6 +17,7 @@
     "prompts:import": "tsx scripts/import-prompts.ts",
     "rag:query": "tsx scripts/rag-query.ts",
     "medico:criar": "tsx --tsconfig tsconfig.json scripts/medico-criar.ts",
+    "medico:token": "tsx scripts/medico-token.ts",
     "rag:eval": "tsx scripts/eval/run.ts",
     "eval:gen": "tsx scripts/eval/gen-run.ts"
   },

@@ -2,7 +2,8 @@ import { timingSafeEqual } from 'crypto';
 import { NextResponse } from 'next/server';
 
 import { medicoOuErro } from '@/lib/medico/acesso-servidor';
-import { enviarAvisoPara, enviarAvisosDoDia } from '@/lib/medico/avisos';
+import { enviarAvisoPara, enviarAvisosDoDia, horaDeAvisar } from '@/lib/medico/avisos';
+import { renovarConexoes } from '@/lib/medico/btg';
 import { tokenInterno } from '@/lib/medico/evolution';
 
 export const runtime = 'nodejs';
@@ -20,7 +21,12 @@ export async function POST(req: Request) {
     if (!esperado || recebido.length !== esperado.length || !timingSafeEqual(Buffer.from(recebido), Buffer.from(esperado))) {
       return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
     }
-    return NextResponse.json(await enviarAvisosDoDia());
+    // Mesma rotina do agendador interno: mantém viva a autorização do BTG e,
+    // de manhã (8h às 12h de Brasília), manda os avisos. Pode ser chamada de
+    // hora em hora: cada médico recebe no máximo um aviso por dia.
+    const btg = await renovarConexoes().catch(() => ({ renovadas: 0, falhas: 0 }));
+    const avisos = horaDeAvisar() ? await enviarAvisosDoDia() : { medicos: 0, enviados: 0 };
+    return NextResponse.json({ ...avisos, btg });
   }
 
   const u = await medicoOuErro();
