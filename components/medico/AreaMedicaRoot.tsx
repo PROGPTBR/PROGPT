@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ArrowRight, CalendarDays, Eye, EyeOff, FileText, Home, Landmark, LogOut, MoreHorizontal, Paperclip, Plug, Plus, Send, Settings2, Sparkles, Stethoscope, UserPlus, Zap } from 'lucide-react';
+import { ArrowRight, CalendarDays, Eye, EyeOff, FileText, Home, Landmark, LayoutGrid, LogOut, MoreHorizontal, Paperclip, Plug, Plus, Send, Settings2, Sparkles, Stethoscope, UserPlus, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { supabaseBrowser } from '@/lib/db/supabase-browser';
@@ -11,6 +11,7 @@ import { Agenda } from './Agenda';
 import { Banco } from './Banco';
 import { Cadastros } from './Cadastros';
 import { Cirurgias } from './Cirurgias';
+import { Cockpit } from './Cockpit';
 import { Demonstrativos } from './Demonstrativos';
 import { Documentos } from './Documentos';
 import { Indicar } from './Indicar';
@@ -79,6 +80,8 @@ export function AreaMedicaRoot({
   const [carregandoExemplo, setCarregandoExemplo] = useState(false);
   const [abrir, setAbrir] = useState<Atalho | null>(null);
   const [mais, setMais] = useState(false);
+  // O cockpit é a tela de entrada: abre primeiro, a menos que o endereço já peça uma aba ou a conta esteja vazia.
+  const [noCockpit, setNoCockpit] = useState(!abaInicial && estadoInicial.hospitais.length > 0);
   const irPara = useCallback((a: Aba, atalho: Atalho | null = null) => {
     setAbrir(atalho);
     setAba(a);
@@ -124,6 +127,16 @@ export function AreaMedicaRoot({
 
   return (
     <div className="lg:pl-64">
+      {noCockpit && estado.hospitais.length > 0 && (
+        <Cockpit
+          estado={estado}
+          hoje={hoje}
+          entrar={(destino) => {
+            setNoCockpit(false);
+            irPara(destino);
+          }}
+        />
+      )}
       {/* Computador: menu lateral fixo, de cima a baixo */}
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col bg-medico-escuro text-white lg:flex">
         <div className="flex h-16 items-center gap-2.5 px-6 text-base font-semibold">
@@ -152,6 +165,9 @@ export function AreaMedicaRoot({
           })}
         </nav>
         <div className="space-y-0.5 border-t border-white/10 p-3">
+          <button type="button" onClick={() => setNoCockpit(true)} className="flex w-full items-center gap-3 rounded-2xl px-3.5 py-2.5 text-left text-sm font-medium text-white/75 hover:bg-white/10 hover:text-white">
+            <LayoutGrid className="h-5 w-5" aria-hidden /> Cockpit
+          </button>
           {linkDoSistema && (
             <a href="/chat" className="flex items-center gap-3 rounded-2xl px-3.5 py-2.5 text-sm font-medium text-white/75 hover:bg-white/10 hover:text-white">
               <ArrowRight className="h-5 w-5 rotate-180" aria-hidden /> Sistema de compras
@@ -221,6 +237,11 @@ export function AreaMedicaRoot({
                 <ArrowRight className="h-4 w-4 text-neutral-400" aria-hidden />
               </button>
             ))}
+            <button type="button" onClick={() => { setMais(false); setNoCockpit(true); }} className="flex w-full items-center gap-3 rounded-2xl px-3 py-3.5 text-left text-sm font-medium hover:bg-neutral-100">
+              <LayoutGrid className="h-5 w-5 text-medico" aria-hidden />
+              <span className="flex-1">Cockpit</span>
+              <ArrowRight className="h-4 w-4 text-neutral-400" aria-hidden />
+            </button>
             {linkDoSistema && (
               <a href="/chat" className="flex w-full items-center gap-3 rounded-2xl px-3 py-3.5 text-sm font-medium text-neutral-600 hover:bg-neutral-100">
                 <ArrowRight className="h-5 w-5 rotate-180" aria-hidden /> Sistema de compras

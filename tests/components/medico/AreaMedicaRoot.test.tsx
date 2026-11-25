@@ -42,7 +42,7 @@ describe('Área Médica (tela)', () => {
   });
 
   it('visão geral mostra os indicadores e a fila do que fazer', () => {
-    render(<AreaMedicaRoot estadoInicial={estadoDeExemplo()} hoje={HOJE} />);
+    render(<AreaMedicaRoot estadoInicial={estadoDeExemplo()} hoje={HOJE} abaInicial="visao" />);
     expect(screen.getByText('A receber')).toBeTruthy();
     expect(screen.getByRole('list', { name: 'O que fazer agora' })).toBeTruthy();
     expect(screen.getByText(/2 cirurgias sem pagamento, cobrar de novo/)).toBeTruthy();
@@ -51,7 +51,7 @@ describe('Área Médica (tela)', () => {
   });
 
   it('percorre as abas: cirurgias, demonstrativos (com o e-mail ao contador) e pendências (com a cobrança)', () => {
-    render(<AreaMedicaRoot estadoInicial={estadoDeExemplo()} hoje={HOJE} />);
+    render(<AreaMedicaRoot estadoInicial={estadoDeExemplo()} hoje={HOJE} abaInicial="visao" />);
     const abas = screen.getByRole('navigation', { name: 'Seções da Área Médica' });
 
     fireEvent.click(within(abas).getByText('Cirurgias'));
@@ -91,7 +91,7 @@ describe('Área Médica (tela)', () => {
       { id: 'e2', canal: 'whatsapp', remetente: 'Você', assunto: '', texto: 'ok', recebido_em: '2026-11-24T12:05:00Z' },
       { id: 'e3', canal: 'email', remetente: 'repasse@hospital.com', assunto: 'Demonstrativo de novembro', texto: 'linhas...', recebido_em: '2026-11-24T13:00:00Z' },
     ];
-    render(<AreaMedicaRoot estadoInicial={estado} hoje={HOJE} />);
+    render(<AreaMedicaRoot estadoInicial={estado} hoje={HOJE} abaInicial="visao" />);
     const abas = screen.getByRole('navigation', { name: 'Seções da Área Médica' });
 
     fireEvent.click(within(abas).getByText('Cirurgias'));
@@ -107,7 +107,7 @@ describe('Área Médica (tela)', () => {
   });
 
   it('cobrança direta, envio automático e integrações estão na tela', () => {
-    render(<AreaMedicaRoot estadoInicial={estadoDeExemplo()} hoje={HOJE} />);
+    render(<AreaMedicaRoot estadoInicial={estadoDeExemplo()} hoje={HOJE} abaInicial="visao" />);
     const abas = screen.getByRole('navigation', { name: 'Seções da Área Médica' });
 
     fireEvent.click(within(abas).getByText('Demonstrativos e notas'));
@@ -145,5 +145,19 @@ describe('Área Médica (tela)', () => {
     expect(screen.getByText('Saiu neste mês')).toBeTruthy();
     expect(screen.getByText('Provável')).toBeTruthy();
     expect(screen.getByText(/a menos que a nota/)).toBeTruthy();
+  });
+
+  it('abre pelo cockpit: destaque grande, fileiras e entrada direto no lugar certo', () => {
+    render(<AreaMedicaRoot estadoInicial={estadoDeExemplo()} hoje={HOJE} />);
+    // O primeiro destaque é o que há a receber, em número grande.
+    expect(screen.getByRole('heading', { level: 1, name: /21\.200,00/ })).toBeTruthy();
+    for (const fileira of ['Mural dos hospitais', 'Para cobrar', 'Notas em andamento', 'Meses']) expect(screen.getByRole('heading', { name: fileira })).toBeTruthy();
+    // Passa para o destaque das cirurgias que ficaram de fora e entra por ele.
+    fireEvent.click(screen.getByRole('button', { name: 'Sem pagamento' }));
+    expect(screen.getByRole('heading', { level: 1, name: '2 cirurgias' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /Cobrar agora/ }));
+    // Saiu do cockpit e caiu na aba de pendências.
+    expect(screen.queryByRole('heading', { name: 'Mural dos hospitais' })).toBeNull();
+    expect(screen.getByText('2 para cobrar')).toBeTruthy();
   });
 });
