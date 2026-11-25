@@ -93,6 +93,16 @@ describe('pendências, avisos e resumo', () => {
     ]);
   });
 
+  it('cada hospital tem o seu prazo para o demonstrativo', () => {
+    const rapido: Hospital = { ...H, id: 'h1', demonstrativo_meses: 1, demonstrativo_dia: 20 };
+    const lento: Hospital = { ...H, id: 'h2', demonstrativo_meses: 3, demonstrativo_dia: 5 };
+    expect(limiteDoDemonstrativo('2026-10-08', rapido)).toBe('2026-11-20');
+    expect(limiteDoDemonstrativo('2026-10-08', lento)).toBe('2027-01-05');
+    // Mesma data de cirurgia: no hospital rápido já passou (hoje é 24/11); no lento, não.
+    const lista = pendencias([cir('a', '2026-10-08', 'A. B.'), cir('b', '2026-10-08', 'C. D.', { hospital_id: 'h2' })], [rapido, lento], HOJE);
+    expect(Object.fromEntries(lista.map((p) => [p.cirurgia.id, p.atrasada]))).toEqual({ a: true, b: false });
+  });
+
   it('é pendência na hora se o demonstrativo do mês chegou sem ela', () => {
     const item = (data: string) => ({ data, paciente: 'X', procedimento: '', convenio: '', valor: 1, cirurgia_id: 'outra' });
     const doMes = dem({ id: 'out', recebido_em: '2026-11-20', itens: [item('2026-10-03'), item('2026-10-14')] });

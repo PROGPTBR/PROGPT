@@ -141,7 +141,7 @@ export function Integracoes({ estado, enviar, recarregar }: PropsDaAba) {
               <span className={ROTULO}>Grupo das cirurgias</span>
               <div className="flex flex-wrap items-center gap-2">
                 {grupos ? (
-                  <select value={config.grupo_jid} onChange={(e) => void escolherGrupo(e.target.value)} className={`${CAMPO} w-auto max-w-full`} aria-label="Grupo das cirurgias">
+                  <select value={config.grupo_jid} onChange={(e) => void escolherGrupo(e.target.value)} className={`${CAMPO} !w-auto max-w-full`} aria-label="Grupo das cirurgias">
                     <option value="">Nenhum (não ler grupo)</option>
                     {grupos.map((g) => (
                       <option key={g.jid} value={g.jid}>

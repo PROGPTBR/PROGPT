@@ -35,7 +35,7 @@ export function situacao(c: Cirurgia, estado: EstadoMedico, hoje: string): { rot
     return d?.tipo === 'direto' ? { rotulo: 'Cobrada do paciente', cor: 'azul' } : { rotulo: 'No demonstrativo', cor: 'azul' };
   }
   // O hospital paga por mês: só é atraso se o demonstrativo do mês veio sem ela, ou se o prazo dele passou.
-  return passouDoCiclo(c, estado.demonstrativos, hoje) ? { rotulo: 'Sem pagamento, atrasada', cor: 'vermelho' } : { rotulo: 'Aguardando demonstrativo', cor: 'amarelo' };
+  return passouDoCiclo(c, estado.demonstrativos, hoje, estado.hospitais) ? { rotulo: 'Sem pagamento, atrasada', cor: 'vermelho' } : { rotulo: 'Aguardando demonstrativo', cor: 'amarelo' };
 }
 
 /** Acha o hospital cadastrado que o texto cita ("D'Or" → "Niterói D'Or"). */
@@ -104,7 +104,7 @@ export function Cirurgias({ estado, hoje, enviar, abrir }: PropsDaAba & { abrir?
       </div>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="flex flex-wrap gap-2">
-          <select value={filtroHospital} onChange={(e) => setFiltroHospital(e.target.value)} className={`${CAMPO} w-auto`} aria-label="Filtrar por hospital">
+          <select value={filtroHospital} onChange={(e) => setFiltroHospital(e.target.value)} className={`${CAMPO} !w-auto`} aria-label="Filtrar por hospital">
             <option value="">Todos os hospitais</option>
             {estado.hospitais.map((h) => (
               <option key={h.id} value={h.id}>
@@ -112,7 +112,7 @@ export function Cirurgias({ estado, hoje, enviar, abrir }: PropsDaAba & { abrir?
               </option>
             ))}
           </select>
-          <select value={filtroSituacao} onChange={(e) => setFiltroSituacao(e.target.value)} className={`${CAMPO} w-auto`} aria-label="Filtrar por situação">
+          <select value={filtroSituacao} onChange={(e) => setFiltroSituacao(e.target.value)} className={`${CAMPO} !w-auto`} aria-label="Filtrar por situação">
             <option value="">Todas as situações</option>
             {['Paga', 'No demonstrativo', 'Cobrada do paciente', 'Aguardando demonstrativo', 'Sem pagamento, atrasada'].map((s) => (
               <option key={s}>{s}</option>

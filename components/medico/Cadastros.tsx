@@ -116,7 +116,10 @@ export function Cadastros({ estado, enviar }: PropsDaAba) {
 function LinhaDoHospital({ h, enviar }: { h: Hospital; enviar: PropsDaAba['enviar'] }) {
   const [email, setEmail] = useState(h.email);
   const [prazo, setPrazo] = useState(String(h.prazo_pagamento_dias));
-  const mudou = email !== h.email || prazo !== String(h.prazo_pagamento_dias);
+  const [meses, setMeses] = useState(String(h.demonstrativo_meses ?? 2));
+  const [dia, setDia] = useState(String(h.demonstrativo_dia ?? 10));
+  const mudou = email !== h.email || prazo !== String(h.prazo_pagamento_dias) || meses !== String(h.demonstrativo_meses ?? 2) || dia !== String(h.demonstrativo_dia ?? 10);
+  const entre = (v: string, min: number, max: number, padrao: number) => Math.min(max, Math.max(min, Number(v) || padrao));
 
   return (
     <li className="grid items-end gap-2 rounded-xl border border-border p-3 sm:grid-cols-6">
@@ -129,12 +132,12 @@ function LinhaDoHospital({ h, enviar }: { h: Hospital; enviar: PropsDaAba['envia
         <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={CAMPO} />
       </label>
       <label>
-        <span className={ROTULO}>Prazo (dias)</span>
+        <span className={ROTULO}>Paga em (dias)</span>
         <input value={prazo} onChange={(e) => setPrazo(e.target.value)} inputMode="numeric" className={CAMPO} />
       </label>
       <div className="flex items-center justify-end gap-1">
         {mudou && (
-          <Botao tipo="secundario" onClick={() => void enviar('PATCH', `/hospitais/${h.id}`, { email, prazo_pagamento_dias: Math.min(365, Math.max(0, Number(prazo) || 0)) }, 'Hospital atualizado.')}>
+          <Botao tipo="secundario" onClick={() => void enviar('PATCH', `/hospitais/${h.id}`, { email, prazo_pagamento_dias: Math.min(365, Math.max(0, Number(prazo) || 0)), demonstrativo_meses: entre(meses, 1, 6, 2), demonstrativo_dia: entre(dia, 1, 28, 10) }, 'Hospital atualizado.')}>
             Salvar
           </Botao>
         )}
@@ -149,6 +152,19 @@ function LinhaDoHospital({ h, enviar }: { h: Hospital; enviar: PropsDaAba['envia
         >
           <Trash2 className="h-4 w-4" aria-hidden />
         </button>
+      </div>
+      <div className="flex flex-wrap items-center gap-2 text-sm text-neutral-600 sm:col-span-6">
+        <span className="flex items-center gap-1">
+          Demonstrativo chega até o dia{' '}
+          <Info>O hospital paga por mês. Informe até quando costuma chegar o demonstrativo das cirurgias de um mês. Exemplo: cirurgias de novembro, demonstrativo até o dia 10 de janeiro = dia 10 do 2º mês seguinte. Passou dessa data sem a cirurgia aparecer, ela vira pendência.</Info>
+        </span>
+        <input value={dia} onChange={(e) => setDia(e.target.value)} inputMode="numeric" aria-label="Dia em que o demonstrativo chega" className={`${CAMPO} !w-16 text-center`} />
+        <span>do</span>
+        <select value={meses} onChange={(e) => setMeses(e.target.value)} aria-label="Mês em que o demonstrativo chega" className={`${CAMPO} !w-auto`}>
+          <option value="1">mês seguinte</option>
+          <option value="2">2º mês seguinte</option>
+          <option value="3">3º mês seguinte</option>
+        </select>
       </div>
     </li>
   );

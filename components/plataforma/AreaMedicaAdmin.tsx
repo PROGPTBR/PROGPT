@@ -107,7 +107,7 @@ export function AreaMedicaAdmin() {
           </label>
           <label>
             <span className={ROTULO}>Tipo de conta</span>
-            <select value={tipo} onChange={(e) => setTipo(e.target.value as 'medico' | 'equipe')} className={`${CAMPO} w-auto`}>
+            <select value={tipo} onChange={(e) => setTipo(e.target.value as 'medico' | 'equipe')} className={`${CAMPO} !w-auto`}>
               <option value="medico">Médico (só a Área Médica)</option>
               <option value="equipe">Equipe (sistema de compras e Área Médica)</option>
             </select>
@@ -213,7 +213,7 @@ export function AreaMedicaAdmin() {
                     if (!r.ok) toast.error(r.mensagem);
                     await carregar();
                   }}
-                  className={`${CAMPO} w-auto`}
+                  className={`${CAMPO} !w-auto`}
                 >
                   <option value="nova">Nova</option>
                   <option value="em_contato">Em contato</option>

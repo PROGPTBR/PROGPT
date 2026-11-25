@@ -17,7 +17,7 @@ export async function GET(_req: Request, { params }: { params: { hospitalId: str
   const hoje = hojeEmBrasilia();
   const estado = await carregarEstado(u.id);
   const hospital = estado.hospitais.find((h) => h.id === params.hospitalId);
-  const abertas = paraCobrar(estado.cirurgias, estado.demonstrativos, params.hospitalId, hoje);
+  const abertas = paraCobrar(estado.cirurgias, estado.demonstrativos, params.hospitalId, hoje, estado.hospitais);
   if (!hospital || abertas.length === 0) return NextResponse.json({ error: 'not_found', message: 'Não há pendências nesse hospital.' }, { status: 404 });
 
   const buf = await planilhaDePendencias(abertas, estado.config);
@@ -37,7 +37,7 @@ export async function POST(_req: Request, { params }: { params: { hospitalId: st
   if (u instanceof NextResponse) return u;
   const hoje = hojeEmBrasilia();
   const estado = await carregarEstado(u.id);
-  const abertas = paraCobrar(estado.cirurgias, estado.demonstrativos, params.hospitalId, hoje);
+  const abertas = paraCobrar(estado.cirurgias, estado.demonstrativos, params.hospitalId, hoje, estado.hospitais);
   if (abertas.length === 0) return NextResponse.json({ error: 'not_found', message: 'Não há pendências nesse hospital.' }, { status: 404 });
   await registrarCobranca(u.id, abertas, hoje);
   return NextResponse.json({ ok: true, cobradas: abertas.length });

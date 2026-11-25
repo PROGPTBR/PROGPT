@@ -78,7 +78,7 @@ export function Anexar({
       className={`rounded-2xl border border-dashed transition ${sobre ? 'border-medico bg-medico/5' : 'border-border'} ${compacto ? 'p-3' : 'p-4 sm:p-5'}`}
     >
       <div className="flex flex-wrap items-center gap-2">
-        <select value={tipo} onChange={(e) => setTipo(e.target.value as TipoDeDocumento)} className={`${CAMPO} w-auto`} aria-label="Tipo do documento">
+        <select value={tipo} onChange={(e) => setTipo(e.target.value as TipoDeDocumento)} className={`${CAMPO} !w-auto`} aria-label="Tipo do documento">
           {TIPOS_DE_DOCUMENTO.map((t) => (
             <option key={t} value={t}>
               {TIPO_DE_DOCUMENTO_LABEL[t]}
@@ -147,7 +147,7 @@ export function Documentos({ estado, recarregar }: PropsDaAba) {
       <section className={CARTAO}>
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-base font-semibold">Seus documentos</h2>
-          <select value={filtro} onChange={(e) => setFiltro(e.target.value as TipoDeDocumento | '')} className={`${CAMPO} w-auto`} aria-label="Filtrar por tipo">
+          <select value={filtro} onChange={(e) => setFiltro(e.target.value as TipoDeDocumento | '')} className={`${CAMPO} !w-auto`} aria-label="Filtrar por tipo">
             <option value="">Todos os tipos</option>
             {TIPOS_DE_DOCUMENTO.map((t) => (
               <option key={t} value={t}>

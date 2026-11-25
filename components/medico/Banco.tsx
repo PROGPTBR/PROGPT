@@ -130,7 +130,7 @@ export function Banco({ estado, hoje, enviar }: PropsDaAba) {
             <div className="mt-3 flex flex-wrap items-end gap-2">
               <label>
                 <span className={ROTULO}>CNPJ da conta no BTG</span>
-                <input value={cnpj} onChange={(e) => setCnpj(e.target.value)} placeholder="00.000.000/0000-00" inputMode="numeric" className={`${CAMPO} w-56`} />
+                <input value={cnpj} onChange={(e) => setCnpj(e.target.value)} placeholder="00.000.000/0000-00" inputMode="numeric" className={`${CAMPO} !w-56`} />
               </label>
               <Botao ocupado={indo} desabilitado={cnpj.replace(/\D/g, '').length !== 14} onClick={conectar}>
                 Conectar BTG

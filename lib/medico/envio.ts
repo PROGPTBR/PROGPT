@@ -33,7 +33,7 @@ export async function enviarMensagem(
 
   if (pedido.tipo === 'cobranca_hospital') {
     const hospital = estado.hospitais.find((h) => h.id === pedido.id);
-    const abertas = paraCobrar(estado.cirurgias, estado.demonstrativos, pedido.id, hoje);
+    const abertas = paraCobrar(estado.cirurgias, estado.demonstrativos, pedido.id, hoje, estado.hospitais);
     if (!hospital || abertas.length === 0) throw new RegraMedica('Não há cirurgias pendentes nesse hospital.');
     mensagem = cobranca(abertas, hospital, config);
     // A cobrança vai sempre na planilha de pendências, o modelo que o hospital exige.

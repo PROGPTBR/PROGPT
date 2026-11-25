@@ -30,7 +30,7 @@ import type {
 // segura o isolamento entre médicos. Remover o filtro vaza paciente de um
 // médico para outro.
 
-const HOSPITAL = 'id, nome, email, prazo_pagamento_dias, exemplo';
+const HOSPITAL = 'id, nome, email, prazo_pagamento_dias, demonstrativo_meses, demonstrativo_dia, exemplo';
 const CIRURGIA =
   'id, hospital_id, data, paciente, procedimento, convenio, valor, origem, demonstrativo_id, cobrada_em, funcao, registro, hora, cobrancas, observacao, exemplo';
 const DEMONSTRATIVO =

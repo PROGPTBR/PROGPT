@@ -111,6 +111,9 @@ export type Hospital = {
   nome: string;
   email: string;
   prazo_pagamento_dias: number;
+  /** O demonstrativo de um mês chega até o dia `demonstrativo_dia` do `demonstrativo_meses`º mês seguinte. */
+  demonstrativo_meses?: number;
+  demonstrativo_dia?: number;
   exemplo: boolean;
 };
 
@@ -220,6 +223,8 @@ export const HospitalSchema = z.object({
   nome: texto(120).min(2),
   email: texto(200).default(''),
   prazo_pagamento_dias: z.number().int().min(0).max(365).default(30),
+  demonstrativo_meses: z.number().int().min(1).max(6).default(2),
+  demonstrativo_dia: z.number().int().min(1).max(28).default(10),
 });
 
 export const CirurgiaSchema = z.object({

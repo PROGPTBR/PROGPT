@@ -289,9 +289,9 @@ function VisaoGeral({
       return !v;
     });
   const dinheiro = (v: number) => (oculto ? 'R$ ••••' : brl(v));
-  const r = useMemo(() => resumo(estado.demonstrativos, estado.cirurgias, hoje), [estado, hoje]);
+  const r = useMemo(() => resumo(estado.demonstrativos, estado.cirurgias, hoje, estado.hospitais), [estado, hoje]);
   const fila = useMemo(() => avisos(estado.demonstrativos, estado.cirurgias, estado.hospitais, hoje), [estado, hoje]);
-  const ciclos = useMemo(() => ciclosMensais(estado.cirurgias, estado.demonstrativos, hoje), [estado, hoje]);
+  const ciclos = useMemo(() => ciclosMensais(estado.cirurgias, estado.demonstrativos, hoje, estado.hospitais), [estado, hoje]);
 
   const semHospital = estado.hospitais.length === 0;
   const atalhos = [

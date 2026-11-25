@@ -173,11 +173,11 @@ function CartaoDoDemonstrativo({ d, estado, hoje, enviar, recarregar }: PropsDaA
             <div className="flex flex-wrap items-end gap-2">
               <label>
                 <span className={ROTULO}>Número da nota</span>
-                <input value={numero} onChange={(e) => setNumero(e.target.value)} className={`${CAMPO} w-36`} />
+                <input value={numero} onChange={(e) => setNumero(e.target.value)} className={`${CAMPO} !w-36`} />
               </label>
               <label>
                 <span className={ROTULO}>Emitida em</span>
-                <input type="date" value={dataNota} onChange={(e) => setDataNota(e.target.value)} className={`${CAMPO} w-44`} />
+                <input type="date" value={dataNota} onChange={(e) => setDataNota(e.target.value)} className={`${CAMPO} !w-44`} />
               </label>
               <Botao ocupado={ocupado} desabilitado={!numero.trim() || !dataNota} onClick={() => gravar({ nota_numero: numero.trim(), nota_emitida_em: dataNota }, 'Nota registrada.')}>
                 Registrar nota
@@ -189,11 +189,11 @@ function CartaoDoDemonstrativo({ d, estado, hoje, enviar, recarregar }: PropsDaA
             <div className="flex flex-wrap items-end gap-2">
               <label>
                 <span className={ROTULO}>Valor que caiu na conta (R$)</span>
-                <input value={valorPago} onChange={(e) => setValorPago(e.target.value)} inputMode="decimal" className={`${CAMPO} w-44`} />
+                <input value={valorPago} onChange={(e) => setValorPago(e.target.value)} inputMode="decimal" className={`${CAMPO} !w-44`} />
               </label>
               <label>
                 <span className={ROTULO}>Pago em</span>
-                <input type="date" value={dataPago} onChange={(e) => setDataPago(e.target.value)} className={`${CAMPO} w-44`} />
+                <input type="date" value={dataPago} onChange={(e) => setDataPago(e.target.value)} className={`${CAMPO} !w-44`} />
               </label>
               <Botao
                 ocupado={ocupado}

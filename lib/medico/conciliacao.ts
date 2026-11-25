@@ -189,9 +189,14 @@ export function mesMais(mes: string, passo: number): string {
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
 }
 
-/** Até quando o demonstrativo das cirurgias de um mês costuma chegar: dia 10 do segundo mês seguinte. */
-export function limiteDoDemonstrativo(data: string): string {
-  return `${mesMais(data.slice(0, 7), 2)}-10`;
+/**
+ * Até quando o demonstrativo das cirurgias de um mês costuma chegar. Cada
+ * hospital tem o seu ritmo (cadastro); o padrão é o dia 10 do segundo mês seguinte.
+ */
+export function limiteDoDemonstrativo(data: string, hospital?: Pick<Hospital, 'demonstrativo_meses' | 'demonstrativo_dia'> | null): string {
+  const meses = hospital?.demonstrativo_meses ?? 2;
+  const dia = hospital?.demonstrativo_dia ?? 10;
+  return `${mesMais(data.slice(0, 7), meses)}-${String(dia).padStart(2, '0')}`;
 }
 
 /** O hospital já mandou um demonstrativo que cobria o mês desta cirurgia (ou depois), e ela não veio nele. */
@@ -201,8 +206,8 @@ export function ficouDeFora(c: Cirurgia, demonstrativos: Demonstrativo[]): boole
 }
 
 /** A cirurgia já deveria ter sido paga: ficou de fora de um demonstrativo, ou o prazo dele passou. */
-export function passouDoCiclo(c: Cirurgia, demonstrativos: Demonstrativo[], hoje: string): boolean {
-  return ficouDeFora(c, demonstrativos) || hoje > limiteDoDemonstrativo(c.data);
+export function passouDoCiclo(c: Cirurgia, demonstrativos: Demonstrativo[], hoje: string, hospitais: Hospital[] = []): boolean {
+  return ficouDeFora(c, demonstrativos) || hoje > limiteDoDemonstrativo(c.data, hospitais.find((h) => h.id === c.hospital_id));
 }
 
 /**
@@ -218,7 +223,7 @@ export function pendencias(cirurgias: Cirurgia[], hospitais: Hospital[], hoje: s
       const cobrancas = c.cobrancas ?? [];
       const ultima = cobrancas.length > 0 ? [...cobrancas].sort().at(-1)! : null;
       const diasSemResposta = ultima ? diasEntre(ultima, hoje) : null;
-      const atrasada = passouDoCiclo(c, demonstrativos, hoje);
+      const atrasada = passouDoCiclo(c, demonstrativos, hoje, hospitais);
       return {
         cirurgia: c,
         dias,
@@ -232,8 +237,8 @@ export function pendencias(cirurgias: Cirurgia[], hospitais: Hospital[], hoje: s
 }
 
 /** As cirurgias de um hospital que valem cobrar agora: feitas, fora de demonstrativo e já além do ciclo do mês. */
-export function paraCobrar(cirurgias: Cirurgia[], demonstrativos: Demonstrativo[], hospitalId: string, hoje: string): Cirurgia[] {
-  return cirurgias.filter((c) => c.hospital_id === hospitalId && !c.demonstrativo_id && c.data <= hoje && passouDoCiclo(c, demonstrativos, hoje));
+export function paraCobrar(cirurgias: Cirurgia[], demonstrativos: Demonstrativo[], hospitalId: string, hoje: string, hospitais: Hospital[] = []): Cirurgia[] {
+  return cirurgias.filter((c) => c.hospital_id === hospitalId && !c.demonstrativo_id && c.data <= hoje && passouDoCiclo(c, demonstrativos, hoje, hospitais));
 }
 
 export type CicloDoMes = {
@@ -251,7 +256,7 @@ export type CicloDoMes = {
 };
 
 /** Um resumo por mês de competência, do mais recente para o mais antigo. */
-export function ciclosMensais(cirurgias: Cirurgia[], demonstrativos: Demonstrativo[], hoje: string, quantos = 4): CicloDoMes[] {
+export function ciclosMensais(cirurgias: Cirurgia[], demonstrativos: Demonstrativo[], hoje: string, hospitais: Hospital[] = [], quantos = 4): CicloDoMes[] {
   const pagos = new Set(demonstrativos.filter((d) => d.pago_em).map((d) => d.id));
   const porMes = new Map<string, Cirurgia[]>();
   for (const c of cirurgias) {
@@ -264,7 +269,9 @@ export function ciclosMensais(cirurgias: Cirurgia[], demonstrativos: Demonstrati
     .slice(0, quantos)
     .map(([mes, lista]) => {
       const abertas = lista.filter((c) => !c.demonstrativo_id);
-      const deFora = abertas.filter((c) => passouDoCiclo(c, demonstrativos, hoje)).length;
+      const deFora = abertas.filter((c) => passouDoCiclo(c, demonstrativos, hoje, hospitais)).length;
+      // Com mais de um hospital no mês, vale a previsão mais distante entre as que ainda aguardam.
+      const previsoes = abertas.map((c) => limiteDoDemonstrativo(c.data, hospitais.find((h) => h.id === c.hospital_id))).sort();
       return {
         mes,
         cirurgias: lista.length,
@@ -272,7 +279,7 @@ export function ciclosMensais(cirurgias: Cirurgia[], demonstrativos: Demonstrati
         pagas: lista.filter((c) => c.demonstrativo_id && pagos.has(c.demonstrativo_id)).length,
         deFora,
         aguardando: abertas.length - deFora,
-        previsao: limiteDoDemonstrativo(`${mes}-01`),
+        previsao: previsoes.at(-1) ?? limiteDoDemonstrativo(`${mes}-01`),
       };
     });
 }
@@ -340,7 +347,7 @@ export type Resumo = {
   pagoAMenos: number;
 };
 
-export function resumo(demonstrativos: Demonstrativo[], cirurgias: Cirurgia[], hoje: string): Resumo {
+export function resumo(demonstrativos: Demonstrativo[], cirurgias: Cirurgia[], hoje: string, hospitais: Hospital[] = []): Resumo {
   const mes = hoje.slice(0, 7);
   let aReceber = 0;
   let recebidoNoMes = 0;
@@ -355,7 +362,7 @@ export function resumo(demonstrativos: Demonstrativo[], cirurgias: Cirurgia[], h
     if (pago < d.valor_total - 0.005) pagoAMenos += d.valor_total - pago;
   }
   // Só conta o que já deveria ter sido pago: o que ainda está no ciclo do mês não é pendência.
-  const abertas = cirurgias.filter((c) => !c.demonstrativo_id && c.data <= hoje && passouDoCiclo(c, demonstrativos, hoje));
+  const abertas = cirurgias.filter((c) => !c.demonstrativo_id && c.data <= hoje && passouDoCiclo(c, demonstrativos, hoje, hospitais));
   return {
     aReceber,
     recebidoNoMes,
