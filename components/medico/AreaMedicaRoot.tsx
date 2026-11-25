@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ArrowRight, CalendarDays, Eye, EyeOff, FileText, Home, Landmark, LayoutGrid, LogOut, MoreHorizontal, Paperclip, Plug, Plus, Send, Settings2, Sparkles, Stethoscope, UserPlus, Zap } from 'lucide-react';
+import { ArrowRight, CalendarDays, ChevronDown, Eye, EyeOff, FileText, Home, Landmark, LayoutGrid, LogOut, MoreHorizontal, Paperclip, Plug, Plus, Send, Settings2, Sparkles, Stethoscope, UserPlus, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { supabaseBrowser } from '@/lib/db/supabase-browser';
@@ -10,7 +10,7 @@ import type { EstadoMedico } from '@/lib/medico/types';
 import { Agenda } from './Agenda';
 import { Banco } from './Banco';
 import { Cadastros } from './Cadastros';
-import { Cirurgias } from './Cirurgias';
+import { Cirurgias, situacao } from './Cirurgias';
 import { Cockpit } from './Cockpit';
 import { Demonstrativos } from './Demonstrativos';
 import { Documentos } from './Documentos';
@@ -312,6 +312,7 @@ function VisaoGeral({
   const dinheiro = (v: number) => (oculto ? 'R$ ••••' : brl(v));
   const r = useMemo(() => resumo(estado.demonstrativos, estado.cirurgias, hoje, estado.hospitais), [estado, hoje]);
   const fila = useMemo(() => avisos(estado.demonstrativos, estado.cirurgias, estado.hospitais, hoje), [estado, hoje]);
+  const [mesAberto, setMesAberto] = useState<string | null>(null);
   const ciclos = useMemo(() => ciclosMensais(estado.cirurgias, estado.demonstrativos, hoje, estado.hospitais), [estado, hoje]);
 
   const semHospital = estado.hospitais.length === 0;
@@ -396,11 +397,18 @@ function VisaoGeral({
           {/* Números: linhas simples */}
           <ul className="order-4 mt-4 divide-y divide-neutral-200 border-y border-neutral-200 lg:mt-6 lg:grid lg:grid-cols-3 lg:gap-4 lg:divide-y-0 lg:border-0">
             {linhas.map((l) => (
-              <li key={l.rotulo} className="flex items-center gap-2 px-5 py-4 sm:px-8 lg:flex-col lg:items-start lg:gap-4 lg:rounded-[2rem] lg:bg-white lg:p-6 lg:ring-1 lg:ring-black/[0.05]">
-                <span className="flex min-w-0 flex-1 items-center gap-1 text-sm text-neutral-600">
+              <li
+                key={l.rotulo}
+                role="button"
+                tabIndex={0}
+                onClick={() => irPara(l.ir)}
+                onKeyDown={(e) => e.key === 'Enter' && irPara(l.ir)}
+                className="flex cursor-pointer items-center gap-2 px-5 py-4 transition hover:bg-neutral-50 sm:px-8 lg:flex-col lg:items-start lg:gap-4 lg:rounded-[2rem] lg:bg-white lg:p-6 lg:ring-1 lg:ring-black/[0.05] lg:hover:-translate-y-0.5 lg:hover:bg-white lg:hover:shadow-lg"
+              >
+                <span className="flex min-w-0 flex-1 items-center gap-1 text-sm text-neutral-600" onClick={(e) => e.stopPropagation()}>
                   {l.rotulo} <Info>{l.info}</Info>
                 </span>
-                <button type="button" onClick={() => irPara(l.ir)} className="flex items-center gap-2">
+                <button type="button" tabIndex={-1} className="flex items-center gap-2">
                   <span className={`text-base font-semibold lg:text-3xl ${l.alerta ? 'text-red-600' : 'text-neutral-900'}`}>{l.valor}</span>
                   <ArrowRight className="h-4 w-4 shrink-0 text-neutral-300" aria-hidden />
                 </button>
@@ -415,34 +423,80 @@ function VisaoGeral({
                 Por mês{' '}
                 <Info>O hospital paga por mês: as cirurgias de um mês entram no demonstrativo que chega no fim do mês seguinte. Depois dele sai a nota, e o pagamento vem em seguida. Aqui você vê em que ponto cada mês está.</Info>
               </h2>
-              <ul className="mt-3 space-y-4">
+              <ul className="mt-3 space-y-2">
                 {ciclos.map((c) => {
                   const [ano, m] = c.mes.split('-');
                   const nome = `${MESES_CURTOS[Number(m) - 1]} ${ano}`;
                   const parte = (n: number) => `${(n / c.cirurgias) * 100}%`;
+                  const aberto = mesAberto === c.mes;
+                  const doMes = aberto ? estado.cirurgias.filter((x) => x.data.slice(0, 7) === c.mes && x.data <= hoje).sort((x, y) => x.data.localeCompare(y.data)) : [];
                   return (
                     <li key={c.mes}>
-                      <div className="flex items-baseline justify-between gap-3 text-sm">
-                        <span className="font-medium capitalize">{nome}</span>
-                        <span className="text-neutral-500">
-                          {c.cirurgias} {c.cirurgias === 1 ? 'cirurgia' : 'cirurgias'}
-                        </span>
-                      </div>
-                      <div className="mt-1.5 flex h-2 overflow-hidden rounded-full bg-neutral-200" aria-hidden>
-                        <span className="bg-emerald-500" style={{ width: parte(c.pagas) }} />
-                        <span className="bg-medico" style={{ width: parte(c.noDemonstrativo - c.pagas) }} />
-                        <span className="bg-red-500" style={{ width: parte(c.deFora) }} />
-                      </div>
-                      <p className="mt-1 text-xs text-neutral-500">
-                        {[
-                          c.pagas > 0 && `${c.pagas} ${c.pagas === 1 ? 'paga' : 'pagas'}`,
-                          c.noDemonstrativo - c.pagas > 0 && `${c.noDemonstrativo - c.pagas} no demonstrativo`,
-                          c.deFora > 0 && `${c.deFora} ${c.deFora === 1 ? 'ficou' : 'ficaram'} de fora`,
-                          c.aguardando > 0 && `${c.aguardando} aguardando o demonstrativo, previsto até ${c.previsao.split('-').reverse().join('/')}`,
-                        ]
-                          .filter(Boolean)
-                          .join(' · ')}
-                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setMesAberto(aberto ? null : c.mes)}
+                        aria-expanded={aberto}
+                        className="group -mx-2 block w-[calc(100%+1rem)] rounded-2xl px-2 py-1.5 text-left transition hover:bg-neutral-100"
+                      >
+                        <div className="flex items-baseline justify-between gap-3 text-sm">
+                          <span className="font-medium capitalize">{nome}</span>
+                          <span className="flex items-center gap-1 text-neutral-500">
+                            {c.cirurgias} {c.cirurgias === 1 ? 'cirurgia' : 'cirurgias'}
+                            <ChevronDown className={`h-4 w-4 transition ${aberto ? 'rotate-180' : ''}`} aria-hidden />
+                          </span>
+                        </div>
+                        <div className="mt-1.5 flex h-2 overflow-hidden rounded-full bg-neutral-200 transition group-hover:h-2.5" aria-hidden>
+                          <span className="bg-emerald-500" style={{ width: parte(c.pagas) }} />
+                          <span className="bg-medico" style={{ width: parte(c.noDemonstrativo - c.pagas) }} />
+                          <span className="bg-red-500" style={{ width: parte(c.deFora) }} />
+                        </div>
+                        <p className="mt-1 text-xs text-neutral-500">
+                          {[
+                            c.pagas > 0 && `${c.pagas} ${c.pagas === 1 ? 'paga' : 'pagas'}`,
+                            c.noDemonstrativo - c.pagas > 0 && `${c.noDemonstrativo - c.pagas} no demonstrativo`,
+                            c.deFora > 0 && `${c.deFora} ${c.deFora === 1 ? 'ficou' : 'ficaram'} de fora`,
+                            c.aguardando > 0 && `${c.aguardando} aguardando o demonstrativo, previsto até ${c.previsao.split('-').reverse().join('/')}`,
+                          ]
+                            .filter(Boolean)
+                            .join(' · ')}
+                        </p>
+                      </button>
+                      {aberto && (
+                        <div className="mt-2 rounded-2xl bg-neutral-50 p-3 ring-1 ring-black/[0.05]">
+                          <ul className="divide-y divide-neutral-200">
+                            {doMes.map((x) => {
+                              const sit = situacao(x, estado, hoje);
+                              return (
+                                <li key={x.id} className="flex items-center gap-3 py-2.5">
+                                  <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${{ verde: 'bg-emerald-500', azul: 'bg-medico', amarelo: 'bg-neutral-300', vermelho: 'bg-red-500' }[sit.cor]}`} aria-hidden />
+                                  <span className="min-w-0 flex-1">
+                                    <span className="block truncate text-sm font-medium">{x.paciente}</span>
+                                    <span className="block truncate text-xs text-neutral-500">
+                                      {x.data.split('-').reverse().slice(0, 2).join('/')} · {estado.hospitais.find((h) => h.id === x.hospital_id)?.nome} · {sit.rotulo}
+                                    </span>
+                                  </span>
+                                  <span className="shrink-0 text-sm font-semibold">{x.valor == null ? '' : dinheiro(x.valor)}</span>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {c.deFora > 0 && (
+                              <Botao onClick={() => irPara('pendencias')}>
+                                <Send className="h-4 w-4" aria-hidden /> Cobrar {c.deFora === 1 ? 'a que ficou' : `as ${c.deFora} que ficaram`} de fora
+                              </Botao>
+                            )}
+                            {c.noDemonstrativo - c.pagas > 0 && (
+                              <Botao tipo="secundario" onClick={() => irPara('demonstrativos')}>
+                                Ver as notas
+                              </Botao>
+                            )}
+                            <Botao tipo="secundario" onClick={() => irPara('cirurgias')}>
+                              Abrir em Cirurgias
+                            </Botao>
+                          </div>
+                        </div>
+                      )}
                     </li>
                   );
                 })}
