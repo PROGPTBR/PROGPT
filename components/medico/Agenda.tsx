@@ -179,3 +179,77 @@ function MarcarCirurgia({ estado, dia, enviar, onFechar }: Pick<PropsDaAba, 'est
     </Janela>
   );
 }
+
+/** Calendário compacto para a tela inicial: clicou no dia, abre as cirurgias dele. */
+export function MiniCalendario({ estado, hoje, abrirAgenda }: Pick<PropsDaAba, 'estado' | 'hoje'> & { abrirAgenda: () => void }) {
+  const [mes, setMes] = useState(hoje.slice(0, 7));
+  const [dia, setDia] = useState(hoje);
+  const semanas = useMemo(() => semanasDoMes(mes), [mes]);
+  const porDia = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const c of estado.cirurgias) m.set(c.data, (m.get(c.data) ?? 0) + 1);
+    return m;
+  }, [estado.cirurgias]);
+  const doDia = cirurgiasDoDia(estado.cirurgias, dia);
+  const nomeHospital = (id: string) => estado.hospitais.find((h) => h.id === id)?.nome ?? '';
+  const [ano, m] = mes.split('-').map(Number) as [number, number];
+
+  return (
+    <section>
+      <div className="mb-2 flex items-center justify-between">
+        <h2 className="text-lg font-semibold">
+          {MESES[m - 1]} <span className="font-normal text-neutral-400">{ano}</span>
+        </h2>
+        <span className="flex">
+          <button type="button" onClick={() => setMes(mesVizinho(mes, -1))} aria-label="Mês anterior" className="rounded-full p-1.5 hover:bg-neutral-100">
+            <ChevronLeft className="h-5 w-5" aria-hidden />
+          </button>
+          <button type="button" onClick={() => setMes(mesVizinho(mes, 1))} aria-label="Próximo mês" className="rounded-full p-1.5 hover:bg-neutral-100">
+            <ChevronRight className="h-5 w-5" aria-hidden />
+          </button>
+        </span>
+      </div>
+      <div className="grid grid-cols-7 text-center text-[11px] font-medium text-neutral-400" aria-hidden>
+        {DIAS.map((d, i) => (
+          <span key={i} className="py-1">
+            {d}
+          </span>
+        ))}
+      </div>
+      <div className="grid grid-cols-7">
+        {semanas.flat().map((d, i) => {
+          if (!d) return <span key={i} />;
+          const n = porDia.get(d) ?? 0;
+          const escolhido = d === dia;
+          return (
+            <button key={d} type="button" onClick={() => setDia(d)} aria-pressed={escolhido} aria-label={`${dataBr(d)}${n > 0 ? `, ${n} ${n === 1 ? 'cirurgia' : 'cirurgias'}` : ''}`} className="group flex flex-col items-center py-0.5">
+              <span className={`grid h-9 w-9 place-items-center rounded-full text-sm transition ${escolhido ? 'bg-medico font-semibold text-white' : d === hoje ? 'font-semibold text-medico ring-1 ring-medico/40' : 'group-hover:bg-neutral-100'}`}>
+                {Number(d.slice(8))}
+              </span>
+              <span className={`mt-0.5 h-1.5 w-1.5 rounded-full ${n > 0 ? (d >= hoje ? 'bg-medico-claro' : 'bg-neutral-300') : ''}`} aria-hidden />
+            </button>
+          );
+        })}
+      </div>
+      <div className="mt-3 border-t border-neutral-200 pt-3">
+        <p className="text-sm font-medium">
+          {dia === hoje ? 'Hoje' : dataBr(dia)} <span className="font-normal text-neutral-500">· {doDia.length === 0 ? 'nada marcado' : `${doDia.length} ${doDia.length === 1 ? 'cirurgia' : 'cirurgias'}`}</span>
+        </p>
+        <ul className="mt-2 space-y-1.5">
+          {doDia.slice(0, 4).map((c) => (
+            <li key={c.id} className="flex items-center gap-2.5 rounded-xl bg-neutral-100 px-3 py-2 text-sm">
+              <span className="w-11 shrink-0 font-semibold text-medico">{c.hora || '--:--'}</span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate font-medium">{c.procedimento || 'Cirurgia'}</span>
+                <span className="block truncate text-xs text-neutral-500">{nomeHospital(c.hospital_id)}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+        <button type="button" onClick={abrirAgenda} className="mt-3 text-sm font-semibold text-medico hover:underline">
+          Abrir a agenda
+        </button>
+      </div>
+    </section>
+  );
+}

@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import { supabaseBrowser } from '@/lib/db/supabase-browser';
 import { avisos, ciclosMensais, pendencias, resumo } from '@/lib/medico/conciliacao';
 import type { EstadoMedico } from '@/lib/medico/types';
-import { Agenda } from './Agenda';
+import { Agenda, MiniCalendario } from './Agenda';
 import { Banco } from './Banco';
 import { Cadastros } from './Cadastros';
 import { Cirurgias, situacao } from './Cirurgias';
@@ -508,11 +508,19 @@ function VisaoGeral({
       </div>
 
       {/* O que fazer agora: logo abaixo dos atalhos no celular, coluna própria no computador */}
-      <aside className="order-3 lg:sticky lg:top-10 lg:rounded-[2rem] lg:bg-white lg:p-6 lg:ring-1 lg:ring-black/[0.05]">
-        <h2 className="mb-4 hidden text-lg font-semibold lg:block">O que fazer agora</h2>
-        {!semHospital && fila.length === 0 && <p className="hidden text-sm text-emerald-700 lg:block">Tudo em dia.</p>}
-        {!semHospital && filaJsx}
-      </aside>
+      <div className="order-3 lg:sticky lg:top-10 lg:space-y-6">
+        <aside className="lg:rounded-[2rem] lg:bg-white lg:p-6 lg:ring-1 lg:ring-black/[0.05]">
+          <h2 className="mb-4 hidden text-lg font-semibold lg:block">O que fazer agora</h2>
+          {!semHospital && fila.length === 0 && <p className="hidden text-sm text-emerald-700 lg:block">Tudo em dia.</p>}
+          {!semHospital && filaJsx}
+        </aside>
+        {/* Computador: o calendário ocupa a coluna da direita */}
+        {!semHospital && (
+          <div className="hidden lg:block lg:rounded-[2rem] lg:bg-white lg:p-6 lg:ring-1 lg:ring-black/[0.05]">
+            <MiniCalendario estado={estado} hoje={hoje} abrirAgenda={() => irPara('agenda')} />
+          </div>
+        )}
+      </div>
     </div>
   );
 }
