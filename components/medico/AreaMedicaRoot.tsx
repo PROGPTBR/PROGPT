@@ -470,7 +470,7 @@ function VisaoGeral({
               <ol className="mt-3 space-y-1.5">
                 {passos.map((p) => (
                   <li key={p.id}>
-                    <button type="button" onClick={() => irPara(p.destino)} disabled={p.feito} className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm ${p.feito ? 'text-neutral-400 line-through' : 'font-medium hover:bg-white'}`}>
+                    <button type="button" onClick={() => (p.destino === 'inicio' ? (window.location.href = '/area-medica/inicio') : irPara(p.destino))} disabled={p.feito} className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm ${p.feito ? 'text-neutral-400 line-through' : 'font-medium hover:bg-white'}`}>
                       <span className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-[11px] font-bold ${p.feito ? 'bg-emerald-500 text-white' : 'bg-white text-medico ring-1 ring-medico/30'}`}>{p.feito ? '✓' : passos.indexOf(p) + 1}</span>
                       <span className="flex-1">{p.titulo}</span>
                       {!p.feito && <ArrowRight className="h-4 w-4 text-neutral-400" aria-hidden />}

@@ -24,6 +24,12 @@ export type MedicoConfig = {
   crm: string;
   especialidade: string;
   contato: string;
+  /** Respostas do formulário de início (sub-projeto 117). */
+  banco_nome: string;
+  secretaria_nome: string;
+  secretaria_contato: string;
+  inicio_status: '' | 'respondido' | 'pulado';
+  inicio_em: string | null;
 };
 
 export const CONFIG_VAZIA: MedicoConfig = {
@@ -43,6 +49,11 @@ export const CONFIG_VAZIA: MedicoConfig = {
   crm: '',
   especialidade: '',
   contato: '',
+  banco_nome: '',
+  secretaria_nome: '',
+  secretaria_contato: '',
+  inicio_status: '',
+  inicio_em: null,
 };
 
 /** Papel do médico na cirurgia, como o hospital pede na planilha de pendências. */
@@ -82,13 +93,16 @@ export type MovimentoBanco = {
 };
 
 /** Documento guardado pelo médico. O caminho do arquivo fica só no servidor. */
-export const TIPOS_DE_DOCUMENTO = ['nota', 'demonstrativo', 'comprovante', 'pendencias', 'outro'] as const;
+export const TIPOS_DE_DOCUMENTO = ['nota', 'demonstrativo', 'comprovante', 'pendencias', 'modelo_pendencias', 'cirurgias', 'extrato', 'outro'] as const;
 export type TipoDeDocumento = (typeof TIPOS_DE_DOCUMENTO)[number];
 export const TIPO_DE_DOCUMENTO_LABEL: Record<TipoDeDocumento, string> = {
   nota: 'Nota fiscal',
   demonstrativo: 'Demonstrativo do hospital',
   comprovante: 'Comprovante de pagamento',
   pendencias: 'Planilha de pendências',
+  modelo_pendencias: 'Modelo de planilha do hospital',
+  cirurgias: 'Planilha de cirurgias do mês',
+  extrato: 'Extrato bancário',
   outro: 'Outro documento',
 };
 export type Documento = {
@@ -207,6 +221,9 @@ export const ConfigSchema = z.object({
   crm: texto(30).default(''),
   especialidade: texto(80).default(''),
   contato: texto(60).default(''),
+  banco_nome: texto(60).default(''),
+  secretaria_nome: texto(120).default(''),
+  secretaria_contato: texto(60).default(''),
 });
 
 /** Cobrança direta: o paciente paga na hora e a nota sai na hora. */

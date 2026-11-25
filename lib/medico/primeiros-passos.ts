@@ -5,18 +5,21 @@ import type { Cirurgia, Demonstrativo, EstadoMedico } from './types';
 // O médico que chega "zero de automação" precisa de um caminho curto, e o
 // sistema sabe pelo próprio dado o que já foi feito: não há caixa para marcar.
 
-export type Passo = { id: string; titulo: string; feito: boolean; destino: 'cadastros' | 'integracoes' | 'agenda' | 'cirurgias' | 'demonstrativos' };
+export type Passo = { id: string; titulo: string; feito: boolean; destino: 'cadastros' | 'integracoes' | 'agenda' | 'cirurgias' | 'demonstrativos' | 'inicio' };
 
 export function primeirosPassos(estado: Omit<EstadoMedico, 'integracoes'>): Passo[] {
   const { config } = estado;
   const reais = <T extends { exemplo: boolean }>(l: T[]) => l.filter((x) => !x.exemplo);
-  return [
+  const passos: Passo[] = [
     { id: 'hospitais', titulo: 'Cadastre os hospitais onde você opera', feito: reais(estado.hospitais).length > 0, destino: 'cadastros' },
     { id: 'contador', titulo: 'Informe o e-mail do seu contador', feito: !!config.contador_email.trim(), destino: 'cadastros' },
     { id: 'contato', titulo: 'Informe o seu e-mail e o seu WhatsApp', feito: !!config.medico_email.trim() && !!config.whatsapp_numero.trim(), destino: 'integracoes' },
     { id: 'cirurgia', titulo: 'Marque ou registre a primeira cirurgia', feito: reais(estado.cirurgias).length > 0, destino: 'agenda' },
     { id: 'demonstrativo', titulo: 'Lance o primeiro demonstrativo do hospital', feito: reais(estado.demonstrativos).length > 0, destino: 'demonstrativos' },
   ];
+  // Pulou o formulário de início: ele volta como primeiro passo até ser respondido (sub-projeto 117).
+  if (config.inicio_status === 'pulado') passos.unshift({ id: 'inicio', titulo: 'Termine o formulário de início', feito: false, destino: 'inicio' });
+  return passos;
 }
 
 /** Cirurgias marcadas pela agenda cuja data já passou e ninguém confirmou que aconteceram. */

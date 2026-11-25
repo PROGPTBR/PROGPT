@@ -7,6 +7,7 @@ import { soAreaMedica } from '@/lib/medico/acesso';
 import { usuarioComAreaMedica } from '@/lib/medico/acesso-servidor';
 import { ShellDoMedico } from '@/components/medico/ShellDoMedico';
 import { estadoCompleto } from '@/lib/medico/integracoes';
+import { precisaDoInicio } from '@/lib/medico/inicio';
 import { hojeEmBrasilia } from '@/lib/vitrine/datas';
 
 export const dynamic = 'force-dynamic';
@@ -27,9 +28,12 @@ export default async function AreaMedicaPage({ searchParams }: { searchParams: {
   if (user.user_metadata?.trocar_senha === true) redirect('/area-medica/primeira-senha');
 
   const perfil = await getProfile(user.id).catch(() => null);
+  const estado = await estadoCompleto(user.id);
+  // Conta nova: primeiro o formulário de início (o que só o médico sabe).
+  if (precisaDoInicio(estado) && !searchParams.aba) redirect('/area-medica/inicio');
   const conteudo = (
     <AreaMedicaRoot
-      estadoInicial={await estadoCompleto(user.id)}
+      estadoInicial={estado}
       hoje={hojeEmBrasilia()}
       abaInicial={searchParams.aba}
       // Só a equipe da 2B Supply (super admin) vê o atalho para o sistema de

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { Fragment, useCallback, useEffect, useState } from 'react';
 import { Copy, ExternalLink, Stethoscope } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -24,7 +24,15 @@ type Acesso = {
   a_receber: number;
   whatsapp: boolean;
   banco: boolean;
+  inicio: 'pendente' | 'respondido' | 'pulado';
+  banco_nome: string;
+  secretaria: string;
+  contador: boolean;
+  empresa: boolean;
+  documentos: number;
+  demonstrativo_anexado: boolean;
 };
+type DocAdmin = { id: string; tipo: string; rotulo: string; nome: string; created_at: string; url: string };
 type IndicacaoAdmin = { id: string; nome: string; contato: string; situacao: string; created_at: string; indicado_por: string };
 type Dados = { acessos: Acesso[]; indicacoes: IndicacaoAdmin[]; avisos: { whatsapp: string | null; email: boolean; btg: boolean } };
 
@@ -34,6 +42,16 @@ export function AreaMedicaAdmin() {
   const [tipo, setTipo] = useState<'medico' | 'equipe'>('medico');
   const [ocupado, setOcupado] = useState<string | null>(null);
   const [senha, setSenha] = useState<{ email: string; senha: string } | null>(null);
+  const [nome, setNome] = useState('');
+  const [whatsapp, setWhatsapp] = useState('');
+  const [docsDe, setDocsDe] = useState<{ id: string; lista: DocAdmin[] } | null>(null);
+
+  async function verDocumentos(a: Acesso) {
+    if (docsDe?.id === a.id) return setDocsDe(null);
+    const r = await chamar<{ documentos: DocAdmin[] }>('GET', `/acessos/${a.id}/documentos`);
+    if (!r.ok) return void toast.error(r.mensagem);
+    setDocsDe({ id: a.id, lista: r.dados.documentos });
+  }
 
   const carregar = useCallback(async () => {
     const r = await chamar<Dados>('GET', '/acessos');
@@ -46,12 +64,14 @@ export function AreaMedicaAdmin() {
 
   async function liberar(modo: 'convite' | 'senha', para = email, comoTipo = tipo) {
     setOcupado(modo + para);
-    const r = await chamar<{ convidado: boolean; senha: string | null }>('POST', '/acessos', { email: para, tipo: comoTipo, modo });
+    const r = await chamar<{ convidado: boolean; senha: string | null }>('POST', '/acessos', { email: para, tipo: comoTipo, modo, nome: para === email ? nome : '', whatsapp: para === email ? whatsapp : '' });
     setOcupado(null);
     if (!r.ok) return void toast.error(r.mensagem);
     if (r.dados.senha) setSenha({ email: para.trim().toLowerCase(), senha: r.dados.senha });
     else toast.success(r.dados.convidado ? 'Convite enviado por e-mail: a pessoa cria a senha e entra.' : 'Acesso liberado para a conta que já existia.');
     setEmail('');
+    setNome('');
+    setWhatsapp('');
     await carregar();
   }
 
@@ -105,6 +125,14 @@ export function AreaMedicaAdmin() {
             <span className={ROTULO}>E-mail</span>
             <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="medico@clinica.com.br" className={CAMPO} />
           </label>
+          <label className="min-w-[12rem] flex-1">
+            <span className={ROTULO}>Nome (opcional)</span>
+            <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Dr. ..." className={CAMPO} />
+          </label>
+          <label className="min-w-[10rem]">
+            <span className={ROTULO}>WhatsApp (opcional)</span>
+            <input value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="(21) 9..." className={CAMPO} />
+          </label>
           <label>
             <span className={ROTULO}>Tipo de conta</span>
             <select value={tipo} onChange={(e) => setTipo(e.target.value as 'medico' | 'equipe')} className={`${CAMPO} !w-auto`}>
@@ -149,6 +177,7 @@ export function AreaMedicaAdmin() {
                 <tr>
                   <th className={TH}>Conta</th>
                   <th className={TH}>Último acesso</th>
+                  <th className={TH}>Início</th>
                   <th className={`${TH} text-right`}>Hospitais</th>
                   <th className={`${TH} text-right`}>Cirurgias</th>
                   <th className={`${TH} text-right`}>Sem demonstrativo</th>
@@ -159,12 +188,22 @@ export function AreaMedicaAdmin() {
               </thead>
               <tbody className="divide-y divide-border">
                 {dados.acessos.map((a) => (
-                  <tr key={a.id}>
+                  <Fragment key={a.id}>
+                  <tr>
                     <td className={TD}>
                       <span className="font-medium">{a.nome || a.email}</span> <Selo cor={a.tipo === 'medico' ? 'azul' : 'neutro'}>{a.tipo === 'medico' ? 'Médico' : 'Equipe'}</Selo>
                       {a.nome && <span className="block break-all text-xs text-muted-foreground">{a.email}</span>}
                     </td>
                     <td className={`${TD} whitespace-nowrap`}>{entrou(a.ultimo_acesso)}</td>
+                    <td className={`${TD} whitespace-nowrap text-xs`}>
+                      <Selo cor={a.inicio === 'respondido' ? 'verde' : a.inicio === 'pulado' ? 'amarelo' : 'neutro'}>{a.inicio === 'respondido' ? 'Respondido' : a.inicio === 'pulado' ? 'Incompleto' : 'Pendente'}</Selo>
+                      {a.tipo === 'medico' && (
+                        <span className="mt-1 block text-muted-foreground">
+                          {a.banco_nome || 'banco ?'} · {a.empresa ? 'CNPJ ok' : 'sem CNPJ'} · {a.contador ? 'contador ok' : 'sem contador'}
+                          {a.secretaria && <span className="block">Secretária: {a.secretaria}</span>}
+                        </span>
+                      )}
+                    </td>
                     <td className={`${TD} text-right`}>{a.hospitais}</td>
                     <td className={`${TD} text-right`}>{a.cirurgias}</td>
                     <td className={`${TD} text-right ${a.pendencias > 0 ? 'font-medium text-red-700 dark:text-red-300' : ''}`}>{a.pendencias}</td>
@@ -177,17 +216,44 @@ export function AreaMedicaAdmin() {
                         Nova senha temporária
                       </button>
                       <span className="mx-2 text-border">|</span>
+                      <button type="button" onClick={() => void verDocumentos(a)} className={`hover:text-foreground ${a.demonstrativo_anexado ? 'text-emerald-700' : 'text-muted-foreground'}`}>
+                        Documentos ({a.documentos})
+                      </button>
+                      <span className="mx-2 text-border">|</span>
                       <button type="button" onClick={() => void remover(a)} className="text-muted-foreground hover:text-red-600">
                         Tirar acesso
                       </button>
                     </td>
                   </tr>
+                  {docsDe?.id === a.id && (
+                    <tr>
+                      <td colSpan={9} className="bg-muted/30 px-4 py-3 text-xs">
+                        {docsDe.lista.length === 0 ? (
+                          <span className="text-muted-foreground">Nenhum documento anexado ainda.</span>
+                        ) : (
+                          <ul className="grid gap-1 sm:grid-cols-2">
+                            {docsDe.lista.map((d) => (
+                              <li key={d.id}>
+                                <span className="text-muted-foreground">{d.rotulo}:</span>{' '}
+                                <a href={d.url} className="font-medium text-amber-700 hover:underline">
+                                  {d.nome}
+                                </a>{' '}
+                                <span className="text-muted-foreground">({new Date(d.created_at).toLocaleDateString('pt-BR')})</span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                        <p className="mt-2 text-muted-foreground">Os links valem 2 minutos. Cada abertura desta lista fica registrada no log de auditoria.</p>
+                      </td>
+                    </tr>
+                  )}
+                  </Fragment>
                 ))}
               </tbody>
             </table>
           </div>
         )}
-        <p className="mt-2 text-xs text-muted-foreground">Os números não contam os dados de exemplo. Verde em WhatsApp = o médico escolheu o grupo das cirurgias; em Banco = ligou a conta.</p>
+        <p className="mt-2 text-xs text-muted-foreground">Os números não contam os dados de exemplo. Verde em WhatsApp = o médico escolheu o grupo das cirurgias; em Banco = ligou a conta. Em Início, Respondido = o médico completou o formulário de início e os documentos dele estão em Documentos: é a hora de lançar o primeiro mês e iniciar a ligação com o banco.</p>
       </section>
 
       <section className={CARTAO}>

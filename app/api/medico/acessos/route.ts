@@ -35,13 +35,14 @@ export async function GET() {
 
   // Só números: o painel da 2B Supply não mostra paciente nem valor por cirurgia.
   const hoje = hojeEmBrasilia();
-  const [emails, hospitais, cirurgias, demonstrativos, configs, contas] = await Promise.all([
+  const [emails, hospitais, cirurgias, demonstrativos, configs, contas, documentos] = await Promise.all([
     db.from('profiles_with_email').select('id, email, last_sign_in_at').in('id', ids),
     db.from('medico_hospitais').select('user_id').in('user_id', ids).eq('exemplo', false),
     db.from('medico_cirurgias').select('user_id, demonstrativo_id, data').in('user_id', ids).eq('exemplo', false).limit(20000),
     db.from('medico_demonstrativos').select('user_id, valor_total, pago_em').in('user_id', ids).eq('exemplo', false).limit(5000),
-    db.from('medico_config').select('user_id, medico_nome, grupo_jid').in('user_id', ids),
+    db.from('medico_config').select('user_id, medico_nome, grupo_jid, inicio_status, banco_nome, secretaria_nome, secretaria_contato, contador_email, empresa_cnpj').in('user_id', ids),
     db.from('medico_banco').select('user_id').in('user_id', ids),
+    db.from('medico_documentos').select('user_id, tipo').in('user_id', ids).limit(5000),
   ]);
   const conta = <T extends { user_id: unknown }>(linhas: T[] | null, id: string, filtro: (l: T) => boolean = () => true) => (linhas ?? []).filter((l) => l.user_id === id && filtro(l)).length;
 
@@ -64,6 +65,14 @@ export async function GET() {
         a_receber: Math.round(abertos.reduce((soma, d) => soma + Number(d.valor_total ?? 0), 0) * 100) / 100,
         whatsapp: !!cfg?.grupo_jid,
         banco: (contas.data ?? []).some((c) => c.user_id === id),
+        // Formulário de início (sub-projeto 117): o que a equipe precisa para ligar o banco e lançar o 1º mês.
+        inicio: ((cfg?.inicio_status as string) || 'pendente') as 'pendente' | 'respondido' | 'pulado',
+        banco_nome: (cfg?.banco_nome as string) ?? '',
+        secretaria: [cfg?.secretaria_nome, cfg?.secretaria_contato].filter(Boolean).join(' · '),
+        contador: !!cfg?.contador_email,
+        empresa: !!cfg?.empresa_cnpj,
+        documentos: conta(documentos.data, id),
+        demonstrativo_anexado: conta(documentos.data, id, (d) => d.tipo === 'demonstrativo') > 0,
       };
     })
     .sort((a, b) => a.email.localeCompare(b.email));
@@ -108,6 +117,9 @@ const Convite = z.object({
   tipo: z.enum(['medico', 'equipe']).default('medico'),
   /** 'convite': e-mail com link para criar a senha. 'senha': senha temporária mostrada uma vez a quem cadastrou. */
   modo: z.enum(['convite', 'senha']).default('convite'),
+  /** Pré-cadastro feito pela equipe (sub-projeto 117): o médico só confere no formulário de início. */
+  nome: z.string().trim().max(120).default(''),
+  whatsapp: z.string().trim().max(30).default(''),
 });
 
 export async function POST(req: Request) {
@@ -115,7 +127,7 @@ export async function POST(req: Request) {
   if (u instanceof NextResponse) return u;
   const body = Convite.safeParse(await req.json().catch(() => null));
   if (!body.success) return NextResponse.json({ error: 'invalid_body', message: 'Informe um e-mail válido.' }, { status: 400 });
-  const { email, tipo, modo } = body.data;
+  const { email, tipo, modo, nome, whatsapp } = body.data;
   const db = getServerSupabase();
 
   // Conta que já existe só muda de tipo; conta nova recebe o convite (ou a senha temporária).
@@ -145,6 +157,12 @@ export async function POST(req: Request) {
   }
 
   const { error } = await db.from('profiles').update({ area_medica: tipo }).eq('id', existente.id);
+  if (nome || whatsapp) {
+    const pre: Record<string, string> = { user_id: existente.id as string };
+    if (nome) pre.medico_nome = nome;
+    if (whatsapp) pre.whatsapp_numero = whatsapp;
+    await db.from('medico_config').upsert(pre);
+  }
   if (error) return NextResponse.json({ error: 'persist_failed', message: 'O convite saiu, mas não consegui liberar o acesso. Tente de novo.' }, { status: 500 });
   void recordAuditLog({ actorId: u.id, actorEmail: u.email ?? null, action: 'area_medica.grant', resourceType: 'user', resourceId: existente.id as string, metadata: { email, tipo, convidado, senha_temporaria: !!senha } });
   // A senha temporária aparece uma vez, para quem cadastrou passar ao médico. Não é gravada em lugar nenhum.

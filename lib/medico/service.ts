@@ -36,7 +36,7 @@ const CIRURGIA =
 const DEMONSTRATIVO =
   'id, hospital_id, referencia, recebido_em, valor_total, itens, nota_pedida_em, nota_numero, nota_emitida_em, nota_enviada_em, pago_em, valor_pago, exemplo, tipo, pagador_nome, pagador_documento, pagador_contato';
 export const CONFIG =
-  'medico_nome, contador_nome, contador_email, medico_email, whatsapp_numero, chave_pix, avisos_email, avisos_whatsapp, lembretes_agenda, grupo_jid, grupo_nome, empresa_nome, empresa_cnpj, crm, especialidade, contato';
+  'medico_nome, contador_nome, contador_email, medico_email, whatsapp_numero, chave_pix, avisos_email, avisos_whatsapp, lembretes_agenda, grupo_jid, grupo_nome, empresa_nome, empresa_cnpj, crm, especialidade, contato, banco_nome, secretaria_nome, secretaria_contato, inicio_status, inicio_em';
 const ENTRADA = 'id, canal, remetente, assunto, texto, recebido_em';
 
 const num = (v: unknown): number | null => (v == null ? null : Number(v));

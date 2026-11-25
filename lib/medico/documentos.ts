@@ -12,7 +12,7 @@ import { TIPOS_DE_DOCUMENTO, type Documento, type TipoDeDocumento } from './type
 export const BUCKET = 'medico-documentos';
 export const TAMANHO_MAXIMO = 20 * 1024 * 1024;
 const ACEITOS = /^(application\/pdf|image\/(jpeg|png|webp|heic|heif)|text\/xml|application\/xml|application\/vnd\.openxmlformats-officedocument\.(spreadsheetml\.sheet|wordprocessingml\.document)|application\/vnd\.ms-excel|text\/csv)$/;
-const EXTENSOES = /\.(pdf|jpe?g|png|webp|heic|heif|xml|xlsx|xls|docx|csv)$/i;
+const EXTENSOES = /\.(pdf|jpe?g|png|webp|heic|heif|xml|xlsx|xls|docx|csv|ofx|txt)$/i;
 
 const COLUNAS = 'id, demonstrativo_id, tipo, nome, mime, tamanho, created_at';
 
@@ -37,7 +37,7 @@ export async function guardarDocumento(
   if (!TIPOS_DE_DOCUMENTO.includes(tipo)) throw new RegraMedica('Tipo de documento inválido.');
   if (arquivo.buf.length === 0) throw new RegraMedica('O arquivo está vazio.');
   if (arquivo.buf.length > TAMANHO_MAXIMO) throw new RegraMedica('O arquivo passa de 20 MB.');
-  if (!arquivoAceito(arquivo.nome, arquivo.mime)) throw new RegraMedica('Envie PDF, foto, XML, Excel ou Word.');
+  if (!arquivoAceito(arquivo.nome, arquivo.mime)) throw new RegraMedica('Envie PDF, foto, XML, Excel, Word, CSV ou OFX.');
   const db = getServerSupabase();
   if (demonstrativoId) {
     const { data } = await db.from('medico_demonstrativos').select('id').eq('user_id', userId).eq('id', demonstrativoId).maybeSingle();
