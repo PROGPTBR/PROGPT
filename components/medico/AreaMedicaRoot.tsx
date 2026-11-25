@@ -5,7 +5,7 @@ import { ArrowRight, CalendarDays, Eye, EyeOff, FileText, Home, Landmark, LogOut
 import { toast } from 'sonner';
 
 import { supabaseBrowser } from '@/lib/db/supabase-browser';
-import { avisos, pendencias, resumo } from '@/lib/medico/conciliacao';
+import { avisos, ciclosMensais, pendencias, resumo } from '@/lib/medico/conciliacao';
 import type { EstadoMedico } from '@/lib/medico/types';
 import { Agenda } from './Agenda';
 import { Banco } from './Banco';
@@ -112,7 +112,7 @@ export function AreaMedicaRoot({
 
   const temExemplo = estado.hospitais.some((h) => h.exemplo);
   const props: PropsDaAba = { estado, hoje, enviar, recarregar };
-  const nPendentes = useMemo(() => pendencias(estado.cirurgias, estado.hospitais, hoje).length, [estado, hoje]);
+  const nPendentes = useMemo(() => pendencias(estado.cirurgias, estado.hospitais, hoje, estado.demonstrativos).filter((p) => p.atrasada).length, [estado, hoje]);
   const novas = { cirurgias: estado.entradas.filter((e) => e.canal === 'whatsapp').length, demonstrativos: estado.entradas.filter((e) => e.canal === 'email').length };
 
   async function exemplo(metodo: 'POST' | 'DELETE') {
@@ -259,6 +259,8 @@ export function AreaMedicaRoot({
   );
 }
 
+const MESES_CURTOS = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+
 const CHAVE_OCULTAR = 'progpt_medico_ocultar_valores_v1';
 
 function VisaoGeral({
@@ -289,6 +291,7 @@ function VisaoGeral({
   const dinheiro = (v: number) => (oculto ? 'R$ ••••' : brl(v));
   const r = useMemo(() => resumo(estado.demonstrativos, estado.cirurgias, hoje), [estado, hoje]);
   const fila = useMemo(() => avisos(estado.demonstrativos, estado.cirurgias, estado.hospitais, hoje), [estado, hoje]);
+  const ciclos = useMemo(() => ciclosMensais(estado.cirurgias, estado.demonstrativos, hoje), [estado, hoje]);
 
   const semHospital = estado.hospitais.length === 0;
   const atalhos = [
@@ -303,7 +306,7 @@ function VisaoGeral({
   ] as const;
   const linhas = [
     { rotulo: 'Recebido neste mês', valor: dinheiro(r.recebidoNoMes), info: 'Soma dos pagamentos confirmados neste mês.', ir: 'demonstrativos' as Aba, alerta: false },
-    { rotulo: 'Cirurgias sem pagamento', valor: String(r.pendentes), info: 'Cirurgias feitas que ainda não apareceram em nenhum demonstrativo do hospital.', ir: 'pendencias' as Aba, alerta: r.pendentes > 0 },
+    { rotulo: 'Cirurgias sem pagamento', valor: String(r.pendentes), info: 'Cirurgias que já deveriam ter sido pagas: o demonstrativo do mês veio sem elas, ou o prazo dele passou.', ir: 'pendencias' as Aba, alerta: r.pendentes > 0 },
     { rotulo: 'Pago a menos', valor: dinheiro(r.pagoAMenos), info: 'Diferença entre o que o demonstrativo dizia e o que caiu na conta.', ir: 'demonstrativos' as Aba, alerta: r.pagoAMenos > 0 },
   ];
 
@@ -383,6 +386,48 @@ function VisaoGeral({
               </li>
             ))}
           </ul>
+
+          {/* O ciclo de cada mês: cirurgias do mês, demonstrativo no mês seguinte, nota e pagamento */}
+          {ciclos.length > 0 && (
+            <section className="order-5 px-5 pb-2 pt-6 sm:px-8 lg:mt-6 lg:rounded-[2rem] lg:bg-white lg:p-6 lg:ring-1 lg:ring-black/[0.05]">
+              <h2 className="flex items-center gap-1 text-base font-semibold">
+                Por mês{' '}
+                <Info>O hospital paga por mês: as cirurgias de um mês entram no demonstrativo que chega no fim do mês seguinte. Depois dele sai a nota, e o pagamento vem em seguida. Aqui você vê em que ponto cada mês está.</Info>
+              </h2>
+              <ul className="mt-3 space-y-4">
+                {ciclos.map((c) => {
+                  const [ano, m] = c.mes.split('-');
+                  const nome = `${MESES_CURTOS[Number(m) - 1]} ${ano}`;
+                  const parte = (n: number) => `${(n / c.cirurgias) * 100}%`;
+                  return (
+                    <li key={c.mes}>
+                      <div className="flex items-baseline justify-between gap-3 text-sm">
+                        <span className="font-medium capitalize">{nome}</span>
+                        <span className="text-neutral-500">
+                          {c.cirurgias} {c.cirurgias === 1 ? 'cirurgia' : 'cirurgias'}
+                        </span>
+                      </div>
+                      <div className="mt-1.5 flex h-2 overflow-hidden rounded-full bg-neutral-200" aria-hidden>
+                        <span className="bg-emerald-500" style={{ width: parte(c.pagas) }} />
+                        <span className="bg-medico" style={{ width: parte(c.noDemonstrativo - c.pagas) }} />
+                        <span className="bg-red-500" style={{ width: parte(c.deFora) }} />
+                      </div>
+                      <p className="mt-1 text-xs text-neutral-500">
+                        {[
+                          c.pagas > 0 && `${c.pagas} ${c.pagas === 1 ? 'paga' : 'pagas'}`,
+                          c.noDemonstrativo - c.pagas > 0 && `${c.noDemonstrativo - c.pagas} no demonstrativo`,
+                          c.deFora > 0 && `${c.deFora} ${c.deFora === 1 ? 'ficou' : 'ficaram'} de fora`,
+                          c.aguardando > 0 && `${c.aguardando} aguardando o demonstrativo, previsto até ${c.previsao.split('-').reverse().join('/')}`,
+                        ]
+                          .filter(Boolean)
+                          .join(' · ')}
+                      </p>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          )}
         </>
       )}
       </div>

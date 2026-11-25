@@ -175,16 +175,50 @@ export type Pendencia = {
 };
 
 /** Cirurgias feitas que não apareceram em nenhum demonstrativo. */
-export function pendencias(cirurgias: Cirurgia[], hospitais: Hospital[], hoje: string): Pendencia[] {
+// ---------------------------------------------------------------------------
+// Ciclo mensal. O hospital não paga cirurgia por cirurgia: junta as do mês,
+// a secretária fecha a relação no mês seguinte, o demonstrativo chega no fim
+// desse mês (ou no começo do outro), aí sai a nota e o pagamento vem dias
+// depois. Uma cirurgia de novembro só é pendência se o demonstrativo que
+// deveria trazê-la chegou sem ela, ou se o prazo de ele chegar já passou.
+
+/** Mês (AAAA-MM) deslocado em `passo` meses. */
+export function mesMais(mes: string, passo: number): string {
+  const [ano, m] = mes.split('-').map(Number) as [number, number];
+  const d = new Date(Date.UTC(ano, m - 1 + passo, 1));
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
+}
+
+/** Até quando o demonstrativo das cirurgias de um mês costuma chegar: dia 10 do segundo mês seguinte. */
+export function limiteDoDemonstrativo(data: string): string {
+  return `${mesMais(data.slice(0, 7), 2)}-10`;
+}
+
+/** O hospital já mandou um demonstrativo que cobria o mês desta cirurgia (ou depois), e ela não veio nele. */
+export function ficouDeFora(c: Cirurgia, demonstrativos: Demonstrativo[]): boolean {
+  const inicioDoMes = `${c.data.slice(0, 7)}-01`;
+  return demonstrativos.some((d) => d.tipo !== 'direto' && d.hospital_id === c.hospital_id && d.recebido_em > c.data && d.itens.some((i) => !!i.data && i.data >= inicioDoMes));
+}
+
+/** A cirurgia já deveria ter sido paga: ficou de fora de um demonstrativo, ou o prazo dele passou. */
+export function passouDoCiclo(c: Cirurgia, demonstrativos: Demonstrativo[], hoje: string): boolean {
+  return ficouDeFora(c, demonstrativos) || hoje > limiteDoDemonstrativo(c.data);
+}
+
+/**
+ * Cirurgias feitas que não apareceram em nenhum demonstrativo. `atrasada`
+ * marca as que já deveriam ter vindo (são as que valem cobrar); as outras
+ * ainda estão dentro do ciclo do mês, esperando o demonstrativo.
+ */
+export function pendencias(cirurgias: Cirurgia[], hospitais: Hospital[], hoje: string, demonstrativos: Demonstrativo[] = []): Pendencia[] {
   return cirurgias
     .filter((c) => !c.demonstrativo_id && c.data <= hoje)
     .map((c) => {
-      const prazo = hospitais.find((h) => h.id === c.hospital_id)?.prazo_pagamento_dias ?? 30;
       const dias = diasEntre(c.data, hoje);
       const cobrancas = c.cobrancas ?? [];
       const ultima = cobrancas.length > 0 ? [...cobrancas].sort().at(-1)! : null;
       const diasSemResposta = ultima ? diasEntre(ultima, hoje) : null;
-      const atrasada = dias > prazo;
+      const atrasada = passouDoCiclo(c, demonstrativos, hoje);
       return {
         cirurgia: c,
         dias,
@@ -194,7 +228,53 @@ export function pendencias(cirurgias: Cirurgia[], hospitais: Hospital[], hoje: s
         cobrarAgora: atrasada && (diasSemResposta === null || diasSemResposta >= DIAS_PARA_RECOBRAR),
       };
     })
-    .sort((a, b) => b.dias - a.dias);
+    .sort((a, b) => Number(b.atrasada) - Number(a.atrasada) || b.dias - a.dias);
+}
+
+/** As cirurgias de um hospital que valem cobrar agora: feitas, fora de demonstrativo e já além do ciclo do mês. */
+export function paraCobrar(cirurgias: Cirurgia[], demonstrativos: Demonstrativo[], hospitalId: string, hoje: string): Cirurgia[] {
+  return cirurgias.filter((c) => c.hospital_id === hospitalId && !c.demonstrativo_id && c.data <= hoje && passouDoCiclo(c, demonstrativos, hoje));
+}
+
+export type CicloDoMes = {
+  mes: string;
+  cirurgias: number;
+  /** Já entraram num demonstrativo (pagas ou não). */
+  noDemonstrativo: number;
+  pagas: number;
+  /** Deveriam ter vindo e não vieram. */
+  deFora: number;
+  /** Ainda dentro do prazo, esperando o demonstrativo do mês. */
+  aguardando: number;
+  /** Quando o demonstrativo desse mês costuma chegar. */
+  previsao: string;
+};
+
+/** Um resumo por mês de competência, do mais recente para o mais antigo. */
+export function ciclosMensais(cirurgias: Cirurgia[], demonstrativos: Demonstrativo[], hoje: string, quantos = 4): CicloDoMes[] {
+  const pagos = new Set(demonstrativos.filter((d) => d.pago_em).map((d) => d.id));
+  const porMes = new Map<string, Cirurgia[]>();
+  for (const c of cirurgias) {
+    if (c.data > hoje) continue;
+    const mes = c.data.slice(0, 7);
+    porMes.set(mes, [...(porMes.get(mes) ?? []), c]);
+  }
+  return [...porMes.entries()]
+    .sort((a, b) => b[0].localeCompare(a[0]))
+    .slice(0, quantos)
+    .map(([mes, lista]) => {
+      const abertas = lista.filter((c) => !c.demonstrativo_id);
+      const deFora = abertas.filter((c) => passouDoCiclo(c, demonstrativos, hoje)).length;
+      return {
+        mes,
+        cirurgias: lista.length,
+        noDemonstrativo: lista.length - abertas.length,
+        pagas: lista.filter((c) => c.demonstrativo_id && pagos.has(c.demonstrativo_id)).length,
+        deFora,
+        aguardando: abertas.length - deFora,
+        previsao: limiteDoDemonstrativo(`${mes}-01`),
+      };
+    });
 }
 
 /** A fila do "o que fazer agora", do mais urgente para o menos. */
@@ -227,7 +307,7 @@ export function avisos(
   }
 
   const porHospital = new Map<string, Pendencia[]>();
-  for (const p of pendencias(cirurgias, hospitais, hoje)) {
+  for (const p of pendencias(cirurgias, hospitais, hoje, demonstrativos)) {
     if (!p.atrasada) continue;
     porHospital.set(p.cirurgia.hospital_id, [...(porHospital.get(p.cirurgia.hospital_id) ?? []), p]);
   }
@@ -274,7 +354,8 @@ export function resumo(demonstrativos: Demonstrativo[], cirurgias: Cirurgia[], h
     if (d.pago_em.slice(0, 7) === mes) recebidoNoMes += pago;
     if (pago < d.valor_total - 0.005) pagoAMenos += d.valor_total - pago;
   }
-  const abertas = cirurgias.filter((c) => !c.demonstrativo_id && c.data <= hoje);
+  // Só conta o que já deveria ter sido pago: o que ainda está no ciclo do mês não é pendência.
+  const abertas = cirurgias.filter((c) => !c.demonstrativo_id && c.data <= hoje && passouDoCiclo(c, demonstrativos, hoje));
   return {
     aReceber,
     recebidoNoMes,

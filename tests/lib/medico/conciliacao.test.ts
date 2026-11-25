@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { areaMedicaLiberada, caminhoDoMedico, soAreaMedica } from '@/lib/medico/acesso';
-import { avisos, casarItens, etapaDe, pendencias, pontosDoPaciente, resumo } from '@/lib/medico/conciliacao';
+import { avisos, casarItens, ciclosMensais, etapaDe, ficouDeFora, limiteDoDemonstrativo, paraCobrar, pendencias, pontosDoPaciente, resumo } from '@/lib/medico/conciliacao';
 import { dadosDeExemplo } from '@/lib/medico/exemplo';
 import { cobranca, mailto, pedidoDeNota } from '@/lib/medico/mensagens';
 import { CONFIG_VAZIA, type Cirurgia, type Demonstrativo, type Hospital } from '@/lib/medico/types';
@@ -80,12 +80,61 @@ describe('cruzamento do demonstrativo com as cirurgias', () => {
 });
 
 describe('pendências, avisos e resumo', () => {
-  it('pendência é a cirurgia sem demonstrativo; atrasada passa do prazo do hospital', () => {
-    const lista = pendencias([cir('c1', '2026-10-01', 'A. B.'), cir('c2', '2026-11-20', 'C. D.'), cir('c3', '2026-10-01', 'E. F.', { demonstrativo_id: 'd1' })], [H], HOJE);
+  it('o hospital paga por mês: a cirurgia só é atraso quando o prazo do demonstrativo do mês passou', () => {
+    // Cirurgias de agosto: o demonstrativo chega até 10/10. Em 24/11 já passou.
+    // As de outubro e novembro ainda estão no ciclo normal.
+    expect(limiteDoDemonstrativo('2026-11-18')).toBe('2027-01-10');
+    expect(limiteDoDemonstrativo('2026-08-15')).toBe('2026-10-10');
+    const lista = pendencias([cir('c1', '2026-08-15', 'A. B.'), cir('c2', '2026-11-20', 'C. D.'), cir('c4', '2026-10-05', 'G. H.'), cir('c3', '2026-08-01', 'E. F.', { demonstrativo_id: 'd1' })], [H], HOJE);
+    expect(lista.map((p) => [p.cirurgia.id, p.atrasada])).toEqual([
+      ['c1', true],
+      ['c4', false],
+      ['c2', false],
+    ]);
+  });
+
+  it('é pendência na hora se o demonstrativo do mês chegou sem ela', () => {
+    const item = (data: string) => ({ data, paciente: 'X', procedimento: '', convenio: '', valor: 1, cirurgia_id: 'outra' });
+    const doMes = dem({ id: 'out', recebido_em: '2026-11-20', itens: [item('2026-10-03'), item('2026-10-14')] });
+    const deOutubro = cir('c1', '2026-10-08', 'L. M. N.');
+    const deNovembro = cir('c2', '2026-11-05', 'T. R. V.');
+    expect(ficouDeFora(deOutubro, [doMes])).toBe(true);
+    // O demonstrativo de outubro não diz nada sobre novembro.
+    expect(ficouDeFora(deNovembro, [doMes])).toBe(false);
+    // Demonstrativo de outro hospital, ou recebido antes da cirurgia, não conta.
+    expect(ficouDeFora(deOutubro, [dem({ ...doMes, hospital_id: 'h2' })])).toBe(false);
+    expect(ficouDeFora(deOutubro, [dem({ ...doMes, recebido_em: '2026-10-07' })])).toBe(false);
+
+    const lista = pendencias([deOutubro, deNovembro], [H], HOJE, [doMes]);
     expect(lista.map((p) => [p.cirurgia.id, p.atrasada])).toEqual([
       ['c1', true],
       ['c2', false],
     ]);
+    // A planilha de cobrança leva só o que ficou de fora.
+    expect(paraCobrar([deOutubro, deNovembro], [doMes], 'h1', HOJE).map((c) => c.id)).toEqual(['c1']);
+  });
+
+  it('resume cada mês: pagas, no demonstrativo, de fora e aguardando', () => {
+    const item = (data: string, id: string) => ({ data, paciente: 'X', procedimento: '', convenio: '', valor: 1, cirurgia_id: id });
+    const pago = dem({ id: 'set', recebido_em: '2026-10-28', pago_em: '2026-11-15', itens: [item('2026-09-03', 's1')] });
+    const aberto = dem({ id: 'out', recebido_em: '2026-11-20', itens: [item('2026-10-03', 'o1')] });
+    const ciclos = ciclosMensais(
+      [
+        cir('s1', '2026-09-03', 'A', { demonstrativo_id: 'set' }),
+        cir('o1', '2026-10-03', 'B', { demonstrativo_id: 'out' }),
+        cir('o2', '2026-10-09', 'C'),
+        cir('n1', '2026-11-12', 'D'),
+        cir('f1', '2026-12-02', 'Futura'),
+      ],
+      [pago, aberto],
+      HOJE,
+    );
+    expect(ciclos.map((c) => [c.mes, c.cirurgias, c.pagas, c.noDemonstrativo, c.deFora, c.aguardando])).toEqual([
+      ['2026-11', 1, 0, 0, 0, 1],
+      ['2026-10', 2, 0, 1, 1, 0],
+      ['2026-09', 1, 1, 1, 0, 0],
+    ]);
+    expect(ciclos[0]!.previsao).toBe('2027-01-10');
   });
 
   it('guarda o histórico da cobrança: o hospital não responde, então o que continua em aberto volta para cobrar', () => {
@@ -143,7 +192,7 @@ describe('pendências, avisos e resumo', () => {
   it('resumo soma a receber, recebido no mês e pago a menos', () => {
     const r = resumo(
       [dem({ valor_total: 6000 }), dem({ id: 'p', valor_total: 5000, pago_em: '2026-11-10', valor_pago: 4600 }), dem({ id: 'v', valor_total: 1000, pago_em: '2026-10-10' })],
-      [cir('c1', '2026-11-01', 'A. B.'), cir('c2', '2026-11-02', 'C. D.', { valor: null })],
+      [cir('c1', '2026-08-01', 'A. B.'), cir('c2', '2026-08-02', 'C. D.', { valor: null }), cir('c3', '2026-11-02', 'Ainda no ciclo do mês')],
       HOJE,
     );
     expect(r).toEqual({ aReceber: 6000, recebidoNoMes: 4600, pendentes: 2, valorPendente: 3000, pagoAMenos: 400 });

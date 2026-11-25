@@ -1,6 +1,7 @@
 import { sendEmail } from '@/lib/email/client';
 
 import { enviarDocumento, enviarTexto, estadoDaInstancia, instanciaDoMedico, numeroLimpo, whatsappConfigurado } from './evolution';
+import { paraCobrar } from './conciliacao';
 import { cobranca, cobrancaAoPaciente, envioDaNota, pedidoDeNota, pedidoDeNotaDireto, type Mensagem } from './mensagens';
 import { notaGuardada } from './documentos';
 import { nomeDoArquivo, planilhaDePendencias } from './planilha-pendencias';
@@ -32,7 +33,7 @@ export async function enviarMensagem(
 
   if (pedido.tipo === 'cobranca_hospital') {
     const hospital = estado.hospitais.find((h) => h.id === pedido.id);
-    const abertas = estado.cirurgias.filter((c) => c.hospital_id === pedido.id && !c.demonstrativo_id && c.data <= hoje);
+    const abertas = paraCobrar(estado.cirurgias, estado.demonstrativos, pedido.id, hoje);
     if (!hospital || abertas.length === 0) throw new RegraMedica('Não há cirurgias pendentes nesse hospital.');
     mensagem = cobranca(abertas, hospital, config);
     // A cobrança vai sempre na planilha de pendências, o modelo que o hospital exige.

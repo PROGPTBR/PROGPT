@@ -1,10 +1,11 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { MessageSquareText, Plus, Trash2 } from 'lucide-react';
+import { FileUp, MessageSquareText, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { diasEntre, partesDoNome } from '@/lib/medico/conciliacao';
+import { CompradorImportDialog } from '@/components/assistants/CompradorImportDialog';
+import { partesDoNome, passouDoCiclo } from '@/lib/medico/conciliacao';
 import { FUNCOES, type Cirurgia, type Entrada, type EstadoMedico } from '@/lib/medico/types';
 import { Botao, brl, CAMPO, CARTAO, chamar, dataBr, Janela, lerNumero, ROTULO, Selo, TD, TH, type PropsDaAba, Info } from './ui';
 
@@ -33,8 +34,8 @@ export function situacao(c: Cirurgia, estado: EstadoMedico, hoje: string): { rot
     if (d?.pago_em) return { rotulo: 'Paga', cor: 'verde' };
     return d?.tipo === 'direto' ? { rotulo: 'Cobrada do paciente', cor: 'azul' } : { rotulo: 'No demonstrativo', cor: 'azul' };
   }
-  const prazo = estado.hospitais.find((h) => h.id === c.hospital_id)?.prazo_pagamento_dias ?? 30;
-  return diasEntre(c.data, hoje) > prazo ? { rotulo: 'Sem pagamento, atrasada', cor: 'vermelho' } : { rotulo: 'Aguardando demonstrativo', cor: 'amarelo' };
+  // O hospital paga por mês: só é atraso se o demonstrativo do mês veio sem ela, ou se o prazo dele passou.
+  return passouDoCiclo(c, estado.demonstrativos, hoje) ? { rotulo: 'Sem pagamento, atrasada', cor: 'vermelho' } : { rotulo: 'Aguardando demonstrativo', cor: 'amarelo' };
 }
 
 /** Acha o hospital cadastrado que o texto cita ("D'Or" → "Niterói D'Or"). */
@@ -215,6 +216,7 @@ export function textoDasEntradas(entradas: Entrada[]): string {
 function ColarDoWhatsApp({ estado, onFechar, enviar, entradas }: Pick<PropsDaAba, 'estado' | 'enviar'> & { onFechar: () => void; entradas?: Entrada[] }) {
   const [texto, setTexto] = useState(() => (entradas ? textoDasEntradas(entradas) : ''));
   const [lendo, setLendo] = useState(false);
+  const [importar, setImportar] = useState(false);
   const [linhas, setLinhas] = useState<Linha[] | null>(null);
 
   async function ler() {
@@ -253,7 +255,7 @@ function ColarDoWhatsApp({ estado, onFechar, enviar, entradas }: Pick<PropsDaAba
     <Janela titulo={entradas ? 'Mensagens novas do grupo' : 'Colar do WhatsApp'} onFechar={onFechar}>
       <div className="space-y-3 text-sm">
         <p className="text-muted-foreground">
-          Cole as mensagens do grupo, suas anotações ou as linhas da sua planilha de pendências. A IA separa as cirurgias e você confere antes de salvar.
+          Cole as mensagens do grupo ou importe a planilha do mês que a secretária fecha. A IA separa as cirurgias e você confere antes de salvar.
         </p>
         <textarea
           value={texto}
@@ -264,11 +266,15 @@ function ColarDoWhatsApp({ estado, onFechar, enviar, entradas }: Pick<PropsDaAba
           aria-label="Texto com as cirurgias"
         />
         <p className="text-xs text-muted-foreground">O hospital pede o nome completo do paciente na planilha de pendências: escreva o nome como está no prontuário.</p>
-        <div className="flex justify-end">
+        <div className="flex flex-wrap justify-between gap-2">
+          <Botao tipo="secundario" onClick={() => setImportar(true)}>
+            <FileUp className="h-4 w-4" aria-hidden /> Importar planilha
+          </Botao>
           <Botao ocupado={lendo} desabilitado={texto.trim().length < 10} onClick={ler}>
             Ler cirurgias
           </Botao>
         </div>
+        <CompradorImportDialog open={importar} onClose={() => setImportar(false)} titulo="Importar a planilha de cirurgias" onImported={(t) => setTexto((atual) => (atual.trim() ? `${atual}\n\n${t}` : t))} />
       </div>
     </Janela>
   );

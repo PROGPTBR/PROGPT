@@ -14,13 +14,25 @@ import { Botao, brl, CARTAO, dataBr, Info, JanelaDeMensagem, Selo, type PropsDaA
 // volta para a fila até entrar num demonstrativo.
 
 export function Pendencias({ estado, hoje, enviar, recarregar }: PropsDaAba) {
-  const lista = useMemo(() => pendencias(estado.cirurgias, estado.hospitais, hoje), [estado, hoje]);
+  const todas = useMemo(() => pendencias(estado.cirurgias, estado.hospitais, hoje, estado.demonstrativos), [estado, hoje]);
+  // Só é pendência o que já deveria ter vindo num demonstrativo. O resto está no ciclo normal do mês.
+  const lista = todas.filter((p) => p.atrasada);
+  const aguardando = todas.length - lista.length;
   const [cobrando, setCobrando] = useState<Hospital | null>(null);
   const { config } = estado;
   const faltaCabecalho = !config.medico_nome || !config.empresa_nome || !config.empresa_cnpj || !config.crm;
 
   if (lista.length === 0) {
-    return <p className={`${CARTAO} text-sm text-emerald-700 dark:text-emerald-300`}>Nenhuma pendência: todas as cirurgias registradas já apareceram em um demonstrativo.</p>;
+    return (
+      <div className={`${CARTAO} text-sm`}>
+        <p className="font-medium text-emerald-700">Nada para cobrar agora.</p>
+        {aguardando > 0 && (
+          <p className="mt-1 text-neutral-500">
+            {aguardando} {aguardando === 1 ? 'cirurgia está' : 'cirurgias estão'} dentro do ciclo normal, esperando o demonstrativo do mês.
+          </p>
+        )}
+      </div>
+    );
   }
 
   const grupos = estado.hospitais.map((h) => ({ h, itens: lista.filter((p) => p.cirurgia.hospital_id === h.id) })).filter((g) => g.itens.length > 0);
@@ -31,9 +43,14 @@ export function Pendencias({ estado, hoje, enviar, recarregar }: PropsDaAba) {
       <h2 className="flex items-center gap-1 text-xl font-semibold">
         A cobrar{' '}
         <Info>
-          Cirurgias feitas que ainda não entraram em nenhum demonstrativo. A cobrança sai na planilha de pendências, o modelo que o hospital exige. Como o hospital não costuma responder, cada envio fica registrado e o que continua sem pagamento volta para cobrar de novo.
+          Cirurgias que já deveriam ter sido pagas: o hospital mandou o demonstrativo do mês sem elas, ou o prazo de ele chegar passou. A cobrança sai na planilha de pendências, o modelo que o hospital exige. Como o hospital não costuma responder, cada envio fica registrado e o que continua sem pagamento volta para cobrar de novo.
         </Info>
       </h2>
+      {aguardando > 0 && (
+        <p className="text-sm text-neutral-500">
+          Além destas, {aguardando} {aguardando === 1 ? 'cirurgia está' : 'cirurgias estão'} dentro do ciclo normal, esperando o demonstrativo do mês.
+        </p>
+      )}
       {faltaCabecalho && (
         <p className="rounded-2xl bg-amber-100 px-4 py-3 text-sm text-amber-900">Falta preencher seu nome, empresa, CNPJ e CRM em Cadastros: eles saem na planilha.</p>
       )}
@@ -63,7 +80,7 @@ export function Pendencias({ estado, hoje, enviar, recarregar }: PropsDaAba) {
                       {dataBr(c.data)} · {c.procedimento || 'Cirurgia'}
                     </span>
                     <span className="block text-xs text-neutral-500">
-                      {vezes === 0 ? `Há ${dias} ${dias === 1 ? 'dia' : 'dias'}, nunca cobrada` : `Cobrada ${vezes} ${vezes === 1 ? 'vez' : 'vezes'}, sem resposta há ${diasSemResposta} ${diasSemResposta === 1 ? 'dia' : 'dias'}`}
+                      {vezes === 0 ? `Feita há ${dias} dias, nunca cobrada` : `Cobrada ${vezes} ${vezes === 1 ? 'vez' : 'vezes'}, sem resposta há ${diasSemResposta} ${diasSemResposta === 1 ? 'dia' : 'dias'}`}
                     </span>
                   </span>
                   <span className="shrink-0 text-sm font-semibold">{c.valor == null ? '' : brl(c.valor)}</span>

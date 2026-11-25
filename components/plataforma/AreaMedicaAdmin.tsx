@@ -85,7 +85,7 @@ export function AreaMedicaAdmin() {
         {[
           ['Médicos com acesso', String(medicos.length)],
           ['Cirurgias registradas', String(total('cirurgias'))],
-          ['Cirurgias sem pagamento', String(total('pendencias'))],
+          ['Cirurgias ainda sem demonstrativo', String(total('pendencias'))],
           ['A receber (soma dos médicos)', brl(total('a_receber'))],
         ].map(([rotulo, valor]) => (
           <div key={rotulo} className={CARTAO}>
@@ -151,7 +151,7 @@ export function AreaMedicaAdmin() {
                   <th className={TH}>Último acesso</th>
                   <th className={`${TH} text-right`}>Hospitais</th>
                   <th className={`${TH} text-right`}>Cirurgias</th>
-                  <th className={`${TH} text-right`}>Sem pagamento</th>
+                  <th className={`${TH} text-right`}>Sem demonstrativo</th>
                   <th className={`${TH} text-right`}>A receber</th>
                   <th className={TH}>Ligações</th>
                   <th className={TH} />

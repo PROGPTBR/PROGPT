@@ -38,7 +38,7 @@ export default async function MedicosPage() {
             Área Médica
           </p>
           <h1 className="mt-6 max-w-2xl text-3xl font-semibold leading-tight tracking-tight sm:text-5xl xl:text-6xl">Você opera. O app cobra, confere e avisa quando o dinheiro cai.</h1>
-          <p className="mt-4 max-w-xl text-base text-white/80 sm:text-lg">Cada cirurgia é acompanhada do demonstrativo do hospital até o pagamento, e o que ficou sem pagar é cobrado até entrar.</p>
+          <p className="mt-4 max-w-xl text-base text-white/80 sm:text-lg">O app acompanha o mês inteiro: as cirurgias feitas, o demonstrativo que o hospital manda, a nota fiscal e o pagamento. O que ficar de fora é cobrado até entrar.</p>
           <div className="mt-10">
             <AppNaMao />
           </div>

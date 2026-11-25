@@ -11,10 +11,10 @@ import { Banknote, Check, FileSpreadsheet, MessageCircle, Pause, Play, Stethosco
 const DURACAO_MS = 5200;
 
 const CENAS = [
-  { id: 'cirurgia', titulo: 'Fez a cirurgia', texto: 'Avise no grupo de WhatsApp, como já faz hoje. O app lê e registra sozinho.', icone: MessageCircle },
-  { id: 'conferencia', titulo: 'O hospital mandou o demonstrativo', texto: 'O app confere linha por linha com as suas cirurgias e mostra o que ficou de fora.', icone: Check },
+  { id: 'cirurgia', titulo: 'As cirurgias do mês', texto: 'Avise no grupo de WhatsApp como já faz, ou importe a planilha que a secretária fecha no fim do mês.', icone: MessageCircle },
+  { id: 'conferencia', titulo: 'Chegou o demonstrativo do mês', texto: 'O app confere linha por linha com as cirurgias do mês e mostra o que o hospital deixou de fora.', icone: Check },
   { id: 'cobranca', titulo: 'Ficou cirurgia sem pagar', texto: 'A planilha de pendências sai pronta, no modelo do hospital, e o app cobra de novo até entrar.', icone: FileSpreadsheet },
-  { id: 'pagamento', titulo: 'O dinheiro caiu', texto: 'O banco avisa, a nota é marcada como paga e você vê o mês inteiro num gráfico.', icone: Banknote },
+  { id: 'pagamento', titulo: 'Nota emitida, dinheiro na conta', texto: 'Com o demonstrativo conferido sai a nota fiscal. Quando o pagamento cai, o mês fecha sozinho.', icone: Banknote },
 ] as const;
 
 export function AppNaMao() {

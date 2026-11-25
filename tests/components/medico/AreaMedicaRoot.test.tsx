@@ -70,15 +70,17 @@ describe('Área Médica (tela)', () => {
 
     fireEvent.click(within(abas).getByText(/Pendências a cobrar/));
     const cobrar = screen.getAllByRole('button', { name: /Enviar ao hospital/ });
-    expect(cobrar.length).toBe(3);
-    expect(screen.getAllByRole('link', { name: /Baixar planilha/ }).length).toBe(3);
+    // Só o hospital que mandou o demonstrativo do mês sem duas cirurgias tem o que cobrar.
+    expect(cobrar.length).toBe(1);
+    expect(screen.getAllByRole('link', { name: /Baixar planilha/ }).length).toBe(1);
+    expect(screen.getByText(/5 cirurgias estão dentro do ciclo normal/)).toBeTruthy();
     // As duas que o hospital deixou de fora já foram cobradas há 32 dias, sem resposta.
     expect(screen.getAllByText(/Cobrada 1 vez, sem resposta há 32 dias/).length).toBe(2);
     expect(screen.getByText('2 para cobrar')).toBeTruthy();
     fireEvent.click(cobrar[0]!);
     const texto = (screen.getByLabelText('Texto do e-mail') as HTMLTextAreaElement).value;
     expect(texto).toContain('planilha de levantamento de pendências');
-    expect(texto).toContain('já foram enviadas antes');
+    expect(texto).toContain('Todas já foram enviadas antes');
   });
 
   it('caixa de entrada: mensagens do grupo e e-mail recebido aparecem para conferir', () => {
