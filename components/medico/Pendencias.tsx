@@ -37,11 +37,12 @@ export function Pendencias({ estado, hoje, enviar, recarregar }: PropsDaAba) {
       {faltaCabecalho && (
         <p className="rounded-2xl bg-amber-100 px-4 py-3 text-sm text-amber-900">Falta preencher seu nome, empresa, CNPJ e CRM em Cadastros: eles saem na planilha.</p>
       )}
+      <div className="space-y-6 lg:grid lg:grid-cols-2 lg:items-start lg:gap-6 lg:space-y-0">
       {grupos.map(({ h, itens }) => {
         const aCobrar = itens.filter((p) => p.cobrarAgora).length;
         const valor = itens.reduce((s, p) => s + (p.cirurgia.valor ?? 0), 0);
         return (
-          <section key={h.id}>
+          <section key={h.id} className="lg:rounded-[2rem] lg:bg-white lg:p-6 lg:ring-1 lg:ring-black/[0.05]">
             <div className="flex items-end justify-between gap-3">
               <div className="min-w-0">
                 <h3 className="truncate text-base font-semibold">{h.nome}</h3>
@@ -80,6 +81,7 @@ export function Pendencias({ estado, hoje, enviar, recarregar }: PropsDaAba) {
           </section>
         );
       })}
+      </div>
 
       {cobrando && (
         <JanelaDeMensagem

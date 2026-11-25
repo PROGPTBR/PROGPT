@@ -22,8 +22,8 @@ export function ShellDoMedico({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-white text-neutral-900 antialiased [scrollbar-width:thin] sm:bg-[#f6f8fc]">
       <TemaClaro />
-      <header className="sticky top-0 z-30 bg-medico-escuro text-white">
-        <div className="mx-auto flex h-14 w-full max-w-[1400px] items-center justify-between px-5 sm:px-8">
+      <header className="sticky top-0 z-30 bg-medico-escuro text-white lg:hidden">
+        <div className="flex h-14 w-full items-center justify-between px-5 sm:px-8">
           <span className="flex items-center gap-2 text-sm font-semibold">
             <Stethoscope className="h-5 w-5" aria-hidden /> Área Médica
           </span>
@@ -32,7 +32,7 @@ export function ShellDoMedico({ children }: { children: React.ReactNode }) {
           </button>
         </div>
       </header>
-      <main className="mx-auto w-full max-w-[1400px] bg-white pt-5 sm:px-0 sm:shadow-[0_0_0_1px_rgba(0,0,0,0.04)]">{children}</main>
+      <main className="w-full bg-white pt-5 lg:min-h-screen lg:bg-[#f6f8fc] lg:pt-0">{children}</main>
     </div>
   );
 }

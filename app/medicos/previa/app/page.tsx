@@ -15,7 +15,6 @@ export default function PreviaDoApp({ searchParams }: { searchParams: { aba?: st
   return (
     <ShellDoMedico>
       <AreaMedicaRoot
-        contaDeMedico
         hoje={hoje}
         abaInicial={searchParams.aba}
         estadoInicial={{ ...estadoDeExemplo(hoje), integracoes: { whatsapp: true, email_envio: true, email_entrada: null, super_admin: false, btg: true } }}

@@ -2,12 +2,10 @@ import type { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
 
 import { getProfile, requireUser, NotAuthenticated } from '@/lib/auth';
-import { AppShell } from '@/components/layout/AppShell';
 import { AreaMedicaRoot } from '@/components/medico/AreaMedicaRoot';
 import { soAreaMedica } from '@/lib/medico/acesso';
 import { usuarioComAreaMedica } from '@/lib/medico/acesso-servidor';
 import { ShellDoMedico } from '@/components/medico/ShellDoMedico';
-import { TemaClaro } from '@/components/medico/TemaClaro';
 import { estadoCompleto } from '@/lib/medico/integracoes';
 import { hojeEmBrasilia } from '@/lib/vitrine/datas';
 
@@ -34,7 +32,7 @@ export default async function AreaMedicaPage({ searchParams }: { searchParams: {
       estadoInicial={await estadoCompleto(user.id)}
       hoje={hojeEmBrasilia()}
       abaInicial={searchParams.aba}
-      contaDeMedico={soAreaMedica(perfil?.area_medica)}
+      linkDoSistema={!soAreaMedica(perfil?.area_medica)}
       aviso={
         searchParams.banco === 'conectado'
           ? { ok: true, texto: 'Conta do BTG ligada. Os próximos créditos e débitos entram sozinhos.' }
@@ -45,12 +43,6 @@ export default async function AreaMedicaPage({ searchParams }: { searchParams: {
     />
   );
 
-  // A conta de médico só tem a Área Médica: moldura própria, sem o menu do resto do sistema.
-  if (soAreaMedica(perfil?.area_medica)) return <ShellDoMedico>{conteudo}</ShellDoMedico>;
-  return (
-    <AppShell back={{ href: '/chat', label: 'Voltar ao chat' }}>
-      <TemaClaro />
-      {conteudo}
-    </AppShell>
-  );
+  // A Área Médica tem sempre a moldura dela, para qualquer conta: é um produto à parte.
+  return <ShellDoMedico>{conteudo}</ShellDoMedico>;
 }

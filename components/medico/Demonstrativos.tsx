@@ -77,7 +77,11 @@ export function Demonstrativos(props: PropsDaAba & { abrir?: string | null }) {
       {estado.demonstrativos.length === 0 ? (
         emails.length === 0 && <p className={`${CARTAO} text-sm text-muted-foreground`}>Nenhum demonstrativo registrado ainda.</p>
       ) : (
-        estado.demonstrativos.map((d) => <CartaoDoDemonstrativo key={d.id} d={d} {...props} />)
+        <div className="space-y-4 xl:grid xl:grid-cols-2 xl:items-start xl:gap-5 xl:space-y-0">
+          {estado.demonstrativos.map((d) => (
+            <CartaoDoDemonstrativo key={d.id} d={d} {...props} />
+          ))}
+        </div>
       )}
 
       {novo && <NovoDemonstrativo {...props} onFechar={() => setNovo(false)} />}
@@ -130,7 +134,7 @@ function CartaoDoDemonstrativo({ d, estado, hoje, enviar, recarregar }: PropsDaA
   const pagoAMenos = d.pago_em && d.valor_pago != null && d.valor_pago < d.valor_total - 0.005;
 
   return (
-    <article className="rounded-3xl bg-neutral-50 p-4 ring-1 ring-black/[0.05] sm:p-5">
+    <article className="rounded-3xl bg-neutral-50 p-4 ring-1 ring-black/[0.05] sm:p-5 lg:rounded-[2rem] lg:bg-white lg:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <h3 className="truncate text-base font-semibold">{direto ? d.pagador_nome || 'Paciente' : hospital.nome}</h3>
