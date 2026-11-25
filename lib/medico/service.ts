@@ -32,7 +32,7 @@ import type {
 
 const HOSPITAL = 'id, nome, email, prazo_pagamento_dias, demonstrativo_meses, demonstrativo_dia, exemplo';
 const CIRURGIA =
-  'id, hospital_id, data, paciente, procedimento, convenio, valor, origem, demonstrativo_id, cobrada_em, funcao, registro, hora, cobrancas, observacao, exemplo';
+  'id, hospital_id, data, paciente, procedimento, convenio, valor, origem, demonstrativo_id, cobrada_em, funcao, registro, hora, confirmar, cobrancas, observacao, exemplo';
 const DEMONSTRATIVO =
   'id, hospital_id, referencia, recebido_em, valor_total, itens, nota_pedida_em, nota_numero, nota_emitida_em, nota_enviada_em, pago_em, valor_pago, exemplo, tipo, pagador_nome, pagador_documento, pagador_contato';
 export const CONFIG =

@@ -1,11 +1,12 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ArrowRight, CalendarDays, ChevronDown, Eye, EyeOff, FileText, Home, Landmark, LayoutGrid, LogOut, MoreHorizontal, Paperclip, Plug, Plus, Send, Settings2, Sparkles, Stethoscope, UserPlus, Zap } from 'lucide-react';
+import { ArrowRight, CalendarDays, ChevronDown, CircleHelp, Eye, EyeOff, FileText, Home, Landmark, LayoutGrid, LogOut, MoreHorizontal, Paperclip, Plug, Plus, Send, Settings2, Sparkles, Stethoscope, UserPlus, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { supabaseBrowser } from '@/lib/db/supabase-browser';
 import { avisos, ciclosMensais, pendencias, resumo } from '@/lib/medico/conciliacao';
+import { aConfirmar, pagamentosRecentes, primeirosPassos } from '@/lib/medico/primeiros-passos';
 import type { EstadoMedico } from '@/lib/medico/types';
 import { Agenda, MiniCalendario } from './Agenda';
 import { Banco } from './Banco';
@@ -168,6 +169,9 @@ export function AreaMedicaRoot({
           <button type="button" onClick={() => setNoCockpit(true)} className="flex w-full items-center gap-3 rounded-2xl px-3.5 py-2.5 text-left text-sm font-medium text-white/75 hover:bg-white/10 hover:text-white">
             <LayoutGrid className="h-5 w-5" aria-hidden /> Cockpit
           </button>
+          <a href="/area-medica/guia" className="flex items-center gap-3 rounded-2xl px-3.5 py-2.5 text-sm font-medium text-white/75 hover:bg-white/10 hover:text-white">
+            <CircleHelp className="h-5 w-5" aria-hidden /> Como usar
+          </a>
           {linkDoSistema && (
             <a href="/chat" className="flex items-center gap-3 rounded-2xl px-3.5 py-2.5 text-sm font-medium text-white/75 hover:bg-white/10 hover:text-white">
               <ArrowRight className="h-5 w-5 rotate-180" aria-hidden /> Sistema de compras
@@ -242,6 +246,11 @@ export function AreaMedicaRoot({
               <span className="flex-1">Cockpit</span>
               <ArrowRight className="h-4 w-4 text-neutral-400" aria-hidden />
             </button>
+            <a href="/area-medica/guia" className="flex w-full items-center gap-3 rounded-2xl px-3 py-3.5 text-sm font-medium hover:bg-neutral-100">
+              <CircleHelp className="h-5 w-5 text-medico" aria-hidden />
+              <span className="flex-1">Como usar</span>
+              <ArrowRight className="h-4 w-4 text-neutral-400" aria-hidden />
+            </a>
             {linkDoSistema && (
               <a href="/chat" className="flex w-full items-center gap-3 rounded-2xl px-3 py-3.5 text-sm font-medium text-neutral-600 hover:bg-neutral-100">
                 <ArrowRight className="h-5 w-5 rotate-180" aria-hidden /> Sistema de compras
@@ -280,6 +289,7 @@ export function AreaMedicaRoot({
   );
 }
 
+const dataBrCurta = (iso: string) => iso.split('-').reverse().slice(0, 2).join('/');
 const MESES_CURTOS = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
 
 const CHAVE_OCULTAR = 'progpt_medico_ocultar_valores_v1';
@@ -287,6 +297,7 @@ const CHAVE_OCULTAR = 'progpt_medico_ocultar_valores_v1';
 function VisaoGeral({
   estado,
   hoje,
+  enviar,
   irPara,
   carregarExemplo,
   carregando,
@@ -313,6 +324,11 @@ function VisaoGeral({
   const r = useMemo(() => resumo(estado.demonstrativos, estado.cirurgias, hoje, estado.hospitais), [estado, hoje]);
   const fila = useMemo(() => avisos(estado.demonstrativos, estado.cirurgias, estado.hospitais, hoje), [estado, hoje]);
   const [mesAberto, setMesAberto] = useState<string | null>(null);
+  const passos = useMemo(() => primeirosPassos(estado), [estado]);
+  const faltam = passos.filter((p) => !p.feito);
+  const confirmar = useMemo(() => aConfirmar(estado.cirurgias, hoje), [estado.cirurgias, hoje]);
+  const pagos = useMemo(() => pagamentosRecentes(estado.demonstrativos, hoje), [estado.demonstrativos, hoje]);
+  const nomeDo = (id: string) => estado.hospitais.find((h) => h.id === id)?.nome ?? 'Hospital';
   const ciclos = useMemo(() => ciclosMensais(estado.cirurgias, estado.demonstrativos, hoje, estado.hospitais), [estado, hoje]);
 
   const semHospital = estado.hospitais.length === 0;
@@ -331,6 +347,44 @@ function VisaoGeral({
     { rotulo: 'Cirurgias sem pagamento', valor: String(r.pendentes), info: 'Cirurgias que já deveriam ter sido pagas: o demonstrativo do mês veio sem elas, ou o prazo dele passou.', ir: 'pendencias' as Aba, alerta: r.pendentes > 0 },
     { rotulo: 'Pago a menos', valor: dinheiro(r.pagoAMenos), info: 'Diferença entre o que o demonstrativo dizia e o que caiu na conta.', ir: 'demonstrativos' as Aba, alerta: r.pagoAMenos > 0 },
   ];
+
+  const sinaisJsx = (
+    <>
+      {confirmar.length > 0 && (
+        <ul className="mb-3 space-y-2 px-4 sm:px-6 lg:px-0" aria-label="Aconteceu?">
+          {confirmar.map((c) => (
+            <li key={c.id} className="rounded-2xl bg-medico/5 px-4 py-3 text-sm ring-1 ring-medico/20">
+              <p className="font-medium">
+                {c.data === hoje ? 'Hoje' : dataBrCurta(c.data)}
+                {c.hora && `, ${c.hora}`}: {c.procedimento || 'cirurgia'} no {nomeDo(c.hospital_id)}. Aconteceu?
+              </p>
+              <div className="mt-2 flex gap-2">
+                <Botao onClick={() => void enviar('PATCH', `/cirurgias/${c.id}`, { confirmar: false }, 'Cirurgia confirmada. Agora ela segue para o demonstrativo.')}>Sim, aconteceu</Botao>
+                <Botao tipo="secundario" onClick={() => void enviar('DELETE', `/cirurgias/${c.id}`, undefined, 'Cirurgia retirada da agenda.')}>
+                  Não aconteceu
+                </Botao>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+      {pagos.length > 0 && (
+        <ul className="mb-3 space-y-2 px-4 sm:px-6 lg:px-0" aria-label="Caiu na conta">
+          {pagos.map((d) => (
+            <li key={d.id}>
+              <button type="button" onClick={() => irPara('banco')} className="flex w-full items-center gap-3 rounded-2xl bg-emerald-50 px-4 py-3 text-left text-sm ring-1 ring-emerald-200 hover:bg-emerald-100">
+                <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-emerald-500" aria-hidden />
+                <span className="min-w-0 flex-1 font-medium text-emerald-900">
+                  Pago: {d.tipo === 'direto' ? d.pagador_nome || 'paciente' : nomeDo(d.hospital_id)}, {dinheiro(d.valor_pago ?? d.valor_total)} em {dataBrCurta(d.pago_em!)}
+                </span>
+                <ArrowRight className="h-4 w-4 shrink-0 text-emerald-400" aria-hidden />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </>
+  );
 
   const filaJsx = fila.length > 0 ? (
     <ul className="space-y-2 px-4 sm:px-6 lg:px-0" aria-label="O que fazer agora">
@@ -393,6 +447,31 @@ function VisaoGeral({
               </li>
             ))}
           </ul>
+
+          {faltam.length > 0 && !estado.hospitais.some((h) => h.exemplo) && (
+            <section className="order-3 mx-4 mt-2 rounded-[2rem] bg-medico/5 p-5 ring-1 ring-medico/15 sm:mx-6 lg:mx-0 lg:mt-6">
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-base font-semibold">Primeiros passos</h2>
+                <span className="text-xs font-medium text-neutral-500">
+                  {passos.length - faltam.length} de {passos.length}
+                </span>
+              </div>
+              <ol className="mt-3 space-y-1.5">
+                {passos.map((p) => (
+                  <li key={p.id}>
+                    <button type="button" onClick={() => irPara(p.destino)} disabled={p.feito} className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm ${p.feito ? 'text-neutral-400 line-through' : 'font-medium hover:bg-white'}`}>
+                      <span className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-[11px] font-bold ${p.feito ? 'bg-emerald-500 text-white' : 'bg-white text-medico ring-1 ring-medico/30'}`}>{p.feito ? '✓' : passos.indexOf(p) + 1}</span>
+                      <span className="flex-1">{p.titulo}</span>
+                      {!p.feito && <ArrowRight className="h-4 w-4 text-neutral-400" aria-hidden />}
+                    </button>
+                  </li>
+                ))}
+              </ol>
+              <a href="/area-medica/guia" className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-medico hover:underline">
+                Ver o guia e o vídeo de como usar <ArrowRight className="h-4 w-4" aria-hidden />
+              </a>
+            </section>
+          )}
 
           {/* Números: linhas simples */}
           <ul className="order-4 mt-4 divide-y divide-neutral-200 border-y border-neutral-200 lg:mt-6 lg:grid lg:grid-cols-3 lg:gap-4 lg:divide-y-0 lg:border-0">
@@ -511,7 +590,8 @@ function VisaoGeral({
       <div className="order-3 lg:sticky lg:top-10 lg:space-y-6">
         <aside className="lg:rounded-[2rem] lg:bg-white lg:p-6 lg:ring-1 lg:ring-black/[0.05]">
           <h2 className="mb-4 hidden text-lg font-semibold lg:block">O que fazer agora</h2>
-          {!semHospital && fila.length === 0 && <p className="hidden text-sm text-emerald-700 lg:block">Tudo em dia.</p>}
+          {!semHospital && sinaisJsx}
+          {!semHospital && fila.length === 0 && confirmar.length === 0 && <p className="hidden text-sm text-emerald-700 lg:block">Tudo em dia.</p>}
           {!semHospital && filaJsx}
         </aside>
         {/* Computador: o calendário ocupa a coluna da direita */}

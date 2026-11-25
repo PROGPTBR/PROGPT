@@ -123,7 +123,7 @@ function MarcarCirurgia({ estado, dia, enviar, onFechar }: Pick<PropsDaAba, 'est
 
   async function salvar() {
     setSalvando(true);
-    const ok = await enviar('POST', '/cirurgias', { cirurgias: [{ ...f, valor: null, origem: 'manual' }] }, 'Cirurgia marcada.');
+    const ok = await enviar('POST', '/cirurgias', { cirurgias: [{ ...f, valor: null, origem: 'manual', confirmar: true }] }, 'Cirurgia marcada.');
     setSalvando(false);
     if (ok) onFechar();
   }

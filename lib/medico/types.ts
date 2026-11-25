@@ -133,6 +133,8 @@ export type Cirurgia = {
   registro: string;
   /** Hora marcada (HH:MM), para a agenda. Vazio quando não foi informada. */
   hora: string;
+  /** Marcada pela agenda e ainda sem a confirmação de que aconteceu. */
+  confirmar?: boolean;
   /** Datas em que a cirurgia foi cobrada do hospital (uma por planilha enviada). */
   cobrancas: string[];
   observacao: string;
@@ -238,6 +240,7 @@ export const CirurgiaSchema = z.object({
   funcao: texto(40).default(''),
   registro: texto(60).default(''),
   hora: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).or(z.literal('')).default(''),
+  confirmar: z.boolean().default(false),
   observacao: texto(500).default(''),
 });
 
@@ -245,7 +248,7 @@ export const CirurgiasSchema = z.object({ cirurgias: z.array(CirurgiaSchema).min
 
 export const CirurgiaPatchSchema = CirurgiaSchema.omit({ origem: true })
   .partial()
-  .extend({ cobrada_em: dia.nullable().optional() });
+  .extend({ cobrada_em: dia.nullable().optional(), confirmar: z.boolean().optional() });
 
 export const ItemDemonstrativoSchema = z.object({
   data: dia.nullable().default(null),
