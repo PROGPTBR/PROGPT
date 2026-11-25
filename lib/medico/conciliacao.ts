@@ -1,3 +1,4 @@
+import { proximaCobranca, reguaDo, vencimentoDa } from './regua';
 import type { Cirurgia, Demonstrativo, Hospital, ItemDemonstrativo } from './types';
 
 // Regras da Área Médica (sub-projeto 100). PURO: roda no servidor (ao gravar)
@@ -146,6 +147,8 @@ export function etapaDe(d: Demonstrativo): Etapa {
 
 /** Dias que cada etapa pode ficar parada antes de virar aviso. */
 export const PRAZO_ETAPA = { recebido: 2, nota_pedida: 3, nota_emitida: 1 } as const;
+/** Lembrete interno: a nota vence em até N dias (o "D-3" da régua). */
+export const DIAS_AVISO_VENCIMENTO = 3;
 
 export type Aviso = {
   tipo: 'demonstrativo' | 'pendencia';
@@ -160,7 +163,7 @@ function nomeDo(hospitais: Hospital[], id: string): string {
   return hospitais.find((h) => h.id === id)?.nome ?? 'Hospital';
 }
 
-/** Dias sem resposta depois dos quais vale reenviar a cobrança. */
+/** Dias sem resposta depois dos quais vale reenviar a cobrança (último intervalo da régua padrão). */
 export const DIAS_PARA_RECOBRAR = 30;
 
 export type Pendencia = {
@@ -170,8 +173,14 @@ export type Pendencia = {
   /** Quantas vezes já foi cobrada e há quantos dias foi a última (null = nunca cobrada). */
   vezes: number;
   diasSemResposta: number | null;
-  /** Passou do prazo e nunca foi cobrada, ou a última cobrança ficou sem resposta. */
+  /** Passou do prazo e nunca foi cobrada, ou a régua do hospital diz que é hora de cobrar de novo. */
   cobrarAgora: boolean;
+  /** Quando venceu (prazo do demonstrativo do mês dela, ou o dia em que o demonstrativo chegou sem ela). */
+  vencimento: string;
+  /** Etapa da régua em que está (0 = nunca cobrada) e quando a próxima cobrança deve sair. */
+  etapa: number;
+  proxima: string;
+  rotulo: string;
 };
 
 /** Cirurgias feitas que não apareceram em nenhum demonstrativo. */
@@ -223,14 +232,21 @@ export function pendencias(cirurgias: Cirurgia[], hospitais: Hospital[], hoje: s
       const cobrancas = c.cobrancas ?? [];
       const ultima = cobrancas.length > 0 ? [...cobrancas].sort().at(-1)! : null;
       const diasSemResposta = ultima ? diasEntre(ultima, hoje) : null;
+      const hospital = hospitais.find((h) => h.id === c.hospital_id);
       const atrasada = passouDoCiclo(c, demonstrativos, hoje, hospitais);
+      const vencimento = vencimentoDa(c, demonstrativos, hospital);
+      const { etapa, proxima, rotulo } = proximaCobranca(vencimento, cobrancas, reguaDo(hospital));
       return {
         cirurgia: c,
         dias,
         atrasada,
         vezes: cobrancas.length,
         diasSemResposta,
-        cobrarAgora: atrasada && (diasSemResposta === null || diasSemResposta >= DIAS_PARA_RECOBRAR),
+        cobrarAgora: atrasada && hoje >= proxima,
+        vencimento,
+        etapa,
+        proxima,
+        rotulo,
       };
     })
     .sort((a, b) => Number(b.atrasada) - Number(a.atrasada) || b.dias - a.dias);
@@ -310,6 +326,10 @@ export function avisos(
       const prazo = direto ? PRAZO_DIRETO_DIAS : (hospitais.find((h) => h.id === d.hospital_id)?.prazo_pagamento_dias ?? 30);
       const dias = diasEntre(d.nota_enviada_em!, hoje);
       if (dias > prazo) out.push({ ...base, dias, gravidade: 'alta', texto: `${nome}: pagamento atrasado` });
+      else if (prazo - dias <= DIAS_AVISO_VENCIMENTO) {
+        const faltam = prazo - dias;
+        out.push({ ...base, dias, gravidade: 'media', texto: `${nome}: pagamento ${faltam === 0 ? 'vence hoje' : `vence em ${faltam} ${faltam === 1 ? 'dia' : 'dias'}`}` });
+      }
     }
   }
 

@@ -111,3 +111,33 @@ export function sugerirPagamentos(creditos: Credito[], demonstrativos: Demonstra
   }
   return out;
 }
+
+export type Placar = {
+  /** Créditos lidos do extrato. */
+  creditos: number;
+  /** Casaram com uma nota pelo valor exato. */
+  certas: number;
+  /** Casaram com valor menor: alguém precisa olhar. */
+  provaveis: number;
+  /** Créditos que não batem com nota nenhuma (outras receitas, transferências). */
+  semPar: number;
+  /** Notas em aberto que não receberam crédito nenhum. */
+  notasSemCredito: number;
+  valorConciliado: number;
+};
+
+/** O placar da conciliação: "N de M conciliadas, K para revisar". */
+export function placarDaConciliacao(creditos: Credito[], sugestoes: Sugestao[], demonstrativos: Demonstrativo[]): Placar {
+  const abertos = demonstrativos.filter((d) => ['nota_enviada', 'nota_emitida'].includes(etapaDe(d)));
+  const comCredito = new Set(sugestoes.map((s) => s.demonstrativo_id));
+  const usados = new Set(sugestoes.map((s) => s.credito));
+  const certas = sugestoes.filter((s) => s.confianca === 'certa').length;
+  return {
+    creditos: creditos.length,
+    certas,
+    provaveis: sugestoes.length - certas,
+    semPar: creditos.filter((c) => !usados.has(c)).length,
+    notasSemCredito: abertos.filter((d) => !comCredito.has(d.id)).length,
+    valorConciliado: Math.round(sugestoes.reduce((s, x) => s + x.credito.valor, 0) * 100) / 100,
+  };
+}

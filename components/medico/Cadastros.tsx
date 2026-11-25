@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 
+import { lerRegua, reguaDo, reguaTexto } from '@/lib/medico/regua';
 import type { Hospital } from '@/lib/medico/types';
 import { Botao, CAMPO, CARTAO, ROTULO, type PropsDaAba, Info } from './ui';
 
@@ -118,7 +119,8 @@ function LinhaDoHospital({ h, enviar }: { h: Hospital; enviar: PropsDaAba['envia
   const [prazo, setPrazo] = useState(String(h.prazo_pagamento_dias));
   const [meses, setMeses] = useState(String(h.demonstrativo_meses ?? 2));
   const [dia, setDia] = useState(String(h.demonstrativo_dia ?? 10));
-  const mudou = email !== h.email || prazo !== String(h.prazo_pagamento_dias) || meses !== String(h.demonstrativo_meses ?? 2) || dia !== String(h.demonstrativo_dia ?? 10);
+  const [regua, setRegua] = useState(reguaTexto(reguaDo(h)));
+  const mudou = email !== h.email || prazo !== String(h.prazo_pagamento_dias) || meses !== String(h.demonstrativo_meses ?? 2) || dia !== String(h.demonstrativo_dia ?? 10) || regua !== reguaTexto(reguaDo(h));
   const entre = (v: string, min: number, max: number, padrao: number) => Math.min(max, Math.max(min, Number(v) || padrao));
 
   return (
@@ -137,7 +139,7 @@ function LinhaDoHospital({ h, enviar }: { h: Hospital; enviar: PropsDaAba['envia
       </label>
       <div className="flex items-center justify-end gap-1">
         {mudou && (
-          <Botao tipo="secundario" onClick={() => void enviar('PATCH', `/hospitais/${h.id}`, { email, prazo_pagamento_dias: Math.min(365, Math.max(0, Number(prazo) || 0)), demonstrativo_meses: entre(meses, 1, 6, 2), demonstrativo_dia: entre(dia, 1, 28, 10) }, 'Hospital atualizado.')}>
+          <Botao tipo="secundario" onClick={() => void enviar('PATCH', `/hospitais/${h.id}`, { email, prazo_pagamento_dias: Math.min(365, Math.max(0, Number(prazo) || 0)), demonstrativo_meses: entre(meses, 1, 6, 2), demonstrativo_dia: entre(dia, 1, 28, 10), regua: lerRegua(regua) }, 'Hospital atualizado.')}>
             Salvar
           </Botao>
         )}
@@ -165,6 +167,13 @@ function LinhaDoHospital({ h, enviar }: { h: Hospital; enviar: PropsDaAba['envia
           <option value="2">2º mês seguinte</option>
           <option value="3">3º mês seguinte</option>
         </select>
+      </div>
+      <div className="flex flex-wrap items-center gap-2 text-sm text-neutral-600 sm:col-span-6">
+        <span className="flex items-center gap-1">
+          Régua de cobrança (dias){' '}
+          <Info>Quando a planilha de pendências sai de novo. O primeiro número conta do vencimento (0 = cobra no dia); os seguintes contam da cobrança anterior. Acabou a lista, repete o último. Padrão 0, 15, 30: cobra no vencimento, de novo em 15 dias, e daí a cada 30.</Info>
+        </span>
+        <input value={regua} onChange={(e) => setRegua(e.target.value)} onBlur={() => setRegua(reguaTexto(lerRegua(regua)))} aria-label="Régua de cobrança" placeholder="0, 15, 30" className={`${CAMPO} !w-40`} />
       </div>
     </li>
   );

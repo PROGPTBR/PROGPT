@@ -1,11 +1,12 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ArrowRight, CalendarDays, ChevronDown, CircleHelp, Eye, EyeOff, FileText, Home, Landmark, LayoutGrid, LogOut, MoreHorizontal, Paperclip, Plug, Plus, Send, Settings2, Sparkles, Stethoscope, UserPlus, Zap } from 'lucide-react';
+import { ArrowRight, CalendarDays, ChevronDown, CircleHelp, Copy, Eye, EyeOff, FileText, Home, Landmark, LayoutGrid, LogOut, MessageCircle, MoreHorizontal, Paperclip, Plug, Plus, Send, Settings2, Sparkles, Stethoscope, UserPlus, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { supabaseBrowser } from '@/lib/db/supabase-browser';
 import { avisos, ciclosMensais, pendencias, resumo } from '@/lib/medico/conciliacao';
+import { previsaoDoMes, relatorioDaSemana } from '@/lib/medico/previsao';
 import { aConfirmar, pagamentosRecentes, primeirosPassos } from '@/lib/medico/primeiros-passos';
 import type { EstadoMedico } from '@/lib/medico/types';
 import { Agenda, MiniCalendario } from './Agenda';
@@ -330,6 +331,16 @@ function VisaoGeral({
   const pagos = useMemo(() => pagamentosRecentes(estado.demonstrativos, hoje), [estado.demonstrativos, hoje]);
   const nomeDo = (id: string) => estado.hospitais.find((h) => h.id === id)?.nome ?? 'Hospital';
   const ciclos = useMemo(() => ciclosMensais(estado.cirurgias, estado.demonstrativos, hoje, estado.hospitais), [estado, hoje]);
+  const previsao = useMemo(() => previsaoDoMes(estado, hoje), [estado, hoje]);
+  const relatorio = useMemo(() => relatorioDaSemana(estado, hoje), [estado, hoje]);
+  async function copiarRelatorio() {
+    try {
+      await navigator.clipboard.writeText(relatorio);
+      toast.success('Relatório copiado. Cole no WhatsApp.');
+    } catch {
+      toast.error('Não consegui copiar. Use o botão do WhatsApp.');
+    }
+  }
 
   const semHospital = estado.hospitais.length === 0;
   const atalhos = [
@@ -580,6 +591,68 @@ function VisaoGeral({
                   );
                 })}
               </ul>
+            </section>
+          )}
+
+          {/* Previsão do mês: o funil das notas em aberto, ponderado pela chance de cada etapa */}
+          {(previsao.funil.length > 0 || previsao.recebido > 0) && (
+            <section className="order-6 px-5 pb-2 pt-6 sm:px-8 lg:mt-6 lg:rounded-[2rem] lg:bg-white lg:p-6 lg:ring-1 lg:ring-black/[0.05]">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h2 className="flex items-center gap-1 text-base font-semibold">
+                    Previsão do mês{' '}
+                    <Info>O que já caiu na conta neste mês, mais o que deve cair até o fim dele. Cada nota em aberto entra com uma chance pela etapa em que está: nota enviada 90%, emitida 75%, pedida 60%, demonstrativo recebido 50%, cirurgia fora do demonstrativo 30%.</Info>
+                  </h2>
+                  <p className="mt-1 text-3xl font-semibold tracking-tight lg:text-4xl">{dinheiro(previsao.esperadoNoMes)}</p>
+                  <p className="text-xs text-neutral-500">
+                    {dinheiro(previsao.recebido)} já caiu · {dinheiro(previsao.ponderadoNoMes)} previsto até o fim do mês · {dinheiro(previsao.totalEmAberto)} em aberto no total
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Botao tipo="secundario" onClick={() => void copiarRelatorio()}>
+                    <Copy className="h-4 w-4" aria-hidden /> Relatório da semana
+                  </Botao>
+                  <a
+                    href={`https://wa.me/?text=${encodeURIComponent(relatorio)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex h-10 items-center gap-1.5 rounded-full bg-emerald-600 px-4 text-sm font-semibold text-white hover:bg-emerald-700"
+                  >
+                    <MessageCircle className="h-4 w-4" aria-hidden /> WhatsApp
+                  </a>
+                </div>
+              </div>
+              {previsao.funil.length > 0 && (
+                <ul className="mt-4 space-y-2" aria-label="Funil das notas em aberto">
+                  {previsao.funil.map((f) => (
+                    <li key={f.etapa} className="text-sm">
+                      <div className="flex items-baseline justify-between gap-3">
+                        <span className="font-medium">
+                          {f.rotulo} <span className="text-neutral-500">· {f.notas}</span>
+                        </span>
+                        <span className="text-neutral-600">
+                          {dinheiro(f.valor)} <span className="text-xs text-neutral-400">× {Math.round(f.chance * 100)}% = {dinheiro(f.ponderado)}</span>
+                        </span>
+                      </div>
+                      <div className="mt-1 h-2 overflow-hidden rounded-full bg-neutral-200" aria-hidden>
+                        <div className="h-full rounded-full bg-medico" style={{ width: `${previsao.totalEmAberto > 0 ? (f.valor / previsao.totalEmAberto) * 100 : 0}%`, opacity: 0.35 + f.chance * 0.65 }} />
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {previsao.ranking.length > 1 && (
+                <ol className="mt-4 divide-y divide-neutral-200 border-t border-neutral-200 text-sm" aria-label="Por hospital">
+                  {previsao.ranking.map((h, i) => (
+                    <li key={h.hospital_id} className="flex items-center gap-3 py-2">
+                      <span className="w-5 text-xs font-bold text-neutral-400">{i + 1}</span>
+                      <span className="min-w-0 flex-1 truncate font-medium">{h.nome}</span>
+                      <span className="text-neutral-600">{dinheiro(h.aReceber)}</span>
+                      {h.pendentes > 0 && <span className="text-xs text-red-600">{h.pendentes} fora</span>}
+                    </li>
+                  ))}
+                </ol>
+              )}
             </section>
           )}
         </>

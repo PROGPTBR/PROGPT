@@ -114,6 +114,8 @@ export type Hospital = {
   /** O demonstrativo de um mês chega até o dia `demonstrativo_dia` do `demonstrativo_meses`º mês seguinte. */
   demonstrativo_meses?: number;
   demonstrativo_dia?: number;
+  /** Régua de cobrança: dias de espera antes de cada envio da planilha de pendências (ver lib/medico/regua.ts). */
+  regua?: number[];
   exemplo: boolean;
 };
 
@@ -227,6 +229,7 @@ export const HospitalSchema = z.object({
   prazo_pagamento_dias: z.number().int().min(0).max(365).default(30),
   demonstrativo_meses: z.number().int().min(1).max(6).default(2),
   demonstrativo_dia: z.number().int().min(1).max(28).default(10),
+  regua: z.array(z.number().int().min(0).max(365)).min(1).max(8).default([0, 15, 30]),
 });
 
 export const CirurgiaSchema = z.object({

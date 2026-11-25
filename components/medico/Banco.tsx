@@ -1,10 +1,11 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { ArrowDownLeft, ArrowUpRight, Banknote, FileUp, Landmark } from 'lucide-react';
+import { ArrowDownLeft, ArrowRight, ArrowUpRight, Banknote, CheckCheck, FileUp, Landmark } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { lerExtrato, sugerirPagamentos, type Credito, type Sugestao } from '@/lib/medico/extrato';
+import { etapaDe } from '@/lib/medico/conciliacao';
+import { lerExtrato, placarDaConciliacao, sugerirPagamentos, type Credito, type Sugestao } from '@/lib/medico/extrato';
 import type { EstadoMedico, MovimentoBanco } from '@/lib/medico/types';
 import { Botao, brl, CAMPO, CARTAO, chamar, dataBr, ROTULO, Selo, TD, TH, type PropsDaAba, Info } from './ui';
 
@@ -46,6 +47,10 @@ export function Banco({ estado, hoje, enviar }: PropsDaAba) {
     return sugerirPagamentos(creditos.map((x) => x.c), estado.demonstrativos, estado.hospitais).map((s) => ({ s, m: creditos.find((x) => x.c === s.credito)!.m }));
   }, [soltos, estado]);
   const sugestoesDoArquivo = useMemo(() => (doArquivo ? sugerirPagamentos(doArquivo, estado.demonstrativos, estado.hospitais) : []), [doArquivo, estado]);
+  const placar = useMemo(() => (doArquivo ? placarDaConciliacao(doArquivo, sugestoesDoArquivo, estado.demonstrativos) : null), [doArquivo, sugestoesDoArquivo, estado.demonstrativos]);
+  const [emLote, setEmLote] = useState(false);
+  // Confirmadas nesta sessão do arquivo: somem da lista sem precisar reler o extrato.
+  const [feitas, setFeitas] = useState<Set<string>>(new Set());
 
   async function conectar() {
     setIndo(true);
@@ -57,18 +62,31 @@ export function Banco({ estado, hoje, enviar }: PropsDaAba) {
     window.location.href = r.dados.url;
   }
 
-  async function confirmar(s: Sugestao, movimento?: MovimentoBanco) {
+  async function confirmar(s: Sugestao, movimento?: MovimentoBanco, silencioso = false) {
     const d = estado.demonstrativos.find((x) => x.id === s.demonstrativo_id)!;
     setConfirmando(d.id);
-    const ok = await enviar('PATCH', `/demonstrativos/${d.id}`, { pago_em: s.credito.data, valor_pago: s.credito.valor, ...(d.nota_enviada_em ? {} : { nota_enviada_em: s.credito.data }) }, 'Pagamento confirmado.');
+    const ok = await enviar('PATCH', `/demonstrativos/${d.id}`, { pago_em: s.credito.data, valor_pago: s.credito.valor, ...(d.nota_enviada_em ? {} : { nota_enviada_em: s.credito.data }) }, silencioso ? undefined : 'Pagamento confirmado.');
     if (ok && movimento) await enviar('PATCH', '/btg', { movimento_id: movimento.id, demonstrativo_id: d.id });
+    if (ok) setFeitas((f) => new Set(f).add(d.id));
     setConfirmando(null);
+    return ok;
+  }
+
+  /** "Conciliar as certas": confirma de uma vez todas as sugestões de valor igual. */
+  async function confirmarCertas() {
+    const certas = sugestoesDoArquivo.filter((s) => s.confianca === 'certa' && !feitas.has(s.demonstrativo_id));
+    setEmLote(true);
+    let n = 0;
+    for (const s of certas) if (await confirmar(s, undefined, true)) n += 1;
+    setEmLote(false);
+    toast.success(`${n} ${n === 1 ? 'pagamento conciliado' : 'pagamentos conciliados'}.`);
   }
 
   async function abrirArquivo(arquivo: File | undefined) {
     if (!arquivo) return;
     const lidos = lerExtrato(await arquivo.text());
     if (lidos.length === 0) return void toast.error('Não encontrei créditos nesse arquivo. Exporte o extrato em OFX ou CSV.');
+    setFeitas(new Set());
     setDoArquivo(lidos);
   }
 
@@ -209,13 +227,112 @@ export function Banco({ estado, hoje, enviar }: PropsDaAba) {
           <FileUp className="h-4 w-4" aria-hidden /> Conferir extrato
           <input type="file" accept=".ofx,.csv,.txt" className="hidden" onChange={(e) => void abrirArquivo(e.target.files?.[0])} />
         </label>
-        {doArquivo && (
-          <div className="mt-3 text-sm">
-            <p className="text-muted-foreground">
-              {doArquivo.length} {doArquivo.length === 1 ? 'crédito lido' : 'créditos lidos'}.{' '}
-              {sugestoesDoArquivo.length === 0 ? 'Nenhum bate com as notas em aberto.' : `${sugestoesDoArquivo.length} ${sugestoesDoArquivo.length === 1 ? 'pagamento encontrado' : 'pagamentos encontrados'}:`}
-            </p>
-            {listaDeSugestoes(sugestoesDoArquivo.map((s) => ({ s })))}
+        {doArquivo && placar && (
+          <div className="mt-4 text-sm">
+            {/* Placar: quantas fecharam sozinhas */}
+            <div className="flex flex-wrap items-end gap-x-6 gap-y-3 rounded-2xl bg-neutral-50 p-4 ring-1 ring-black/[0.05]">
+              <div>
+                <p className="text-xs font-medium text-neutral-500">Conciliadas</p>
+                <p className="text-3xl font-semibold tracking-tight">
+                  {placar.certas}
+                  <span className="text-lg text-neutral-400"> / {placar.creditos}</span>
+                </p>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-neutral-500">Para revisar</p>
+                <p className={`text-3xl font-semibold tracking-tight ${placar.provaveis > 0 ? 'text-amber-600' : ''}`}>{placar.provaveis}</p>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-neutral-500">Sem nota</p>
+                <p className="text-3xl font-semibold tracking-tight text-neutral-500">{placar.semPar}</p>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-neutral-500">Notas sem crédito</p>
+                <p className={`text-3xl font-semibold tracking-tight ${placar.notasSemCredito > 0 ? 'text-red-600' : ''}`}>{placar.notasSemCredito}</p>
+              </div>
+              <div className="ml-auto">
+                {sugestoesDoArquivo.some((s) => s.confianca === 'certa' && !feitas.has(s.demonstrativo_id)) && (
+                  <Botao ocupado={emLote} onClick={confirmarCertas}>
+                    <CheckCheck className="h-4 w-4" aria-hidden /> Conciliar as {sugestoesDoArquivo.filter((s) => s.confianca === 'certa' && !feitas.has(s.demonstrativo_id)).length} certas
+                  </Botao>
+                )}
+              </div>
+            </div>
+
+            {/* Duas colunas: o crédito do banco à esquerda, a nota que ele paga à direita */}
+            <ul className="mt-3 space-y-2">
+              {sugestoesDoArquivo.map((s) => {
+                const d = estado.demonstrativos.find((x) => x.id === s.demonstrativo_id)!;
+                const feita = feitas.has(d.id);
+                return (
+                  <li key={`${s.demonstrativo_id}-${s.credito.data}`} className={`grid items-center gap-2 rounded-2xl border p-3 sm:grid-cols-[1fr_auto_1fr_auto] ${feita ? 'border-emerald-200 bg-emerald-50' : 'border-border'}`}>
+                    <div className="min-w-0">
+                      <p className="text-xs text-neutral-500">Banco · {dataBr(s.credito.data)}</p>
+                      <p className="truncate font-medium">{brl(s.credito.valor)}</p>
+                      <p className="truncate text-xs text-neutral-500">{s.credito.descricao || 'sem descrição'}</p>
+                    </div>
+                    <ArrowRight className="hidden h-4 w-4 text-neutral-300 sm:block" aria-hidden />
+                    <div className="min-w-0">
+                      <p className="text-xs text-neutral-500">Nota · {etapaDe(d) === 'nota_enviada' ? 'enviada' : 'emitida'}</p>
+                      <p className="truncate font-medium">{quemPaga(estado, d.id)}</p>
+                      <p className="truncate text-xs text-neutral-500">
+                        {brl(d.valor_total)}
+                        {s.diferenca > 0 && <span className="text-amber-700"> · veio {brl(s.diferenca)} a menos</span>}
+                      </p>
+                    </div>
+                    <div className="flex items-center justify-end gap-2">
+                      {feita ? (
+                        <Selo cor="verde">Conciliada</Selo>
+                      ) : (
+                        <>
+                          <Selo cor={s.confianca === 'certa' ? 'verde' : 'amarelo'}>{s.confianca === 'certa' ? 'Valor igual' : 'Revisar'}</Selo>
+                          <Botao tipo={s.confianca === 'certa' ? 'secundario' : 'primario'} ocupado={confirmando === d.id} onClick={() => void confirmar(s)}>
+                            Confirmar
+                          </Botao>
+                        </>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+
+            {(placar.semPar > 0 || placar.notasSemCredito > 0) && (
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                {placar.semPar > 0 && (
+                  <div className="rounded-2xl bg-neutral-50 p-3">
+                    <p className="text-xs font-medium text-neutral-500">Créditos sem nota ({placar.semPar})</p>
+                    <ul className="mt-1 max-h-48 space-y-1 overflow-y-auto">
+                      {doArquivo
+                        .filter((c) => !sugestoesDoArquivo.some((s) => s.credito === c))
+                        .map((c, i) => (
+                          <li key={i} className="flex justify-between gap-2 text-xs">
+                            <span className="truncate text-neutral-600">
+                              {dataBr(c.data)} · {c.descricao || 'sem descrição'}
+                            </span>
+                            <span className="shrink-0 font-medium">{brl(c.valor)}</span>
+                          </li>
+                        ))}
+                    </ul>
+                  </div>
+                )}
+                {placar.notasSemCredito > 0 && (
+                  <div className="rounded-2xl bg-red-50 p-3">
+                    <p className="text-xs font-medium text-red-700">Notas em aberto sem crédito ({placar.notasSemCredito})</p>
+                    <ul className="mt-1 max-h-48 space-y-1 overflow-y-auto">
+                      {estado.demonstrativos
+                        .filter((d) => ['nota_enviada', 'nota_emitida'].includes(etapaDe(d)) && !sugestoesDoArquivo.some((s) => s.demonstrativo_id === d.id))
+                        .map((d) => (
+                          <li key={d.id} className="flex justify-between gap-2 text-xs">
+                            <span className="truncate text-neutral-700">{quemPaga(estado, d.id)}</span>
+                            <span className="shrink-0 font-medium">{brl(d.valor_total)}</span>
+                          </li>
+                        ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
       </section>
