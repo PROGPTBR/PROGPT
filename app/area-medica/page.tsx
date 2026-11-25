@@ -32,7 +32,9 @@ export default async function AreaMedicaPage({ searchParams }: { searchParams: {
       estadoInicial={await estadoCompleto(user.id)}
       hoje={hojeEmBrasilia()}
       abaInicial={searchParams.aba}
-      linkDoSistema={!soAreaMedica(perfil?.area_medica)}
+      // Só a equipe da 2B Supply (super admin) vê o atalho para o sistema de
+      // compras. Médico e equipe do médico ficam só na Área Médica (25/11/2026).
+      linkDoSistema={perfil?.super_admin === true && !soAreaMedica(perfil?.area_medica)}
       aviso={
         searchParams.banco === 'conectado'
           ? { ok: true, texto: 'Conta do BTG ligada. Os próximos créditos e débitos entram sozinhos.' }
