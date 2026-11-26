@@ -761,7 +761,7 @@ Mais confiança para usar IA em decisões reais de Compras.
           <span>Recursos</span>
           <h2>
             Por que a plataforma de agentes autônomos da 2BSUPPLY.IA é{' '}
-            <em>diferente</em>
+            <em>diferente.</em>
           </h2>
           <p>
             Não é mais uma IA genérica.
