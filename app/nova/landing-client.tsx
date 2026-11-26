@@ -772,7 +772,7 @@ Mais confiança para usar IA em decisões reais de Compras.
             Automatize tarefas, reduza riscos
             e transforme dados em decisões
             mais rápidas, seguras e
-            estratégicas.
+            estratégicas. 
           </p>
         </div>
         <div className={styles.featureGrid}>
