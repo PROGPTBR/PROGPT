@@ -153,6 +153,11 @@ export type Cirurgia = {
   confirmar?: boolean;
   /** Datas em que a cirurgia foi cobrada do hospital (uma por planilha enviada). */
   cobrancas: string[];
+  /** Planilha de sobreaviso (sub-projeto 118): o que o hospital cruza para pagar. */
+  atendimento?: string;
+  carteirinha?: string;
+  senha?: string;
+  tuss?: string;
   observacao: string;
   exemplo: boolean;
 };
@@ -179,6 +184,8 @@ export type Demonstrativo = {
   nota_numero: string;
   nota_emitida_em: string | null;
   nota_enviada_em: string | null;
+  /** Valor líquido da nota depois das retenções (IRRF, PIS/COFINS/CSLL, ISS): é o que cai na conta. */
+  nota_liquido?: number | null;
   pago_em: string | null;
   valor_pago: number | null;
   exemplo: boolean;
@@ -259,6 +266,10 @@ export const CirurgiaSchema = z.object({
   origem: z.enum(['manual', 'whatsapp', 'demonstrativo']).default('manual'),
   funcao: texto(40).default(''),
   registro: texto(60).default(''),
+  atendimento: texto(40).default(''),
+  carteirinha: texto(40).default(''),
+  senha: texto(40).default(''),
+  tuss: texto(200).default(''),
   hora: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).or(z.literal('')).default(''),
   confirmar: z.boolean().default(false),
   observacao: texto(500).default(''),
@@ -293,6 +304,7 @@ export const DemonstrativoPatchSchema = z.object({
   nota_pedida_em: dia.nullable().optional(),
   nota_numero: texto(60).optional(),
   nota_emitida_em: dia.nullable().optional(),
+  nota_liquido: z.number().min(0).max(100_000_000).nullable().optional(),
   nota_enviada_em: dia.nullable().optional(),
   pago_em: dia.nullable().optional(),
   valor_pago: z.number().min(0).max(100_000_000).nullable().optional(),

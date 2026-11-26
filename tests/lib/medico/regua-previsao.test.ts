@@ -132,3 +132,11 @@ describe('previsão do mês e relatório da semana', () => {
     }
   });
 });
+
+describe('líquido da nota (sub-projeto 118)', () => {
+  it('crédito igual ao líquido da nota (depois das retenções) é conciliação certa', () => {
+    const nota = dem({ id: 'n', valor_total: 9251.84, nota_liquido: 8682.85, nota_emitida_em: '2026-10-15', nota_enviada_em: '2026-10-16' });
+    const creditos = lerExtrato(['data;descricao;valor', '20/11/2026;TED IMPAR SERVICOS;8.682,85'].join('\n'));
+    expect(sugerirPagamentos(creditos, [nota], [H])).toMatchObject([{ demonstrativo_id: 'n', confianca: 'certa', diferenca: 0 }]);
+  });
+});

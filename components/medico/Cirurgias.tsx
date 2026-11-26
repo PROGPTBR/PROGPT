@@ -12,7 +12,7 @@ import { Botao, brl, CAMPO, CARTAO, chamar, dataBr, Janela, lerNumero, ROTULO, S
 // Cirurgias feitas: a lista que o médico mantinha no grupo de WhatsApp. É
 // contra ela que cada demonstrativo é conferido.
 
-type Linha = { hospital_id: string; data: string; paciente: string; procedimento: string; convenio: string; valor: string; funcao: string; registro: string };
+type Linha = { hospital_id: string; data: string; paciente: string; procedimento: string; convenio: string; valor: string; funcao: string; registro: string; atendimento: string; carteirinha: string; senha: string; tuss: string };
 
 /** "2o auxiliar", "2º Auxiliar", "cirurgiao" → a grafia da lista; o que não for reconhecido fica em branco. */
 export function funcaoPadrao(v: string | null | undefined): string {
@@ -191,7 +191,7 @@ export function Cirurgias({ estado, hoje, enviar, abrir }: PropsDaAba & { abrir?
         <EditorDeCirurgias
           titulo="Nova cirurgia"
           estado={estado}
-          linhasIniciais={[{ hospital_id: estado.hospitais[0]!.id, data: hoje, paciente: '', procedimento: '', convenio: '', valor: '', funcao: '', registro: '' }]}
+          linhasIniciais={[{ hospital_id: estado.hospitais[0]!.id, data: hoje, paciente: '', procedimento: '', convenio: '', valor: '', funcao: '', registro: '', atendimento: '', carteirinha: '', senha: '', tuss: '' }]}
           origem="manual"
           onFechar={() => setNova(false)}
           enviar={enviar}
@@ -221,7 +221,7 @@ function ColarDoWhatsApp({ estado, onFechar, enviar, entradas }: Pick<PropsDaAba
 
   async function ler() {
     setLendo(true);
-    const r = await chamar<{ leitura: { cirurgias: { data: string | null; paciente: string; procedimento: string | null; convenio: string | null; valor: number | null; hospital: string | null; funcao: string | null; registro: string | null }[] } }>(
+    const r = await chamar<{ leitura: { cirurgias: { data: string | null; paciente: string; procedimento: string | null; convenio: string | null; valor: number | null; hospital: string | null; funcao: string | null; registro: string | null; atendimento: string | null; carteirinha: string | null; senha: string | null; tuss: string | null }[] } }>(
       'POST',
       '/extrair',
       { tipo: 'cirurgias', texto, hospitais: estado.hospitais.map((h) => h.nome) },
@@ -240,6 +240,10 @@ function ColarDoWhatsApp({ estado, onFechar, enviar, entradas }: Pick<PropsDaAba
         valor: c.valor == null ? '' : String(c.valor).replace('.', ','),
         funcao: funcaoPadrao(c.funcao),
         registro: c.registro ?? '',
+        atendimento: c.atendimento ?? '',
+        carteirinha: c.carteirinha ?? '',
+        senha: c.senha ?? '',
+        tuss: c.tuss ?? '',
       })),
     );
   }
@@ -356,6 +360,22 @@ function EditorDeCirurgias({
             <label className="sm:col-span-2">
               <span className={ROTULO}>Nº de registro (opcional)</span>
               <input value={l.registro} onChange={(e) => mudar(i, 'registro', e.target.value)} className={CAMPO} />
+            </label>
+            <label className="sm:col-span-2">
+              <span className={ROTULO}>Atendimento (hospital)</span>
+              <input value={l.atendimento} onChange={(e) => mudar(i, 'atendimento', e.target.value)} className={CAMPO} />
+            </label>
+            <label className="sm:col-span-2">
+              <span className={ROTULO}>Carteirinha</span>
+              <input value={l.carteirinha} onChange={(e) => mudar(i, 'carteirinha', e.target.value)} className={CAMPO} />
+            </label>
+            <label>
+              <span className={ROTULO}>Senha de autorização</span>
+              <input value={l.senha} onChange={(e) => mudar(i, 'senha', e.target.value)} className={CAMPO} />
+            </label>
+            <label>
+              <span className={ROTULO}>Código TUSS</span>
+              <input value={l.tuss} onChange={(e) => mudar(i, 'tuss', e.target.value)} placeholder="98106073" className={CAMPO} />
             </label>
             {linhas.length > 1 && (
               <div className="sm:col-span-6 text-right">

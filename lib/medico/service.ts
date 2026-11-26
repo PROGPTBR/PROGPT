@@ -32,9 +32,9 @@ import type {
 
 const HOSPITAL = 'id, nome, email, prazo_pagamento_dias, demonstrativo_meses, demonstrativo_dia, regua, exemplo';
 const CIRURGIA =
-  'id, hospital_id, data, paciente, procedimento, convenio, valor, origem, demonstrativo_id, cobrada_em, funcao, registro, hora, confirmar, cobrancas, observacao, exemplo';
+  'id, hospital_id, data, paciente, procedimento, convenio, valor, origem, demonstrativo_id, cobrada_em, funcao, registro, atendimento, carteirinha, senha, tuss, hora, confirmar, cobrancas, observacao, exemplo';
 const DEMONSTRATIVO =
-  'id, hospital_id, referencia, recebido_em, valor_total, itens, nota_pedida_em, nota_numero, nota_emitida_em, nota_enviada_em, pago_em, valor_pago, exemplo, tipo, pagador_nome, pagador_documento, pagador_contato';
+  'id, hospital_id, referencia, recebido_em, valor_total, itens, nota_pedida_em, nota_numero, nota_emitida_em, nota_liquido, nota_enviada_em, pago_em, valor_pago, exemplo, tipo, pagador_nome, pagador_documento, pagador_contato';
 export const CONFIG =
   'medico_nome, contador_nome, contador_email, medico_email, whatsapp_numero, chave_pix, avisos_email, avisos_whatsapp, lembretes_agenda, grupo_jid, grupo_nome, empresa_nome, empresa_cnpj, crm, especialidade, contato, banco_nome, secretaria_nome, secretaria_contato, inicio_status, inicio_em';
 const ENTRADA = 'id, canal, remetente, assunto, texto, recebido_em';
@@ -50,6 +50,7 @@ function demonstrativoDe(r: Record<string, unknown>): Demonstrativo {
     ...(r as Demonstrativo),
     valor_total: Number(r.valor_total ?? 0),
     valor_pago: num(r.valor_pago),
+    nota_liquido: num(r.nota_liquido),
     itens: Array.isArray(r.itens) ? (r.itens as ItemDemonstrativo[]) : [],
   };
 }

@@ -108,6 +108,7 @@ function CartaoDoDemonstrativo({ d, estado, hoje, enviar, recarregar }: PropsDaA
   };
   const [numero, setNumero] = useState('');
   const [dataNota, setDataNota] = useState(hoje);
+  const [liquido, setLiquido] = useState('');
   const [valorPago, setValorPago] = useState(String(d.valor_total.toFixed(2)).replace('.', ','));
   const [dataPago, setDataPago] = useState(hoje);
   const [ocupado, setOcupado] = useState(false);
@@ -179,7 +180,13 @@ function CartaoDoDemonstrativo({ d, estado, hoje, enviar, recarregar }: PropsDaA
                 <span className={ROTULO}>Emitida em</span>
                 <input type="date" value={dataNota} onChange={(e) => setDataNota(e.target.value)} className={`${CAMPO} !w-44`} />
               </label>
-              <Botao ocupado={ocupado} desabilitado={!numero.trim() || !dataNota} onClick={() => gravar({ nota_numero: numero.trim(), nota_emitida_em: dataNota }, 'Nota registrada.')}>
+              <label>
+                <span className={`${ROTULO} flex items-center gap-1`}>
+                  Líquido da nota (R$) <Info>O valor que vai cair na conta: o total da nota menos as retenções (IRRF, PIS/COFINS/CSLL, ISS). Está no campo Valor líquido da NFS-e. Com ele, a conciliação do banco fecha sozinha.</Info>
+                </span>
+                <input value={liquido} onChange={(e) => setLiquido(e.target.value)} inputMode="decimal" className={`${CAMPO} !w-36`} />
+              </label>
+              <Botao ocupado={ocupado} desabilitado={!numero.trim() || !dataNota} onClick={() => gravar({ nota_numero: numero.trim(), nota_emitida_em: dataNota, nota_liquido: lerNumero(liquido) }, 'Nota registrada.')}>
                 Registrar nota
               </Botao>
             </div>

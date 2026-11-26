@@ -93,7 +93,9 @@ export function sugerirPagamentos(creditos: Credito[], demonstrativos: Demonstra
       if (diasEntre(desde, c.data) < 0) continue;
       const diferenca = Math.round((d.valor_total - c.valor) * 100) / 100;
       const cita = citaPagador(c.descricao, pagador);
-      if (Math.abs(diferenca) <= 0.01) candidatos.push({ demonstrativo_id: d.id, credito: c, confianca: 'certa', diferenca: 0, peso: cita ? 4 : 3 });
+      // O que cai na conta é o líquido da nota (sem IRRF, PIS/COFINS/CSLL, ISS retido). Com o líquido informado, ele vale como valor exato.
+      const bateLiquido = d.nota_liquido != null && Math.abs(d.nota_liquido - c.valor) <= 0.01;
+      if (Math.abs(diferenca) <= 0.01 || bateLiquido) candidatos.push({ demonstrativo_id: d.id, credito: c, confianca: 'certa', diferenca: 0, peso: cita ? 4 : 3 });
       else if (cita && diferenca > 0 && diferenca <= d.valor_total * RETENCAO_MAXIMA) {
         candidatos.push({ demonstrativo_id: d.id, credito: c, confianca: 'provavel', diferenca, peso: 2 - diferenca / d.valor_total });
       }

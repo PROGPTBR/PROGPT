@@ -24,7 +24,17 @@ const Linha = z.object({
 });
 
 export const CirurgiasExtraidasSchema = z.object({
-  cirurgias: z.array(Linha.extend({ hospital: z.string().nullable(), funcao: z.string().nullable(), registro: z.string().nullable() })),
+  cirurgias: z.array(
+    Linha.extend({
+      hospital: z.string().nullable(),
+      funcao: z.string().nullable(),
+      registro: z.string().nullable(),
+      atendimento: z.string().nullable(),
+      carteirinha: z.string().nullable(),
+      senha: z.string().nullable(),
+      tuss: z.string().nullable(),
+    }),
+  ),
 });
 
 export const DemonstrativoExtraidoSchema = z.object({
@@ -47,13 +57,14 @@ Copie como está: não invente paciente, data nem valor. O que não aparecer vol
 function systemCirurgias(hoje: string, hospitais: string[]) {
   return `Você organiza a lista de cirurgias feitas por um médico brasileiro. O texto vem de mensagens de WhatsApp, anotações ou planilha colada. Hoje é ${hoje}.
 
-O texto também pode ser a planilha de pendências do próprio médico (colunas Data, Médico, Função, Nº Registro, Paciente, Convênio, Procedimento): nesse caso cada linha é uma cirurgia.
+O texto também pode ser a planilha de pendências do próprio médico (colunas Data, Médico, Função, Nº Registro, Paciente, Convênio, Procedimento) ou a planilha de sobreaviso que ele manda ao hospital (colunas Atendimento, Carteirinha, Paciente, Data cirurgia, Senha autorização, Médico executante, Procedimento TUSS): nesse caso cada linha é uma cirurgia.
 
 Devolva uma linha por cirurgia REALIZADA. Ignore conversa, confirmações, agendamentos cancelados e mensagens que não são cirurgia.
 
 ${REGRAS}
 - funcao: o papel do médico na cirurgia quando o texto disser, exatamente um de: Cirurgião, 1º Auxiliar, 2º Auxiliar, 3º Auxiliar, Anestesista, Instrumentador. Senão null.
 - registro: o número de registro da descrição cirúrgica, se aparecer.
+- atendimento: o número do atendimento no hospital, se aparecer. carteirinha: o número da carteirinha do convênio. senha: a senha de autorização. tuss: o(s) código(s) TUSS do procedimento, separados por ponto e vírgula quando forem vários. Tudo como texto; o que não aparecer volta null.
 - procedimento: mantenha os códigos (ex.: 30733073) junto do nome quando vierem.
 - convenio: quando vier operadora e plano ("Bradesco / Nacional III"), mantenha os dois.
 - hospital: o hospital onde a cirurgia foi feita, se o texto disser. Hospitais cadastrados: ${hospitais.join('; ') || 'nenhum'}. Se for um deles, use o nome exatamente como cadastrado.`;
