@@ -8,6 +8,7 @@ import { getServerSupabase } from '@/lib/db/supabase';
 import { getEmailConfigStatus } from '@/lib/email/client';
 import { btgConfigurado } from '@/lib/medico/btg';
 import { estadoDaInstancia, INSTANCIA_AVISOS, whatsappConfigurado } from '@/lib/medico/evolution';
+import { aliasDoMedico } from '@/lib/medico/integracoes';
 import { recordAuditLog } from '@/lib/observability/audit-log';
 import { hojeEmBrasilia } from '@/lib/vitrine/datas';
 
@@ -40,7 +41,7 @@ export async function GET() {
     db.from('medico_hospitais').select('user_id').in('user_id', ids).eq('exemplo', false),
     db.from('medico_cirurgias').select('user_id, demonstrativo_id, data').in('user_id', ids).eq('exemplo', false).limit(20000),
     db.from('medico_demonstrativos').select('user_id, valor_total, pago_em').in('user_id', ids).eq('exemplo', false).limit(5000),
-    db.from('medico_config').select('user_id, medico_nome, grupo_jid, inicio_status, banco_nome, secretaria_nome, secretaria_contato, contador_email, empresa_cnpj').in('user_id', ids),
+    db.from('medico_config').select('user_id, medico_nome, grupo_jid, whatsapp_numero, inicio_status, banco_nome, secretaria_nome, secretaria_contato, contador_email, empresa_cnpj').in('user_id', ids),
     db.from('medico_banco').select('user_id').in('user_id', ids),
     db.from('medico_documentos').select('user_id, tipo').in('user_id', ids).limit(5000),
   ]);
@@ -73,6 +74,9 @@ export async function GET() {
         empresa: !!cfg?.empresa_cnpj,
         documentos: conta(documentos.data, id),
         demonstrativo_anexado: conta(documentos.data, id, (d) => d.tipo === 'demonstrativo') > 0,
+        // Para a mensagem de acesso (sub-projeto 119).
+        whatsapp_numero: (cfg?.whatsapp_numero as string) ?? '',
+        email_entrada: aliasDoMedico(id),
       };
     })
     .sort((a, b) => a.email.localeCompare(b.email));

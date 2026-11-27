@@ -1,10 +1,11 @@
 'use client';
 
 import { Fragment, useCallback, useEffect, useState } from 'react';
-import { Copy, ExternalLink, Stethoscope } from 'lucide-react';
+import { Copy, ExternalLink, Send, Stethoscope } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { ConexaoWhatsapp } from '@/components/medico/Integracoes';
+import { mensagemDeAcesso } from '@/lib/medico/mensagem-acesso';
 import { Botao, brl, CAMPO, CARTAO, chamar, ROTULO, Selo, TD, TH } from '@/components/medico/ui';
 
 // Painel da Área Médica no Super Admin (sub-projeto 107). É onde a 2B Supply
@@ -30,6 +31,8 @@ type Acesso = {
   contador: boolean;
   empresa: boolean;
   documentos: number;
+  whatsapp_numero: string;
+  email_entrada: string | null;
   demonstrativo_anexado: boolean;
 };
 type DocAdmin = { id: string; tipo: string; rotulo: string; nome: string; created_at: string; url: string };
@@ -147,21 +150,7 @@ export function AreaMedicaAdmin() {
             Convidar por e-mail
           </Botao>
         </div>
-        {senha && (
-          <div className="mt-4 rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 text-sm">
-            <p className="font-medium">Senha temporária de {senha.email}</p>
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-              <code className="rounded-lg bg-background px-3 py-1.5 text-base font-semibold tracking-wide">{senha.senha}</code>
-              <Botao tipo="secundario" onClick={() => navigator.clipboard.writeText(senha.senha).then(() => toast.success('Senha copiada.'), () => toast.error('Não foi possível copiar.'))}>
-                <Copy className="h-4 w-4" aria-hidden /> Copiar
-              </Botao>
-              <Botao tipo="secundario" onClick={() => setSenha(null)}>
-                Já anotei
-              </Botao>
-            </div>
-            <p className="mt-2 text-xs text-muted-foreground">Ela não fica guardada e não aparece de novo. O médico entra em /medicos e o sistema pede para ele criar a própria senha.</p>
-          </div>
-        )}
+        {senha && <QuadroDaSenha senha={senha} acesso={dados?.acessos.find((a) => a.email.toLowerCase() === senha.email)} onFechar={() => setSenha(null)} />}
       </section>
 
       <section className={CARTAO}>
@@ -310,6 +299,74 @@ export function AreaMedicaAdmin() {
           </ul>
         </div>
       </section>
+    </div>
+  );
+}
+
+/** A senha temporária e a mensagem completa de acesso, pronta para copiar ou mandar pelo WhatsApp (sub-projeto 119). */
+function QuadroDaSenha({ senha, acesso, onFechar }: { senha: { email: string; senha: string }; acesso?: Acesso; onFechar: () => void }) {
+  const inicial = mensagemDeAcesso({
+    nome: acesso?.nome ?? '',
+    email: senha.email,
+    senha: senha.senha,
+    link: `${typeof window === 'undefined' ? '' : window.location.origin}/medicos`,
+    hospitais: acesso?.hospitais ?? 0,
+    cirurgias: acesso?.cirurgias ?? 0,
+    demonstrativos: acesso?.demonstrativos ?? 0,
+    contador: acesso?.contador ?? false,
+    celular: !!acesso?.whatsapp_numero,
+    emailEntrada: acesso?.email_entrada ?? null,
+  });
+  const [texto, setTexto] = useState(inicial);
+  const [numero, setNumero] = useState('');
+  const [enviando, setEnviando] = useState(false);
+
+  async function enviarPeloSistema() {
+    if (!acesso) return;
+    setEnviando(true);
+    const r = await chamar<{ email: boolean; whatsapp: 'enviado' | 'sem_numero' | 'desligado' | 'falhou' }>('POST', '/acessos/mensagem', { id: acesso.id, texto, whatsapp: numero });
+    setEnviando(false);
+    if (!r.ok) return void toast.error(r.mensagem);
+    const partes = [r.dados.email ? `e-mail enviado para ${senha.email}` : 'o e-mail não saiu (envio de e-mail desligado no servidor)'];
+    partes.push(
+      { enviado: 'WhatsApp enviado', sem_numero: 'sem WhatsApp cadastrado', desligado: 'o número de avisos da 2B Supply não está conectado', falhou: 'o WhatsApp não saiu' }[r.dados.whatsapp],
+    );
+    const tudo = r.dados.email && (r.dados.whatsapp === 'enviado' || r.dados.whatsapp === 'sem_numero');
+    (tudo ? toast.success : toast.warning)(partes.join('; ') + '.');
+  }
+  const copiar = (t: string, ok: string) => navigator.clipboard.writeText(t).then(() => toast.success(ok), () => toast.error('Não foi possível copiar.'));
+
+  return (
+    <div className="mt-4 rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 text-sm">
+      <p className="font-medium">Senha temporária de {senha.email}</p>
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        <code className="rounded-lg bg-background px-3 py-1.5 text-base font-semibold tracking-wide">{senha.senha}</code>
+        <Botao tipo="secundario" onClick={() => copiar(senha.senha, 'Senha copiada.')}>
+          <Copy className="h-4 w-4" aria-hidden /> Copiar senha
+        </Botao>
+      </div>
+      <label className="mt-4 block">
+        <span className={ROTULO}>Mensagem pronta para o médico (pode editar antes de mandar)</span>
+        <textarea value={texto} onChange={(e) => setTexto(e.target.value)} rows={16} className="w-full rounded-xl border border-border bg-background p-3 font-mono text-xs leading-relaxed" />
+      </label>
+      {acesso && !acesso.whatsapp_numero && (
+        <label className="mt-3 block max-w-xs">
+          <span className={ROTULO}>WhatsApp do médico (opcional, fica no cadastro)</span>
+          <input value={numero} onChange={(e) => setNumero(e.target.value)} inputMode="tel" placeholder="(21) 9 9999-9999" className={CAMPO} />
+        </label>
+      )}
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        <Botao tipo="secundario" onClick={() => copiar(texto, 'Mensagem copiada.')}>
+          <Copy className="h-4 w-4" aria-hidden /> Copiar mensagem
+        </Botao>
+        <Botao ocupado={enviando} desabilitado={!acesso} onClick={() => void enviarPeloSistema()}>
+          <Send className="h-4 w-4" aria-hidden /> Enviar pelo sistema
+        </Botao>
+        <Botao tipo="secundario" onClick={onFechar}>
+          Já enviei
+        </Botao>
+      </div>
+      <p className="mt-2 text-xs text-muted-foreground">A senha não fica guardada e não aparece de novo depois que você fechar. O envio sai pelo e-mail da 2B Supply para o e-mail da conta e, se houver número, pelo WhatsApp de avisos. A mensagem já diz o que falta, conforme o cadastro dele.</p>
     </div>
   );
 }
